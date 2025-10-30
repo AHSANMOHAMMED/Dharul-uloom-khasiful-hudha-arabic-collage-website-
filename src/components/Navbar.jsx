@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../context/AuthContext'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const { t, i18n } = useTranslation()
   const location = useLocation()
+  const { isAuthenticated, isAdmin, user, logout } = useAuth()
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'ar' : 'en'
@@ -50,6 +52,50 @@ const Navbar = () => {
                 {t(item.label)}
               </Link>
             ))}
+            
+            {/* Auth Buttons */}
+            {isAuthenticated ? (
+              <>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-islamic-dark hover:text-islamic-gold"
+                  >
+                    {i18n.language === 'ar' ? 'لوحة التحكم' : 'Admin'}
+                  </Link>
+                )}
+                {!isAdmin && (
+                  <Link
+                    to="/dashboard"
+                    className="px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-islamic-dark hover:text-islamic-gold"
+                  >
+                    {i18n.language === 'ar' ? 'لوحتي' : 'Dashboard'}
+                  </Link>
+                )}
+                <button
+                  onClick={logout}
+                  className="px-4 py-2 rounded-md bg-white text-islamic-green font-medium hover:bg-gray-100 transition-colors"
+                >
+                  {i18n.language === 'ar' ? 'خروج' : 'Logout'}
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-4 py-2 rounded-md text-white hover:text-islamic-gold font-medium transition-colors"
+                >
+                  {i18n.language === 'ar' ? 'دخول' : 'Login'}
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-4 py-2 rounded-md bg-white text-islamic-green font-medium hover:bg-gray-100 transition-colors"
+                >
+                  {i18n.language === 'ar' ? 'تسجيل' : 'Register'}
+                </Link>
+              </>
+            )}
+            
             <button
               onClick={toggleLanguage}
               className="px-4 py-2 rounded-md bg-islamic-gold text-islamic-green font-medium hover:bg-yellow-500 transition-colors"

@@ -6,9 +6,15 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     role: { type: String, enum: ['guest', 'student', 'parent', 'admin'], default: 'guest' },
     isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String },
+    resetPasswordToken: { type: String },
+    resetPasswordExpiry: { type: Date },
     preferences: { type: Object },
 }, {
     timestamps: true
 });
+
+// Create index on email for faster lookups
+userSchema.index({ email: 1 });
 
 export default mongoose.model('User', userSchema);
