@@ -10,6 +10,8 @@ import contactRoutes from './routes/contact.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import userRoutes from './routes/user.js';
+import libraryRoutes from './routes/library.js';
+import curriculumRoutes from './routes/curriculum.js';
 
 dotenv.config();
 
@@ -45,6 +47,8 @@ app.use('/api/user', userRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/library', libraryRoutes);
+app.use('/api/curriculum', curriculumRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -57,7 +61,9 @@ app.get('/', (req, res) => {
       user: '/api/user (dashboard, my admissions)',
       news: '/api/news',
       faculty: '/api/faculty',
-      contact: '/api/contact'
+      contact: '/api/contact',
+      library: '/api/library (books, categories)',
+      curriculum: '/api/curriculum (7-year program, classes 1-7)'
     }
   });
 });
