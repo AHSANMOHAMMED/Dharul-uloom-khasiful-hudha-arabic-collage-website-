@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 import News from './models/News.js';
 import Faculty from './models/Faculty.js';
+import User from './models/User.js';
 
 dotenv.config();
 
@@ -14,8 +16,23 @@ const seedData = async () => {
     // Clear existing data
     await News.deleteMany({});
     await Faculty.deleteMany({});
+    await User.deleteMany({});
     
     console.log('Cleared existing data');
+    
+    // Seed Admin User
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash('admin123', salt);
+    
+    await User.create({
+      username: 'Admin',
+      email: 'admin@kashifulhudha.lk',
+      password: hashedPassword,
+      role: 'admin',
+      isVerified: true
+    });
+    
+    console.log('Admin user created (email: admin@kashifulhudha.lk, password: admin123)');
     
     // Seed News
     const newsData = [

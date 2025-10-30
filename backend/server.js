@@ -7,6 +7,9 @@ import connectDB from './config/db.js';
 import newsRoutes from './routes/news.js';
 import facultyRoutes from './routes/faculty.js';
 import contactRoutes from './routes/contact.js';
+import authRoutes from './routes/auth.js';
+import adminRoutes from './routes/admin.js';
+import userRoutes from './routes/user.js';
 
 dotenv.config();
 
@@ -36,6 +39,9 @@ app.use(cors({
 }));
 
 // Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/contact', contactRoutes);
@@ -44,8 +50,11 @@ app.use('/api/contact', contactRoutes);
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Dharul Uloom Kashiful Hudha Arabic College API',
-    version: '1.0.0',
+    version: '2.0.0',
     endpoints: {
+      auth: '/api/auth (login, register, verify-email, forgot-password)',
+      admin: '/api/admin (news, faculty, admissions management)',
+      user: '/api/user (dashboard, my admissions)',
       news: '/api/news',
       faculty: '/api/faculty',
       contact: '/api/contact'
