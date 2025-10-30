@@ -1,43 +1,73 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+import { useAuth } from '../context/AuthContext'
+import axios from 'axios'
+import { toast, ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+
+// Validation schema
+const admissionSchema = yup.object().shape({
+  studentName: yup.string().required('Student name is required').min(3, 'Name must be at least 3 characters'),
+  age: yup.number()
+    .required('Age is required')
+    .min(5, 'Age must be at least 5')
+    .max(15, 'Age must not exceed 15')
+    .typeError('Age must be a number'),
+  parentName: yup.string().required('Parent name is required').min(3, 'Name must be at least 3 characters'),
+  phone: yup.string()
+    .required('Phone number is required')
+    .matches(/^[0-9]{10}$/, 'Phone number must be 10 digits'),
+  email: yup.string().email('Invalid email address'),
+  address: yup.string().required('Address is required').min(10, 'Address must be at least 10 characters'),
+  course: yup.string().required('Please select a course'),
+})
 
 const Admissions = () => {
   const { t, i18n } = useTranslation()
-  const [formData, setFormData] = useState({
-    studentName: '',
-    age: '',
-    parentName: '',
-    phone: '',
-    email: '',
-    address: '',
-    previousEducation: '',
-    course: ''
-  })
+  const { isAuthenticated, user } = useAuth()
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
+  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+    resolver: yupResolver(admissionSchema)
+  })
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // In a real application, this would send data to backend
-    console.log('Admission form submitted:', formData)
-    setSubmitted(true)
-    setTimeout(() => {
-      setSubmitted(false)
-      setFormData({
-        studentName: '',
-        age: '',
-        parentName: '',
-        phone: '',
-        email: '',
-        address: '',
-        previousEducation: '',
-        course: ''
-      })
-    }, 3000)
+  const onSubmit = async (data) => {
+    setLoading(true)
+    try {
+      if (isAuthenticated) {
+        // Submit to authenticated endpoint
+        await axios.post('/api/user/admissions', data)
+        toast.success(i18n.language === 'ar' 
+          ? 'تم تقديم طلبك بنجاح! يمكنك متابعة حالته من لوحة التحكم.'
+          : 'Application submitted successfully! Track it in your dashboard.')
+      } else {
+        // Submit as guest
+        await axios.post('/api/contact', {
+          name: data.parentName,
+          email: data.email,
+          phone: data.phone,
+          message: `Admission Application:\nStudent: ${data.studentName}\nAge: ${data.age}\nCourse: ${data.course}\nAddress: ${data.address}\nPrevious Education: ${data.previousEducation || 'N/A'}`
+        })
+        toast.success(i18n.language === 'ar'
+          ? 'تم إرسال طلبك بنجاح! سنتواصل معك قريباً.'
+          : 'Application sent successfully! We will contact you soon.')
+      }
+      setSubmitted(true)
+      reset()
+      setTimeout(() => setSubmitted(false), 5000)
+    } catch (error) {
+      toast.error(i18n.language === 'ar'
+        ? 'حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.'
+        : 'Error submitting application. Please try again.')
+      console.error('Submission error:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -96,6 +126,14 @@ const Admissions = () => {
             <h2 className="text-2xl font-bold text-islamic-green mb-6">
               {i18n.language === 'ar' ? 'نموذج التقديم' : 'Application Form'}
             </h2>
+
+            {!isAuthenticated && (
+              <div className="mb-6 p-4 bg-blue-100 text-blue-700 rounded-lg">
+                {i18n.language === 'ar'
+                  ? 'لتتبع حالة طلبك، يرجى تسجيل الدخول أو إنشاء حساب.'
+                  : 'To track your application status, please login or create an account.'}
+              </div>
+            )}
             
             {submitted && (
               <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg">
@@ -105,19 +143,23 @@ const Admissions = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <ToastContainer position="top-right" autoClose={5000} />
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
                   {i18n.language === 'ar' ? 'اسم الطالب *' : 'Student Name *'}
                 </label>
                 <input
                   type="text"
-                  name="studentName"
-                  value={formData.studentName}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent"
+                  {...register('studentName')}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent ${
+                    errors.studentName ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {errors.studentName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.studentName.message}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -127,14 +169,16 @@ const Admissions = () => {
                   </label>
                   <input
                     type="number"
-                    name="age"
-                    value={formData.age}
-                    onChange={handleChange}
-                    required
+                    {...register('age')}
                     min="5"
                     max="15"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent ${
+                      errors.age ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   />
+                  {errors.age && (
+                    <p className="mt-1 text-sm text-red-600">{errors.age.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -143,12 +187,14 @@ const Admissions = () => {
                   </label>
                   <input
                     type="text"
-                    name="parentName"
-                    value={formData.parentName}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent"
+                    {...register('parentName')}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent ${
+                      errors.parentName ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   />
+                  {errors.parentName && (
+                    <p className="mt-1 text-sm text-red-600">{errors.parentName.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -159,12 +205,15 @@ const Admissions = () => {
                   </label>
                   <input
                     type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent"
+                    {...register('phone')}
+                    placeholder="0701234567"
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent ${
+                      errors.phone ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   />
+                  {errors.phone && (
+                    <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -173,11 +222,14 @@ const Admissions = () => {
                   </label>
                   <input
                     type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent"
+                    {...register('email')}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent ${
+                      errors.email ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -186,25 +238,37 @@ const Admissions = () => {
                   {i18n.language === 'ar' ? 'العنوان *' : 'Address *'}
                 </label>
                 <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  required
+                  {...register('address')}
                   rows="3"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent ${
+                    errors.address ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {errors.address && (
+                  <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  {i18n.language === 'ar' ? 'التعليم السابق' : 'Previous Education'}
+                </label>
+                <input
+                  type="text"
+                  {...register('previousEducation')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent"
                 />
               </div>
 
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  {i18n.language === 'ar' ? 'الدورة المرغوبة *' : 'Desired Course *'}
+                  {i18n.language === 'ar' ? 'الدورة المطلوبة *' : 'Desired Course *'}
                 </label>
                 <select
-                  name="course"
-                  value={formData.course}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent"
+                  {...register('course')}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent ${
+                    errors.course ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 >
                   <option value="">
                     {i18n.language === 'ar' ? 'اختر دورة' : 'Select a course'}
@@ -213,10 +277,10 @@ const Admissions = () => {
                     {i18n.language === 'ar' ? 'حفظ القرآن' : 'Quran Memorization'}
                   </option>
                   <option value="arabic">
-                    {i18n.language === 'ar' ? 'النحو العربي' : 'Arabic Grammar'}
+                    {i18n.language === 'ar' ? 'قواعد اللغة العربية' : 'Arabic Grammar'}
                   </option>
                   <option value="hadith">
-                    {i18n.language === 'ar' ? 'دراسة الحديث' : 'Hadith Studies'}
+                    {i18n.language === 'ar' ? 'دراسات الحديث' : 'Hadith Studies'}
                   </option>
                   <option value="fiqh">
                     {i18n.language === 'ar' ? 'الفقه الإسلامي' : 'Islamic Jurisprudence'}
@@ -225,26 +289,20 @@ const Admissions = () => {
                     {i18n.language === 'ar' ? 'الدراسات الإسلامية' : 'Islamic Studies'}
                   </option>
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  {i18n.language === 'ar' ? 'التعليم السابق' : 'Previous Education'}
-                </label>
-                <textarea
-                  name="previousEducation"
-                  value={formData.previousEducation}
-                  onChange={handleChange}
-                  rows="3"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent"
-                />
+                {errors.course && (
+                  <p className="mt-1 text-sm text-red-600">{errors.course.message}</p>
+                )}
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-islamic-green text-white py-3 rounded-lg font-semibold hover:bg-islamic-dark transition-colors"
+                disabled={loading}
+                className="w-full bg-islamic-green text-white py-3 px-6 rounded-lg font-semibold hover:bg-islamic-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {i18n.language === 'ar' ? 'إرسال الطلب' : 'Submit Application'}
+                {loading
+                  ? (i18n.language === 'ar' ? 'جاري الإرسال...' : 'Submitting...')
+                  : (i18n.language === 'ar' ? 'إرسال الطلب' : 'Submit Application')
+                }
               </button>
             </form>
           </motion.div>

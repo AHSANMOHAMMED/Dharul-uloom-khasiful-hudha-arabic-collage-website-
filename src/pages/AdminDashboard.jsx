@@ -4,6 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+const COLORS = ['#0F5132', '#FFD700', '#22c55e', '#ef4444'];
 
 const AdminDashboard = () => {
   const { user, isAdmin, logout } = useAuth();
@@ -32,6 +37,7 @@ const AdminDashboard = () => {
       setAdmissions(admissionsRes.data.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
@@ -40,11 +46,25 @@ const AdminDashboard = () => {
   const handleStatusUpdate = async (id, status) => {
     try {
       await axios.put(`/api/admin/admissions/${id}`, { status });
+      toast.success(`Admission ${status} successfully`);
       fetchData(); // Refresh data
     } catch (error) {
       console.error('Error updating admission:', error);
+      toast.error('Failed to update admission status');
     }
   };
+
+  // Prepare chart data
+  const admissionStatusData = stats ? [
+    { name: i18n.language === 'ar' ? 'قيد الانتظار' : 'Pending', value: stats.admissions?.pending || 0 },
+    { name: i18n.language === 'ar' ? 'تمت الموافقة' : 'Approved', value: stats.admissions?.approved || 0 },
+    { name: i18n.language === 'ar' ? 'مرفوض' : 'Rejected', value: stats.admissions?.rejected || 0 },
+  ] : [];
+
+  const recentTrendsData = stats?.recentAdmissions?.map((item, index) => ({
+    name: `Day ${index + 1}`,
+    admissions: 1
+  })) || [];
 
   if (loading) {
     return (
@@ -125,6 +145,67 @@ const AdminDashboard = () => {
             </p>
           </motion.div>
         </div>
+
+        {/* Analytics Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Pie Chart - Admission Status */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-lg shadow-md p-6"
+          >
+            <h2 className="text-xl font-bold text-islamic-green mb-4">
+              {i18n.language === 'ar' ? 'حالة الطلبات' : 'Admission Status'}
+            </h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={admissionStatusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {admissionStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </motion.div>
+
+          {/* Bar Chart - Content Overview */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-lg shadow-md p-6"
+          >
+            <h2 className="text-xl font-bold text-islamic-green mb-4">
+              {i18n.language === 'ar' ? 'نظرة عامة على المحتوى' : 'Content Overview'}
+            </h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={[
+                { name: i18n.language === 'ar' ? 'الأخبار' : 'News', count: stats?.content?.news || 0 },
+                { name: i18n.language === 'ar' ? 'الأساتذة' : 'Faculty', count: stats?.content?.faculty || 0 },
+                { name: i18n.language === 'ar' ? 'الطلبات' : 'Admissions', count: stats?.admissions?.total || 0 },
+              ]}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="count" fill="#0F5132" />
+              </BarChart>
+            </ResponsiveContainer>
+          </motion.div>
+        </div>
+
+        <ToastContainer position="top-right" autoClose={3000} />
 
         {/* Pending Admissions */}
         <div className="bg-white rounded-lg shadow-md p-6">
