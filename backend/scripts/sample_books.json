@@ -1,0 +1,326 @@
+[
+  {
+    "title": "Tafsir al-Baghawi",
+    "author": "Al-Baghawi",
+    "category": "Tafsir",
+    "description": {
+      "en": "Ma'alim al-Tanzil, a classical tafsir known for its clarity and reliability",
+      "ar": "معالم التنزيل، تفسير كلاسيكي معروف بوضوحه وموثوقيته"
+    },
+    "year": 1122,
+    "language": ["Arabic"],
+    "publisher": "Dar Taiba",
+    "pages": 1200,
+    "assignedToClasses": [6, 7],
+    "pdfUrl": "https://archive.org/download/tafsir-baghawi/tafsir-baghawi.pdf",
+    "coverUrl": "/covers/tafsir_baghawi.jpg"
+  },
+  {
+    "title": "Tafsir al-Nasafi",
+    "author": "Abdullah al-Nasafi",
+    "category": "Tafsir",
+    "description": {
+      "en": "Madarik al-Tanzil, a concise yet comprehensive Quranic commentary",
+      "ar": "مدارك التنزيل، تفسير موجز وشامل للقرآن"
+    },
+    "year": 1310,
+    "language": ["Arabic", "Urdu"],
+    "publisher": "Dar al-Kutub al-Ilmiyyah",
+    "pages": 800,
+    "assignedToClasses": [6, 7],
+    "pdfUrl": "https://archive.org/download/tafsir-nasafi/tafsir-nasafi.pdf",
+    "coverUrl": "/covers/tafsir_nasafi.jpg"
+  },
+  {
+    "title": "Sunan al-Tirmidhi",
+    "author": "Abu Isa al-Tirmidhi",
+    "category": "Hadith",
+    "description": {
+      "en": "One of the six major hadith collections, known for its grading system",
+      "ar": "أحد الكتب الستة الرئيسية للحديث، معروف بنظام التصنيف"
+    },
+    "year": 892,
+    "language": ["Arabic", "English"],
+    "publisher": "Dar al-Salam",
+    "isbn": "978-9960-892-44-0",
+    "pages": 2200,
+    "assignedToClasses": [5, 6, 7],
+    "pdfUrl": "https://archive.org/download/sunan-tirmidhi/sunan-tirmidhi.pdf",
+    "coverUrl": "/covers/sunan_tirmidhi.jpg"
+  },
+  {
+    "title": "Sunan al-Nasai",
+    "author": "Ahmad ibn Shuayb al-Nasai",
+    "category": "Hadith",
+    "description": {
+      "en": "Al-Sunan al-Sughra, a collection of authentic hadiths organized by topic",
+      "ar": "السنن الصغرى، مجموعة من الأحاديث الصحيحة منظمة حسب الموضوع"
+    },
+    "year": 915,
+    "language": ["Arabic"],
+    "publisher": "Dar al-Kutub al-Ilmiyyah",
+    "pages": 1800,
+    "assignedToClasses": [6, 7],
+    "pdfUrl": "https://archive.org/download/sunan-nasai/sunan-nasai.pdf",
+    "coverUrl": "/covers/sunan_nasai.jpg"
+  },
+  {
+    "title": "Sunan Ibn Majah",
+    "author": "Ibn Majah",
+    "category": "Hadith",
+    "description": {
+      "en": "One of the six major hadith collections, compiled by Ibn Majah",
+      "ar": "أحد الكتب الستة الرئيسية للحديث، جمعه ابن ماجه"
+    },
+    "year": 887,
+    "language": ["Arabic", "Urdu"],
+    "publisher": "Dar al-Risalah",
+    "pages": 1600,
+    "assignedToClasses": [6, 7],
+    "pdfUrl": "https://archive.org/download/sunan-ibn-majah/sunan-ibn-majah.pdf",
+    "coverUrl": "/covers/sunan_ibn_majah.jpg"
+  },
+  {
+    "title": "Bulugh al-Maram",
+    "author": "Ibn Hajar al-Asqalani",
+    "category": "Hadith",
+    "description": {
+      "en": "Collection of hadiths related to Islamic jurisprudence with commentary",
+      "ar": "مجموعة من الأحاديث المتعلقة بالفقه الإسلامي مع التعليق"
+    },
+    "year": 1449,
+    "language": ["Arabic", "English"],
+    "publisher": "Darussalam",
+    "isbn": "978-9960-717-57-2",
+    "pages": 600,
+    "assignedToClasses": [5, 6, 7],
+    "pdfUrl": "https://archive.org/download/bulugh-maram/bulugh-maram.pdf",
+    "coverUrl": "/covers/bulugh_maram.jpg"
+  },
+  {
+    "title": "Al-Mughni",
+    "author": "Ibn Qudamah",
+    "category": "Fiqh",
+    "description": {
+      "en": "Comprehensive Hanbali fiqh text covering all aspects of Islamic law",
+      "ar": "نص فقهي حنبلي شامل يغطي جميع جوانب الشريعة الإسلامية"
+    },
+    "year": 1223,
+    "language": ["Arabic"],
+    "publisher": "Dar Alam al-Kutub",
+    "pages": 3000,
+    "assignedToClasses": [7],
+    "pdfUrl": "https://archive.org/download/al-mughni/al-mughni.pdf",
+    "coverUrl": "/covers/al_mughni.jpg"
+  },
+  {
+    "title": "Minhaj al-Talibin",
+    "author": "Imam Nawawi",
+    "category": "Fiqh",
+    "description": {
+      "en": "Shafi'i fiqh manual widely used in Islamic schools",
+      "ar": "دليل الفقه الشافعي المستخدم على نطاق واسع في المدارس الإسلامية"
+    },
+    "year": 1277,
+    "language": ["Arabic", "English"],
+    "publisher": "Dar al-Minhaj",
+    "pages": 500,
+    "assignedToClasses": [6, 7],
+    "pdfUrl": "https://archive.org/download/minhaj-talibin/minhaj-talibin.pdf",
+    "coverUrl": "/covers/minhaj_talibin.jpg"
+  },
+  {
+    "title": "Umdat al-Salik",
+    "author": "Ibn Naqib al-Misri",
+    "category": "Fiqh",
+    "description": {
+      "en": "The Reliance of the Traveler, a classic manual of Shafi'i fiqh",
+      "ar": "عمدة السالك، دليل كلاسيكي للفقه الشافعي"
+    },
+    "year": 1368,
+    "language": ["Arabic", "English"],
+    "publisher": "Amana Publications",
+    "isbn": "978-0-915957-72-9",
+    "pages": 1200,
+    "assignedToClasses": [7],
+    "pdfUrl": "https://archive.org/download/umdat-salik/umdat-salik.pdf",
+    "coverUrl": "/covers/umdat_salik.jpg"
+  },
+  {
+    "title": "Al-Aqida al-Wasitiyyah",
+    "author": "Ibn Taymiyyah",
+    "category": "Aqidah",
+    "description": {
+      "en": "A fundamental text on Islamic creed and theology",
+      "ar": "نص أساسي في العقيدة والدين الإسلامي"
+    },
+    "year": 1328,
+    "language": ["Arabic", "English", "Urdu"],
+    "publisher": "Darussalam",
+    "isbn": "978-9960-899-42-6",
+    "pages": 150,
+    "assignedToClasses": [5, 6],
+    "pdfUrl": "https://archive.org/download/aqida-wasitiyyah/aqida-wasitiyyah.pdf",
+    "coverUrl": "/covers/aqida_wasitiyyah.jpg"
+  },
+  {
+    "title": "Kitab al-Iman",
+    "author": "Ibn Taymiyyah",
+    "category": "Aqidah",
+    "description": {
+      "en": "Comprehensive treatise on faith and its principles",
+      "ar": "رسالة شاملة عن الإيمان ومبادئه"
+    },
+    "year": 1328,
+    "language": ["Arabic", "English"],
+    "publisher": "Dar Ibn Hazm",
+    "pages": 400,
+    "assignedToClasses": [6, 7],
+    "pdfUrl": "https://archive.org/download/kitab-iman/kitab-iman.pdf",
+    "coverUrl": "/covers/kitab_iman.jpg"
+  },
+  {
+    "title": "Usul al-Din",
+    "author": "Imam al-Ghazali",
+    "category": "Aqidah",
+    "description": {
+      "en": "Principles of Islamic theology by the renowned scholar Al-Ghazali",
+      "ar": "أصول الدين الإسلامي للعالم الشهير الغزالي"
+    },
+    "year": 1111,
+    "language": ["Arabic", "Urdu"],
+    "publisher": "Dar al-Kutub al-Ilmiyyah",
+    "pages": 300,
+    "assignedToClasses": [6, 7],
+    "pdfUrl": "https://archive.org/download/usul-din/usul-din.pdf",
+    "coverUrl": "/covers/usul_din.jpg"
+  },
+  {
+    "title": "Al-Shifa",
+    "author": "Qadi Iyad",
+    "category": "Sira",
+    "description": {
+      "en": "Al-Shifa bi Ta'rif Huquq al-Mustafa, a comprehensive work on the Prophet's life",
+      "ar": "الشفا بتعريف حقوق المصطفى، عمل شامل عن حياة النبي"
+    },
+    "year": 1149,
+    "language": ["Arabic"],
+    "publisher": "Dar al-Fajr",
+    "pages": 800,
+    "assignedToClasses": [6, 7],
+    "pdfUrl": "https://archive.org/download/al-shifa/al-shifa.pdf",
+    "coverUrl": "/covers/al_shifa.jpg"
+  },
+  {
+    "title": "Zad al-Maad",
+    "author": "Ibn Qayyim al-Jawziyyah",
+    "category": "Sira",
+    "description": {
+      "en": "Provisions of the Hereafter, guidance from the Prophet's biography",
+      "ar": "زاد المعاد، هداية من سيرة النبي"
+    },
+    "year": 1350,
+    "language": ["Arabic", "English"],
+    "publisher": "Dar al-Risalah",
+    "pages": 1500,
+    "assignedToClasses": [6, 7],
+    "pdfUrl": "https://archive.org/download/zad-maad/zad-maad.pdf",
+    "coverUrl": "/covers/zad_maad.jpg"
+  },
+  {
+    "title": "Hayatus Sahabah",
+    "author": "Muhammad Yusuf Kandhlawi",
+    "category": "Sira",
+    "description": {
+      "en": "Lives of the Companions, inspiring stories of the Prophet's companions",
+      "ar": "حياة الصحابة، قصص ملهمة من صحابة النبي"
+    },
+    "year": 1964,
+    "language": ["Urdu", "English", "Arabic"],
+    "publisher": "Zamzam Publishers",
+    "pages": 900,
+    "assignedToClasses": [5, 6, 7],
+    "pdfUrl": "https://archive.org/download/hayatus-sahabah/hayatus-sahabah.pdf",
+    "coverUrl": "/covers/hayatus_sahabah.jpg"
+  },
+  {
+    "title": "Sharh Ibn Aqil",
+    "author": "Ibn Aqil",
+    "category": "Arabic Grammar",
+    "description": {
+      "en": "Commentary on Alfiyyah Ibn Malik, essential for advanced Arabic grammar",
+      "ar": "شرح على ألفية ابن مالك، ضروري للنحو العربي المتقدم"
+    },
+    "year": 1367,
+    "language": ["Arabic"],
+    "publisher": "Dar al-Turath",
+    "pages": 600,
+    "assignedToClasses": [6, 7],
+    "pdfUrl": "https://archive.org/download/sharh-ibn-aqil/sharh-ibn-aqil.pdf",
+    "coverUrl": "/covers/sharh_ibn_aqil.jpg"
+  },
+  {
+    "title": "Qatr al-Nada",
+    "author": "Ibn Hisham al-Ansari",
+    "category": "Arabic Grammar",
+    "description": {
+      "en": "Classical Arabic grammar text focusing on syntax and morphology",
+      "ar": "نص النحو العربي الكلاسيكي يركز على النحو والصرف"
+    },
+    "year": 1360,
+    "language": ["Arabic"],
+    "publisher": "Dar Ibn Kathir",
+    "pages": 400,
+    "assignedToClasses": [5, 6],
+    "pdfUrl": "https://archive.org/download/qatr-nada/qatr-nada.pdf",
+    "coverUrl": "/covers/qatr_nada.jpg"
+  },
+  {
+    "title": "Alfiyyah Ibn Malik",
+    "author": "Ibn Malik",
+    "category": "Arabic Grammar",
+    "description": {
+      "en": "Famous thousand-line poem on Arabic grammar, memorized by students",
+      "ar": "قصيدة الألفية الشهيرة في النحو العربي، يحفظها الطلاب"
+    },
+    "year": 1274,
+    "language": ["Arabic"],
+    "publisher": "Dar al-Fath",
+    "pages": 200,
+    "assignedToClasses": [6, 7],
+    "pdfUrl": "https://archive.org/download/alfiyyah/alfiyyah.pdf",
+    "coverUrl": "/covers/alfiyyah.jpg"
+  },
+  {
+    "title": "Hidayat al-Nahw",
+    "author": "Various Authors",
+    "category": "Arabic Grammar",
+    "description": {
+      "en": "Beginner-friendly guide to Arabic grammar with exercises",
+      "ar": "دليل مبتدئ لنحو العربي مع التمارين"
+    },
+    "year": 2000,
+    "language": ["Arabic", "Urdu"],
+    "publisher": "Maktaba Rahmaniyyah",
+    "pages": 250,
+    "assignedToClasses": [4, 5, 6],
+    "pdfUrl": "https://archive.org/download/hidayat-nahw/hidayat-nahw.pdf",
+    "coverUrl": "/covers/hidayat_nahw.jpg"
+  },
+  {
+    "title": "Kashf al-Mahjub",
+    "author": "Ali al-Hujwiri",
+    "category": "Tasawwuf",
+    "description": {
+      "en": "Classical text on Islamic spirituality and Sufism",
+      "ar": "نص كلاسيكي عن الروحانية الإسلامية والتصوف"
+    },
+    "year": 1077,
+    "language": ["Arabic", "Urdu"],
+    "publisher": "Islamic Book Foundation",
+    "pages": 500,
+    "assignedToClasses": [7],
+    "pdfUrl": "https://archive.org/download/kashf-mahjub/kashf-mahjub.pdf",
+    "coverUrl": "/covers/kashf_mahjub.jpg"
+  }
+]
