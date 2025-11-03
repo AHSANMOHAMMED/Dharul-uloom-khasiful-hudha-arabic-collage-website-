@@ -1,6 +1,7 @@
 import express from 'express';
 import Contact from '../models/Contact.js';
 import nodemailer from 'nodemailer';
+import { validateContact } from '../middleware/validation.js';
 
 const router = express.Router();
 
@@ -23,17 +24,9 @@ const createTransporter = () => {
 };
 
 // Submit contact form
-router.post('/', async (req, res) => {
+router.post('/', validateContact, async (req, res) => {
   try {
     const { name, email, phone, subject, message } = req.body;
-    
-    // Validate required fields
-    if (!name || !email || !message) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Name, email, and message are required' 
-      });
-    }
     
     // Save to database
     const contact = await Contact.create({
