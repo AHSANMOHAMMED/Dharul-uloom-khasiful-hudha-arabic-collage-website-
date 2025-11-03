@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6
+    restart: always
+    volumes:
+      - mongo_data_prod:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-changeme}
+    networks:
+      - app-network
+
+  backend:
+    image: ghcr.io/ahsanmohammed/dharul-uloom-khasiful-hudha-arabic-collage-website--backend:latest
+    restart: always
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+
+  frontend:
+    image: ghcr.io/ahsanmohammed/dharul-uloom-khasiful-hudha-arabic-collage-website--frontend:latest
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  mongo_data_prod:
+
+networks:
+  app-network:
+    driver: bridge

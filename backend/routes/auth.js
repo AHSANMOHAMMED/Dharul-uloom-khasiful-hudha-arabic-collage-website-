@@ -4,6 +4,12 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/User.js';
 import nodemailer from 'nodemailer';
+import {
+  validateRegister,
+  validateLogin,
+  validateEmail,
+  validatePasswordReset
+} from '../middleware/validation.js';
 
 const router = express.Router();
 
@@ -26,7 +32,7 @@ const createTransporter = () => {
 };
 
 // Register new user
-router.post('/register', async (req, res) => {
+router.post('/register', validateRegister, async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
@@ -120,7 +126,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login user
-router.post('/login', async (req, res) => {
+router.post('/login', validateLogin, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -210,7 +216,7 @@ router.post('/verify-email', async (req, res) => {
 });
 
 // Forgot password
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', validateEmail, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -270,7 +276,7 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // Reset password
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', validatePasswordReset, async (req, res) => {
   try {
     const { token, password } = req.body;
 
