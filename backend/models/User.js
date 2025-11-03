@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true, index: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['guest', 'student', 'parent', 'admin'], default: 'guest' },
     isVerified: { type: Boolean, default: false },
@@ -13,8 +13,5 @@ const userSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
-
-// Create index on email for faster lookups
-userSchema.index({ email: 1 });
 
 export default mongoose.model('User', userSchema);
