@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const Library = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -16,10 +16,12 @@ const Library = () => {
   useEffect(() => {
     fetchCategories();
     fetchBooks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     fetchBooks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, pagination.page]);
 
   const fetchCategories = async () => {

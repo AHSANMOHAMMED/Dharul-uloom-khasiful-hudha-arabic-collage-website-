@@ -27,8 +27,8 @@ const admissionSchema = yup.object().shape({
 })
 
 const Admissions = () => {
-  const { t, i18n } = useTranslation()
-  const { isAuthenticated, user } = useAuth()
+  const { i18n } = useTranslation()
+  const { isAuthenticated } = useAuth()
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
 

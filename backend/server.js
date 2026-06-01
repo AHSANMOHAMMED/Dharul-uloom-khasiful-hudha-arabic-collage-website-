@@ -17,9 +17,6 @@ dotenv.config();
 
 const app = express();
 
-// Connect to MongoDB
-connectDB();
-
 // Security middleware
 app.use(helmet());
 
@@ -78,7 +75,7 @@ app.get('/', (req, res) => {
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
     error: {
@@ -90,7 +87,14 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
-});
+// Connect to the database and start the server only when run directly
+// (skipped during tests, which import `app` without a live database).
+if (process.env.NODE_ENV !== 'test') {
+  connectDB();
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+  });
+}
+
+export default app;

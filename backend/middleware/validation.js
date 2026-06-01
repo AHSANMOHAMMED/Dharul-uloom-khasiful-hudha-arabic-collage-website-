@@ -106,7 +106,7 @@ export const validateContact = [
   body('phone')
     .optional()
     .trim()
-    .matches(/^[\d\s\-\+\(\)]+$/).withMessage('Invalid phone number format'),
+    .matches(/^[\d\s\-+()]+$/).withMessage('Invalid phone number format'),
   
   handleValidationErrors
 ];
