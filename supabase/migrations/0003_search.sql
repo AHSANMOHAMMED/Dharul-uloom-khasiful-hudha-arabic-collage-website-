@@ -3,6 +3,10 @@
 -- Search RPCs callable from the frontend via supabase.rpc(...).
 -- =============================================================================
 
+-- Ensure extension objects (similarity/% from pg_trgm, websearch_to_tsquery) are
+-- resolvable while this migration runs.
+set search_path = public, extensions, pg_temp;
+
 -- ---------------------------------------------------------------------------
 -- search_books : ranked full-text + trigram fallback over the catalog.
 --
@@ -44,6 +48,8 @@ returns table (
 )
 language sql
 stable
+-- pin search_path so pg_trgm's similarity()/% operator resolve at call time.
+set search_path = public, extensions, pg_temp
 as $$
   with normalized as (
     select nullif(trim(coalesce(q, '')), '') as raw,
@@ -117,6 +123,7 @@ returns table (
 )
 language sql
 stable
+set search_path = public, extensions, pg_temp
 as $$
   with query as (
     select websearch_to_tsquery('simple', public.normalize_arabic(coalesce(q, ''))) as ts
