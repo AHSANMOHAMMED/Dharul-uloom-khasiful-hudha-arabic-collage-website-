@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import axios from 'axios'
+import { listNews } from '../lib/contentApi'
 
 const News = () => {
   const { t, i18n } = useTranslation()
@@ -11,8 +11,7 @@ const News = () => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const response = await axios.get('/api/news')
-        setNews(response.data.data || [])
+        setNews(await listNews())
       } catch (error) {
         console.error('Error fetching news:', error)
       } finally {

@@ -1,5 +1,5 @@
-import { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 const AuthContext = createContext();
 
@@ -12,82 +12,110 @@ export const useAuth = () => {
   return context;
 };
 
+/**
+ * Auth is backed by Supabase Auth (replacing the previous Express + MongoDB
+ * JWT flow). The signed-in identity comes from supabase.auth; the application
+ * role / display name come from the public.profiles row that the
+ * handle_new_user() trigger creates on sign-up.
+ *
+ * The public API (user, login, register, logout, isAuthenticated, isAdmin, ...)
+ * is preserved so existing pages/components keep working unchanged.
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem('token'));
 
-  // Set axios default authorization header
+  // Merge the auth user with its profile row into the shape the UI expects.
+  const buildUser = useCallback(async (authUser) => {
+    if (!authUser) return null;
+    let profile = null;
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name, role, account_type, email')
+      .eq('id', authUser.id)
+      .maybeSingle();
+    profile = data;
+    return {
+      id: authUser.id,
+      email: authUser.email ?? profile?.email ?? '',
+      username: profile?.full_name || authUser.user_metadata?.full_name || authUser.email,
+      role: profile?.role || 'user',
+      accountType: profile?.account_type || authUser.user_metadata?.account_type || 'guest',
+      isVerified: Boolean(authUser.email_confirmed_at || authUser.confirmed_at),
+    };
+  }, []);
+
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      fetchUser();
-    } else {
+    if (!isSupabaseConfigured) {
       setLoading(false);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+    let active = true;
 
-  const fetchUser = async () => {
-    try {
-      const response = await axios.get('/api/auth/me');
-      setUser(response.data.data);
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-      logout();
-    } finally {
+    // Hydrate from any persisted session on first load.
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!active) return;
+      setUser(await buildUser(session?.user ?? null));
       setLoading(false);
-    }
-  };
+    });
+
+    // Keep context in sync with sign-in / sign-out / token refresh events.
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!active) return;
+      setUser(await buildUser(session?.user ?? null));
+      setLoading(false);
+    });
+
+    return () => {
+      active = false;
+      sub?.subscription?.unsubscribe();
+    };
+  }, [buildUser]);
 
   const login = async (email, password) => {
-    try {
-      const response = await axios.post('/api/auth/login', { email, password });
-      const { token: newToken, user: userData } = response.data.data;
-      
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-      setUser(userData);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-      
-      return { success: true, user: userData };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Login failed'
-      };
+    if (!isSupabaseConfigured) {
+      return { success: false, error: 'Authentication is not configured' };
     }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    const mapped = await buildUser(data.user);
+    setUser(mapped);
+    return { success: true, user: mapped };
   };
 
-  const register = async (username, email, password, role = 'guest') => {
-    try {
-      const response = await axios.post('/api/auth/register', {
-        username,
-        email,
-        password,
-        role
-      });
-      const { token: newToken, user: userData } = response.data.data;
-      
-      localStorage.setItem('token', newToken);
-      setToken(newToken);
-      setUser(userData);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-      
-      return { success: true, user: userData };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Registration failed'
-      };
+  const register = async (username, email, password, accountType = 'guest') => {
+    if (!isSupabaseConfigured) {
+      return { success: false, error: 'Authentication is not configured' };
     }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: username, account_type: accountType } },
+    });
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    // When email confirmation is disabled, signUp returns an active session.
+    if (data.session?.user) {
+      const mapped = await buildUser(data.session.user);
+      setUser(mapped);
+      return { success: true, user: mapped };
+    }
+    // Otherwise the user must confirm their email before signing in.
+    return {
+      success: true,
+      needsConfirmation: true,
+      user: { username, email, role: 'user', accountType },
+    };
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
+  const logout = async () => {
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut();
+    }
     setUser(null);
-    delete axios.defaults.headers.common['Authorization'];
   };
 
   const value = {
@@ -98,8 +126,9 @@ export const AuthProvider = ({ children }) => {
     loading,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
-    isStudent: user?.role === 'student',
-    isParent: user?.role === 'parent'
+    isStaff: user?.role === 'admin' || user?.role === 'librarian',
+    isStudent: user?.accountType === 'student',
+    isParent: user?.accountType === 'parent',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

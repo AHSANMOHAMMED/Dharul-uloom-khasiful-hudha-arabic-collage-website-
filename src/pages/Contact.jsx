@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import axios from 'axios'
+import { sendContactMessage } from '../lib/contentApi'
 
 const Contact = () => {
   const { t, i18n } = useTranslation()
@@ -24,7 +24,7 @@ const Contact = () => {
     setError('')
     
     try {
-      await axios.post('/api/contact', formData)
+      await sendContactMessage(formData)
       setSubmitted(true)
       setTimeout(() => {
         setSubmitted(false)
@@ -37,7 +37,7 @@ const Contact = () => {
         })
       }, 3000)
     } catch (error) {
-      setError(error.response?.data?.error || 'Failed to send message')
+      setError(error?.message || 'Failed to send message')
     }
   }
 

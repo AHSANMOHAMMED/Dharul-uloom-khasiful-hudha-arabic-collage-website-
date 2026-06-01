@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import { listMyAdmissions, myAdmissionStats } from '../lib/admissionsApi';
 import { motion } from 'framer-motion';
 
 const UserDashboard = () => {
@@ -23,12 +23,12 @@ const UserDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [admissionsRes, statsRes] = await Promise.all([
-        axios.get('/api/user/admissions'),
-        axios.get('/api/user/stats')
+      const [admissionsData, statsData] = await Promise.all([
+        listMyAdmissions(),
+        myAdmissionStats()
       ]);
-      setAdmissions(admissionsRes.data.data);
-      setStats(statsRes.data.data);
+      setAdmissions(admissionsData);
+      setStats(statsData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {

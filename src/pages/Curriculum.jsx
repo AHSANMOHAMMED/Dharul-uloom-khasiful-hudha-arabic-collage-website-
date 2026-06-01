@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { listCurriculum } from '../lib/contentApi';
 
 const Curriculum = () => {
   const { i18n } = useTranslation();
@@ -15,8 +15,7 @@ const Curriculum = () => {
 
   const fetchCurricula = async () => {
     try {
-      const response = await axios.get('/api/curriculum');
-      setCurricula(response.data);
+      setCurricula(await listCurriculum());
       setLoading(false);
     } catch (error) {
       console.error('Error fetching curricula:', error);
