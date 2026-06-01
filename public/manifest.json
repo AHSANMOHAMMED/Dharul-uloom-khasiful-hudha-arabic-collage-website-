@@ -1,0 +1,40 @@
+{
+  "name": "Dharul Uloom Kashiful Hudha",
+  "short_name": "Kashiful Hudha",
+  "description": "College ERP Portal — دار العلوم كاشف الهدى",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f1e14",
+  "theme_color": "#1a5c38",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Student Portal",
+      "url": "/dashboard",
+      "description": "Go to your student dashboard"
+    },
+    {
+      "name": "Digital Library",
+      "url": "/library",
+      "description": "Browse Islamic books"
+    }
+  ]
+}
