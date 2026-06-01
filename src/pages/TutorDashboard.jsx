@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { motion } from 'framer-motion';
+
 
 const TutorDashboard = () => {
   const { user, isTreasurer } = useAuth();
@@ -408,7 +408,7 @@ const TutorDashboard = () => {
                       </span>
                     </div>
                     <div className="font-mono text-gray-400 text-[10px]">{lv.start_date} ~ {lv.end_date}</div>
-                    <p className="text-gray-300 italic">" {lv.reason} "</p>
+                    <p className="text-gray-300 italic">&quot; {lv.reason} &quot;</p>
                   </div>
                 ))}
               </div>

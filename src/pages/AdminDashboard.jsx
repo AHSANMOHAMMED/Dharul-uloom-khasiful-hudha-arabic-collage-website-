@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { adminStats, listAdmissionsByStatus, updateAdmissionStatus } from '../lib/admissionsApi';
-import { motion } from 'framer-motion';
+
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -713,7 +713,7 @@ const AdminDashboard = () => {
                       This generates standard invoices (LKR 5000) for all approved students.
                     </p>
                     <div className="p-4 bg-amber-500/10 text-amber-300 text-xs rounded-lg border border-amber-500/20 italic">
-                      "Treasurer and parent profiles will be updated instantly showing outstanding dues and invoice status."
+                      &quot;Treasurer and parent profiles will be updated instantly showing outstanding dues and invoice status.&quot;
                     </div>
                   </div>
                   <button

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { motion } from 'framer-motion';
+
 
 const ParentDashboard = () => {
   const { user } = useAuth();
