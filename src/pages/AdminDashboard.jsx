@@ -11,7 +11,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const COLORS = ['#0F5132', '#FFD700', '#22c55e', '#ef4444'];
 
 const AdminDashboard = () => {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, logout, loading: authLoading } = useAuth();
   const { i18n } = useTranslation();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -19,12 +19,15 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for the auth session to hydrate before deciding to redirect, so a
+    // full page reload doesn't bounce an authenticated admin to the home page.
+    if (authLoading) return;
     if (!isAdmin) {
       navigate('/');
       return;
     }
     fetchData();
-  }, [isAdmin, navigate]);
+  }, [authLoading, isAdmin, navigate]);
 
   const fetchData = async () => {
     try {
