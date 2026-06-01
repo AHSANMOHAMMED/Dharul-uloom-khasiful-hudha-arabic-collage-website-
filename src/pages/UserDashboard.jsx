@@ -6,7 +6,7 @@ import { listMyAdmissions, myAdmissionStats } from '../lib/admissionsApi';
 import { motion } from 'framer-motion';
 
 const UserDashboard = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, loading: authLoading } = useAuth();
   const { i18n } = useTranslation();
   const navigate = useNavigate();
   const [admissions, setAdmissions] = useState([]);
@@ -14,12 +14,15 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for the auth session to hydrate before deciding to redirect, so a
+    // full page reload doesn't bounce an authenticated user to /login.
+    if (authLoading) return;
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     fetchData();
-  }, [isAuthenticated, navigate]);
+  }, [authLoading, isAuthenticated, navigate]);
 
   const fetchData = async () => {
     try {

@@ -60,10 +60,17 @@ export const AuthProvider = ({ children }) => {
     });
 
     // Keep context in sync with sign-in / sign-out / token refresh events.
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!active) return;
-      setUser(await buildUser(session?.user ?? null));
-      setLoading(false);
+    // NOTE: supabase-js holds an internal auth lock for the duration of this
+    // callback, so calling another supabase method here (buildUser awaits
+    // supabase.from('profiles'), which itself needs the session) would
+    // deadlock. Defer the profile lookup to a macrotask so the lock is
+    // released before we touch supabase again.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setTimeout(async () => {
+        if (!active) return;
+        setUser(await buildUser(session?.user ?? null));
+        setLoading(false);
+      }, 0);
     });
 
     return () => {
