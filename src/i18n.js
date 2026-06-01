@@ -46,7 +46,20 @@ const resources = {
       
       // Footer
       "footer.rights": "All rights reserved",
-      "footer.follow": "Follow Us"
+      "footer.follow": "Follow Us",
+
+      // Library
+      "library.title": "Digital Islamic Library",
+      "library.subtitle": "Browse thousands of books in Tafsir, Hadith, Fiqh, Aqidah and more",
+      "library.search": "Search by title, author, or full text...",
+      "library.searchBtn": "Search",
+      "library.language": "Language",
+      "library.category": "Category",
+      "library.allLanguages": "All languages",
+      "library.allCategories": "All categories",
+      "library.noResults": "No matching books.",
+      "library.loading": "Loading...",
+      "library.backToLibrary": "Back to library"
     }
   },
   ar: {
@@ -93,7 +106,20 @@ const resources = {
       
       // Footer
       "footer.rights": "جميع الحقوق محفوظة",
-      "footer.follow": "تابعنا"
+      "footer.follow": "تابعنا",
+
+      // Library
+      "library.title": "المكتبة الإسلامية الرقمية",
+      "library.subtitle": "تصفّح آلاف الكتب في التفسير والحديث والفقه والعقيدة والمزيد",
+      "library.search": "ابحث بالعنوان أو المؤلف أو النص الكامل...",
+      "library.searchBtn": "بحث",
+      "library.language": "اللغة",
+      "library.category": "التصنيف",
+      "library.allLanguages": "كل اللغات",
+      "library.allCategories": "كل التصنيفات",
+      "library.noResults": "لا توجد كتب مطابقة.",
+      "library.loading": "جارٍ التحميل...",
+      "library.backToLibrary": "العودة إلى المكتبة"
     }
   }
 };

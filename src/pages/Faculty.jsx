@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import axios from 'axios'
+import { listFaculty } from '../lib/contentApi'
 
 const Faculty = () => {
   const { i18n } = useTranslation()
@@ -11,8 +11,7 @@ const Faculty = () => {
   useEffect(() => {
     const fetchFaculty = async () => {
       try {
-        const response = await axios.get('/api/faculty')
-        setFaculty(response.data.data || [])
+        setFaculty(await listFaculty())
       } catch (error) {
         console.error('Error fetching faculty:', error)
       } finally {

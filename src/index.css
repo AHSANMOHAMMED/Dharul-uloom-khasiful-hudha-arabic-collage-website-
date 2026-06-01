@@ -1,5 +1,5 @@
-/* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+/* Google Fonts: Inter (Latin) + Amiri, Scheherazade New, Noto Naskh Arabic (Arabic/Urdu) */
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -15,9 +15,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Arabic Text */
+/* Arabic / Urdu text: elegant Naskh stack with RTL refinements. */
 [dir="rtl"] {
-  font-family: 'Amiri', serif;
+  font-family: 'Amiri', 'Scheherazade New', 'Noto Naskh Arabic', serif;
+}
+
+[lang="ar"],
+[lang="ur"] {
+  font-family: 'Amiri', 'Scheherazade New', 'Noto Naskh Arabic', serif;
+}
+
+/* Improve Arabic readability: relaxed line height and natural digits. */
+[dir="rtl"] p,
+[dir="rtl"] li,
+[dir="rtl"] article {
+  line-height: 1.9;
 }
 
 /* Custom Scrollbar */

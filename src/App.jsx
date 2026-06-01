@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useEffect } from 'react'
-import axios from 'axios'
 import { AuthProvider } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -19,11 +18,8 @@ import UserDashboard from './pages/UserDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import Curriculum from './pages/Curriculum'
 import Library from './pages/Library'
+import BookReaderPage from './pages/BookReaderPage'
 import NotFound from './pages/NotFound'
-
-// Configure axios defaults
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-axios.defaults.headers.common['Content-Type'] = 'application/json'
 
 function App() {
   const { i18n } = useTranslation()
@@ -55,6 +51,7 @@ function App() {
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/curriculum" element={<Curriculum />} />
               <Route path="/library" element={<Library />} />
+              <Route path="/library/:id" element={<BookReaderPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
