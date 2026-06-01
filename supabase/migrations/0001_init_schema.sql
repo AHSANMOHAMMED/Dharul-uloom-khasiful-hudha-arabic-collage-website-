@@ -12,9 +12,18 @@
 -- ---------------------------------------------------------------------------
 -- Extensions
 -- ---------------------------------------------------------------------------
-create extension if not exists "pgcrypto";   -- gen_random_uuid()
-create extension if not exists "pg_trgm";     -- trigram fuzzy search
-create extension if not exists "unaccent";    -- diacritic-insensitive search
+-- On Supabase these extensions live in the dedicated "extensions" schema; on a
+-- vanilla Postgres they default to "public". We create the schema if needed and
+-- install there so behaviour is identical in both environments.
+create schema if not exists extensions;
+create extension if not exists "pgcrypto" with schema extensions;   -- gen_random_uuid()
+create extension if not exists "pg_trgm"  with schema extensions;   -- trigram fuzzy search
+create extension if not exists "unaccent" with schema extensions;   -- diacritic-insensitive search
+
+-- The migration runner does NOT include "extensions" in its search_path (unlike
+-- the PostgREST runtime), so qualify it here. This lets bare references such as
+-- gin_trgm_ops / unaccent() resolve while CREATE INDEX runs below.
+set search_path = public, extensions, pg_temp;
 
 -- ---------------------------------------------------------------------------
 -- Arabic text normalization
@@ -30,6 +39,8 @@ returns text
 language sql
 immutable
 strict
+-- pin search_path so unaccent() resolves no matter which schema the caller uses.
+set search_path = public, extensions, pg_temp
 as $$
   select
     regexp_replace(
