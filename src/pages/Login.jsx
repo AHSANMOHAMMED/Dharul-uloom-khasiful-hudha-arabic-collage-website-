@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
@@ -8,11 +8,13 @@ const Login = () => {
   const { i18n } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
+  const [info] = useState(location.state?.message || '');
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -61,6 +63,11 @@ const Login = () => {
         </div>
 
         <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" onSubmit={handleSubmit}>
+          {info && (
+            <div className="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded">
+              {info}
+            </div>
+          )}
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               {error}
