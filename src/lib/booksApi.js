@@ -91,10 +91,13 @@ export async function getCategories() {
 /** Fetch a single book with resolved author/category names. */
 export async function getBook(id) {
   if (!isSupabaseConfigured || !id) return null;
+  // Disambiguate the embeds: books relates to authors/categories both directly
+  // (author_id/category_id) and via the book_authors/book_categories junctions,
+  // so PostgREST needs the explicit FK hint to avoid an ambiguous-embed error.
   const { data, error } = await supabase
     .from('books')
     .select(
-      'id, title_ar, title_en, description, language, year, pages, cover_image, file_path, tags, author_id, category_id, authors ( name_ar, name_en ), categories ( name_ar, name_en )'
+      'id, title_ar, title_en, description, language, year, pages, cover_image, file_path, tags, author_id, category_id, authors!books_author_id_fkey ( name_ar, name_en ), categories!books_category_id_fkey ( name_ar, name_en )'
     )
     .eq('id', id)
     .single();
