@@ -1,4 +1,6 @@
 {
+  "root": true,
+  "ignorePatterns": ["dist", "build", "node_modules", "**/node_modules", "coverage"],
   "extends": ["eslint:recommended", "plugin:react/recommended", "plugin:react/jsx-runtime"],
   "env": {
     "browser": true,

@@ -19,6 +19,7 @@ import UserDashboard from './pages/UserDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import Curriculum from './pages/Curriculum'
 import Library from './pages/Library'
+import NotFound from './pages/NotFound'
 
 // Configure axios defaults
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
@@ -54,6 +55,7 @@ function App() {
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/curriculum" element={<Curriculum />} />
               <Route path="/library" element={<Library />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />

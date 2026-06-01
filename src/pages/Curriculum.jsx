@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 
 const Curriculum = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const [curricula, setCurricula] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
   const [loading, setLoading] = useState(true);

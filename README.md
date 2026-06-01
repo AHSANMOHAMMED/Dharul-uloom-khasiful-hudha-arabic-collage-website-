@@ -84,29 +84,36 @@ Create a `.env` file in the backend directory:
 MONGO_URI=mongodb://localhost:27017/kashiful-hudha
 PORT=5000
 JWT_SECRET=your_jwt_secret
+FRONTEND_URL=http://localhost:3000
+
+# Email (Nodemailer). For Gmail App Passwords use port 465 with EMAIL_SECURE=true.
 EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
+EMAIL_PORT=465
+EMAIL_SECURE=true
 EMAIL_USER=your_email
-EMAIL_PASS=your_password
+EMAIL_PASS=your_app_password
 ```
 
 ## Features
 
 ### Implemented
-- Bilingual support (English/Arabic)
+- Bilingual support (English/Arabic) with RTL
 - Responsive design
-- User authentication
-- Contact forms
+- User authentication (JWT) with admin/student/parent roles
+- Contact form with email notifications
 - News and events management
 - Faculty profiles
 - Course listings
-- Online admissions
+- Online admissions with validation
+- 7-year curriculum overview (Classes 1–7)
+- Islamic library with search, category filtering, and pagination
+- Admin dashboard with analytics (admission stats, content overview)
 - Gallery
-- Google Maps integration
-- WhatsApp integration
+- Google Maps & WhatsApp integration
+- 404 / not-found page
+- CI: lint, build, frontend (Vitest) and backend (Jest) test suites
 
 ### Planned
-- Admin dashboard
 - Online payment system
 - Learning Management System (LMS)
 - Mobile app (PWA)
@@ -114,11 +121,11 @@ EMAIL_PASS=your_password
 ## Development Phases
 
 1. ✅ **Phase 1**: Project Setup and Planning
-2. 🔄 **Phase 2**: Design and UI/UX Wireframing
-3. ⏳ **Phase 3**: Frontend Development
-4. ⏳ **Phase 4**: Backend Development and Database
-5. ⏳ **Phase 5**: Integration, Features, and Testing
-6. ⏳ **Phase 6**: Deployment and Maintenance
+2. ✅ **Phase 2**: Design and UI/UX
+3. ✅ **Phase 3**: Frontend Development
+4. ✅ **Phase 4**: Backend Development and Database
+5. ✅ **Phase 5**: Integration, Features, and Testing
+6. ✅ **Phase 6**: Deployment and Maintenance
 
 ## Deployment
 

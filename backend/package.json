@@ -9,7 +9,7 @@
     "dev": "nodemon server.js",
     "seed": "node seed.js",
     "seed:curriculum": "node seedCurriculum.js",
-    "test": "jest"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -26,6 +26,11 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.2",
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
   }
 }

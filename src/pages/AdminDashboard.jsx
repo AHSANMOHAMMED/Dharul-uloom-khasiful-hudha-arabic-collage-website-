@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -15,7 +15,6 @@ const AdminDashboard = () => {
   const { i18n } = useTranslation();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
   const [admissions, setAdmissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,11 +59,6 @@ const AdminDashboard = () => {
     { name: i18n.language === 'ar' ? 'تمت الموافقة' : 'Approved', value: stats.admissions?.approved || 0 },
     { name: i18n.language === 'ar' ? 'مرفوض' : 'Rejected', value: stats.admissions?.rejected || 0 },
   ] : [];
-
-  const recentTrendsData = stats?.recentAdmissions?.map((item, index) => ({
-    name: `Day ${index + 1}`,
-    admissions: 1
-  })) || [];
 
   if (loading) {
     return (
