@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import { adminStats, listAdmissionsByStatus, updateAdmissionStatus } from '../lib/admissionsApi';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { toast, ToastContainer } from 'react-toastify';
@@ -28,12 +28,12 @@ const AdminDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [statsRes, admissionsRes] = await Promise.all([
-        axios.get('/api/admin/stats'),
-        axios.get('/api/admin/admissions?status=pending')
+      const [statsData, admissionsData] = await Promise.all([
+        adminStats(),
+        listAdmissionsByStatus('pending')
       ]);
-      setStats(statsRes.data.data);
-      setAdmissions(admissionsRes.data.data);
+      setStats(statsData);
+      setAdmissions(admissionsData);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load dashboard data');
@@ -44,7 +44,7 @@ const AdminDashboard = () => {
 
   const handleStatusUpdate = async (id, status) => {
     try {
-      await axios.put(`/api/admin/admissions/${id}`, { status });
+      await updateAdmissionStatus(id, status);
       toast.success(`Admission ${status} successfully`);
       fetchData(); // Refresh data
     } catch (error) {

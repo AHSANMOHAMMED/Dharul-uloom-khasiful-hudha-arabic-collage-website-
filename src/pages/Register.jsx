@@ -51,7 +51,18 @@ const Register = () => {
     );
     
     if (result.success) {
-      navigate('/dashboard');
+      if (result.needsConfirmation) {
+        // Email confirmation is enabled on the project; no session yet.
+        navigate('/login', {
+          state: {
+            message: i18n.language === 'ar'
+              ? 'تم إنشاء حسابك. يرجى تأكيد بريدك الإلكتروني ثم تسجيل الدخول.'
+              : 'Account created. Please confirm your email, then sign in.'
+          }
+        });
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       setError(result.error);
     }

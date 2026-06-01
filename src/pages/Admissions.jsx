@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useAuth } from '../context/AuthContext'
-import axios from 'axios'
+import { submitAdmission } from '../lib/admissionsApi'
+import { sendContactMessage } from '../lib/contentApi'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -40,17 +41,18 @@ const Admissions = () => {
     setLoading(true)
     try {
       if (isAuthenticated) {
-        // Submit to authenticated endpoint
-        await axios.post('/api/user/admissions', data)
+        // Persist as a tracked application for the signed-in user.
+        await submitAdmission(data)
         toast.success(i18n.language === 'ar' 
           ? 'تم تقديم طلبك بنجاح! يمكنك متابعة حالته من لوحة التحكم.'
           : 'Application submitted successfully! Track it in your dashboard.')
       } else {
-        // Submit as guest
-        await axios.post('/api/contact', {
+        // Guests have no account to track against, so route to the contact inbox.
+        await sendContactMessage({
           name: data.parentName,
           email: data.email,
           phone: data.phone,
+          subject: 'Admission Application',
           message: `Admission Application:\nStudent: ${data.studentName}\nAge: ${data.age}\nCourse: ${data.course}\nAddress: ${data.address}\nPrevious Education: ${data.previousEducation || 'N/A'}`
         })
         toast.success(i18n.language === 'ar'
