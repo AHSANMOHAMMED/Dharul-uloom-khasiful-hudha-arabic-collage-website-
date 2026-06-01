@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 
 const Register = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const { register } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({

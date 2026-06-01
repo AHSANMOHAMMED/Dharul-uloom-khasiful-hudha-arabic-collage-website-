@@ -1,6 +1,6 @@
 import express from 'express';
 import Admission from '../models/Admission.js';
-import { verifyToken, isStudentOrParent } from '../middleware/auth.js';
+import { verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
 

@@ -7,7 +7,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const { t, i18n } = useTranslation()
   const location = useLocation()
-  const { isAuthenticated, isAdmin, user, logout } = useAuth()
+  const { isAuthenticated, isAdmin, logout } = useAuth()
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'ar' : 'en'
@@ -20,6 +20,8 @@ const Navbar = () => {
     { path: '/courses', label: 'nav.courses' },
     { path: '/admissions', label: 'nav.admissions' },
     { path: '/faculty', label: 'nav.faculty' },
+    { path: '/curriculum', label: 'nav.curriculum' },
+    { path: '/library', label: 'nav.library' },
     { path: '/gallery', label: 'nav.gallery' },
     { path: '/news', label: 'nav.news' },
     { path: '/contact', label: 'nav.contact' },
