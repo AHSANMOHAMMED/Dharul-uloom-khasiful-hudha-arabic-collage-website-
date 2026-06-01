@@ -42,3 +42,10 @@ backend/.env
 /tmp
 *.tmp
 *.temp
+
+# Shamela import checkpoint / downloaded artifacts
+scripts/shamela/.import-state.json
+scripts/shamela/books/
+scripts/shamela/*.db
+scripts/shamela/*.json
+!scripts/shamela/sample_books.json
