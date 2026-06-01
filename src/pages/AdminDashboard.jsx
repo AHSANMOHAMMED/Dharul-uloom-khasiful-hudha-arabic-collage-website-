@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import { adminStats, listAdmissionsByStatus, updateAdmissionStatus } from '../lib/admissionsApi';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { toast, ToastContainer } from 'react-toastify';
@@ -11,7 +11,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const COLORS = ['#0F5132', '#FFD700', '#22c55e', '#ef4444'];
 
 const AdminDashboard = () => {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, logout, loading: authLoading } = useAuth();
   const { i18n } = useTranslation();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -19,21 +19,24 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for the auth session to hydrate before deciding to redirect, so a
+    // full page reload doesn't bounce an authenticated admin to the home page.
+    if (authLoading) return;
     if (!isAdmin) {
       navigate('/');
       return;
     }
     fetchData();
-  }, [isAdmin, navigate]);
+  }, [authLoading, isAdmin, navigate]);
 
   const fetchData = async () => {
     try {
-      const [statsRes, admissionsRes] = await Promise.all([
-        axios.get('/api/admin/stats'),
-        axios.get('/api/admin/admissions?status=pending')
+      const [statsData, admissionsData] = await Promise.all([
+        adminStats(),
+        listAdmissionsByStatus('pending')
       ]);
-      setStats(statsRes.data.data);
-      setAdmissions(admissionsRes.data.data);
+      setStats(statsData);
+      setAdmissions(admissionsData);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load dashboard data');
@@ -44,7 +47,7 @@ const AdminDashboard = () => {
 
   const handleStatusUpdate = async (id, status) => {
     try {
-      await axios.put(`/api/admin/admissions/${id}`, { status });
+      await updateAdmissionStatus(id, status);
       toast.success(`Admission ${status} successfully`);
       fetchData(); // Refresh data
     } catch (error) {
