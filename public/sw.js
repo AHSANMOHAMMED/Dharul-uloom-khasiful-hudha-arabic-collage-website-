@@ -1,3 +1,4 @@
+/* global clients */
 // =============================================================================
 // sw.js — Dharul Uloom Kashiful Hudha Service Worker
 // Strategy:

@@ -126,7 +126,7 @@ const BookReader = ({ book, pages = [], fileUrl }) => {
       'الحمد لله': { en: 'All Praise is due to Allah', ur: 'تمام تعریفیں اللہ کے لیے ہیں' }
     };
 
-    const term = selectedText.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
+    const term = selectedText.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g,"").trim();
     
     if (dict[term]) {
       setTranslation(dict[term][lang]);
@@ -243,7 +243,7 @@ const BookReader = ({ book, pages = [], fileUrl }) => {
               {/* Highlighted text preview */}
               <div className={`p-3 rounded-lg border text-xs italic ${night ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
                 <span className="text-[9px] uppercase font-bold text-gray-500 block mb-1">Selected Text</span>
-                "{selectedText}"
+                &quot;{selectedText}&quot;
               </div>
 
               {/* Translation buttons */}

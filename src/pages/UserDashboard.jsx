@@ -11,7 +11,7 @@ import LibrarianDashboard from './LibrarianDashboard';
 
 const UserDashboard = () => {
   const {
-    user, isAuthenticated, isApproved,
+    isAuthenticated, isApproved,
     isStudent, isParent, isTutor, isTreasurer,
     isPrincipal, isVP, isLibrarian, isAdmin,
     logout, loading: authLoading

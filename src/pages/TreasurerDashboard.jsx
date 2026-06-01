@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { motion } from 'framer-motion';
+
 import { generateFeeReceipt, exportFeesCSV } from '../lib/exportUtils';
 
 const TreasurerDashboard = () => {

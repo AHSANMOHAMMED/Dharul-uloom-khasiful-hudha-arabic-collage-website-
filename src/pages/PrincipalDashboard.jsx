@@ -443,7 +443,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                       <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">Class {lv.profiles?.class_number}</span>
                     </div>
                     <p className="text-xs text-gray-500 font-mono mt-1">{lv.start_date} → {lv.end_date}</p>
-                    <p className="text-xs text-gray-400 italic mt-1 line-clamp-1">"{lv.reason}"</p>
+                    <p className="text-xs text-gray-400 italic mt-1 line-clamp-1">&quot;{lv.reason}&quot;</p>
                   </div>
                 ))}
                 {leaves.length === 0 && (
