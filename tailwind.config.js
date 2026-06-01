@@ -13,7 +13,10 @@ export default {
         'islamic-dark': '#1A3C2E',
       },
       fontFamily: {
-        'arabic': ['Amiri', 'serif'],
+        // Elegant Naskh families for Arabic/Urdu body and headings.
+        'arabic': ['"Amiri"', '"Scheherazade New"', '"Noto Naskh Arabic"', 'serif'],
+        'naskh': ['"Noto Naskh Arabic"', '"Amiri"', 'serif'],
+        'scheherazade': ['"Scheherazade New"', '"Amiri"', 'serif'],
         'sans': ['Inter', 'sans-serif'],
       },
     },
