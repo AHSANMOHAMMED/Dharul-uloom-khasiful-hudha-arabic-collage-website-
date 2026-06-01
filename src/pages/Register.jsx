@@ -13,7 +13,9 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'parent'
+    role: 'parent',
+    indexNumber: '',
+    phone: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -41,13 +43,21 @@ const Register = () => {
       return;
     }
 
+    // Validate index number if student
+    if (formData.role === 'student' && !formData.indexNumber.trim()) {
+      setError(i18n.language === 'ar' ? 'رقم القيد مطلوب للطلاب' : 'Index number is required for students');
+      return;
+    }
+
     setLoading(true);
 
     const result = await register(
       formData.username,
       formData.email,
       formData.password,
-      formData.role
+      formData.role,
+      formData.indexNumber,
+      formData.phone
     );
     
     if (result.success) {
@@ -61,6 +71,8 @@ const Register = () => {
           }
         });
       } else {
+        // Account created, redirect to dashboard.
+        // If they are a student or tutor, they will see the pending approval page inside the dashboard.
         navigate('/dashboard');
       }
     } else {
@@ -139,7 +151,40 @@ const Register = () => {
               >
                 <option value="parent">{i18n.language === 'ar' ? 'ولي أمر' : 'Parent'}</option>
                 <option value="student">{i18n.language === 'ar' ? 'طالب' : 'Student'}</option>
+                <option value="tutor">{i18n.language === 'ar' ? 'معلم / أستاذ' : 'Teacher / Tutor'}</option>
               </select>
+            </div>
+
+            {formData.role === 'student' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {i18n.language === 'ar' ? 'رقم القيد' : 'Index Number'}
+                </label>
+                <input
+                  name="indexNumber"
+                  type="text"
+                  required
+                  value={formData.indexNumber}
+                  onChange={handleChange}
+                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
+                  placeholder={i18n.language === 'ar' ? 'أدخل رقم القيد الخاص بك (مثال: KASHIF-2026-001)' : 'Enter your index number (e.g., KASHIF-2026-001)'}
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {i18n.language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+              </label>
+              <input
+                name="phone"
+                type="tel"
+                required={formData.role === 'tutor' || formData.role === 'parent'}
+                value={formData.phone}
+                onChange={handleChange}
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
+                placeholder={i18n.language === 'ar' ? 'أدخل رقم الهاتف' : 'Enter phone number'}
+              />
             </div>
 
             <div>

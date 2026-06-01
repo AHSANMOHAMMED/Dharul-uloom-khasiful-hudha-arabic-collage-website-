@@ -38,14 +38,36 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #0f172a; /* gray-950 */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #0F5132;
+  background: #047857; /* emerald-700 */
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #1A3C2E;
+  background: #059669; /* emerald-600 */
+}
+
+/* Custom Text Selection */
+::selection {
+  background-color: rgba(16, 185, 129, 0.3); /* emerald-500 with opacity */
+  color: #fff;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.4); /* gray-900 transparent */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-card {
+  background: linear-gradient(145deg, rgba(17,24,39,0.7) 0%, rgba(3,7,18,0.7) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(16, 185, 129, 0.15); /* subtle emerald border */
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }

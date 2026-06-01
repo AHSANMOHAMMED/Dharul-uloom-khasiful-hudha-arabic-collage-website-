@@ -1,210 +1,110 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { listMyAdmissions, myAdmissionStats } from '../lib/admissionsApi';
-import { motion } from 'framer-motion';
+import StudentDashboard from './StudentDashboard';
+import ParentDashboard from './ParentDashboard';
+import TutorDashboard from './TutorDashboard';
+import TreasurerDashboard from './TreasurerDashboard';
+import PrincipalDashboard from './PrincipalDashboard';
+import LibrarianDashboard from './LibrarianDashboard';
 
 const UserDashboard = () => {
-  const { user, isAuthenticated, logout, loading: authLoading } = useAuth();
+  const {
+    user, isAuthenticated, isApproved,
+    isStudent, isParent, isTutor, isTreasurer,
+    isPrincipal, isVP, isLibrarian, isAdmin,
+    logout, loading: authLoading
+  } = useAuth();
   const { i18n } = useTranslation();
   const navigate = useNavigate();
-  const [admissions, setAdmissions] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Wait for the auth session to hydrate before deciding to redirect, so a
-    // full page reload doesn't bounce an authenticated user to /login.
     if (authLoading) return;
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-    fetchData();
-  }, [authLoading, isAuthenticated, navigate]);
-
-  const fetchData = async () => {
-    try {
-      const [admissionsData, statsData] = await Promise.all([
-        listMyAdmissions(),
-        myAdmissionStats()
-      ]);
-      setAdmissions(admissionsData);
-      setStats(statsData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
+    if (isAdmin) {
+      navigate('/admin');
     }
-  };
+  }, [authLoading, isAuthenticated, isAdmin, navigate]);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status) => {
-    if (i18n.language === 'ar') {
-      return { pending: 'قيد المراجعة', approved: 'مقبول', rejected: 'مرفوض' }[status];
-    }
-    return { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' }[status];
-  };
-
-  if (loading) {
+  if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">{i18n.language === 'ar' ? 'جاري التحميل...' : 'Loading...'}</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-emerald-500"></div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-islamic-green text-white py-4 px-6 shadow-md">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">
-            {i18n.language === 'ar' ? 'لوحة التحكم' : 'My Dashboard'}
-          </h1>
-          <div className="flex items-center gap-4">
-            <Link to="/" className="hover:text-islamic-gold">
-              {i18n.language === 'ar' ? 'الصفحة الرئيسية' : 'Home'}
-            </Link>
-            <span>{user?.username}</span>
-            <button
-              onClick={logout}
-              className="px-4 py-2 bg-white text-islamic-green rounded-lg hover:bg-gray-100"
-            >
-              {i18n.language === 'ar' ? 'تسجيل الخروج' : 'Logout'}
-            </button>
+  // Handle Unapproved Users
+  if (isAuthenticated && !isApproved) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-900/20 rounded-full blur-[100px]"></div>
+        
+        <div className="max-w-md w-full glass-card p-10 rounded-3xl text-center space-y-8 relative z-10">
+          <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
+            <div className="absolute inset-0 border-t-2 border-r-2 border-amber-500 rounded-full animate-spin"></div>
+            <div className="h-20 w-20 bg-gradient-to-br from-amber-500/20 to-amber-900/40 text-amber-500 rounded-full flex items-center justify-center text-4xl border border-amber-500/30 shadow-glow-amber">
+              ⏳
+            </div>
           </div>
+          <div className="space-y-3">
+            <h2 className="text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">
+              {i18n.language === 'ar' ? 'الحساب قيد المراجعة' : 'Pending Approval'}
+            </h2>
+            <p className="text-sm text-gray-400 leading-relaxed font-light">
+              {i18n.language === 'ar'
+                ? 'شكراً لتسجيلك. حسابك حالياً قيد المراجعة والتحقق من قبل إدارة الكلية. ستتمكن من تسجيل الدخول فور تفعيل حسابك.'
+                : 'Thank you for registering. Your credentials are pending review by the administration. You will have full access once approved.'}
+            </p>
+          </div>
+          <button
+            onClick={logout}
+            className="w-full py-3.5 bg-gray-900/80 hover:bg-gray-800 text-gray-300 font-bold rounded-2xl text-sm transition-all border border-gray-700 shadow-lg hover:-translate-y-1"
+          >
+            {i18n.language === 'ar' ? 'تسجيل الخروج' : 'Logout / Switch Account'}
+          </button>
         </div>
       </div>
+    );
+  }
 
-      <div className="max-w-7xl mx-auto py-8 px-4">
-        {/* Welcome Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-2xl font-bold text-islamic-green mb-2">
-            {i18n.language === 'ar' ? `مرحباً ${user?.username}!` : `Welcome, ${user?.username}!`}
-          </h2>
-          <p className="text-gray-600">
-            {i18n.language === 'ar' 
-              ? 'يمكنك متابعة حالة طلبات القبول الخاصة بك من هنا'
-              : 'Track your admission applications here'}
-          </p>
-        </div>
+  // ── Role-based routing ─────────────────────────────────────────────────────
+  // Librarian
+  if (isLibrarian) return <LibrarianDashboard />;
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="bg-white p-6 rounded-lg shadow-md"
-          >
-            <h3 className="text-gray-600 text-sm mb-2">
-              {i18n.language === 'ar' ? 'إجمالي الطلبات' : 'Total Applications'}
-            </h3>
-            <p className="text-3xl font-bold text-islamic-green">
-              {stats?.total || 0}
-            </p>
-          </motion.div>
+  // Principal (gets full management powers)
+  if (isPrincipal) return <PrincipalDashboard vpMode={false} />;
 
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="bg-white p-6 rounded-lg shadow-md"
-          >
-            <h3 className="text-gray-600 text-sm mb-2">
-              {i18n.language === 'ar' ? 'قيد المراجعة' : 'Pending'}
-            </h3>
-            <p className="text-3xl font-bold text-yellow-600">
-              {stats?.pending || 0}
-            </p>
-          </motion.div>
+  // Vice Principal (restricted subset — no tutor approvals, read-only finance)
+  if (isVP) return <PrincipalDashboard vpMode={true} />;
 
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="bg-white p-6 rounded-lg shadow-md"
-          >
-            <h3 className="text-gray-600 text-sm mb-2">
-              {i18n.language === 'ar' ? 'تمت الموافقة' : 'Approved'}
-            </h3>
-            <p className="text-3xl font-bold text-green-600">
-              {stats?.approved || 0}
-            </p>
-          </motion.div>
-        </div>
+  // Treasurer (dedicated finance dashboard)
+  if (isTreasurer) return <TreasurerDashboard />;
 
-        {/* Admissions List */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-islamic-green">
-              {i18n.language === 'ar' ? 'طلبات القبول' : 'My Admissions'}
-            </h2>
-            <Link
-              to="/admissions"
-              className="px-4 py-2 bg-islamic-green text-white rounded-lg hover:bg-islamic-dark"
-            >
-              {i18n.language === 'ar' ? '+ تقديم طلب جديد' : '+ New Application'}
-            </Link>
-          </div>
+  // Regular tutor / class teacher
+  if (isTutor) return <TutorDashboard />;
 
-          {admissions.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-600 mb-4">
-                {i18n.language === 'ar' 
-                  ? 'لم تقدم أي طلبات بعد'
-                  : 'You haven\'t submitted any applications yet'}
-              </p>
-              <Link
-                to="/admissions"
-                className="text-islamic-green hover:text-islamic-dark font-semibold"
-              >
-                {i18n.language === 'ar' ? 'قدم طلبك الآن →' : 'Submit your first application →'}
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {admissions.map((admission) => (
-                <motion.div
-                  key={admission._id}
-                  whileHover={{ scale: 1.02 }}
-                  className="border border-gray-200 rounded-lg p-4"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {admission.studentName}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {i18n.language === 'ar' ? 'الدورة: ' : 'Course: '}
-                        {admission.course}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {i18n.language === 'ar' ? 'تاريخ التقديم: ' : 'Applied: '}
-                        {new Date(admission.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(admission.status)}`}>
-                      {getStatusText(admission.status)}
-                    </span>
-                  </div>
-                  {admission.notes && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded">
-                      <p className="text-sm text-gray-700">
-                        <strong>{i18n.language === 'ar' ? 'ملاحظات: ' : 'Notes: '}</strong>
-                        {admission.notes}
-                      </p>
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
+  // Student portal
+  if (isStudent) return <StudentDashboard />;
+
+  // Parent portal
+  if (isParent) return <ParentDashboard />;
+
+  // Fallback (profile still loading or unknown role)
+  return (
+    <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-4">
+      <div className="text-center space-y-4">
+        <div className="text-4xl animate-pulse">🔄</div>
+        <p className="text-gray-400 text-sm">
+          {i18n.language === 'ar' ? 'تحميل لوحة التحكم...' : 'Loading your dashboard...'}
+        </p>
+        <button onClick={logout} className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-750 transition text-sm">
+          Logout
+        </button>
       </div>
     </div>
   );

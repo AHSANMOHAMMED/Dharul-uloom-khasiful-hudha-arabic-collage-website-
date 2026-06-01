@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     let profile = null;
     const { data } = await supabase
       .from('profiles')
-      .select('full_name, role, account_type, email')
+      .select('full_name, role, account_type, email, is_approved, index_number, assigned_tutor_role, class_number')
       .eq('id', authUser.id)
       .maybeSingle();
     profile = data;
@@ -42,6 +42,10 @@ export const AuthProvider = ({ children }) => {
       role: profile?.role || 'user',
       accountType: profile?.account_type || authUser.user_metadata?.account_type || 'guest',
       isVerified: Boolean(authUser.email_confirmed_at || authUser.confirmed_at),
+      isApproved: profile ? profile.is_approved : true,
+      indexNumber: profile?.index_number || '',
+      assignedTutorRole: profile?.assigned_tutor_role || 'none',
+      classNumber: profile?.class_number || null,
     };
   }, []);
 
@@ -92,14 +96,38 @@ export const AuthProvider = ({ children }) => {
     return { success: true, user: mapped };
   };
 
-  const register = async (username, email, password, accountType = 'guest') => {
+  const register = async (username, email, password, accountType = 'guest', indexNumber = '', phone = '') => {
     if (!isSupabaseConfigured) {
       return { success: false, error: 'Authentication is not configured' };
     }
+    
+    // Verify index number if registration is for a student
+    if (accountType === 'student') {
+      if (!indexNumber) {
+        return { success: false, error: 'Index number is required for students' };
+      }
+      const { data: verifyData, error: verifyErr } = await supabase
+        .rpc('verify_student_index', { p_index_number: indexNumber });
+      
+      if (verifyErr) {
+        return { success: false, error: verifyErr.message };
+      }
+      if (!verifyData || !verifyData.valid) {
+        return { success: false, error: verifyData?.error || 'Invalid index number' };
+      }
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: username, account_type: accountType } },
+      options: {
+        data: {
+          full_name: username,
+          account_type: accountType,
+          index_number: indexNumber || null,
+          phone: phone || null,
+        }
+      },
     });
     if (error) {
       return { success: false, error: error.message };
@@ -114,7 +142,7 @@ export const AuthProvider = ({ children }) => {
     return {
       success: true,
       needsConfirmation: true,
-      user: { username, email, role: 'user', accountType },
+      user: { username, email, role: 'user', accountType, indexNumber },
     };
   };
 
@@ -133,9 +161,15 @@ export const AuthProvider = ({ children }) => {
     loading,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
+    isLibrarian: user?.role === 'librarian',
     isStaff: user?.role === 'admin' || user?.role === 'librarian',
     isStudent: user?.accountType === 'student',
     isParent: user?.accountType === 'parent',
+    isTutor: user?.accountType === 'tutor',
+    isTreasurer: user?.accountType === 'tutor' && user?.assignedTutorRole === 'treasurer',
+    isPrincipal: user?.accountType === 'tutor' && user?.assignedTutorRole === 'principal',
+    isVP: user?.accountType === 'tutor' && user?.assignedTutorRole === 'vice_principal',
+    isApproved: user?.isApproved ?? false,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
