@@ -24,9 +24,7 @@ export async function registerServiceWorker() {
       const newWorker = registration.installing;
       newWorker?.addEventListener('statechange', () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          console.info('[SW] New version available — refreshing for updates.');
-          // In production you'd show a "Update Available" toast here.
-          window.location.reload();
+          window.dispatchEvent(new CustomEvent('sw-update-available'));
         }
       });
     });

@@ -9,6 +9,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AnalyticsDashboard from './AnalyticsDashboard';
+import AdminContentCMS from '../components/AdminContentCMS';
 
 const COLORS = ['#059669', '#d97706', '#2563eb', '#dc2626'];
 
@@ -22,6 +23,7 @@ const AdminDashboard = () => {
   const [admissions, setAdmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('admissions');
+  const [contentSection, setContentSection] = useState('news');
 
   // New state for approvals queue
   const [pendingApprovals, setPendingApprovals] = useState([]);
@@ -154,17 +156,24 @@ const AdminDashboard = () => {
         .eq('id', selectedTutorId);
 
       if (error) throw error;
-      toast.success('Tutor role updated successfully!');
+      if (assignedRole === 'none') {
+        toast.success('Tutor role updated successfully!');
+        fetchData();
+        return;
+      }
       
       // Auto Assign standard jobs if Principal/Treasurer
-      if (assignedRole !== 'none') {
-        await supabase.from('tutor_jobs').insert({
-          tutor_id: selectedTutorId,
-          title: assignedRole.toUpperCase(),
-          description: `Responsible for college administrative and financial oversight as ${assignedRole}.`
-        });
+      const { error: jobError } = await supabase.from('tutor_jobs').insert({
+        tutor_id: selectedTutorId,
+        title: assignedRole.toUpperCase(),
+        description: `Responsible for college administrative and financial oversight as ${assignedRole}.`
+      });
+
+      if (jobError) {
+        throw jobError;
       }
 
+      toast.success('Tutor role updated successfully!');
       fetchData();
     } catch (err) {
       console.error('Error assigning tutor role:', err);
@@ -240,7 +249,8 @@ const AdminDashboard = () => {
         query = query.eq('account_type', 'tutor');
       }
       
-      const { data: targets } = await query;
+      const { data: targets, error } = await query;
+      if (error) throw error;
       if (targets && targets.length > 0) {
         const notificationsPayload = targets.map(t => ({
           user_id: t.id,
@@ -248,7 +258,8 @@ const AdminDashboard = () => {
           message: broadcastMsg
         }));
         
-        await supabase.from('notifications').insert(notificationsPayload);
+        const { error: notificationError } = await supabase.from('notifications').insert(notificationsPayload);
+        if (notificationError) throw notificationError;
       }
 
       setBroadcastTitle('');
@@ -266,11 +277,12 @@ const AdminDashboard = () => {
   const handleTriggerFeeReminder = async () => {
     try {
       // Find all approved students
-      const { data: studentsList } = await supabase
+      const { data: studentsList, error } = await supabase
         .from('profiles')
         .select('id, full_name, parent_children(parent_id)')
         .eq('account_type', 'student')
         .eq('is_approved', true);
+      if (error) throw error;
 
       if (studentsList && studentsList.length > 0) {
         const monthString = new Date().toISOString().substring(0, 7); // e.g. '2026-06'
@@ -290,11 +302,12 @@ const AdminDashboard = () => {
           // Notify parents
           const parentId = student.parent_children?.[0]?.parent_id;
           if (parentId) {
-            await supabase.from('notifications').insert({
+            const { error: notificationError } = await supabase.from('notifications').insert({
               user_id: parentId,
               title: 'Monthly Tuition Fee Reminder',
               message: `Reminder: Tuition fee of LKR 5000 is generated for your child ${student.full_name} for ${monthString}.`
             });
+            if (notificationError) throw notificationError;
           }
         }
       }
@@ -433,6 +446,7 @@ const AdminDashboard = () => {
             { id: 'approvals', label_en: 'Signups', label_ar: 'الموافقات', icon: '🔐' },
             { id: 'tutors', label_en: 'Tutors & Roles', label_ar: 'المعلمون والوظائف', icon: '👨‍🏫' },
             { id: 'broadcast', label_en: 'Broadcast', label_ar: 'البث', icon: '📢' },
+            { id: 'content', label_en: 'Content CMS', label_ar: 'إدارة المحتوى', icon: '📰' },
             { id: 'indexes', label_en: 'Index Pre-seed', label_ar: 'أرقام القيد', icon: '🪪' },
             { id: 'analytics', label_en: 'Analytics', label_ar: 'التحليلات', icon: '📊' },
           ].map(tab => (
@@ -725,6 +739,33 @@ const AdminDashboard = () => {
                 </div>
 
               </div>
+            </div>
+          )}
+
+          {/* Tab: Content CMS */}
+          {activeTab === 'content' && (
+            <div className="space-y-6">
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: 'news', en: 'News', ar: 'الأخبار' },
+                  { id: 'faculty', en: 'Faculty', ar: 'الأساتذة' },
+                  { id: 'curriculum', en: 'Curriculum', ar: 'المنهج' },
+                  { id: 'gallery', en: 'Gallery', ar: 'المعرض' },
+                  { id: 'courses', en: 'Courses', ar: 'الدورات' },
+                ].map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setContentSection(s.id)}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
+                      contentSection === s.id ? 'bg-emerald-700 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {i18n.language === 'ar' ? s.ar : s.en}
+                  </button>
+                ))}
+              </div>
+              <AdminContentCMS section={contentSection} />
             </div>
           )}
 

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import PayFeeButton from '../components/PayFeeButton';
+import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
 
 
 const ParentDashboard = () => {
@@ -18,6 +20,8 @@ const ParentDashboard = () => {
   const [fees, setFees] = useState(null);
   const [leaves, setLeaves] = useState([]);
   const [tutorJobs, setTutorJobs] = useState([]);
+  const [lmsSubmissions, setLmsSubmissions] = useState([]);
+  const [lmsAssignments, setLmsAssignments] = useState([]);
   
   // App state
   const [loading, setLoading] = useState(true);
@@ -37,12 +41,14 @@ const ParentDashboard = () => {
 
   useEffect(() => {
     fetchLinkedChildren();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
     if (selectedChild) {
       fetchChildData(selectedChild.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChild]);
 
   // Fetch all children linked to this parent
@@ -124,6 +130,12 @@ const ParentDashboard = () => {
         .select('*, profiles(full_name, phone)')
         .limit(5);
       setTutorJobs(jobsData || []);
+
+      const child = children.find((c) => c.id === childId) || selectedChild;
+      if (child?.class_number) {
+        setLmsAssignments(await listAssignmentsForClass(child.class_number));
+      }
+      setLmsSubmissions(await getStudentSubmissions(childId));
 
     } catch (err) {
       console.error('Error fetching child details:', err);
@@ -461,11 +473,36 @@ const ParentDashboard = () => {
                             ))}
                           </div>
                         )}
+                        <PayFeeButton fee={fees} />
                       </div>
                     ) : (
                       <div className="text-center py-6 text-xs text-gray-500">
                         {i18n.language === 'ar' ? 'لا توجد مستحقات رسوم مفعلة حالياً' : 'No generated monthly fees for this child.'}
                       </div>
+                    )}
+                  </div>
+
+                  {/* Child LMS progress */}
+                  <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-3">
+                    <h3 className="text-base font-bold text-white">
+                      📚 {i18n.language === 'ar' ? 'الواجبات والتقدم' : 'Assignments & Progress'}
+                    </h3>
+                    {lmsAssignments.length === 0 ? (
+                      <p className="text-xs text-gray-500">{i18n.language === 'ar' ? 'لا واجبات حالياً' : 'No assignments yet'}</p>
+                    ) : (
+                      <ul className="space-y-2 text-sm">
+                        {lmsAssignments.map((a) => {
+                          const sub = lmsSubmissions.find((s) => s.assignment_id === a.id);
+                          return (
+                            <li key={a.id} className="p-3 bg-gray-950/40 rounded border border-gray-800 flex justify-between gap-2">
+                              <span className="text-white">{a.title}</span>
+                              <span className={`text-xs shrink-0 ${sub ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                {sub ? (sub.grade ? `Grade ${sub.grade}` : 'Submitted') : (a.due_date ? `Due ${a.due_date}` : 'Pending')}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     )}
                   </div>
 

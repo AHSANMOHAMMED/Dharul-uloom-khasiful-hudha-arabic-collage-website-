@@ -1,121 +1,100 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
+import { listGalleryItems } from '../lib/contentApi'
 
 const Gallery = () => {
   const { i18n } = useTranslation()
+  const ar = i18n.language === 'ar'
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [lightbox, setLightbox] = useState(null)
 
-  // Mock gallery images - in production, these would be real images
-  const galleryItems = [
-    {
-      id: 1,
-      title: { en: 'Main Building', ar: 'المبنى الرئيسي' },
-      category: 'facilities'
-    },
-    {
-      id: 2,
-      title: { en: 'Classroom', ar: 'الفصل الدراسي' },
-      category: 'facilities'
-    },
-    {
-      id: 3,
-      title: { en: 'Quran Competition 2024', ar: 'مسابقة القرآن 2024' },
-      category: 'events'
-    },
-    {
-      id: 4,
-      title: { en: 'Graduation Ceremony', ar: 'حفل التخرج' },
-      category: 'events'
-    },
-    {
-      id: 5,
-      title: { en: 'Library', ar: 'المكتبة' },
-      category: 'facilities'
-    },
-    {
-      id: 6,
-      title: { en: 'Eid Celebration', ar: 'احتفال العيد' },
-      category: 'events'
-    }
-  ]
+  useEffect(() => {
+    listGalleryItems().then(setItems).finally(() => setLoading(false))
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <section className="bg-islamic-green text-white py-16 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {i18n.language === 'ar' ? 'معرض الصور' : 'Gallery'}
+            {ar ? 'معرض الصور' : 'Gallery'}
           </h1>
           <p className="text-xl text-gray-200">
-            {i18n.language === 'ar'
-              ? 'لمحة عن حياتنا في الكلية'
-              : 'A glimpse into our college life'}
+            {ar ? 'لمحة عن حياتنا في الكلية' : 'A glimpse into our college life'}
           </p>
         </div>
       </section>
 
-      {/* Gallery Grid */}
       <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {galleryItems.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ scale: 0.9, opacity: 0 }}
-                whileInView={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                whileHover={{ scale: 1.05 }}
-                className="bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer"
-              >
-                <div className="h-64 bg-gradient-to-br from-islamic-green to-islamic-dark flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="text-6xl mb-2">
-                      {item.category === 'facilities' ? '🏫' : '📸'}
+          {loading ? (
+            <p className="text-center text-gray-600">{ar ? 'جاري التحميل...' : 'Loading...'}</p>
+          ) : items.length === 0 ? (
+            <p className="text-center text-gray-600">{ar ? 'لا توجد صور بعد' : 'No gallery photos yet'}</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {items.map((item, index) => (
+                <motion.button
+                  key={item.id}
+                  type="button"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                  viewport={{ once: true }}
+                  onClick={() => item.imageUrl && setLightbox(item)}
+                  className="group relative overflow-hidden rounded-lg shadow-lg aspect-[4/3] text-left"
+                >
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.title.en} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-islamic-green to-islamic-dark flex items-center justify-center">
+                      <span className="text-6xl opacity-30">{item.category === 'events' ? '🎉' : '🏫'}</span>
                     </div>
-                    <p className="text-lg font-semibold">
-                      {item.title[i18n.language]}
-                    </p>
+                  )}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-end">
+                    <div className="p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <h3 className="font-bold text-lg">{item.title[ar ? 'ar' : 'en'] || item.title.en}</h3>
+                      <span className="text-sm opacity-90 capitalize">{item.category}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="p-4 bg-white">
-                  <p className="text-sm text-gray-600 text-center">
-                    {item.category === 'facilities'
-                      ? (i18n.language === 'ar' ? 'المرافق' : 'Facilities')
-                      : (i18n.language === 'ar' ? 'الفعاليات' : 'Events')}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.button>
+              ))}
+            </div>
+          )}
 
-          {/* Facebook Link */}
           <motion.div
             initial={{ y: 30, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="mt-12 text-center"
+            className="mt-12 bg-islamic-green text-white rounded-lg shadow-lg p-8 text-center"
           >
-            <p className="text-gray-600 mb-4">
-              {i18n.language === 'ar'
-                ? 'لمزيد من الصور، تفضل بزيارة صفحتنا على Facebook'
-                : 'For more photos, visit our Facebook page'}
-            </p>
+            <h3 className="text-2xl font-bold mb-4">
+              {ar ? 'تابعنا على Facebook' : 'Follow Us on Facebook'}
+            </h3>
             <a
               href="https://www.facebook.com/100088419063008"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-islamic-green rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              {i18n.language === 'ar' ? 'تابعنا على Facebook' : 'Follow us on Facebook'}
+              Facebook
             </a>
           </motion.div>
         </div>
       </section>
+
+      {lightbox && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setLightbox(null)} role="presentation">
+          <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()} role="presentation">
+            <img src={lightbox.imageUrl} alt={lightbox.title.en} className="w-full max-h-[80vh] object-contain rounded-lg" />
+            <p className="text-white text-center mt-4 text-lg">{lightbox.title[ar ? 'ar' : 'en'] || lightbox.title.en}</p>
+            <button type="button" onClick={() => setLightbox(null)} className="mt-4 mx-auto block text-gray-300 hover:text-white">Close</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

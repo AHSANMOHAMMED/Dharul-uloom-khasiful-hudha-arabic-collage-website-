@@ -319,7 +319,7 @@ const TreasurerDashboard = () => {
             </div>
           </div>
           <Link
-            to="/dashboard"
+            to="/dashboard?view=tutor"
             className="relative z-10 px-6 py-3 bg-gray-900/80 border border-gray-700 hover:bg-gray-800 text-gray-200 rounded-2xl text-sm font-bold transition-all shadow-lg hover:-translate-y-1 flex items-center gap-2"
           >
             ← {i18n.language === 'ar' ? 'العودة لوحة المعلم' : 'Back to Tutor Portal'}

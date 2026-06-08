@@ -124,11 +124,11 @@ const Home = () => {
             className="flex flex-col sm:flex-row justify-center items-center gap-6 pt-4"
           >
             <Link
-              to="/about"
-              className="group relative px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-400 text-gray-950 font-extrabold rounded-2xl overflow-hidden shadow-glow-amber transition-all hover:scale-105"
+              to="/library"
+              className="group relative px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-400 text-gray-950 font-extrabold rounded-2xl overflow-hidden shadow-glow-emerald transition-all hover:scale-105"
             >
               <span className="relative z-10 flex items-center gap-2">
-                {t('home.cta.learn')}
+                {ar ? 'ادخل المكتبة الرقمية' : 'Enter the Digital Library'}
                 <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
@@ -137,11 +137,11 @@ const Home = () => {
             </Link>
             
             <Link
-              to="/login"
-              className="group px-8 py-4 glass-panel border-emerald-500/30 text-emerald-400 font-bold rounded-2xl hover:bg-emerald-900/30 hover:border-emerald-400/50 hover:shadow-glow-emerald transition-all hover:scale-105 flex items-center gap-3"
+              to="/about"
+              className="group px-8 py-4 glass-panel border-amber-500/30 text-amber-400 font-bold rounded-2xl hover:bg-amber-900/30 hover:border-amber-400/50 hover:shadow-glow-amber transition-all hover:scale-105 flex items-center gap-3"
             >
-              <span className="text-xl">🔐</span>
-              {ar ? 'بوابة الطلاب والمعلمين' : 'Access Portal'}
+              <span className="text-xl">🏫</span>
+              {ar ? 'تعرف على الكلية' : 'Learn About the College'}
             </Link>
           </motion.div>
 
@@ -157,6 +157,61 @@ const Home = () => {
           <span className="text-xs tracking-widest uppercase font-bold">Scroll</span>
           <div className="w-px h-12 bg-gradient-to-b from-emerald-500/50 to-transparent animate-pulse"></div>
         </motion.div>
+      </section>
+
+      {/* 2.5 Library Spotlight */}
+      <section className="py-24 px-4 bg-gray-950 relative overflow-hidden border-b border-gray-800/60">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_40%)] pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative z-10">
+          <div className="space-y-6">
+            <span className="px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold tracking-widest uppercase shadow-glow-emerald">
+              {ar ? 'المكتبة الإسلامية الرقمية' : 'Digital Islamic Library'}
+            </span>
+            <h2 className="text-4xl sm:text-5xl font-extrabold font-arabic text-white leading-tight">
+              {ar ? 'المكتبة أصبحت قلب الموقع' : 'The library is now the heart of the site'}
+            </h2>
+            <p className="text-gray-400 text-lg leading-relaxed">
+              {ar
+                ? 'تصفح آلاف الكتب الإسلامية من المكتبة الشاملة داخل الموقع، مع بحث سريع، تصنيفات واضحة، وقراءة مباشرة عبر Google Drive على الهاتف أو الحاسوب.'
+                : 'Browse thousands of Islamic books from Al-Maktaba al-Shamela directly inside the website, with fast search, clear categories, and Google Drive reading on mobile or desktop.'}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/library"
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold shadow-glow-emerald"
+              >
+                {ar ? 'ابدأ التصفح' : 'Start Browsing'}
+              </Link>
+              <Link
+                to="/library-admin"
+                className="px-6 py-3 rounded-xl border border-emerald-500/30 text-emerald-300 font-bold hover:bg-emerald-900/20"
+              >
+                {ar ? 'إدارة الكتب' : 'Manage Books'}
+              </Link>
+            </div>
+          </div>
+
+          <div className="glass-card rounded-[2rem] p-6 border border-emerald-500/20 shadow-2xl">
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: ar ? 'كتب كلاسيكية' : 'Classic books', value: '8,000+' },
+                { label: ar ? 'بحث سريع' : 'Fast search', value: '✓' },
+                { label: ar ? 'قراءة مباشرة' : 'Direct reading', value: '✓' },
+                { label: ar ? 'RTL ممتاز' : 'Excellent RTL', value: '✓' },
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl bg-gray-950/70 border border-gray-800 p-5 text-center">
+                  <div className="text-3xl font-black text-amber-400">{item.value}</div>
+                  <div className="mt-2 text-xs uppercase tracking-widest text-gray-400 font-bold">{item.label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm text-gray-300">
+              {ar
+                ? 'كل بيانات الكتب محفوظة في Supabase فقط، بينما ملفات PDF تبقى في Google Drive المجاني.'
+                : 'Book metadata stays in Supabase only, while the PDF files remain in free Google Drive storage.'}
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* 2. Marquee Ticker */}

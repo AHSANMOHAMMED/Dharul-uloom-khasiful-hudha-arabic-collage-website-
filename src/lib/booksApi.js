@@ -1,51 +1,81 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
-const COVERS_BUCKET = 'covers';
-const BOOKS_BUCKET = 'books';
-const SIGNED_URL_TTL = 60 * 60; // 1 hour
-
-/**
- * Thin data-access layer for the library. Every function degrades gracefully
- * when Supabase is not configured yet (returns empty results) so the UI never
- * crashes during the migration period.
- */
+const DEFAULT_PAGE_SIZE = 24;
 
 const emptyPage = { books: [], total: 0 };
 
-/** Resolve a stored cover path (or absolute URL) into a displayable URL. */
-export function resolveCoverUrl(coverImage) {
-  if (!coverImage) return null;
-  if (/^https?:\/\//i.test(coverImage)) return coverImage;
+export function getDriveFileIdFromUrl(input) {
+  if (!input) return null;
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(input)) return input;
+  const match = String(input).match(/\/d\/([a-zA-Z0-9_-]+)/) || String(input).match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  return match?.[1] ?? null;
+}
+
+export function buildDrivePreviewUrl(fileIdOrUrl) {
+  const fileId = getDriveFileIdFromUrl(fileIdOrUrl);
+  if (!fileId) return null;
+  return `https://drive.google.com/file/d/${fileId}/preview`;
+}
+
+export function buildDriveDownloadUrl(fileIdOrUrl) {
+  const fileId = getDriveFileIdFromUrl(fileIdOrUrl);
+  if (!fileId) return null;
+  return `https://drive.google.com/uc?export=download&id=${fileId}`;
+}
+
+export function resolveCoverUrl(coverUrl) {
+  if (!coverUrl) return null;
+  if (/^https?:\/\//i.test(coverUrl)) return coverUrl;
   if (!isSupabaseConfigured) return null;
-  const { data } = supabase.storage.from(COVERS_BUCKET).getPublicUrl(coverImage);
+  const { data } = supabase.storage.from('covers').getPublicUrl(coverUrl);
   return data?.publicUrl ?? null;
 }
 
-/** Mint a short-lived signed URL for a private book artifact (PDF/HTML). */
-export async function getBookFileUrl(filePath) {
-  if (!filePath || !isSupabaseConfigured) return null;
-  if (/^https?:\/\//i.test(filePath)) return filePath;
-  const { data, error } = await supabase.storage
-    .from(BOOKS_BUCKET)
-    .createSignedUrl(filePath, SIGNED_URL_TTL);
-  if (error) {
-    console.error('[booksApi] signed url error', error);
-    return null;
-  }
-  return data?.signedUrl ?? null;
+export async function getBookFileUrl(book) {
+  if (!book) return null;
+  if (book.drive_preview_url) return book.drive_preview_url;
+  if (book.drive_file_id) return buildDrivePreviewUrl(book.drive_file_id);
+  return null;
 }
 
-/**
- * Search / browse the catalog through the search_books RPC.
- * @returns {Promise<{books: object[], total: number}>}
- */
+function normalizeBook(row) {
+  const categories = Array.isArray(row.categories) ? row.categories : [];
+  return {
+    id: row.id,
+    shamela_id: row.shamela_id,
+    title_ar: row.title_ar,
+    title_en: row.title_en,
+    author: row.author,
+    categories,
+    description: row.description,
+    language: row.language || 'ar',
+    year: row.year,
+    pages: row.pages,
+    drive_file_id: row.drive_file_id,
+    drive_preview_url: row.drive_preview_url,
+    cover_url: resolveCoverUrl(row.cover_url),
+    source_link: row.source_link,
+    imported_at: row.imported_at,
+  };
+}
+
+function buildCategoryOptions(books = []) {
+  const values = new Set();
+  books.forEach((book) => {
+    (book.categories || []).forEach((category) => values.add(category));
+  });
+  return Array.from(values)
+    .sort((a, b) => a.localeCompare(b, 'ar'))
+    .map((value) => ({ value, label: value }));
+}
+
 export async function searchBooks({
   query = '',
   language = null,
   category = null,
   author = null,
   page = 1,
-  pageSize = 24,
+  pageSize = DEFAULT_PAGE_SIZE,
 } = {}) {
   if (!isSupabaseConfigured) return emptyPage;
 
@@ -66,80 +96,60 @@ export async function searchBooks({
 
   const rows = data ?? [];
   const total = rows.length > 0 ? Number(rows[0].total_count) : 0;
-  const books = rows.map((row) => ({
-    ...row,
-    coverUrl: resolveCoverUrl(row.cover_image),
-  }));
-  return { books, total };
+  return {
+    books: rows.map(normalizeBook),
+    total,
+  };
 }
 
-/** Fetch all categories (for filters), ordered for display. */
-export async function getCategories() {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
-    .from('categories')
-    .select('id, name_ar, name_en, slug, parent_id, sort_order')
-    .order('sort_order', { ascending: true })
-    .order('name_ar', { ascending: true });
-  if (error) {
-    console.error('[booksApi] getCategories error', error);
-    return [];
-  }
-  return data ?? [];
+export async function getBooks(options = {}) {
+  return searchBooks(options);
 }
 
-/** Fetch a single book with resolved author/category names. */
 export async function getBook(id) {
   if (!isSupabaseConfigured || !id) return null;
-  // Disambiguate the embeds: books relates to authors/categories both directly
-  // (author_id/category_id) and via the book_authors/book_categories junctions,
-  // so PostgREST needs the explicit FK hint to avoid an ambiguous-embed error.
   const { data, error } = await supabase
     .from('books')
-    .select(
-      'id, title_ar, title_en, description, language, year, pages, cover_image, file_path, tags, author_id, category_id, authors!books_author_id_fkey ( name_ar, name_en ), categories!books_category_id_fkey ( name_ar, name_en )'
-    )
+    .select('id, shamela_id, title_ar, title_en, author, categories, description, language, year, pages, drive_file_id, drive_preview_url, cover_url, source_link, imported_at')
     .eq('id', id)
     .single();
   if (error) {
     console.error('[booksApi] getBook error', error);
     return null;
   }
-  return {
-    ...data,
-    coverUrl: resolveCoverUrl(data.cover_image),
-    author_name: data.authors?.name_ar ?? null,
-    category_name: data.categories?.name_ar ?? null,
-  };
+  return normalizeBook(data);
 }
 
-/** Fetch a page-range of a book's cleaned text content for the reader. */
-export async function getBookPages(bookId, { from = 0, to = 19 } = {}) {
-  if (!isSupabaseConfigured || !bookId) return [];
+export async function getCategories() {
+  if (!isSupabaseConfigured) return [];
   const { data, error } = await supabase
-    .from('book_pages')
-    .select('id, page_index, page_label, part, content')
-    .eq('book_id', bookId)
-    .order('page_index', { ascending: true })
-    .range(from, to);
+    .from('books')
+    .select('categories')
+    .order('imported_at', { ascending: false })
+    .limit(1000);
   if (error) {
-    console.error('[booksApi] getBookPages error', error);
+    console.error('[booksApi] getCategories error', error);
     return [];
   }
-  return data ?? [];
+  return buildCategoryOptions(data ?? []);
 }
 
-/** Full-text search within a single book (reader search). */
-export async function searchWithinBook(bookId, query, limit = 50) {
-  if (!isSupabaseConfigured || !bookId || !query) return [];
-  const { data, error } = await supabase.rpc('search_book_pages', {
-    p_book_id: bookId,
-    q: query,
-    p_limit: limit,
-  });
-  if (error) {
-    console.error('[booksApi] searchWithinBook error', error);
-    return [];
-  }
-  return data ?? [];
+export async function getBookFilePreviewUrl(book) {
+  if (!book) return null;
+  if (book.drive_preview_url) return book.drive_preview_url;
+  return buildDrivePreviewUrl(book.drive_file_id);
+}
+
+export async function createDrivePdfUrl(book) {
+  if (!book) return null;
+  return buildDriveDownloadUrl(book.drive_file_id || book.drive_preview_url);
+}
+
+// Compatibility helpers for older parts of the app.
+export async function getBookPages() {
+  return [];
+}
+
+export async function searchWithinBook() {
+  return [];
 }

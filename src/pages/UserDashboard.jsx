@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import RoleSwitcher from '../components/RoleSwitcher';
 import StudentDashboard from './StudentDashboard';
 import ParentDashboard from './ParentDashboard';
 import TutorDashboard from './TutorDashboard';
@@ -18,6 +19,7 @@ const UserDashboard = () => {
   } = useAuth();
   const { i18n } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     if (authLoading) return;
@@ -38,12 +40,10 @@ const UserDashboard = () => {
     );
   }
 
-  // Handle Unapproved Users
   if (isAuthenticated && !isApproved) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-900/20 rounded-full blur-[100px]"></div>
-        
         <div className="max-w-md w-full glass-card p-10 rounded-3xl text-center space-y-8 relative z-10">
           <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
             <div className="absolute inset-0 border-t-2 border-r-2 border-amber-500 rounded-full animate-spin"></div>
@@ -72,29 +72,36 @@ const UserDashboard = () => {
     );
   }
 
-  // ── Role-based routing ─────────────────────────────────────────────────────
-  // Librarian
+  const view = searchParams.get('view');
+  const defaultSpecialView = isTreasurer ? 'treasurer' : isPrincipal ? 'principal' : isVP ? 'vp' : null;
+  const activeView = view || defaultSpecialView || 'tutor';
+
+  const wrapWithSwitcher = (dashboard) => (
+    <>
+      <RoleSwitcher />
+      {dashboard}
+    </>
+  );
+
   if (isLibrarian) return <LibrarianDashboard />;
 
-  // Principal (gets full management powers)
+  if (isTutor && (isTreasurer || isPrincipal || isVP)) {
+    if (activeView === 'treasurer' && isTreasurer) return wrapWithSwitcher(<TreasurerDashboard />);
+    if (activeView === 'principal' && isPrincipal) return wrapWithSwitcher(<PrincipalDashboard vpMode={false} />);
+    if (activeView === 'vp' && isVP) return wrapWithSwitcher(<PrincipalDashboard vpMode={true} />);
+    if (activeView === 'tutor') return wrapWithSwitcher(<TutorDashboard />);
+    if (isTreasurer) return wrapWithSwitcher(<TreasurerDashboard />);
+    if (isPrincipal) return wrapWithSwitcher(<PrincipalDashboard vpMode={false} />);
+    if (isVP) return wrapWithSwitcher(<PrincipalDashboard vpMode={true} />);
+  }
+
   if (isPrincipal) return <PrincipalDashboard vpMode={false} />;
-
-  // Vice Principal (restricted subset — no tutor approvals, read-only finance)
   if (isVP) return <PrincipalDashboard vpMode={true} />;
-
-  // Treasurer (dedicated finance dashboard)
   if (isTreasurer) return <TreasurerDashboard />;
-
-  // Regular tutor / class teacher
   if (isTutor) return <TutorDashboard />;
-
-  // Student portal
   if (isStudent) return <StudentDashboard />;
-
-  // Parent portal
   if (isParent) return <ParentDashboard />;
 
-  // Fallback (profile still loading or unknown role)
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-4">
       <div className="text-center space-y-4">

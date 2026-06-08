@@ -23,6 +23,9 @@
  * Required env (see docs/SUPABASE_MIGRATION.md):
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
  *   SHAMELA_API_KEY, SHAMELA_BOOKS_ENDPOINT, SHAMELA_MASTER_ENDPOINT
+ *
+ * For offline import without API key (Internet Archive .bok zip), use instead:
+ *   npm run import:shamela:archive -- --archive-path /path/to/shamela.zip
  */
 import 'dotenv/config';
 import fs from 'node:fs';

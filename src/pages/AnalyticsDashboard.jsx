@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabaseClient';
-import { exportFeesCSV, exportResultsCSV, exportAttendanceCSV } from '../lib/exportUtils';
+import { exportFeesCSV, exportResultsCSV } from '../lib/exportUtils';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -15,7 +15,6 @@ const BLUE    = '#2563eb';
 const PURPLE  = '#7c3aed';
 const TEAL    = '#0d9488';
 const GRADE_COLORS = { 'A+': GREEN, A: GREEN, B: BLUE, C: AMBER, D: '#f97316', F: RED, Fail: RED };
-const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // ── Custom Tooltip ─────────────────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }) => {
@@ -64,8 +63,6 @@ const AnalyticsDashboard = () => {
   // Raw data
   const [allFees, setAllFees]       = useState([]);
   const [allResults, setAllResults] = useState([]);
-  const [allAttendance, setAllAttendance] = useState([]);
-  const [allProfiles, setAllProfiles] = useState([]);
 
   // Computed chart data
   const [feeChartData, setFeeChartData]         = useState([]);
@@ -97,8 +94,6 @@ const AnalyticsDashboard = () => {
 
       setAllFees(fees || []);
       setAllResults(results || []);
-      setAllAttendance(attendance || []);
-      setAllProfiles(profiles || []);
 
       buildCharts(fees || [], results || [], attendance || [], profiles || []);
     } catch (err) {
