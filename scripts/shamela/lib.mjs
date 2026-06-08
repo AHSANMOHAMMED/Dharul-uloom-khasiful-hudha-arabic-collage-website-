@@ -62,6 +62,11 @@ export function saveState(state) {
 // Retry / concurrency
 // ---------------------------------------------------------------------------
 
+export function isNonRetryableDbError(err) {
+  const msg = String(err?.message ?? err);
+  return /no space left on device|read-only mode|too many connections/i.test(msg);
+}
+
 export async function withRetry(fn, { retries = 4, baseDelay = 1000, label = 'op' } = {}) {
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
@@ -69,6 +74,7 @@ export async function withRetry(fn, { retries = 4, baseDelay = 1000, label = 'op
       return await fn();
     } catch (err) {
       lastErr = err;
+      if (isNonRetryableDbError(err)) throw err;
       if (attempt === retries) break;
       const delay = baseDelay * 2 ** attempt;
       // eslint-disable-next-line no-console

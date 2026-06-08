@@ -1,6 +1,31 @@
 # Dharul Uloom Kashiful Hudha Arabic College - Development Guide
 
-## Quick Start
+## Quick Start (Supabase — current)
+
+### Prerequisites
+- Node.js 18+
+- Supabase project ([supabase.com](https://supabase.com))
+
+### Setup
+
+```bash
+cp .env.example .env
+# Set VITE_SUPABASE_URL=https://YOUR_REF.supabase.co
+# Set VITE_SUPABASE_ANON_KEY=your-anon-key
+# Set SUPABASE_DB_PASSWORD for npm run db:apply
+
+npm install
+npm run db:apply:all   # first time only — applies all SQL migrations
+npm run dev            # http://localhost:3000
+```
+
+See [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) for PayHere, Edge Functions, and production.
+
+Legacy Mongo/Express: `npm run dev:legacy`
+
+---
+
+## Legacy MongoDB guide (optional)
 
 ### Prerequisites
 - Node.js 18 or higher

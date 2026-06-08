@@ -39,6 +39,37 @@ Deno.serve(async (req) => {
   const serviceKey   = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase     = createClient(supabaseUrl, serviceKey);
 
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: { user }, error: userErr } = await userClient.auth.getUser();
+  if (userErr || !user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, account_type, assigned_tutor_role')
+    .eq('id', user.id)
+    .single();
+
+  const isStaff = profile?.role === 'admin' || profile?.role === 'librarian';
+  const isTreasurer = profile?.account_type === 'tutor' && profile?.assigned_tutor_role === 'treasurer';
+  if (!isStaff && !isTreasurer) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), {
+      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   // Parse optional body params
   let body: { month?: string; default_fee?: number } = {};
   try { body = await req.json(); } catch { /* use defaults */ }

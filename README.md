@@ -47,76 +47,79 @@ Nurturing faith and knowledge through quality Islamic education, serving as a fo
 - **Animations**: Framer Motion
 - **SEO**: React Helmet
 
-### Backend
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB with Mongoose
-- **Email**: Nodemailer
-- **Security**: Helmet, CORS, Rate Limiting
+### Backend (data & auth)
+- **Platform**: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
+- **Legacy**: Express + MongoDB in `backend/` (reference/compatibility service; use `npm run dev:legacy` only if you still need the older API)
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
-- MongoDB 6+
+- Node.js 18+
+- Supabase project ([supabase.com](https://supabase.com))
 - npm or yarn
 
 ### Installation
 
-#### Frontend
 ```bash
+cp .env.example .env
+# Set VITE_SUPABASE_URL (https://YOUR_REF.supabase.co) and VITE_SUPABASE_ANON_KEY
+
 npm install
 npm run dev
 ```
 
-#### Backend
+Apply migrations: see [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md).
+
+Legacy Mongo API (optional):
+
 ```bash
-cd backend
-npm install
-npm run dev
+npm run dev:legacy
 ```
+
+### Runtime Model
+
+- The **frontend** is the primary app surface.
+- **Auth and data access** are expected to come from Supabase.
+- The `backend/` folder remains available for legacy routes, but it is not the main path for the current SPA.
+- Most production issues will come from **Supabase schema, RLS, and edge functions**, not from React routing.
 
 ### Environment Variables
 
-Create a `.env` file in the backend directory:
+Copy `.env.example` to `.env`. Required for the SPA:
 
 ```env
-MONGO_URI=mongodb://localhost:27017/kashiful-hudha
-PORT=5000
-JWT_SECRET=your_jwt_secret
-FRONTEND_URL=http://localhost:3000
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
 
-# Email (Nodemailer). For Gmail App Passwords use port 465 with EMAIL_SECURE=true.
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=465
-EMAIL_SECURE=true
-EMAIL_USER=your_email
-EMAIL_PASS=your_app_password
+If you run the legacy backend, also configure `backend/.env` with:
+
+```env
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+JWT_SECRET=your-secret
+FRONTEND_URL=http://localhost:5173
 ```
 
 ## Features
 
 ### Implemented
 - Bilingual support (English/Arabic) with RTL
-- Responsive design
-- User authentication (JWT) with admin/student/parent roles
-- Contact form with email notifications
-- News and events management
-- Faculty profiles
-- Course listings
+- Supabase auth with role dashboards (student, parent, tutor, treasurer, principal, librarian, admin)
+- Admin CMS for news, faculty, curriculum, gallery, and courses
 - Online admissions with validation
-- 7-year curriculum overview (Classes 1–7)
-- Islamic library with search, category filtering, and pagination
-- Admin dashboard with analytics (admission stats, content overview)
-- Gallery
+- Digital library with Arabic search, bookmarks, in-book search
+- PayHere online fee payments (student/parent)
+- LMS: materials, assignments, submissions
+- PWA: install prompt, offline shell, service worker
+- 7-year curriculum, gallery, faculty, news from Supabase
 - Google Maps & WhatsApp integration
-- 404 / not-found page
-- CI: lint, build, frontend (Vitest) and backend (Jest) test suites
+- CI: lint, build, Vitest
 
-### Planned
-- Online payment system
-- Learning Management System (LMS)
-- Mobile app (PWA)
+### Optional / external setup
+- PayHere merchant account (sandbox available)
+- Shamela bulk import (`npm run import:shamela`)
+- Legacy Express/Mongo backend for reference only
 
 ## Development Phases
 

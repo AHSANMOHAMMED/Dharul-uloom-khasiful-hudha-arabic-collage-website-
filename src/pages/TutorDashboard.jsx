@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import TutorLmsPanel from '../components/TutorLmsPanel';
 
 
 const TutorDashboard = () => {
@@ -29,6 +30,7 @@ const TutorDashboard = () => {
 
   useEffect(() => {
     fetchTutorData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -445,6 +447,10 @@ const TutorDashboard = () => {
               </div>
             )}
             {leaveSuccess && <p className="text-xs text-emerald-400 text-center animate-pulse">✓ Leave processed!</p>}
+          </div>
+
+          <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl">
+            <TutorLmsPanel />
           </div>
 
         </div>

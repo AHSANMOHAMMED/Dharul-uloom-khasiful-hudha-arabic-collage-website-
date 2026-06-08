@@ -1,0 +1,30 @@
+[
+  {
+    "shamela_id": "1001",
+    "title_ar": "الفقه الميسر",
+    "title_en": "Easy Fiqh",
+    "author": "مجموعة من العلماء",
+    "categories": ["فقه", "عبادات"],
+    "description": "شرح مبسط لأحكام الفقه مع أمثلة تعليمية.",
+    "language": "ar",
+    "year": 2018,
+    "pages": 320,
+    "drive_file_id": "PASTE_GOOGLE_DRIVE_FILE_ID_HERE",
+    "drive_preview_url": "https://drive.google.com/file/d/PASTE_GOOGLE_DRIVE_FILE_ID_HERE/preview",
+    "cover_url": ""
+  },
+  {
+    "shamela_id": "1002",
+    "title_ar": "شرح الأربعين النووية",
+    "title_en": "Commentary on Al-Arba'in Al-Nawawiyyah",
+    "author": "الإمام النووي",
+    "categories": ["حديث", "شرح"],
+    "description": "عرض تعليمي للأحاديث الأربعين المشهورة.",
+    "language": "ar",
+    "year": 2020,
+    "pages": 280,
+    "drive_file_id": "PASTE_GOOGLE_DRIVE_FILE_ID_HERE",
+    "drive_preview_url": "https://drive.google.com/file/d/PASTE_GOOGLE_DRIVE_FILE_ID_HERE/preview",
+    "cover_url": ""
+  }
+]

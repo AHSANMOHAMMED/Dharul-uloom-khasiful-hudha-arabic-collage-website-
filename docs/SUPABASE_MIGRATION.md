@@ -5,9 +5,8 @@ backend to **Supabase** (PostgreSQL + Auth + Storage), and bulk-importing the
 **Al-Maktaba al-Shamela** collection via the official
 [`ragaeeb/shamela`](https://github.com/ragaeeb/shamela) library.
 
-> The migration is **phased**. This PR delivers the library foundation
-> (schema, search, import pipeline, Supabase-backed Library UI). Auth and the
-> remaining content (news/admissions/faculty/contact) follow in later PRs.
+> **Status (2026):** The SPA now uses Supabase for auth, content, library, payments, and LMS.
+> Migrations `0001`–`0010` cover the full schema. Apply with `npm run db:apply:all`.
 
 ---
 
@@ -38,7 +37,10 @@ supabase db push
 #   0001_init_schema.sql   tables, Arabic normalization, FTS + trigram indexes
 #   0002_rls.sql           Row Level Security policies
 #   0003_search.sql        search_books / search_book_pages RPCs
-#   0004_storage.sql       covers (public) + books (private) buckets & policies
+#   0007_schedules_announcements.sql
+#   0008_gallery_courses_cms.sql
+#   0009_payments.sql
+#   0010_lms.sql
 ```
 
 ### What the schema provides
@@ -64,6 +66,33 @@ update public.profiles set role = 'admin' where email = 'you@example.com';
 Only `librarian`/`admin` can write to the catalog and upload to Storage.
 
 ## 5. Import the Shamela collection
+
+### Option A — Offline archive (no API key)
+
+Use the **shamela_ps** full zip (~7543 books, Shamela v4 SQLite inside). Requires **Python 3** (macOS `unzip` fails on this Archive.org file; the importer uses Python `zipfile` instead).
+
+1. Download from **shamela_ps** (the old `shamela_1441_11_full` page is empty):
+   - Browse: https://archive.org/details/shamela_ps
+   - Direct (~6.7 GB): https://archive.org/download/shamela_ps/shamela_1441_113_full.zip
+2. For legacy **v3 `.bok`** zips only: `brew install mdbtools`
+3. Import:
+
+```bash
+# Test catalog import (5 books — titles/authors/categories)
+npm run import:shamela:archive -- --archive-path ~/Downloads/shamela_1441_113_full.zip --limit 5
+
+# Full catalog (~7543 books; resumes if interrupted)
+npm run import:shamela:archive -- --archive-path ~/Downloads/shamela_1441_113_full.zip
+
+# Readable page text from the zip (one-time ~7 GB extract + local Elasticsearch)
+npm run import:shamela:archive -- --archive-path ~/Downloads/shamela_1441_113_full.zip --with-elasticsearch --limit 10
+```
+
+Page text in v4 zips lives in a bundled Elasticsearch index, not in the per-book `.db` files. Without `--with-elasticsearch`, the importer loads **metadata only**. For API-based page import, use Option B.
+
+Set `SHAMELA_ARCHIVE_PATH` in `.env` to skip passing `--archive-path` each time.
+
+### Option B — Shamela v4 API
 
 Request a Shamela API key (`mail@shamela.ws`) and set `SHAMELA_API_KEY`,
 `SHAMELA_BOOKS_ENDPOINT`, `SHAMELA_MASTER_ENDPOINT`.

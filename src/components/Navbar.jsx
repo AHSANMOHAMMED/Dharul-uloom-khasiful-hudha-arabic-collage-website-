@@ -7,7 +7,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const { t, i18n } = useTranslation()
   const location = useLocation()
-  const { isAuthenticated, isAdmin, logout } = useAuth()
+  const { isAuthenticated, isAdmin, isStaff, logout } = useAuth()
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'ar' : 'en'
@@ -80,6 +80,14 @@ const Navbar = () => {
                     className="px-4 py-2 rounded-xl text-sm font-bold bg-emerald-900/40 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-800/50 transition-all shadow-lg hover:shadow-glow-emerald"
                   >
                     {i18n.language === 'ar' ? 'البوابة' : 'My Portal'}
+                  </Link>
+                )}
+                {isStaff && (
+                  <Link
+                    to="/library-admin"
+                    className="px-4 py-2 rounded-xl text-sm font-bold bg-amber-900/40 text-amber-300 border border-amber-500/30 hover:bg-amber-800/50 transition-all shadow-lg"
+                  >
+                    {i18n.language === 'ar' ? 'إدارة المكتبة' : 'Library Admin'}
                   </Link>
                 )}
                 <button
@@ -164,6 +172,15 @@ const Navbar = () => {
                   >
                     {i18n.language === 'ar' ? 'الذهاب للوحة التحكم' : 'Go to Portal'}
                   </Link>
+                  {isStaff && (
+                    <Link
+                      to="/library-admin"
+                      onClick={() => setIsOpen(false)}
+                      className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-amber-900/40 text-amber-300 border border-amber-500/30"
+                    >
+                      {i18n.language === 'ar' ? 'إدارة المكتبة' : 'Library Admin'}
+                    </Link>
+                  )}
                   <button
                     onClick={() => { logout(); setIsOpen(false); }}
                     className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-gray-900 border border-gray-800 text-red-400"

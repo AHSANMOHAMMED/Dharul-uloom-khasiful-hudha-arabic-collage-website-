@@ -16,6 +16,8 @@ const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/offline.html',
+  '/images/icon.svg',
 ];
 
 // ── Install ───────────────────────────────────────────────────────────────────
@@ -70,9 +72,8 @@ self.addEventListener('fetch', (event) => {
           caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, cloned));
           return response;
         })
-        .catch(() => {
-          // Offline fallback: serve cached index.html (SPA shell)
-          return caches.match('/index.html');
+        .catch(async () => {
+          return (await caches.match('/index.html')) || (await caches.match('/offline.html'));
         })
     );
     return;
@@ -108,8 +109,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: payload.body || '',
-    icon: '/images/icon-192.png',
-    badge: '/images/icon-192.png',
+    icon: '/images/icon.svg',
+    badge: '/images/icon.svg',
     tag: payload.tag || 'default',
     data: { url: payload.url || '/' },
     actions: [

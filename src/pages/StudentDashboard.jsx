@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { motion } from 'framer-motion';
+import PayFeeButton from '../components/PayFeeButton';
+import StudentLmsPanel from '../components/StudentLmsPanel';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
@@ -12,7 +14,6 @@ const StudentDashboard = () => {
   const [attendance, setAttendance] = useState([]);
   const [fees, setFees] = useState(null);
   const [tutorJobs, setTutorJobs] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [queryText, setQueryText] = useState('');
@@ -20,6 +21,7 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     fetchStudentData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchStudentData = async () => {
@@ -60,16 +62,7 @@ const StudentDashboard = () => {
         .limit(5);
       if (jobsData) setTutorJobs(jobsData);
 
-      // 5. Fetch notifications
-      const { data: notifData } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      if (notifData) setNotifications(notifData);
-
-      // 6. Fetch pinned announcements
+      // 5. Fetch pinned announcements
       const { data: annData } = await supabase
         .from('announcements')
         .select('id, title, body, is_pinned, created_at')
@@ -366,6 +359,7 @@ const StudentDashboard = () => {
                     </div>
                   </div>
                 )}
+                <PayFeeButton fee={fees} />
               </div>
             ) : (
               <div className="text-center py-12 text-gray-500">
@@ -417,6 +411,10 @@ const StudentDashboard = () => {
                 )}
               </form>
             </div>
+          </div>
+
+          <div className="glass-card p-6 rounded-2xl border border-gray-800">
+            <StudentLmsPanel />
           </div>
 
         </div>

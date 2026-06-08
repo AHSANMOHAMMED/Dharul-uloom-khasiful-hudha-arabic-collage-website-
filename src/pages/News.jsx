@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { listNews } from '../lib/contentApi'
@@ -90,9 +91,16 @@ const News = () => {
                       {item.title[i18n.language] || item.title.en}
                     </h2>
                     
-                    <p className="text-gray-700 leading-relaxed">
+                    <p className="text-gray-700 leading-relaxed line-clamp-4">
                       {item.content[i18n.language] || item.content.en}
                     </p>
+
+                    <Link
+                      to={`/news/${item._id}`}
+                      className="inline-block mt-4 text-islamic-green font-semibold hover:text-islamic-dark"
+                    >
+                      {t('news.readMore')}
+                    </Link>
                     
                     {item.author && (
                       <p className="mt-4 text-sm text-gray-500">

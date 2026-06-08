@@ -45,6 +45,8 @@ backend/.env
 
 # Shamela import checkpoint / downloaded artifacts
 scripts/shamela/.import-state.json
+scripts/shamela/.import-archive-state.json
+.cache/shamela/
 scripts/shamela/books/
 scripts/shamela/*.db
 scripts/shamela/*.json

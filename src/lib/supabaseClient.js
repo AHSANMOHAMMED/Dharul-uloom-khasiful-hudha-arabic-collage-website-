@@ -5,6 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+export const supabaseFunctionBaseUrl = supabaseUrl || '';
+
 // The app should still build and render (with graceful empty states) before a
 // Supabase project has been provisioned, so we guard against missing config
 // instead of throwing at import time.
