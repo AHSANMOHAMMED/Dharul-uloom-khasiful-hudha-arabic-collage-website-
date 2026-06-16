@@ -15,9 +15,11 @@ const Footer = () => {
           {/* Brand Section */}
           <div className="col-span-1 md:col-span-2 space-y-6">
             <Link to="/" className="flex items-center gap-3 group inline-flex">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center shadow-glow-emerald">
-                <span className="text-white font-arabic font-bold text-2xl">ك</span>
-              </div>
+              <img 
+                src="/images/logo.jpg" 
+                alt="Dharul Uloom Kashiful Hudha Logo" 
+                className="w-12 h-12 object-contain rounded-xl shadow-sm border border-gray-800"
+              />
               <div className="flex flex-col">
                 <span className="text-2xl font-arabic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">
                   {i18n.language === 'ar' ? 'دار العلوم كاشف الهدى' : 'Kashiful Hudha'}
