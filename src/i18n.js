@@ -15,6 +15,9 @@ const resources = {
       "nav.gallery": "Gallery",
       "nav.news": "News",
       "nav.contact": "Contact",
+      "nav.academics": "Academics",
+      "nav.portal": "Portal",
+      "nav.explore": "Explore",
       
       // Home Page
       "home.hero.title": "Welcome to Dharul Uloom Kashiful Hudha",
@@ -75,6 +78,9 @@ const resources = {
       "nav.gallery": "المعرض",
       "nav.news": "الأخبار",
       "nav.contact": "اتصل بنا",
+      "nav.academics": "الدراسة والأكاديمية",
+      "nav.portal": "البوابة الإلكترونية",
+      "nav.explore": "استكشف",
       
       // Home Page
       "home.hero.title": "مرحبا بكم في دار العلوم كشف الهدى",
