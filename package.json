@@ -4,7 +4,7 @@
   "description": "Official website for Dharul Uloom Kashiful Hudha Arabic College",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0 --port 3000",
     "dev:legacy": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" --names \"FRONTEND,BACKEND\" --prefix-colors \"cyan,green\"",
     "dev:frontend": "vite",
     "dev:backend": "cd backend && npm run dev",
