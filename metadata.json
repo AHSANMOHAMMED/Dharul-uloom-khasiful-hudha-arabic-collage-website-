@@ -1,0 +1,7 @@
+{
+  "name": "Dharul Uloom Kashiful Hudha Arabic College",
+  "description": "دار العلوم كاشف الهدى — Islamic Arabic College Management Portal. Students, Tutors, Parents & Administration.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
