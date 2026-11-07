@@ -118,18 +118,30 @@ export async function updateAdmissionStatus(id, status) {
   if (error) throw error;
 }
 
-/** Staff: aggregate dashboard stats (admissions + content counts). */
+/** Staff: aggregate dashboard stats (admissions + content + user + library counts). */
 export async function adminStats() {
-  const [total, pending, approved, rejected, news, faculty] = await Promise.all([
+  const [
+    total, pending, approved, rejected,
+    news, faculty,
+    students, tutors,
+    books,
+  ] = await Promise.all([
     countAdmissions(),
     countAdmissions({ status: 'pending' }),
     countAdmissions({ status: 'approved' }),
     countAdmissions({ status: 'rejected' }),
     supabase.from('news').select('*', { count: 'exact', head: true }),
     supabase.from('faculty').select('*', { count: 'exact', head: true }),
+    supabase.from('profiles').select('*', { count: 'exact', head: true })
+      .eq('account_type', 'student').eq('is_approved', true),
+    supabase.from('profiles').select('*', { count: 'exact', head: true })
+      .eq('account_type', 'tutor').eq('is_approved', true),
+    supabase.from('books').select('*', { count: 'exact', head: true }),
   ]);
   return {
     admissions: { total, pending, approved, rejected },
     content: { news: news.count ?? 0, faculty: faculty.count ?? 0 },
+    users: { students: students.count ?? 0, tutors: tutors.count ?? 0 },
+    library: { books: books.count ?? 0 },
   };
 }
