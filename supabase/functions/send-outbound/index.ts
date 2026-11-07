@@ -26,7 +26,7 @@ const corsHeaders = {
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-type Result = { ok: boolean; id?: string; error?: string; skipped?: boolean };
+type Result = { ok: boolean; id?: string; error?: string; skipped?: boolean; blocked?: boolean; staleToken?: boolean };
 type OutboxRow = {
   id: string;
   org_id: string;
@@ -48,7 +48,7 @@ async function timedFetch(url: string, init: RequestInit): Promise<Response> {
 async function smsNotifyLk(to: string, body: string, sender: string): Promise<Result> {
   const user = Deno.env.get('NOTIFYLK_USER_ID');
   const key = Deno.env.get('NOTIFYLK_API_KEY');
-  if (!user || !key) return { ok: false, skipped: true, error: 'Notify.lk not configured' };
+  if (!user || !key) return { ok: false, blocked: true, error: 'Notify.lk not configured' };
   const q = new URLSearchParams({ user_id: user, api_key: key, sender_id: sender || 'NotifyDEMO', to: normalizeLkPhone(to), message: body });
   const res = await timedFetch(`https://app.notify.lk/api/v1/send?${q}`, { method: 'GET' });
   const j = await res.json().catch(() => ({}));
@@ -58,7 +58,7 @@ async function smsNotifyLk(to: string, body: string, sender: string): Promise<Re
 
 async function smsTextLk(to: string, body: string, sender: string): Promise<Result> {
   const token = Deno.env.get('TEXTLK_API_TOKEN');
-  if (!token) return { ok: false, skipped: true, error: 'Text.lk not configured' };
+  if (!token) return { ok: false, blocked: true, error: 'Text.lk not configured' };
   const res = await timedFetch('https://app.text.lk/api/v3/sms/send', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -74,7 +74,7 @@ async function smsTwilio(to: string, body: string, sender: string): Promise<Resu
   const token = Deno.env.get('TWILIO_AUTH_TOKEN');
   // An alphanumeric sender (mask) is used when the country allows it, else the number.
   const from = sender || Deno.env.get('TWILIO_FROM_NUMBER');
-  if (!sid || !token || !from) return { ok: false, skipped: true, error: 'Twilio not configured' };
+  if (!sid || !token || !from) return { ok: false, blocked: true, error: 'Twilio not configured' };
   const res = await timedFetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: 'POST',
     headers: { Authorization: `Basic ${btoa(`${sid}:${token}`)}`, 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -96,7 +96,7 @@ async function sendWhatsApp(to: string, body: string): Promise<Result> {
   const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
   const token = Deno.env.get('TWILIO_AUTH_TOKEN');
   const from = Deno.env.get('WHATSAPP_FROM') || Deno.env.get('TWILIO_WHATSAPP_FROM');
-  if (!sid || !token || !from) return { ok: false, skipped: true, error: 'WhatsApp/Twilio not configured' };
+  if (!sid || !token || !from) return { ok: false, blocked: true, error: 'WhatsApp/Twilio not configured' };
   const res = await timedFetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: 'POST',
     headers: { Authorization: `Basic ${btoa(`${sid}:${token}`)}`, 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -116,7 +116,7 @@ async function sendEmail(to: string, subject: string | null, body: string,
                          attachment?: { filename: string; content: string }): Promise<Result> {
   const apiKey = Deno.env.get('RESEND_API_KEY');
   const from = Deno.env.get('MAIL_FROM') || 'noreply@kashifulhudha.lk';
-  if (!apiKey) return { ok: false, skipped: true, error: 'RESEND_API_KEY not configured' };
+  if (!apiKey) return { ok: false, blocked: true, error: 'RESEND_API_KEY not configured' };
   const res = await timedFetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
@@ -144,7 +144,15 @@ async function sendExpoPush(token: string, title: string | null, body: string, d
   });
   const j = await res.json().catch(() => ({}));
   const ticket = Array.isArray(j?.data) ? j.data[0] : j?.data;
-  if (!res.ok || ticket?.status === 'error') return { ok: false, error: ticket?.message || j?.errors?.[0]?.message || `push ${res.status}` };
+  if (!res.ok || ticket?.status === 'error') {
+    const error = ticket?.details?.error || ticket?.message || j?.errors?.[0]?.message || `push ${res.status}`;
+    return {
+      ok: false,
+      skipped: error === 'DeviceNotRegistered',
+      staleToken: error === 'DeviceNotRegistered',
+      error
+    };
+  }
   return { ok: true, id: ticket?.id };
 }
 
@@ -220,7 +228,14 @@ Deno.serve(async (req) => {
     }
 
     const now = new Date().toISOString();
-    if (result.skipped) {
+    if (result.blocked) {
+      skipped++;
+      await admin.from('message_outbox').update({ status: 'blocked', error: result.error, sent_at: null }).eq('id', row.id);
+    } else if (result.staleToken) {
+      skipped++;
+      await admin.from('device_push_tokens').delete().eq('token', row.to_address);
+      await admin.from('message_outbox').update({ status: 'skipped', error: result.error, sent_at: now }).eq('id', row.id);
+    } else if (result.skipped) {
       skipped++;
       await admin.from('message_outbox').update({ status: 'skipped', error: result.error, sent_at: now }).eq('id', row.id);
     } else if (result.ok) {
