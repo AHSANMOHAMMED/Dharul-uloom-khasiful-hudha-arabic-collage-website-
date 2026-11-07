@@ -15,7 +15,7 @@
 // LOCKED) so several workers can run at once without double-sending.
 // Every provider call has an 8 s timeout to stay inside the 10 s API budget.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { base64, buildReceiptPdf } from '../_shared/receiptPdf.ts';
 import { normalizeLkPhone } from '../_shared/phone.ts';
 
@@ -156,6 +156,43 @@ async function sendExpoPush(token: string, title: string | null, body: string, d
   return { ok: true, id: ticket?.id };
 }
 
+async function reconcileExpoReceipts(admin: SupabaseClient<any, 'public', any>) {
+  const { data: rows, error } = await admin
+    .from('message_outbox')
+    .select('id, provider_id, to_address')
+    .eq('channel', 'push')
+    .eq('status', 'sent')
+    .not('provider_id', 'is', null)
+    .gte('sent_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .limit(100);
+  if (error || !rows?.length) return;
+
+  const response = await timedFetch('https://exp.host/--/api/v2/push/getReceipts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ ids: rows.map((row) => row.provider_id) }),
+  });
+  if (!response.ok) return;
+  const payload = await response.json().catch(() => ({}));
+  const receipts = payload?.data || {};
+
+  for (const row of rows) {
+    const receipt = receipts[row.provider_id];
+    if (!receipt || receipt.status === 'ok') continue;
+    const errorCode = receipt.details?.error || receipt.message || 'Expo push delivery failed';
+    if (errorCode === 'DeviceNotRegistered') {
+      await admin.from('device_push_tokens').delete().eq('token', row.to_address);
+      await admin.from('message_outbox')
+        .update({ status: 'skipped', error: errorCode })
+        .eq('id', row.id);
+    } else {
+      await admin.from('message_outbox')
+        .update({ status: 'failed', error: errorCode })
+        .eq('id', row.id);
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -248,6 +285,12 @@ Deno.serve(async (req) => {
         .update({ status: (row.attempts ?? 1) >= 5 ? 'failed' : 'pending', error: result.error || 'send failed' })
         .eq('id', row.id);
     }
+  }
+
+  try {
+    await reconcileExpoReceipts(admin);
+  } catch (error) {
+    console.error('Expo receipt reconciliation failed', error);
   }
 
   return json({ processed: rows?.length || 0, sent, failed, skipped, ms: Date.now() - started });
