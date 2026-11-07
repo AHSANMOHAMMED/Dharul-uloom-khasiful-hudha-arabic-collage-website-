@@ -19,8 +19,9 @@ let loading = null;
 export function loadTamil() {
   if (TA) return Promise.resolve(TA);
   if (!loading) {
-    loading = import('../locales/ta.json').then((m) => {
-      TA = m.default || m;
+    // several dictionaries (keyed by English) merged into one
+    loading = Promise.all([import('../locales/ta.json'), import('../locales/ta.governance.json')]).then((mods) => {
+      TA = Object.assign({}, ...mods.map((m) => m.default || m));
       return TA;
     });
   }

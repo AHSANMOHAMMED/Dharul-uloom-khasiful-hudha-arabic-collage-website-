@@ -20,9 +20,24 @@ const STAGE_LABELS = {
   rejected: { en: 'Rejected', ar: 'مرفوض' },
 };
 
+const SOURCE_LABELS = {
+  website: { en: 'Website', ar: 'الموقع الإلكتروني' },
+};
+
+/** "DOB 2014-03-02 · Age 12 · Source: Website" (only the parts we have). */
+function admissionFacts(item) {
+  const parts = [];
+  if (item.dateOfBirth) parts.push(`${tx('تاريخ الميلاد', 'Date of birth')}: ${item.dateOfBirth}`);
+  if (item.age != null) parts.push(`${tx('العمر', 'Age')}: ${item.age}`);
+  if (item.source) {
+    const l = SOURCE_LABELS[item.source];
+    parts.push(`${tx('المصدر', 'Source')}: ${l ? tx(l.ar, l.en) : item.source}`);
+  }
+  return parts.join(' · ');
+}
+
 export default function AdmissionsCrmBoard() {
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation(); // re-render on language change
   const [rows, setRows] = useState([]);
   const [selected, setSelected] = useState(null);
   const [notes, setNotes] = useState([]);
@@ -74,9 +89,7 @@ export default function AdmissionsCrmBoard() {
       const result = await enrollAdmission(selected._id, enrollIndex.trim(), Number(enrollClass));
       const token = result?.parent_invite_token;
       toast.success(
-        ar
-          ? `تم التسجيل. رمز دعوة ولي الأمر: ${token || '—'}`
-          : `Enrolled. Parent invite token: ${token || '—'}`
+        tx('تم التسجيل. رمز دعوة ولي الأمر: {token}', 'Enrolled. Parent invite token: {token}').replace('{token}', token || '—')
       );
       if (token && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(token);
@@ -90,7 +103,7 @@ export default function AdmissionsCrmBoard() {
   };
 
   if (loading) {
-    return <div className="text-gray-400 text-sm py-8 text-center">Loading CRM…</div>;
+    return <div className="text-gray-400 text-sm py-8 text-center">{tx('جارٍ تحميل CRM…', 'Loading CRM…')}</div>;
   }
 
   return (
@@ -104,7 +117,7 @@ export default function AdmissionsCrmBoard() {
           onClick={load}
           className="text-sm px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800"
         >
-          Refresh
+          {tx('تحديث', 'Refresh')}
         </button>
       </div>
 
@@ -115,7 +128,7 @@ export default function AdmissionsCrmBoard() {
             <div key={stage} className="rounded-2xl border border-gray-800 bg-gray-900/50 p-3 min-h-[180px]">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-sm font-bold text-emerald-300">
-                  {ar ? STAGE_LABELS[stage].ar : STAGE_LABELS[stage].en}
+                  {tx(STAGE_LABELS[stage].ar, STAGE_LABELS[stage].en)}
                 </span>
                 <span className="text-xs text-gray-500">{items.length}</span>
               </div>
@@ -130,6 +143,9 @@ export default function AdmissionsCrmBoard() {
                     <div className="font-semibold text-white text-sm">{item.studentName}</div>
                     <div className="text-xs text-gray-400 mt-1">{item.course} · {item.parentName}</div>
                     <div className="text-xs text-gray-500">{item.phone}</div>
+                    {(item.dateOfBirth || item.age != null || item.source) && (
+                      <div className="text-xs text-gray-500">{admissionFacts(item)}</div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -146,9 +162,12 @@ export default function AdmissionsCrmBoard() {
               <p className="text-sm text-gray-400">
                 {selected.parentName} · {selected.phone} · {selected.course}
               </p>
+              {(selected.dateOfBirth || selected.age != null || selected.source) && (
+                <p className="text-sm text-gray-400">{admissionFacts(selected)}</p>
+              )}
             </div>
             <button type="button" className="text-gray-400 text-sm" onClick={() => setSelected(null)}>
-              Close
+              {tx('إغلاق', 'Close')}
             </button>
           </div>
 
@@ -164,14 +183,14 @@ export default function AdmissionsCrmBoard() {
                     : 'border-gray-700 text-gray-300 hover:bg-gray-800'
                 }`}
               >
-                {ar ? STAGE_LABELS[stage].ar : STAGE_LABELS[stage].en}
+                {tx(STAGE_LABELS[stage].ar, STAGE_LABELS[stage].en)}
               </button>
             ))}
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs text-gray-400 uppercase">Notes</label>
+              <label className="text-xs text-gray-400 uppercase">{tx('ملاحظات', 'Notes')}</label>
               <textarea
                 className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200"
                 rows={3}
@@ -183,14 +202,14 @@ export default function AdmissionsCrmBoard() {
                 onClick={onAddNote}
                 className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold"
               >
-                Add note
+                {tx('إضافة ملاحظة', 'Add note')}
               </button>
               <ul className="space-y-2 max-h-40 overflow-y-auto">
                 {notes.map((n) => (
                   <li key={n.id} className="text-xs text-gray-300 border-b border-gray-800 pb-2">
                     {n.body}
                     <div className="text-gray-500 mt-1">
-                      {n.profiles?.full_name || 'Staff'} · {new Date(n.created_at).toLocaleString()}
+                      {n.profiles?.full_name || tx('موظف', 'Staff')} · {new Date(n.created_at).toLocaleString()}
                     </div>
                   </li>
                 ))}
@@ -198,7 +217,7 @@ export default function AdmissionsCrmBoard() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs text-gray-400 uppercase">Enroll student</label>
+              <label className="text-xs text-gray-400 uppercase">{tx('تسجيل الطالب', 'Enroll student')}</label>
               <input
                 className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200"
                 placeholder="KASHIF-2026-101"
@@ -211,7 +230,7 @@ export default function AdmissionsCrmBoard() {
                 onChange={(e) => setEnrollClass(e.target.value)}
               >
                 {[1, 2, 3, 4, 5, 6, 7].map((c) => (
-                  <option key={c} value={c}>Class {c}</option>
+                  <option key={c} value={c}>{tx('الصف {n}', 'Class {n}').replace('{n}', c)}</option>
                 ))}
               </select>
               <button
@@ -219,7 +238,7 @@ export default function AdmissionsCrmBoard() {
                 onClick={onEnroll}
                 className="px-4 py-2 rounded-xl bg-amber-600 text-white text-sm font-bold"
               >
-                Create index + enroll
+                {tx('إنشاء رقم القيد + التسجيل', 'Create index + enroll')}
               </button>
             </div>
           </div>

@@ -193,7 +193,7 @@ export default function FeeInvoiceDetail({ invoiceId, student, onClose, onChange
                           </Button>
                           {p.fee_receipts?.public_token && (
                             <Button size="sm" variant="ghost" onClick={() => openReceiptPdf(p.fee_receipts.public_token)}>
-                              PDF
+                              {t('PDF', 'PDF')}
                             </Button>
                           )}
                           {isAccountant && p.status === 'posted' && (

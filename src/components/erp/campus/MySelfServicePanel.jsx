@@ -1,12 +1,36 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
-import { AsyncView, Button, Card, Input, PageHeader, Stat, StatusBadge, Table, Tabs, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Input, PageHeader, Stat, Table, Tabs, useAsync, useLang } from '../ui';
 import { currentMonth, formatDate, formatMoney, query, rpc, today } from '../../../lib/erp/rpc';
 import { DAYS, DAYS_AR, monthRange } from '../../../lib/erp/campusApi';
 import { useAction } from './hooks';
 import SelfLeave from './SelfLeave';
 import SelfPayslips from './SelfPayslips';
+import { TASK_STATUSES, TASK_STATUS_LABELS, dutyName, listAssignments, listFunds, listTasks, pairLabel } from '../../../lib/erp/governanceApi';
+
+const STATUS_LABELS = {
+  present: ['Present', 'حاضر', 'green'],
+  half_day: ['Half day', 'نصف يوم', 'amber'],
+  late: ['Late', 'متأخر', 'amber'],
+  leave: ['Leave', 'إجازة', 'blue'],
+  absent: ['Absent', 'غائب', 'red'],
+  holiday: ['Holiday', 'عطلة', 'gray'],
+  submitted: ['Submitted', 'مقدَّم', 'amber'],
+  approved: ['Approved', 'معتمد', 'blue'],
+  rejected: ['Rejected', 'مرفوض', 'red'],
+  paid: ['Paid', 'مدفوع', 'green'],
+  void: ['Void', 'ملغى', 'red'],
+  draft: ['Draft', 'مسودة', 'amber'],
+};
+
+function StatusBadge({ status }) {
+  const { t } = useLang();
+  const s = STATUS_LABELS[status];
+  return <Badge tone={s?.[2] || 'gray'}>{s ? t(s[0], s[1]) : String(status ?? '—').replace(/_/g, ' ')}</Badge>;
+}
+
+const subjectName = (s, lang) => (lang === 'ar' && s?.name_ar) || s?.name_en || '';
 
 function AttendanceTab({ user }) {
   const { t } = useLang();
@@ -86,7 +110,7 @@ function AttendanceTab({ user }) {
   );
 }
 function TimetableTab({ user }) {
-  const { t, ar } = useLang();
+  const { t, lang } = useLang();
   const [state] = useAsync(
     () =>
       query('class_schedules', (q) =>
@@ -110,13 +134,13 @@ function TimetableTab({ user }) {
                   if (!items.length) return null;
                   return (
                     <div key={d} className="rounded-xl border border-gray-800 p-3">
-                      <div className="font-bold text-emerald-300 mb-2">{ar ? DAYS_AR[d] : d}</div>
+                      <div className="font-bold text-emerald-300 mb-2">{t(d, DAYS_AR[d])}</div>
                       <ul className="space-y-1 text-sm">
                         {items.map((r) => (
                           <li key={r.id} className="flex justify-between gap-2">
                             <span className="text-gray-400 whitespace-nowrap">{String(r.start_time).slice(0, 5)}–{String(r.end_time).slice(0, 5)}</span>
                             <span className="text-gray-100 text-end">
-                              {(ar ? r.subjects?.name_ar : r.subjects?.name_en) || r.subject} · {t('Class', 'الصف')} {r.class_number}
+                              {subjectName(r.subjects, lang) || r.subject} · {t('Class', 'الصف')} {r.class_number}
                               {r.room ? ` · ${r.room}` : ''}
                             </span>
                           </li>
@@ -140,7 +164,7 @@ function TimetableTab({ user }) {
               empty={t('No subjects assigned.', 'لا توجد مواد مسندة.')}
               columns={[
                 { key: 'class_number', label: t('Class', 'الصف') },
-                { key: 'subject', label: t('Subject', 'المادة'), render: (r) => (ar ? r.subjects?.name_ar || r.subjects?.name_en : r.subjects?.name_en) },
+                { key: 'subject', label: t('Subject', 'المادة'), render: (r) => subjectName(r.subjects, lang) },
                 { key: 'weekly_periods', label: t('Periods / week', 'حصص أسبوعية') },
               ]}
             />
@@ -187,6 +211,104 @@ function ClaimsTab({ user }) {
   );
 }
 
+function DutiesTab({ user }) {
+  const { t, lang } = useLang();
+  const [, setParams] = useSearchParams();
+  const [state] = useAsync(async () => {
+    const [active, past, funds, tasks] = await Promise.all([
+      listAssignments({ status: 'active', assigneeId: user.id }),
+      listAssignments({ status: 'ended', assigneeId: user.id }),
+      listFunds().catch(() => []),
+      listTasks({ assigneeId: user.id }).catch(() => []),
+    ]);
+    return { active, past, funds: funds.filter((f) => f.holders.some((h) => h.assignee_id === user.id)), tasks };
+  }, [user.id]);
+
+  return (
+    <AsyncView state={state}>
+      {({ active, past, funds, tasks }) => (
+        <div className="space-y-6">
+          <Card title={t('My duties', 'مسؤولياتي')} actions={<Button size="sm" variant="secondary" onClick={() => setParams({ module: 'duties' })}>{t('All duties', 'كل المسؤوليات')} →</Button>}>
+            {active.length ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                {active.map((a) => (
+                  <div key={a.id} className="rounded-xl border border-gray-800 p-3">
+                    <div className="font-bold text-emerald-300">{dutyName(a.duty, lang)}</div>
+                    <div className="text-xs text-gray-400">
+                      {t('Since', 'منذ')} {formatDate(a.start_date)}
+                      {a.year?.name ? ` · ${a.year.name}` : ''}
+                    </div>
+                    {a.meeting && (
+                      <div className="text-xs text-gray-500">
+                        {t('Decided at', 'تقرر في')}: {a.meeting.title} · {formatDate(a.meeting.meeting_date)}
+                      </div>
+                    )}
+                    {!a.is_lead && <Badge>{t('Co-holder', 'مشارك')}</Badge>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 py-4 text-center">{t('You hold no duty at the moment.', 'لا تتولى أي مسؤولية حاليًا.')}</p>
+            )}
+          </Card>
+          <Card title={t('My petty cash', 'نثريتي')}>
+            <Table
+              rows={funds}
+              empty={t('No petty cash funds for your duties.', 'لا توجد صناديق نثرية لمسؤولياتك.')}
+              columns={[
+                { key: 'duty', label: t('Duty', 'المسؤولية'), render: (f) => dutyName(f.duty, lang) },
+                { key: 'balance', label: t('Balance', 'الرصيد'), render: (f) => formatMoney(f.balance.posted_balance) },
+                { key: 'pending', label: t('Pending approval', 'بانتظار الاعتماد'), render: (f) => formatMoney(f.balance.pending_spend) },
+                { key: 'available', label: t('Available', 'المتاح'), render: (f) => <b>{formatMoney(f.balance.available)}</b> },
+                {
+                  key: 'act',
+                  label: '',
+                  render: (f) =>
+                    f.is_active && (
+                      <Button size="sm" onClick={() => setParams({ module: 'pettycash', spend: f.id })}>
+                        {t('Record spend', 'تسجيل صرف')}
+                      </Button>
+                    ),
+                },
+              ]}
+            />
+          </Card>
+          <Card title={t('My tasks', 'مهامي')} actions={<Button size="sm" onClick={() => setParams({ module: 'tasks' })}>{t('Open task board', 'فتح لوحة المهام')} →</Button>}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {TASK_STATUSES.map((s) => (
+                <Stat
+                  key={s}
+                  label={pairLabel(TASK_STATUS_LABELS, s, t)}
+                  value={tasks.filter((x) => x.status === s).length}
+                  tone={{ todo: 'gray', in_progress: 'blue', review: 'amber', done: 'emerald' }[s]}
+                />
+              ))}
+            </div>
+            {tasks.some((x) => x.status !== 'done' && x.due_date && x.due_date < today()) && (
+              <p className="text-sm text-red-400 mt-3">
+                {t('Overdue tasks', 'مهام متأخرة')}: {tasks.filter((x) => x.status !== 'done' && x.due_date && x.due_date < today()).length}
+              </p>
+            )}
+          </Card>
+          <Card title={t('My past duties', 'مسؤولياتي السابقة')}>
+            <Table
+              rows={past}
+              empty={t('No past duties.', 'لا توجد مسؤوليات سابقة.')}
+              columns={[
+                { key: 'duty', label: t('Duty', 'المسؤولية'), render: (a) => dutyName(a.duty, lang) },
+                { key: 'period', label: t('Period', 'الفترة'), render: (a) => `${formatDate(a.start_date)} → ${formatDate(a.end_date)}` },
+                { key: 'year', label: t('Academic year', 'العام الدراسي'), render: (a) => a.year?.name || '—' },
+                { key: 'meeting', label: t('Decided at', 'تقرر في'), render: (a) => a.meeting?.title || '—' },
+                { key: 'end_reason', label: t('Note', 'ملاحظة') },
+              ]}
+            />
+          </Card>
+        </div>
+      )}
+    </AsyncView>
+  );
+}
+
 export default function MySelfServicePanel() {
   const { t } = useLang();
   const { user } = useAuth();
@@ -207,6 +329,7 @@ export default function MySelfServicePanel() {
           { id: 'payslips', label: t('Payslips', 'قسائم الراتب') },
           { id: 'timetable', label: t('My classes', 'حصصي') },
           { id: 'claims', label: t('Expense claims', 'المطالبات') },
+          { id: 'duties', label: t('My duties', 'مسؤولياتي') },
         ]}
       />
       {tab === 'attendance' && <AttendanceTab user={user} />}
@@ -214,6 +337,7 @@ export default function MySelfServicePanel() {
       {tab === 'payslips' && <SelfPayslips user={user} />}
       {tab === 'timetable' && <TimetableTab user={user} />}
       {tab === 'claims' && <ClaimsTab user={user} />}
+      {tab === 'duties' && <DutiesTab user={user} />}
     </div>
   );
 }

@@ -36,7 +36,10 @@ for (const file of files(SRC)) {
 const all = [...out].filter((s) => /[A-Za-z]/.test(s)).sort();
 writeFileSync(join(ROOT, 'scripts/i18n/strings.json'), JSON.stringify(all, null, 1) + '\n');
 const taPath = join(SRC, 'locales/ta.json');
-const ta = existsSync(taPath) ? JSON.parse(readFileSync(taPath, 'utf8')) : {};
+const ta = {};
+for (const f of [taPath, join(SRC, 'locales/ta.governance.json')]) {
+  if (existsSync(f)) Object.assign(ta, JSON.parse(readFileSync(f, 'utf8')));
+}
 const missing = all.filter((s) => !ta[s]);
 console.log(`${all.length} strings, ${all.length - missing.length} translated, ${missing.length} missing`);
 if (process.argv.includes('--missing')) writeFileSync(join(ROOT, 'scripts/i18n/missing.json'), JSON.stringify(missing, null, 1) + '\n');

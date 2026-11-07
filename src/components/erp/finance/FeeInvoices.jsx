@@ -88,7 +88,7 @@ export default function FeeInvoices({ studentId = null, onClearStudent }) {
             </Button>
           )}
           <Button size="sm" variant="secondary" onClick={exportCsv} disabled={!rows.length}>
-            CSV
+            {t('CSV', 'CSV')}
           </Button>
           <Button size="sm" variant="secondary" onClick={reload}>
             {t('Refresh', 'تحديث')}

@@ -9,7 +9,7 @@ import { useAction, useEmployees } from './hooks';
 const EMPTY = { day_of_week: 'Monday', start_time: '08:00', end_time: '08:45', subject_id: '', subject: '', tutor_id: '', room: '' };
 
 export default function Timetable() {
-  const { t, ar } = useLang();
+  const { t } = useLang();
   const auth = useAuth();
   const [busy, run] = useAction();
   const [cls, setCls] = useState('1');
@@ -79,7 +79,7 @@ export default function Timetable() {
               const items = rows.filter((r) => r.day_of_week === d);
               return (
                 <div key={d} className="rounded-xl border border-gray-800 p-3 min-h-[120px]">
-                  <div className="font-bold text-emerald-300 mb-2">{ar ? DAYS_AR[d] : d}</div>
+                  <div className="font-bold text-emerald-300 mb-2">{t(d, DAYS_AR[d])}</div>
                   {!items.length && <div className="text-xs text-gray-600">—</div>}
                   <ul className="space-y-2">
                     {items.map((r) => (
@@ -88,7 +88,7 @@ export default function Timetable() {
                           <span className="text-gray-400">{String(r.start_time).slice(0, 5)}–{String(r.end_time).slice(0, 5)}</span>
                           {r.room && <span className="text-xs text-gray-500">{r.room}</span>}
                         </div>
-                        <div className="text-white font-semibold">{(ar ? r.subjects?.name_ar : r.subjects?.name_en) || r.subject}</div>
+                        <div className="text-white font-semibold">{t(r.subjects?.name_en, r.subjects?.name_ar) || r.subject}</div>
                         <div className="text-xs text-gray-400">{r.tutor?.full_name || '—'}</div>
                         {canEditRow(r) && (
                           <div className="flex gap-2 mt-1">
@@ -112,13 +112,13 @@ export default function Timetable() {
         footer={<><Button variant="ghost" onClick={() => setModal(null)}>{t('Cancel', 'إلغاء')}</Button><Button disabled={busy} onClick={save}>{t('Save', 'حفظ')}</Button></>}>
         {modal && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label={t('Day', 'اليوم')}><Select value={modal.day_of_week} onChange={(e) => setModal({ ...modal, day_of_week: e.target.value })} options={DAYS.map((d) => ({ value: d, label: ar ? DAYS_AR[d] : d }))} /></Field>
+            <Field label={t('Day', 'اليوم')}><Select value={modal.day_of_week} onChange={(e) => setModal({ ...modal, day_of_week: e.target.value })} options={DAYS.map((d) => ({ value: d, label: t(d, DAYS_AR[d]) }))} /></Field>
             <Field label={t('Room', 'القاعة')}><Input value={modal.room} onChange={(e) => setModal({ ...modal, room: e.target.value })} /></Field>
             <Field label={t('Start', 'البداية')}><Input type="time" value={modal.start_time} onChange={(e) => setModal({ ...modal, start_time: e.target.value })} /></Field>
             <Field label={t('End', 'النهاية')}><Input type="time" value={modal.end_time} onChange={(e) => setModal({ ...modal, end_time: e.target.value })} /></Field>
             <Field label={t('Subject', 'المادة')}>
               <Select value={modal.subject_id} onChange={(e) => setModal({ ...modal, subject_id: e.target.value })} placeholder={t('Other (type below)', 'أخرى (اكتب أدناه)')}
-                options={(subjects.data || []).map((s) => ({ value: s.id, label: `${s.code} · ${ar ? s.name_ar || s.name_en : s.name_en}` }))} />
+                options={(subjects.data || []).map((s) => ({ value: s.id, label: `${s.code} · ${t(s.name_en, s.name_ar)}` }))} />
             </Field>
             <Field label={t('Custom subject label', 'اسم مادة مخصص')}><Input value={modal.subject} onChange={(e) => setModal({ ...modal, subject: e.target.value })} disabled={Boolean(modal.subject_id)} /></Field>
             <div className="sm:col-span-2">

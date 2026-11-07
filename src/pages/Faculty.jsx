@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { listFaculty } from '../lib/contentApi'
 import { tx } from '../lib/tx';
+import { localized } from '../lib/localized';
 
 const Faculty = () => {
-  const { i18n } = useTranslation()
+  useTranslation() // re-render on language change
   const [faculty, setFaculty] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -64,13 +65,13 @@ const Faculty = () => {
                   </div>
                   <div className="p-6">
                     <h3 className="text-xl font-bold text-islamic-green mb-2">
-                      {member.name[i18n.language] || member.name.en}
+                      {localized(member.name)}
                     </h3>
                     <p className="text-islamic-gold font-semibold mb-3">
-                      {member.role[i18n.language] || member.role.en}
+                      {localized(member.role)}
                     </p>
                     <p className="text-gray-700 text-sm mb-3">
-                      {member.bio?.[i18n.language] || member.bio?.en || ''}
+                      {localized(member.bio)}
                     </p>
                     {member.qualifications && member.qualifications.length > 0 && (
                       <div className="mt-4">

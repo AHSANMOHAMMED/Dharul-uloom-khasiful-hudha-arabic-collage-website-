@@ -7,7 +7,8 @@ import { tx } from '../../lib/tx';
 
 /** Public certificate verification (no login). Calls verify_certificate (anon). */
 export default function VerifyCertificate() {
-  const { t, ar } = useLang();
+  const { t, ar, lang } = useLang();
+  const dir = { ar: 'rtl' }[lang] || 'ltr';
   const { code: routeCode } = useParams();
   const navigate = useNavigate();
   const [code, setCode] = useState(routeCode || '');
@@ -44,7 +45,7 @@ export default function VerifyCertificate() {
   const found = r && r.status !== 'not_found';
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-24 pb-16 px-4" dir={tx('rtl', 'ltr')}>
+    <div className="min-h-screen bg-slate-50 pt-24 pb-16 px-4" dir={dir}>
       <div className="max-w-xl mx-auto space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-emerald-800">{t('Certificate verification', 'التحقق من الشهادة')}</h1>
@@ -85,7 +86,7 @@ export default function VerifyCertificate() {
                 <h2 className={`text-xl font-bold ${r.valid ? 'text-emerald-800' : 'text-red-800'}`}>
                   {r.valid ? t('Valid certificate', 'شهادة صحيحة') : t('This certificate has been revoked', 'تم إلغاء هذه الشهادة')}
                 </h2>
-                <p className="text-sm text-slate-500">{ar ? r.institution_ar || r.institution : r.institution}</p>
+                <p className="text-sm text-slate-500">{tx(r.institution_ar || r.institution, r.institution)}</p>
               </div>
             </div>
             <dl className="divide-y divide-slate-100 text-sm">
@@ -95,7 +96,7 @@ export default function VerifyCertificate() {
                 [t('Type', 'النوع'), labelOf(CERTIFICATE_TYPES, r.type, ar)],
                 [t('Serial no.', 'الرقم التسلسلي'), r.serial_no],
                 [t('Issued on', 'تاريخ الإصدار'), formatDate(r.issued_date)],
-                [t('Institution', 'المؤسسة'), ar ? r.institution_ar || r.institution : r.institution],
+                [t('Institution', 'المؤسسة'), tx(r.institution_ar || r.institution, r.institution)],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4 py-2">
                   <dt className="text-slate-500">{k}</dt>

@@ -231,6 +231,7 @@ export default function CrmLeadDetail({ lead, employees, onClose, onChanged }) {
         [t('Parent', 'ولي الأمر'), lead.parent_name],
         [t('Phone', 'الهاتف'), lead.phone],
         [t('E-mail', 'البريد'), lead.email],
+        [t('Date of birth', 'تاريخ الميلاد'), lead.date_of_birth ? formatDate(lead.date_of_birth) : null],
         [t('Age', 'العمر'), lead.age],
         [t('Course', 'البرنامج'), labelOf(COURSES, lead.course, ar)],
         [t('Source', 'المصدر'), labelOf(LEAD_SOURCES, lead.source, ar)],
@@ -241,7 +242,7 @@ export default function CrmLeadDetail({ lead, employees, onClose, onChanged }) {
       ]} />
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <Field label={t('Move to stage', 'نقل إلى مرحلة')}>
-          <Select value={stage} onChange={(e) => setStage(e.target.value)} options={CRM_STAGES.filter((s) => s.value !== 'enrolled' || lead.pipeline_stage === 'enrolled').map((s) => ({ value: s.value, label: ar ? s.ar : s.en }))} />
+          <Select value={stage} onChange={(e) => setStage(e.target.value)} options={CRM_STAGES.filter((s) => s.value !== 'enrolled' || lead.pipeline_stage === 'enrolled').map((s) => ({ value: s.value, label: t(s.en, s.ar) }))} />
         </Field>
         <Field label={t('Reason / note', 'السبب / ملاحظة')}><Input value={stageNote} onChange={(e) => setStageNote(e.target.value)} /></Field>
         <Button disabled={busy || stage === (lead.pipeline_stage || 'submitted')} onClick={changeStage}>{t('Update stage', 'تحديث المرحلة')}</Button>

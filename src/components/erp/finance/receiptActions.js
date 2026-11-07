@@ -1,4 +1,5 @@
 import { toast } from 'react-toastify';
+import { tx } from '../../../lib/tx';
 import { rpc } from '../../../lib/erp/rpc';
 import { num, runAction } from '../../../lib/erp/financeApi';
 import { printReceipt, receiptPdfUrl, receiptPublicUrl } from '../../../lib/receiptPrint';
@@ -24,7 +25,7 @@ export function allocateOldestFirst(months, amount) {
 export function openReceiptPdf(token) {
   const url = receiptPdfUrl(token);
   if (url) window.open(url, '_blank', 'noopener');
-  else toast.error('PDF service is not configured.');
+  else toast.error(tx('خدمة PDF غير مهيأة.', 'PDF service is not configured.'));
 }
 
 export async function copyReceiptLink(token, t) {

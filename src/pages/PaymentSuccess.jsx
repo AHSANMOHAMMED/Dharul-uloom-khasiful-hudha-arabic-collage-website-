@@ -26,7 +26,7 @@ const PaymentSuccess = () => {
         <p className="text-gray-600 text-sm">
           {tx('شكراً لك. سيتم تحديث حالة الرسوم بعد تأكيد PayHere.', 'Thank you. Your fee balance will update once PayHere confirms the payment.')}
         </p>
-        {orderId && <p className="text-xs text-gray-400 font-mono">Order: {orderId}</p>}
+        {orderId && <p className="text-xs text-gray-400 font-mono">{tx('الطلب', 'Order')}: {orderId}</p>}
         {fromApp && (
           <a href={appLink} className="block mt-2 px-6 py-2 bg-emerald-700 text-white rounded-lg font-semibold">
             {tx('العودة إلى التطبيق', 'Return to the app')}

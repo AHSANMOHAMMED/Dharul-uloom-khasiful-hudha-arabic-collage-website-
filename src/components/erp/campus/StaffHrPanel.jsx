@@ -35,7 +35,7 @@ function Directory() {
     return { employee_no: hr.employee_no, name: p.full_name, email: p.email, phone: p.phone, type: p.account_type, department: hr.department, job_title: hr.job_title, status: hr.status, roles: [p.assigned_tutor_role, ...(p.extra_roles || [])].filter((x) => x && x !== 'none').join(' ') };
   }));
   return (
-    <Card title={`${t('Employees', 'الموظفون')} (${rows.length})`} actions={<><Button size="sm" variant="secondary" onClick={exportCsv} disabled={!rows.length}>CSV</Button><Button size="sm" variant="secondary" onClick={reload}>{t('Refresh', 'تحديث')}</Button></>}>
+    <Card title={`${t('Employees', 'الموظفون')} (${rows.length})`} actions={<><Button size="sm" variant="secondary" onClick={exportCsv} disabled={!rows.length}>{t('CSV', 'CSV')}</Button><Button size="sm" variant="secondary" onClick={reload}>{t('Refresh', 'تحديث')}</Button></>}>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Search name, no., department…', 'ابحث…')} />
         <Select value={type} onChange={(e) => setType(e.target.value)} placeholder={t('Tutors & staff', 'المعلمون والموظفون')} options={[

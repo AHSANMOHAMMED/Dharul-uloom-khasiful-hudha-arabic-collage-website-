@@ -62,14 +62,16 @@ app/
   shared stack screens: notifications, settings, announcements, fees, results,
   report-card, attendance-history, timetable, certificates, hostel, leave-requests,
   discipline, link-child, child/[id], assignment/[id], payslips, payslip/[id],
-  my-attendance, staff-leave, receipt/[id], receive-payment, dictionary
+  my-attendance, staff-leave, receipt/[id], receive-payment, dictionary,
+  tasks, task/[id], duties, petty-cash-spend, mashoora
 components/              UI kit (Screen, Card, Button, ListItem, Badge/StatusBadge,
                          EmptyState, Loading, ErrorBanner, Money, SectionHeader, Field,
                          Chips, StatTile, Row/KeyValue, RoleTabs, LiveIndicator, LiveToast)
                          + views/ (shared screens)
 lib/                     supabase, auth context, roles (caps), i18n, payments, useAsync, format,
                          live (Realtime hooks + LiveProvider), push (registration + deep links),
-                         receipts (PDF url, payment methods)
+                         receipts (PDF url, payment methods),
+                         governance (task statuses / move rules, duty & account names)
 ```
 
 ## Role routing
@@ -118,6 +120,8 @@ Inside the staff portal, the tabs depend on the user's roles (`lib/roles.js` mir
 - Payslips, as a list and a detail view (earnings, deductions, net).
 - Announcements and notifications.
 
+- My tasks, My duties (with petty cash) and Mashoora. See "Duties, petty cash, mashoora and tasks" below.
+
 **Admin / principal / finance (lite)**
 - `org_dashboard_stats` tiles:
   - Counts: students, staff, parents.
@@ -148,6 +152,55 @@ Inside the staff portal, the tabs depend on the user's roles (`lib/roles.js` mir
 3. Amount with quick **Oldest month** / **All arrears**, method chips (cash, bank transfer, cheque, online, other), reference (required unless cash), payer name, note.
 4. Confirm → `receive_student_payment(...)` → the app replaces the screen with the new receipt. The server notifies the student and every linked parent (in-app, push, SMS / e-mail).
 
+## Duties, petty cash, mashoora and tasks
+
+These screens use migration `0022_governance_duties_mashoora.sql`. They are open to employees (`caps.isEmployee`). RLS and the `tg_tasks_guard` trigger are the real gate. Entry points:
+
+- Staff Home: quick links (My tasks, My duties, Mashoora) and a **My open tasks** tile. The count is my tasks with `status <> 'done'`, kept fresh by Realtime on `tasks`.
+- Staff More: the same three links.
+- Admin Settings: My tasks and Mashoora.
+
+**`/tasks`: My tasks board**
+- Four columns: To do, In progress, Review, Done. Use the segment bar (with counts) or swipe between pages. The pages are a horizontal paging `ScrollView`; no extra dependency.
+- Filter: **Mine** (default, `assignee_id = me`) or **All tasks** of the institution.
+- Each card shows:
+  - title and priority;
+  - due date, in red when overdue;
+  - duty name in the chosen language (`name_ta` / `name_ar` / `name_en`);
+  - the mashoora it came from, and the assignee in the All view.
+- Cards have back and forward buttons. The board follows the DB rules (`lib/governance.js#canMoveTask`):
+  - an assignee who did not create a task can move it up to **Review**, but not to Done ("waiting for the person who assigned it");
+  - the creator and governance (admin, principal, vice principal: `caps.isGovernance`) can mark it Done.
+- DB errors, and updates that RLS silently blocks (0 rows), are shown in an Alert.
+- **Add my own task** opens a modal: title, description, priority, optional due date, and optionally one of my active duties. It inserts with `assignee_id = me`.
+- Live: `useLiveReload(['tasks'], 'assignee_id=eq.<me>' | none)`.
+
+**`/task/[id]`: task detail**
+- Status, priority, due date, assignee, assigned by, duty, mashoora, completion time and description.
+- "Move to" buttons, with the same rules as the board.
+- Comments thread. New comments are inserted into `task_comments` with `author_id = me`.
+- History from `task_events`: created, moved and reassigned events.
+- Live on `tasks` (`id=eq.`) and `task_comments` (`task_id=eq.`).
+
+**`/duties`: My duties**
+- Active duties: since date, the mashoora where it was decided, academic year and category.
+- **Holders over the years** (`duty_history(p_duty)`).
+- For a duty with a `petty_cash_funds` row:
+  - balance from `petty_cash_balance(p_fund)`: available, awaiting approval, posted, and fund limit;
+  - the last 5 entries (top-up, spend, return) with their status;
+  - **Record a spend**.
+- Past duties: period, mashoora and end reason.
+- Live on `duty_assignments` and `petty_cash_entries`.
+
+**`/petty-cash-spend?fund=<id>&duty=<name>`**
+- Fields: amount, expense account picker (`accounts` with `type = 'expense'`; employees can read these; with a search box when there are more than 8), description, vendor and date.
+- It calls `petty_cash_spend(...)`. The entry is `submitted` until accounts approve it with `review_petty_cash`.
+- DB errors (not the holder, over the available balance, wrong account) are shown in an Alert.
+
+**`/mashoora`**
+- A read-only list of the last 30 meetings, filtered by type (weekly, annual, special): type, status, date and decisions (expandable).
+- Under each meeting, the duties (`duty_assignments.meeting_id`) and tasks (`tasks.meeting_id`) decided there. Tasks open the task detail.
+
 ## Live updates (Supabase Realtime)
 
 `lib/live.js`:
@@ -166,6 +219,10 @@ Screens that re-fetch on change for the relevant student (`student_id=eq.<id>`):
 | Leave requests | `leave_requests` |
 | Receive payment | `student_fees` |
 | Notifications | `notifications` (`user_id`) |
+| My tasks, staff Home badge | `tasks` (`assignee_id`, or all in the All view) |
+| Task detail | `tasks` (`id`), `task_comments` (`task_id`) |
+| My duties | `duty_assignments`, `petty_cash_entries` |
+| Mashoora | `tasks`, `duty_assignments` |
 
 A small green **Live** pill shows while the channel is SUBSCRIBED. RLS applies to Realtime, so clients only receive rows they could read anyway. Pull-to-refresh and refresh-on-focus still work if the socket is down.
 
@@ -174,7 +231,10 @@ A small green **Live** pill shows while the channel is SUBSCRIBED. RLS applies t
 `lib/push.js` registers the Expo push token (`register_push_token`) and routes taps:
 
 - `data.type = 'fee_receipt'` → `/receipt/<data.receipt_id>`
+- `data.type = 'task'` → `/task/<data.task_id>`
+- `data.type = 'duty'` → `/duties`
 - otherwise `data.link` if it is an app route (e.g. `/receipt/<id>`, `/announcements`)
+- otherwise web ERP links with a mobile screen: `/erp?module=tasks` → `/tasks`, `module=duties` → `/duties`, `module=mashoora` → `/mashoora`
 - otherwise `/notifications`
 
 Taps are handled while running (`addNotificationResponseReceivedListener`) and on cold start (`getLastNotificationResponseAsync`, after the session is restored). Each response is handled once, and the related notification row (`data.notification_id`) is marked read. In-app notification rows use the same routing (`notificationRoute({ data, link })`).

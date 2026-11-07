@@ -11,15 +11,21 @@ import { tx } from '../lib/tx';
 const PAGE_SIZE = 24;
 
 const Library = () => {
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation(); // subscribe: re-render on language change
   const [filters, setFilters] = useState({ query: '', language: null, category: null, author: null, page: 1 });
   const [categories, setCategories] = useState([]);
   const [books, setBooks] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const sentinelRef = useRef(null);
-  const featuredCategories = ['حديث', 'فقه', 'تفسير', 'عقيدة', 'نحو'];
+  // value = Arabic category name stored on the books; en = display label
+  const featuredCategories = [
+    { value: 'حديث', en: 'Hadith' },
+    { value: 'فقه', en: 'Fiqh' },
+    { value: 'تفسير', en: 'Tafsir' },
+    { value: 'عقيدة', en: 'Aqidah' },
+    { value: 'نحو', en: 'Arabic grammar' },
+  ];
 
   useEffect(() => {
     getCategories().then(setCategories);
@@ -94,14 +100,14 @@ const Library = () => {
             >
               {tx('الكل', 'All')}
             </button>
-            {featuredCategories.map((category) => (
+            {featuredCategories.map(({ value: category, en }) => (
               <button
                 key={category}
                 type="button"
                 onClick={() => setFilters((current) => ({ ...current, category, page: 1 }))}
                 className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-emerald-300 hover:text-emerald-800"
               >
-                {category}
+                {tx(category, en)}
               </button>
             ))}
           </div>
@@ -118,7 +124,7 @@ const Library = () => {
 
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-gray-500">
-              {total > 0 ? (ar ? `${total} كتاب` : `${total} books`) : tx('ابدأ البحث عن كتاب', 'Start searching for a book')}
+              {total > 0 ? tx('{n} كتاب', '{n} books').replace('{n}', total) : tx('ابدأ البحث عن كتاب', 'Start searching for a book')}
             </p>
             <div className="flex items-center gap-3 text-xs text-gray-400">
               <span className="rounded-full bg-white px-3 py-1 shadow-sm">{tx('قراءة عبر Google Drive', 'Google Drive reading')}</span>

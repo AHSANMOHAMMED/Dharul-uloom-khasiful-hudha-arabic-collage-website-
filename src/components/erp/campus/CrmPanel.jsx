@@ -89,7 +89,7 @@ function Pipeline({ onChangedStats }) {
   };
 
   const exportCsv = () => downloadCsv('admissions.csv', rows.map((r) => ({
-    student: r.student_name, age: r.age, parent: r.parent_name, phone: r.phone, email: r.email, course: r.course,
+    student: r.student_name, date_of_birth: r.date_of_birth, age: r.age, parent: r.parent_name, phone: r.phone, email: r.email, course: r.course,
     source: r.source, stage: r.pipeline_stage, created: r.created_at, enrolled_index: r.enrolled_index,
   })));
 
@@ -114,7 +114,7 @@ function Pipeline({ onChangedStats }) {
             onChange={(e) => quickMove(r, e.target.value)}
             aria-label={t('Move stage', 'نقل المرحلة')}
           >
-            {CRM_STAGES.filter((s) => s.value !== 'enrolled').map((s) => <option key={s.value} value={s.value}>{ar ? s.ar : s.en}</option>)}
+            {CRM_STAGES.filter((s) => s.value !== 'enrolled').map((s) => <option key={s.value} value={s.value}>{t(s.en, s.ar)}</option>)}
           </select>
         </div>
       )}
@@ -129,7 +129,7 @@ function Pipeline({ onChangedStats }) {
         <Button variant={view === 'board' ? 'primary' : 'secondary'} size="sm" onClick={() => setView('board')}>{t('Board', 'لوحة')}</Button>
         <Button variant={view === 'list' ? 'primary' : 'secondary'} size="sm" onClick={() => setView('list')}>{t('List', 'قائمة')}</Button>
         <div className="flex-1" />
-        <Button variant="secondary" size="sm" onClick={exportCsv} disabled={!rows.length}>CSV</Button>
+        <Button variant="secondary" size="sm" onClick={exportCsv} disabled={!rows.length}>{t('CSV', 'CSV')}</Button>
         <Button onClick={() => setNewLead({ ...LEAD_EMPTY })}>{t('New lead', 'عميل جديد')}</Button>
       </div>
       <AsyncView state={state}>
@@ -140,7 +140,7 @@ function Pipeline({ onChangedStats }) {
               return (
                 <div key={s.value} className="rounded-2xl border border-gray-800 bg-gray-900/50 p-3 min-h-[200px]">
                   <div className="flex justify-between items-center mb-3">
-                    <span className="text-sm font-bold text-emerald-300">{ar ? s.ar : s.en}</span>
+                    <span className="text-sm font-bold text-emerald-300">{t(s.en, s.ar)}</span>
                     <span className="text-xs text-gray-500">{items.length}</span>
                   </div>
                   <div className="space-y-2 max-h-[60vh] overflow-y-auto">{items.slice(0, 200).map(card)}</div>

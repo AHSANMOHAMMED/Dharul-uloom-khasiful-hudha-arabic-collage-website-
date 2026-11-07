@@ -12,7 +12,7 @@ import { tx } from '../lib/tx';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
-  const { i18n } = useTranslation();
+  useTranslation(); // subscribe: re-render on language change
   const [results, setResults] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [fees, setFees] = useState(null);
@@ -142,7 +142,7 @@ const StudentDashboard = () => {
                   {tx('بوابة الطالب', 'Student Portal')}
                 </span>
                 <h1 className="mt-4 text-3xl md:text-5xl font-extrabold font-arabic tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">
-                  {i18n.language === 'ar' ? `مرحباً بك، ${user?.username}` : `Welcome back, ${user?.username}`}
+                  {tx('مرحباً بك، {name}', 'Welcome back, {name}').replace('{name}', user?.username)}
                 </h1>
                 <p className="mt-3 text-gray-400 text-sm max-w-xl font-medium">
                   {tx('رقم القيد الخاص بك: ', 'Your Student Index Number: ')}
@@ -193,9 +193,10 @@ const StudentDashboard = () => {
                 {tx('تنبيه الحضور والمواظبة!', 'Attendance Alert!')}
               </h3>
               <p className="text-xs text-red-300">
-                {i18n.language === 'ar' 
-                  ? `نسبة حضورك هي ${attendanceRate}% وهو أقل من الحد المطلوب (85%). يرجى مراجعة المعلم المسؤول.`
-                  : `Your attendance is currently ${attendanceRate}%, which is below the required 85%. Please consult your class teacher.`}
+                {tx(
+                  'نسبة حضورك هي {rate}% وهو أقل من الحد المطلوب (85%). يرجى مراجعة المعلم المسؤول.',
+                  'Your attendance is currently {rate}%, which is below the required 85%. Please consult your class teacher.',
+                ).replace('{rate}', attendanceRate)}
               </p>
             </div>
           </motion.div>
@@ -321,19 +322,21 @@ const StudentDashboard = () => {
                     fees.status === 'partial' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
                     'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}>
-                    {i18n.language === 'ar' 
-                      ? { completed: 'مكتمل', partial: 'مدفوع جزئياً', unpaid: 'غير مدفوع' }[fees.status]
-                      : fees.status}
+                    {{
+                      completed: tx('مكتمل', 'Completed'),
+                      partial: tx('مدفوع جزئياً', 'Partially paid'),
+                      unpaid: tx('غير مدفوع', 'Unpaid'),
+                    }[fees.status] || fees.status}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-gray-950/20 border border-gray-800/30 rounded-xl text-center">
-                    <div className="text-2xl font-black text-amber-500 font-mono">LKR {fees.total_due}</div>
+                    <div className="text-2xl font-black text-amber-500 font-mono">{tx('روبية', 'LKR')} {fees.total_due}</div>
                     <div className="text-xs text-gray-400 mt-1">{tx('المبلغ المستحق', 'Amount Due')}</div>
                   </div>
                   <div className="p-4 bg-gray-950/20 border border-gray-800/30 rounded-xl text-center">
-                    <div className="text-2xl font-black text-emerald-400 font-mono">LKR {fees.paid_amount}</div>
+                    <div className="text-2xl font-black text-emerald-400 font-mono">{tx('روبية', 'LKR')} {fees.paid_amount}</div>
                     <div className="text-xs text-gray-400 mt-1">{tx('المبلغ المدفوع', 'Amount Paid')}</div>
                   </div>
                 </div>
@@ -341,7 +344,7 @@ const StudentDashboard = () => {
                 {/* Arrears Indicator */}
                 <div className="flex justify-between items-center p-3 bg-gray-950/10 rounded-lg text-sm border border-gray-800/30">
                   <span className="text-gray-400">{tx('المستحقات المتبقية', 'Remaining Balance')}</span>
-                  <span className="font-mono text-red-400 font-bold">LKR {fees.total_due - fees.paid_amount}</span>
+                  <span className="font-mono text-red-400 font-bold">{tx('روبية', 'LKR')} {fees.total_due - fees.paid_amount}</span>
                 </div>
 
                 {/* Partial payment history logs */}
@@ -354,7 +357,7 @@ const StudentDashboard = () => {
                       {fees.payments.map((p, idx) => (
                         <div key={idx} className="flex justify-between text-xs bg-gray-950/40 p-2 rounded border border-gray-800/20">
                           <span className="text-gray-400">{p.date}</span>
-                          <span className="font-semibold text-emerald-400">+ LKR {p.amount}</span>
+                          <span className="font-semibold text-emerald-400">+ {tx('روبية', 'LKR')} {p.amount}</span>
                         </div>
                       ))}
                     </div>

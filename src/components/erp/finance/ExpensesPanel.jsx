@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { AsyncView, Button, Card, Field, Input, Modal, PageHeader, Select, Stat, StatusBadge, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
 import { query, rpc, insertRow, formatMoney, formatDate, today, downloadCsv } from '../../../lib/erp/rpc';
 import {
   EXPENSE_STATUSES,
   PAYMENT_METHODS,
   accountLabel,
+  labelOf,
   listAccounts,
   listCashBankAccounts,
   num,
@@ -14,12 +15,34 @@ import {
   toOptions,
 } from '../../../lib/erp/financeApi';
 import { ConfirmModal, DateRange, FilterBar, Num } from './shared';
+import { dutyName, listAssignments, listDutyRoles } from '../../../lib/erp/governanceApi';
+
+const STATUS_TONE = { submitted: 'amber', draft: 'amber', approved: 'blue', paid: 'green', rejected: 'red', void: 'red' };
+
+function ExpenseStatus({ status }) {
+  const { t } = useLang();
+  return <Badge tone={STATUS_TONE[status] || 'gray'}>{labelOf(EXPENSE_STATUSES, status, t)}</Badge>;
+}
+
+/** Duties the claimant may tag: finance staff → every active duty; others → their own active duties. */
+function useClaimDuties() {
+  const { user, isFinanceStaff } = useAuth();
+  const [state] = useAsync(async () => {
+    if (isFinanceStaff) return listDutyRoles({ activeOnly: true });
+    const mine = await listAssignments({ status: 'active', assigneeId: user?.id });
+    const seen = new Map();
+    mine.forEach((a) => a.duty && seen.set(a.duty.id, a.duty));
+    return [...seen.values()];
+  }, [isFinanceStaff, user?.id]);
+  return state;
+}
 
 const METHODS = ['cash', 'bank_transfer', 'cheque', 'online', 'other'];
 
 function ExpenseForm({ onClose, onSaved }) {
-  const { t, ar } = useLang();
-  const [form, setForm] = useState({ account_id: '', payee: '', description: '', amount: '', expense_date: today(), reference: '', payment_method: 'cash' });
+  const { t, ar, lang } = useLang();
+  const [form, setForm] = useState({ account_id: '', payee: '', description: '', amount: '', expense_date: today(), reference: '', payment_method: 'cash', duty_role_id: '' });
+  const duties = useClaimDuties();
   const [busy, setBusy] = useState(false);
   const [accounts] = useAsync(() => listAccounts((q) => q.eq('type', 'expense').eq('is_active', true)), []);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
@@ -37,6 +60,7 @@ function ExpenseForm({ onClose, onSaved }) {
           expense_date: form.expense_date,
           reference: form.reference.trim() || null,
           payment_method: form.payment_method,
+          duty_role_id: form.duty_role_id || null,
           status: 'submitted',
         }),
       t('Expense claim submitted', 'تم تقديم طلب المصروف'),
@@ -93,6 +117,16 @@ function ExpenseForm({ onClose, onSaved }) {
       <Field label={t('Reference / bill no.', 'المرجع / رقم الفاتورة')}>
         <Input value={form.reference} onChange={(e) => set({ reference: e.target.value })} />
       </Field>
+      {(duties.data || []).length > 0 && (
+        <Field label={t('Duty (optional)', 'المسؤولية (اختياري)')} hint={t('Tag this purchase to a duty so it appears in the duty history', 'اربط هذه المشتريات بمسؤولية لتظهر في سجلها')}>
+          <Select
+            value={form.duty_role_id}
+            onChange={(e) => set({ duty_role_id: e.target.value })}
+            placeholder={t('— None —', '— لا شيء —')}
+            options={(duties.data || []).map((d) => ({ value: d.id, label: dutyName(d, lang) }))}
+          />
+        </Field>
+      )}
     </Modal>
   );
 }
@@ -111,7 +145,7 @@ function PayModal({ expense, onClose, onPaid }) {
       ];
 
   const pay = async () => {
-    if (!window.confirm(t(`Pay ${formatMoney(expense.amount)} to ${expense.payee}?`, `دفع ${formatMoney(expense.amount)} إلى ${expense.payee}؟`))) return;
+    if (!window.confirm(`${t('Pay', 'دفع')} ${formatMoney(expense.amount)} → ${expense.payee}?`)) return;
     setBusy(true);
     const ok = await runAction(
       () => rpc('pay_expense', { p_expense: expense.id, p_paid_from_code: code, p_reference: reference.trim() || null }),
@@ -151,7 +185,7 @@ function PayModal({ expense, onClose, onPaid }) {
 }
 
 export default function ExpensesPanel() {
-  const { t, ar } = useLang();
+  const { t, ar, lang } = useLang();
   const { user, isAdmin, isAccountant, isPrincipal, isFinanceStaff, isFinanceViewer } = useAuth();
   const canApprove = isAccountant || isPrincipal;
   const [scope, setScope] = useState(isFinanceViewer ? 'all' : 'mine');
@@ -164,7 +198,7 @@ export default function ExpensesPanel() {
   const [state, reload] = useAsync(async () => {
     const rows = await query('expenses', (q) => {
       let b = q
-        .select('*, account:accounts!expenses_account_id_fkey(code, name, name_ar)')
+        .select('*, account:accounts!expenses_account_id_fkey(code, name, name_ar), duty:duty_roles(id, code, name_en, name_ar, name_ta)')
         .order('expense_date', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(500);
@@ -179,7 +213,7 @@ export default function ExpensesPanel() {
   }, [scope, filters.status, filters.from, filters.to, user?.id]);
 
   const approve = async (e) => {
-    if (!window.confirm(t(`Approve ${e.expense_no} for ${formatMoney(e.amount)}?`, `اعتماد ${e.expense_no} بمبلغ ${formatMoney(e.amount)}؟`))) return;
+    if (!window.confirm(`${t('Approve', 'اعتماد')} ${e.expense_no} · ${formatMoney(e.amount)}?`)) return;
     if (await runAction(() => rpc('approve_expense', { p_expense: e.id, p_approve: true }), t('Expense approved', 'تم اعتماد المصروف'))) reload();
   };
 
@@ -199,8 +233,8 @@ export default function ExpensesPanel() {
       <Card
         actions={
           <>
-            <Button size="sm" variant="secondary" disabled={!state.data?.rows.length} onClick={() => downloadCsv('expenses.csv', (state.data?.rows || []).map(({ account, ...r }) => ({ ...r, account: account?.code })))}>
-              CSV
+            <Button size="sm" variant="secondary" disabled={!state.data?.rows.length} onClick={() => downloadCsv('expenses.csv', (state.data?.rows || []).map(({ account, duty, ...r }) => ({ ...r, account: account?.code, duty: duty?.name_en || '' })))}>
+              {t('Export CSV', 'تصدير CSV')}
             </Button>
             <Button size="sm" variant="secondary" onClick={reload}>
               {t('Refresh', 'تحديث')}
@@ -257,6 +291,7 @@ export default function ExpensesPanel() {
                       ),
                     },
                     { key: 'account', label: t('Account', 'الحساب'), render: (e) => (e.account ? accountLabel(e.account, ar) : '—') },
+                    { key: 'duty', label: t('Duty', 'المسؤولية'), render: (e) => (e.duty ? dutyName(e.duty, lang) : '—') },
                     { key: 'amount', label: t('Amount', 'المبلغ'), render: (e) => <Num>{formatMoney(e.amount)}</Num> },
                     {
                       key: 'people',
@@ -269,7 +304,7 @@ export default function ExpensesPanel() {
                         </div>
                       ),
                     },
-                    { key: 'status', label: t('Status', 'الحالة'), render: (e) => <StatusBadge status={e.status} /> },
+                    { key: 'status', label: t('Status', 'الحالة'), render: (e) => <ExpenseStatus status={e.status} /> },
                     {
                       key: 'actions',
                       label: '',

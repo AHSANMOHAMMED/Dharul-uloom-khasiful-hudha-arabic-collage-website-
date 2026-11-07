@@ -18,7 +18,7 @@ const Footer = () => {
             <Link to="/" className="flex items-center gap-3 group inline-flex">
               <img 
                 src="/images/logo.jpg" 
-                alt="Dharul Uloom Kashiful Hudha Logo" 
+                alt={tx('شعار دار العلوم كاشف الهدى', 'Dharul Uloom Kashiful Hudha Logo')} 
                 className="w-12 h-12 object-contain rounded-xl shadow-sm border border-gray-800"
               />
               <div className="flex flex-col">
@@ -26,7 +26,7 @@ const Footer = () => {
                   {tx('دار العلوم كاشف الهدى', 'Kashiful Hudha')}
                 </span>
                 <span className="text-[10px] text-emerald-400 font-bold tracking-widest uppercase">
-                  Arabic College
+                  {tx('كلية عربية', 'Arabic College')}
                 </span>
               </div>
             </Link>
@@ -45,7 +45,7 @@ const Footer = () => {
               <li className="flex items-start gap-3 group">
                 <span className="mt-0.5 text-emerald-500 group-hover:text-amber-400 transition-colors">📞</span>
                 <div>
-                  <div className="font-semibold text-gray-300">Hotlines</div>
+                  <div className="font-semibold text-gray-300">{tx('الخطوط الساخنة', 'Hotlines')}</div>
                   <div className="hover:text-emerald-400 transition-colors cursor-pointer">032-5612355</div>
                   <div className="hover:text-emerald-400 transition-colors cursor-pointer">070-5668463 | 071-5576060</div>
                 </div>
@@ -53,9 +53,9 @@ const Footer = () => {
               <li className="flex items-start gap-3 group">
                 <span className="mt-0.5 text-emerald-500 group-hover:text-amber-400 transition-colors">📍</span>
                 <div>
-                  <div className="font-semibold text-gray-300">Campus</div>
-                  <div>Mudalippalli, Kalpitiya</div>
-                  <div>Puttalam District, Sri Lanka</div>
+                  <div className="font-semibold text-gray-300">{tx('الحرم الجامعي', 'Campus')}</div>
+                  <div>{tx('مداليبالي، كالبيتيا', 'Mudalippalli, Kalpitiya')}</div>
+                  <div>{tx('مقاطعة بوتلام، سريلانكا', 'Puttalam District, Sri Lanka')}</div>
                 </div>
               </li>
             </ul>
@@ -88,7 +88,7 @@ const Footer = () => {
         <div className="mt-16 pt-8 border-t border-gray-800/60">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-gray-500 font-medium">
-              © {currentYear} Dharul Uloom Kashiful Hudha Arabic College. {t('footer.rights')}. <br className="md:hidden" /> Developed by IT Division.
+              © {currentYear} {tx('كلية دار العلوم كاشف الهدى العربية.', 'Dharul Uloom Kashiful Hudha Arabic College.')} {t('footer.rights')}. <br className="md:hidden" /> {tx('تطوير قسم تقنية المعلومات.', 'Developed by IT Division.')}
             </p>
             <div className="flex space-x-3">
               <a

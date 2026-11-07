@@ -65,7 +65,7 @@ const StudentLmsPanel = () => {
             <li key={m.id} className="p-3 bg-gray-900/40 rounded border border-gray-800">
               <span className="text-white font-semibold">{m.title}</span>
               {m.link_url && (
-                <a href={m.link_url} target="_blank" rel="noreferrer" className="block text-emerald-400 text-xs mt-1">Open</a>
+                <a href={m.link_url} target="_blank" rel="noreferrer" className="block text-emerald-400 text-xs mt-1">{tx('فتح', 'Open')}</a>
               )}
             </li>
           ))}
@@ -79,9 +79,9 @@ const StudentLmsPanel = () => {
           return (
             <div key={a.id} className="p-4 mb-3 bg-gray-900/40 rounded border border-gray-800 space-y-2">
               <div className="font-semibold text-white">{a.title}</div>
-              <div className="text-xs text-gray-500">{a.due_date ? `Due: ${a.due_date}` : ''}</div>
+              <div className="text-xs text-gray-500">{a.due_date ? `${tx('الاستحقاق:', 'Due:')} ${a.due_date}` : ''}</div>
               {sub ? (
-                <p className="text-sm text-emerald-400">{tx('تم التسليم', 'Submitted')} {sub.grade ? `· Grade: ${sub.grade}` : ''}</p>
+                <p className="text-sm text-emerald-400">{tx('تم التسليم', 'Submitted')} {sub.grade ? `· ${tx('الدرجة:', 'Grade:')} ${sub.grade}` : ''}</p>
               ) : (
                 <>
                   <textarea

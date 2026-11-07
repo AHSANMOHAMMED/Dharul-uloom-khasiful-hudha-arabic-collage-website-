@@ -523,6 +523,90 @@ select tst.login('00000000-0000-0000-0000-000000000001');
 select tst.fails($$select * from public.claim_outbox_batch(5)$$, 'end users cannot claim the outbox');
 
 -- ---------------------------------------------------------------------------
+-- 11d. Governance: duties per year, petty cash, mashoora tasks, admissions DOB
+-- ---------------------------------------------------------------------------
+select tst.login('00000000-0000-0000-0000-000000000002'); -- principal
+select tst.succeeds($$insert into public.mashoora_meetings (id, title, meeting_type, meeting_date) values ('f0000000-0000-0000-0000-000000000001', 'Annual mashoora 2026', 'annual', '2026-01-05')$$,
+                    'principal records annual mashoora');
+select tst.succeeds($$select public.assign_duty((select id from public.duty_roles where code = 'FOOD'), '00000000-0000-0000-0000-000000000006', '2026-01-06', 'f0000000-0000-0000-0000-000000000001')$$,
+                    'mashoora assigns FOOD duty to tutor 1');
+select tst.ok((select count(*) = 1 from public.petty_cash_funds f join public.duty_roles r on r.id = f.duty_role_id where r.code = 'FOOD'), 'petty cash fund opened for the duty');
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.fails($$select public.assign_duty((select id from public.duty_roles where code = 'CLEANING'), auth.uid())$$, 'lecturer cannot assign duties');
+select tst.fails($$insert into public.duty_assignments (duty_role_id, assignee_id) values ((select id from public.duty_roles where code = 'CLEANING'), auth.uid())$$, 'duty assignments only via RPC');
+select tst.ok((select public.has_duty('FOOD')), 'tutor 1 holds FOOD duty');
+
+select tst.login('00000000-0000-0000-0000-000000000003'); -- treasurer tops up
+select tst.succeeds($$select public.petty_cash_topup((select f.id from public.petty_cash_funds f join public.duty_roles r on r.id = f.duty_role_id where r.code = 'FOOD'), 8000, '1000', 'January float')$$,
+                    'treasurer tops up FOOD petty cash');
+select tst.fails($$select public.petty_cash_topup((select f.id from public.petty_cash_funds f join public.duty_roles r on r.id = f.duty_role_id where r.code = 'FOOD'), 5000, '1000')$$,
+                 'top-up above fund limit rejected');
+select tst.login('00000000-0000-0000-0000-000000000006'); -- holder spends
+select tst.succeeds($$select public.petty_cash_spend((select f.id from public.petty_cash_funds f join public.duty_roles r on r.id = f.duty_role_id where r.code = 'FOOD'), 3500,
+  (select id from public.accounts where code = '5400'), 'Rice and vegetables', 'Kalpitiya market')$$, 'duty holder records petty cash spend');
+select tst.fails($$select public.petty_cash_spend((select f.id from public.petty_cash_funds f join public.duty_roles r on r.id = f.duty_role_id where r.code = 'FOOD'), 99999,
+  (select id from public.accounts where code = '5400'), 'Too much')$$, 'spend above available petty cash rejected');
+select tst.login('00000000-0000-0000-0000-000000000009');
+select tst.fails($$select public.petty_cash_spend((select f.id from public.petty_cash_funds f join public.duty_roles r on r.id = f.duty_role_id where r.code = 'FOOD'), 10,
+  (select id from public.accounts where code = '5400'), 'x')$$, 'non-holder cannot spend petty cash');
+select tst.login('00000000-0000-0000-0000-000000000004'); -- accountant approves
+select tst.succeeds($$select public.review_petty_cash((select id from public.petty_cash_entries where entry_type = 'expense' and status = 'submitted' limit 1), true)$$, 'accountant approves spend');
+select tst.ok((select (public.petty_cash_balance(f.id) ->> 'posted_balance')::numeric = 4500
+               from public.petty_cash_funds f join public.duty_roles r on r.id = f.duty_role_id where r.code = 'FOOD'), 'petty cash balance 8,000 - 3,500 = 4,500');
+
+select tst.login('00000000-0000-0000-0000-000000000009');
+select tst.ok((select public.petty_cash_balance(f.id) is null from public.petty_cash_funds f limit 1) is not false, 'students cannot read petty cash balances');
+-- year end: duty moves to the principal, history keeps tutor 1's spending
+select tst.login('00000000-0000-0000-0000-000000000002');
+select tst.succeeds($$select public.assign_duty((select id from public.duty_roles where code = 'FOOD'), '00000000-0000-0000-0000-000000000002', '2027-01-04')$$, 'next year duty handed over');
+insert into tst.r values ('hist', public.duty_history((select id from public.duty_roles where code = 'FOOD')));
+select tst.ok((select jsonb_array_length(v -> 'assignments') = 2 from tst.r where k = 'hist'), 'duty history keeps both holders');
+select tst.ok((select (a ->> 'petty_spent')::numeric = 3500 and a ->> 'status' = 'ended' and a ->> 'meeting' = 'Annual mashoora 2026'
+               from tst.r, jsonb_array_elements(v -> 'assignments') a where k = 'hist' and a ->> 'assignee_id' = '00000000-0000-0000-0000-000000000006'),
+              'previous holder''s petty cash spending and mashoora decision preserved');
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.ok((select not public.has_duty('FOOD')), 'old holder lost the duty');
+
+-- task board
+select tst.login('00000000-0000-0000-0000-000000000002');
+select tst.ok((select public.create_meeting_tasks('f0000000-0000-0000-0000-000000000001',
+  '[{"title":"Fix hall lights","assignee_id":"00000000-0000-0000-0000-000000000006","priority":"high","due_date":"2026-01-12"}]') = 1), 'mashoora creates weekly task');
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.succeeds($$update public.tasks set status = 'in_progress' where title = 'Fix hall lights'$$, 'assignee moves card to in progress');
+select tst.fails($$update public.tasks set status = 'done' where title = 'Fix hall lights'$$, 'assignee cannot self-close a task');
+select tst.fails($$update public.tasks set title = 'Something else' where title = 'Fix hall lights'$$, 'assignee cannot rewrite task');
+select tst.succeeds($$update public.tasks set status = 'review' where title = 'Fix hall lights'$$, 'assignee sends task to review');
+select tst.fails($$insert into public.tasks (title, assignee_id) values ('x', '00000000-0000-0000-0000-000000000002')$$, 'lecturer cannot assign tasks to others');
+select tst.succeeds($$insert into public.tasks (title, assignee_id) values ('My own note', auth.uid())$$, 'lecturer adds own task');
+select tst.login('00000000-0000-0000-0000-000000000002');
+select tst.ok((select count(*) >= 1 from public.notifications where title = 'Task ready for review'), 'assigner notified for review');
+select tst.succeeds($$update public.tasks set status = 'done' where title = 'Fix hall lights'$$, 'principal marks task done');
+select tst.ok((select completed_at is not null from public.tasks where title = 'Fix hall lights'), 'completion time recorded');
+select tst.ok((select count(*) >= 4 from public.task_events where task_id = (select id from public.tasks where title = 'Fix hall lights')), 'task history recorded');
+
+-- admissions: date of birth → age, limits, guest applications into CRM
+select tst.as_anon();
+select tst.ok((select (public.submit_public_admission('Yusuf Rahman', (current_date - interval '12 years 2 months')::date, 'Rahman Ali', '077 123 4568', 'Kalpitiya', 'quran') ->> 'age')::int = 12),
+              'guest application: age computed from DOB');
+select tst.fails($$select public.submit_public_admission('Yusuf Rahman', (current_date - interval '12 years')::date, 'Rahman Ali', '0771234568', 'Kalpitiya', 'quran')$$, 'duplicate guest application blocked');
+select tst.fails($$select public.submit_public_admission('Tiny Tot', (current_date - interval '2 years')::date, 'Parent', '0771112223', 'x', 'quran')$$, 'too young rejected');
+select tst.fails($$select public.submit_public_admission('Future Kid', (current_date + 10)::date, 'Parent', '0771112224', 'x', 'quran')$$, 'future DOB rejected');
+select tst.fails($$select public.submit_public_admission('Bad Phone', (current_date - interval '10 years')::date, 'Parent', '12345', 'x', 'quran')$$, 'invalid phone rejected');
+select tst.login('00000000-0000-0000-0000-000000000002');
+select tst.ok((select count(*) = 1 from public.admissions where student_name = 'Yusuf Rahman' and pipeline_stage = 'submitted' and source = 'website'), 'guest application in CRM pipeline');
+select tst.ok((select count(*) >= 1 from public.notifications where title = 'New admission application'), 'admissions staff notified');
+
+-- super admin acts inside another institution
+select tst.login('00000000-0000-0000-0000-000000000099');
+select public.set_acting_org('0b000000-0000-0000-0000-000000000000');
+select tst.ok((select public.current_org_id() = '0b000000-0000-0000-0000-000000000000'), 'super admin acts as another institution');
+select tst.ok((select count(*) >= 10 from public.duty_roles), 'super admin manages that institution''s duties');
+select public.set_acting_org(null);
+select tst.login('00000000-0000-0000-0000-000000000001');
+select tst.fails($$select public.set_acting_org('0b000000-0000-0000-0000-000000000000')$$, 'org admin cannot switch institutions');
+select tst.fails($$update public.profiles set acting_org_id = '0b000000-0000-0000-0000-000000000000' where id = auth.uid()$$, 'acting org only via RPC');
+
+-- ---------------------------------------------------------------------------
 -- 12. Global ledger integrity
 -- ---------------------------------------------------------------------------
 select tst.logout();

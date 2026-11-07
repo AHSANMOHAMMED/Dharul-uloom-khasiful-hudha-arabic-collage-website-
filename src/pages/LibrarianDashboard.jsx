@@ -28,7 +28,7 @@ const emptyForm = {
 const LibrarianDashboard = () => {
   const { user, isAdmin, isLibrarian, logout } = useAuth();
   const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  const dir = { ar: 'rtl' }[i18n.language] || 'ltr';
 
   const [books, setBooks] = useState([]);
   const [query, setQuery] = useState('');
@@ -167,7 +167,7 @@ const LibrarianDashboard = () => {
                 {tx('إدارة المكتبة', 'Library Admin')}
               </span>
               <h1 className="mt-3 font-arabic text-3xl font-bold">
-                {ar ? `مرحباً، ${user?.username || ''}` : `Welcome, ${user?.username || ''}`}
+                {tx('مرحباً، {name}', 'Welcome, {name}').replace('{name}', user?.username || '')}
               </h1>
               <p className="mt-2 max-w-2xl text-emerald-50/90">
                 {tx('أضف الكتب أو حدّثها مباشرة في Supabase باستخدام رابط معاينة Google Drive.', 'Add or update books directly in Supabase using Google Drive preview links.')}
@@ -239,7 +239,7 @@ const LibrarianDashboard = () => {
                   {tx('دليل الإعداد', 'Setup guide')}
                 </Link>
                 <span className="rounded-lg border border-amber-200 px-3 py-2 text-xs font-semibold">
-                  node scripts/library/importBooks.mjs --input ./books.json
+                  {'node scripts/library/importBooks.mjs --input ./books.json'}
                 </span>
               </div>
             </div>
@@ -263,7 +263,7 @@ const LibrarianDashboard = () => {
                     onChange={(e) => updateForm({ [key]: e.target.value })}
                     onBlur={key === 'drive_preview_url' ? handlePreviewAutofill : undefined}
                     className="rounded-xl border border-gray-200 px-4 py-3 focus:border-emerald-500 focus:outline-none"
-                    dir={tx('rtl', 'ltr')}
+                    dir={dir}
                   />
                 </label>
               ))}
@@ -274,7 +274,7 @@ const LibrarianDashboard = () => {
                   onChange={(e) => updateForm({ description: e.target.value })}
                   rows={4}
                   className="rounded-xl border border-gray-200 px-4 py-3 focus:border-emerald-500 focus:outline-none"
-                  dir={tx('rtl', 'ltr')}
+                  dir={dir}
                 />
               </label>
 
@@ -285,10 +285,10 @@ const LibrarianDashboard = () => {
                   onChange={(e) => updateForm({ language: e.target.value })}
                   className="rounded-xl border border-gray-200 px-4 py-3 focus:border-emerald-500 focus:outline-none"
                 >
-                  <option value="ar">Arabic</option>
-                  <option value="ur">Urdu</option>
-                  <option value="en">English</option>
-                  <option value="mixed">Mixed</option>
+                  <option value="ar">{tx('عربي', 'Arabic')}</option>
+                  <option value="ur">{tx('أردو', 'Urdu')}</option>
+                  <option value="en">{tx('إنجليزي', 'English')}</option>
+                  <option value="mixed">{tx('مختلط', 'Mixed')}</option>
                 </select>
               </label>
 
@@ -392,7 +392,7 @@ const LibrarianDashboard = () => {
                           </h3>
                           <p className="mt-1 text-sm text-gray-500">{book.author}</p>
                           <p className="mt-2 text-xs text-gray-400">
-                            {book.shamela_id} · {book.language} · {book.pages || '—'} pages
+                            {book.shamela_id} · {book.language} · {tx('{n} صفحة', '{n} pages').replace('{n}', book.pages || '—')}
                           </p>
                         </div>
                         <div className="flex flex-col gap-2">

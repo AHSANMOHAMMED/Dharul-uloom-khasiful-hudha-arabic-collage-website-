@@ -8,7 +8,7 @@ const CATEGORIES = ['quran', 'arabic', 'hadith', 'fiqh', 'aqeedah', 'tafseer', '
 const SUBJECT_EMPTY = { code: '', name_en: '', name_ar: '', category: 'general', credit_hours: '1', is_active: true };
 
 export function SubjectsTab({ canEdit }) {
-  const { t, ar } = useLang();
+  const { t } = useLang();
   const [busy, run] = useAction();
   const [modal, setModal] = useState(null);
   const [state, reload] = useAsync(() => query('subjects', (q) => q.select('*').order('code')), []);
@@ -34,7 +34,7 @@ export function SubjectsTab({ canEdit }) {
         {(rows) => (
           <Table rows={rows} empty={t('No subjects yet.', 'لا توجد مواد.')} columns={[
             { key: 'code', label: t('Code', 'الرمز') },
-            { key: 'name', label: t('Name', 'الاسم'), render: (r) => (ar ? r.name_ar || r.name_en : r.name_en) },
+            { key: 'name', label: t('Name', 'الاسم'), render: (r) => t(r.name_en, r.name_ar) },
             { key: 'name_ar', label: t('Arabic name', 'الاسم بالعربية') },
             { key: 'category', label: t('Category', 'الفئة') },
             { key: 'credit_hours', label: t('Credits', 'الساعات') },
@@ -69,7 +69,7 @@ export function SubjectsTab({ canEdit }) {
 }
 
 export function ClassSubjectsTab({ canEdit }) {
-  const { t, ar } = useLang();
+  const { t } = useLang();
   const [busy, run] = useAction();
   const [cls, setCls] = useState('1');
   const [form, setForm] = useState({ subject_id: '', tutor_id: '', academic_year_id: '', weekly_periods: '1' });
@@ -108,7 +108,7 @@ export function ClassSubjectsTab({ canEdit }) {
         <form onSubmit={add} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end mb-4">
           <Field label={t('Subject', 'المادة')}>
             <Select required value={form.subject_id} onChange={(e) => setForm({ ...form, subject_id: e.target.value })} placeholder={t('Select…', 'اختر…')}
-              options={(subjects.data || []).map((s) => ({ value: s.id, label: `${s.code} · ${ar ? s.name_ar || s.name_en : s.name_en}` }))} />
+              options={(subjects.data || []).map((s) => ({ value: s.id, label: `${s.code} · ${t(s.name_en, s.name_ar)}` }))} />
           </Field>
           <Field label={t('Teacher', 'المعلم')}><Select value={form.tutor_id} onChange={(e) => setForm({ ...form, tutor_id: e.target.value })} placeholder="—" options={tutorOpts} /></Field>
           <Field label={t('Academic year', 'العام الدراسي')}>
@@ -122,7 +122,7 @@ export function ClassSubjectsTab({ canEdit }) {
       <AsyncView state={state}>
         {(rows) => (
           <Table rows={rows} empty={t('No subjects assigned to this class.', 'لا توجد مواد لهذا الصف.')} columns={[
-            { key: 'subject', label: t('Subject', 'المادة'), render: (r) => `${r.subjects?.code} · ${ar ? r.subjects?.name_ar || r.subjects?.name_en : r.subjects?.name_en}` },
+            { key: 'subject', label: t('Subject', 'المادة'), render: (r) => `${r.subjects?.code} · ${t(r.subjects?.name_en, r.subjects?.name_ar)}` },
             { key: 'tutor', label: t('Teacher', 'المعلم'), render: (r) => canEdit ? (
               <div className="min-w-[200px]"><Select value={r.tutor_id || ''} onChange={(e) => changeTutor(r, e.target.value)} placeholder="—" options={tutorOpts} /></div>
             ) : r.tutor?.full_name || '—' },

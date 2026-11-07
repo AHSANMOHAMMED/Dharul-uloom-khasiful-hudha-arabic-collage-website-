@@ -44,7 +44,7 @@ export default function OrgAdminPanel() {
   };
 
   if (!org) {
-    return <p className="text-sm text-gray-400">Loading organization…</p>;
+    return <p className="text-sm text-gray-400">{tx('جاري تحميل المؤسسة…', 'Loading organization…')}</p>;
   }
 
   return (
@@ -52,37 +52,37 @@ export default function OrgAdminPanel() {
       <div>
         <h2 className="text-xl font-bold text-white">{tx('إعدادات المؤسسة (SaaS)', 'Organization (SaaS foundation)')}</h2>
         <p className="text-sm text-gray-400 mt-1">
-          {org.name_en} · slug: <code className="text-emerald-300">{org.slug}</code>
+          {org.name_en} · {tx('المعرّف:', 'slug:')} <code className="text-emerald-300">{org.slug}</code>
         </p>
       </div>
       <form onSubmit={onSave} className="grid md:grid-cols-2 gap-3">
         <input
           className="bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200"
           value={form.tagline_en}
-          placeholder="Tagline EN"
+          placeholder={tx('الشعار (إنجليزي)', 'Tagline EN')}
           onChange={(e) => setForm({ ...form, tagline_en: e.target.value })}
         />
         <input
           className="bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200"
           dir="rtl"
           value={form.tagline_ar}
-          placeholder="Tagline AR"
+          placeholder={tx('الشعار (عربي)', 'Tagline AR')}
           onChange={(e) => setForm({ ...form, tagline_ar: e.target.value })}
         />
         <input
           className="bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200"
           value={form.supportEmail}
-          placeholder="Support email"
+          placeholder={tx('بريد الدعم', 'Support email')}
           onChange={(e) => setForm({ ...form, supportEmail: e.target.value })}
         />
         <input
           className="bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200"
           value={form.supportPhone}
-          placeholder="Support phone"
+          placeholder={tx('هاتف الدعم', 'Support phone')}
           onChange={(e) => setForm({ ...form, supportPhone: e.target.value })}
         />
         <label className="flex items-center gap-3 text-sm text-gray-300 md:col-span-2">
-          Primary color
+          {tx('اللون الأساسي', 'Primary color')}
           <input
             type="color"
             value={form.primaryColor}
@@ -90,12 +90,14 @@ export default function OrgAdminPanel() {
           />
         </label>
         <button type="submit" className="md:col-span-2 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-sm">
-          Save branding
+          {tx('حفظ الهوية', 'Save branding')}
         </button>
       </form>
       <p className="text-xs text-gray-500">
-        Multi-tenant SaaS billing is scaffolded via org_id on core tables. Add more colleges later by inserting
-        organizations rows and scoping RLS by org_id.
+        {tx(
+          'تم تجهيز فوترة SaaS متعددة المستأجرين عبر org_id في الجداول الأساسية. أضف كليات أخرى لاحقاً بإدراج صفوف في organizations وتقييد RLS حسب org_id.',
+          'Multi-tenant SaaS billing is scaffolded via org_id on core tables. Add more colleges later by inserting organizations rows and scoping RLS by org_id.',
+        )}
       </p>
     </div>
   );

@@ -1,66 +1,127 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useAuth } from '../context/AuthContext'
-import { submitAdmission } from '../lib/admissionsApi'
-import { sendContactMessage } from '../lib/contentApi'
+import {
+  DEFAULT_AGE_LIMITS,
+  ageFromDob,
+  isSriLankanPhone,
+  loadAdmissionAgeLimits,
+  shiftIso,
+  submitAdmission,
+  submitPublicAdmission,
+  todayIso,
+} from '../lib/admissionsApi'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { tx } from '../lib/tx';
 
-// Validation schema
-const admissionSchema = yup.object().shape({
-  studentName: yup.string().required('Student name is required').min(3, 'Name must be at least 3 characters'),
-  age: yup.number()
-    .required('Age is required')
-    .min(5, 'Age must be at least 5')
-    .max(15, 'Age must not exceed 15')
-    .typeError('Age must be a number'),
-  parentName: yup.string().required('Parent name is required').min(3, 'Name must be at least 3 characters'),
-  phone: yup.string()
-    .required('Phone number is required')
-    .matches(/^[0-9]{10}$/, 'Phone number must be 10 digits'),
-  email: yup.string().email('Invalid email address'),
-  address: yup.string().required('Address is required').min(10, 'Address must be at least 10 characters'),
-  course: yup.string().required('Please select a course'),
-})
+const fill = (s, vars) => Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{${k}}`, v), s)
+
+/** "Age: 12 years 2 months" in the UI language. */
+const ageLabel = ({ years, months }) =>
+  fill(tx('العمر: {years} سنة و{months} شهر', 'Age: {years} years {months} months'), { years, months })
+
+const ageRangeError = ({ minAge, maxAge }) =>
+  fill(tx('يجب أن يكون عمر المتقدم بين {min} و{max} سنة', 'Applicant must be between {min} and {max} years old'), { min: minAge, max: maxAge })
+
+/** Validation schema — built at render so messages follow the UI language and the institution's age limits. */
+function makeAdmissionSchema(limits, today) {
+  return yup.object().shape({
+    studentName: yup.string().trim()
+      .required(tx('اسم الطالب مطلوب', 'Student name is required'))
+      .min(3, tx('يجب أن يتكون الاسم من 3 أحرف على الأقل', 'Name must be at least 3 characters')),
+    dateOfBirth: yup.string()
+      .required(tx('تاريخ الميلاد مطلوب', 'Date of birth is required'))
+      .test('not-future', tx('لا يمكن أن يكون تاريخ الميلاد في المستقبل', 'Date of birth cannot be in the future'),
+        (v) => !v || v <= today)
+      .test('age-range', ageRangeError(limits), (v) => {
+        if (!v || v > today) return true
+        const age = ageFromDob(v, today)
+        return !!age && age.years >= limits.minAge && age.years <= limits.maxAge
+      }),
+    parentName: yup.string().trim()
+      .required(tx('اسم ولي الأمر مطلوب', 'Parent name is required'))
+      .min(3, tx('يجب أن يتكون الاسم من 3 أحرف على الأقل', 'Name must be at least 3 characters')),
+    phone: yup.string()
+      .required(tx('رقم الهاتف مطلوب', 'Phone number is required'))
+      .test('lk-phone', tx('أدخل رقم هاتف سريلانكي صحيحاً (مثال: 0771234567)', 'Enter a valid Sri Lankan phone number (e.g. 0771234567)'),
+        (v) => !v || isSriLankanPhone(v)),
+    email: yup.string().trim().email(tx('عنوان البريد الإلكتروني غير صالح', 'Invalid email address')),
+    address: yup.string().trim()
+      .required(tx('العنوان مطلوب', 'Address is required'))
+      .min(5, tx('يجب أن يتكون العنوان من 5 أحرف على الأقل', 'Address must be at least 5 characters')),
+    course: yup.string().required(tx('يرجى اختيار دورة', 'Please select a course')),
+  })
+}
+
+/** Show the database's reason in the UI language when it is one we know. */
+function admissionErrorMessage(error) {
+  const msg = error?.message || ''
+  const range = /between (\d+) and (\d+) years old/.exec(msg)
+  if (range) return ageRangeError({ minAge: range[1], maxAge: range[2] })
+  const known = [
+    [/already received/i, tx('تم استلام هذا الطلب بالفعل. سنتواصل معك قريباً.', 'This application was already received. We will contact you soon.')],
+    [/valid Sri Lankan phone/i, tx('أدخل رقم هاتف سريلانكي صحيحاً (مثال: 0771234567)', 'Enter a valid Sri Lankan phone number (e.g. 0771234567)')],
+    [/in the future/i, tx('لا يمكن أن يكون تاريخ الميلاد في المستقبل', 'Date of birth cannot be in the future')],
+    [/Date of birth is required/i, tx('تاريخ الميلاد مطلوب', 'Date of birth is required')],
+    [/names are required/i, tx('اسم الطالب واسم ولي الأمر مطلوبان', 'Student and parent names are required')],
+    [/Institution not found/i, tx('لم يتم العثور على المؤسسة', 'Institution not found')],
+  ]
+  for (const [re, text] of known) if (re.test(msg)) return text
+  return msg || tx('حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.', 'Error submitting application. Please try again.')
+}
 
 const Admissions = () => {
   useTranslation() // subscribe: re-render on language change
   const { isAuthenticated } = useAuth()
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [limits, setLimits] = useState(DEFAULT_AGE_LIMITS)
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
-    resolver: yupResolver(admissionSchema)
+  useEffect(() => {
+    let alive = true
+    loadAdmissionAgeLimits().then((l) => { if (alive) setLimits(l) })
+    return () => { alive = false }
+  }, [])
+
+  const today = todayIso()
+  // oldest allowed: the day after the (maxAge + 1)th birthday would fall on today
+  const minDob = shiftIso(today, { years: -(limits.maxAge + 1), days: 1 })
+  const year = new Date().getFullYear()
+
+  // rebuilt every render so messages follow the current language (cheap)
+  const schema = makeAdmissionSchema(limits, today)
+
+  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm({
+    resolver: yupResolver(schema)
   })
+
+  const dob = watch('dateOfBirth')
+  const liveAge = dob ? ageFromDob(dob, today) : null
+  const liveAgeOutOfRange = !!liveAge && (liveAge.years < limits.minAge || liveAge.years > limits.maxAge)
 
   const onSubmit = async (data) => {
     setLoading(true)
     try {
+      const age = ageFromDob(data.dateOfBirth, today)?.years
       if (isAuthenticated) {
         // Persist as a tracked application for the signed-in user.
-        await submitAdmission(data)
+        await submitAdmission({ ...data, age })
         toast.success(tx('تم تقديم طلبك بنجاح! يمكنك متابعة حالته من لوحة التحكم.', 'Application submitted successfully! Track it in your dashboard.'))
       } else {
-        // Guests have no account to track against, so route to the contact inbox.
-        await sendContactMessage({
-          name: data.parentName,
-          email: data.email,
-          phone: data.phone,
-          subject: 'Admission Application',
-          message: `Admission Application:\nStudent: ${data.studentName}\nAge: ${data.age}\nCourse: ${data.course}\nAddress: ${data.address}\nPrevious Education: ${data.previousEducation || 'N/A'}`
-        })
+        // Guests: public RPC → CRM pipeline + admissions staff notified.
+        await submitPublicAdmission(data)
         toast.success(tx('تم إرسال طلبك بنجاح! سنتواصل معك قريباً.', 'Application sent successfully! We will contact you soon.'))
       }
       setSubmitted(true)
       reset()
       setTimeout(() => setSubmitted(false), 5000)
     } catch (error) {
-      toast.error(tx('حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.', 'Error submitting application. Please try again.'))
+      toast.error(admissionErrorMessage(error))
       console.error('Submission error:', error)
     } finally {
       setLoading(false)
@@ -76,7 +137,7 @@ const Admissions = () => {
             {tx('القبول', 'Admissions')}
           </h1>
           <p className="text-xl text-gray-200">
-            {tx('التسجيل الآن مفتوح للعام 2025', 'Admissions now open for 2025')}
+            {fill(tx('التسجيل الآن مفتوح للعام {year}', 'Admissions now open for {year}'), { year: `${year} / ${year + 1}` })}
           </p>
         </div>
       </section>
@@ -96,7 +157,7 @@ const Admissions = () => {
             <div className="space-y-4 text-gray-700">
               <p>
                 <strong>{tx('العمر المطلوب:', 'Age Requirement:')}</strong>{' '}
-                {tx('5-15 سنة', '5-15 years')}
+                {fill(tx('{min}-{max} سنة', '{min}-{max} years'), { min: limits.minAge, max: limits.maxAge })}
               </p>
               <p>
                 <strong>{tx('الرسوم:', 'Fees:')}</strong>{' '}
@@ -153,20 +214,28 @@ const Admissions = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-gray-700 font-semibold mb-2">
-                    {tx('العمر *', 'Age *')}
+                  <label htmlFor="admission-dob" className="block text-gray-700 font-semibold mb-2">
+                    {tx('تاريخ الميلاد *', 'Date of Birth *')}
                   </label>
                   <input
-                    type="number"
-                    {...register('age')}
-                    min="5"
-                    max="15"
+                    id="admission-dob"
+                    type="date"
+                    {...register('dateOfBirth')}
+                    min={minDob}
+                    max={today}
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-islamic-green focus:border-transparent ${
-                      errors.age ? 'border-red-500' : 'border-gray-300'
+                      errors.dateOfBirth || liveAgeOutOfRange ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
-                  {errors.age && (
-                    <p className="mt-1 text-sm text-red-600">{errors.age.message}</p>
+                  {liveAge && (
+                    <p className={`mt-1 text-sm ${liveAgeOutOfRange ? 'text-red-600' : 'text-gray-600'}`} aria-live="polite">
+                      {ageLabel(liveAge)}
+                    </p>
+                  )}
+                  {errors.dateOfBirth ? (
+                    <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth.message}</p>
+                  ) : liveAgeOutOfRange && (
+                    <p className="mt-1 text-sm text-red-600">{ageRangeError(limits)}</p>
                   )}
                 </div>
 

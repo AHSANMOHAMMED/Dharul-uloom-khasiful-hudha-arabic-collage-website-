@@ -68,18 +68,18 @@ const TutorLmsPanel = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <form onSubmit={addMaterial} className="bg-gray-900/50 p-5 rounded-xl border border-gray-800 space-y-3">
           <h3 className="font-bold text-emerald-400">{tx('مادة تعليمية', 'Learning material')}</h3>
-          <input className={inputCls} placeholder="Subject" value={matForm.subject} onChange={(e) => setMatForm({ ...matForm, subject: e.target.value })} required />
-          <input className={inputCls} placeholder="Title" value={matForm.title} onChange={(e) => setMatForm({ ...matForm, title: e.target.value })} required />
-          <input className={inputCls} placeholder="Link URL" value={matForm.link_url} onChange={(e) => setMatForm({ ...matForm, link_url: e.target.value })} />
+          <input className={inputCls} placeholder={tx('المادة', 'Subject')} value={matForm.subject} onChange={(e) => setMatForm({ ...matForm, subject: e.target.value })} required />
+          <input className={inputCls} placeholder={tx('العنوان', 'Title')} value={matForm.title} onChange={(e) => setMatForm({ ...matForm, title: e.target.value })} required />
+          <input className={inputCls} placeholder={tx('رابط URL', 'Link URL')} value={matForm.link_url} onChange={(e) => setMatForm({ ...matForm, link_url: e.target.value })} />
           <button type="submit" className="py-2 px-4 bg-emerald-700 rounded text-white text-sm font-bold">{tx('نشر', 'Publish')}</button>
         </form>
 
         <form onSubmit={addAssignment} className="bg-gray-900/50 p-5 rounded-xl border border-gray-800 space-y-3">
           <h3 className="font-bold text-amber-400">{tx('واجب', 'Assignment')}</h3>
-          <input className={inputCls} placeholder="Subject" value={asgForm.subject} onChange={(e) => setAsgForm({ ...asgForm, subject: e.target.value })} required />
-          <input className={inputCls} placeholder="Title" value={asgForm.title} onChange={(e) => setAsgForm({ ...asgForm, title: e.target.value })} required />
+          <input className={inputCls} placeholder={tx('المادة', 'Subject')} value={asgForm.subject} onChange={(e) => setAsgForm({ ...asgForm, subject: e.target.value })} required />
+          <input className={inputCls} placeholder={tx('العنوان', 'Title')} value={asgForm.title} onChange={(e) => setAsgForm({ ...asgForm, title: e.target.value })} required />
           <input type="date" className={inputCls} value={asgForm.due_date} onChange={(e) => setAsgForm({ ...asgForm, due_date: e.target.value })} />
-          <textarea className={inputCls} rows={2} placeholder="Description" value={asgForm.description} onChange={(e) => setAsgForm({ ...asgForm, description: e.target.value })} />
+          <textarea className={inputCls} rows={2} placeholder={tx('الوصف', 'Description')} value={asgForm.description} onChange={(e) => setAsgForm({ ...asgForm, description: e.target.value })} />
           <button type="submit" className="py-2 px-4 bg-amber-600 rounded text-white text-sm font-bold">{tx('إنشاء', 'Create')}</button>
         </form>
       </div>
@@ -91,7 +91,7 @@ const TutorLmsPanel = () => {
             {materials.map((m) => (
               <li key={m.id} className="p-3 bg-gray-900/40 rounded border border-gray-800">
                 <div className="font-semibold text-white">{m.title}</div>
-                {m.link_url && <a href={m.link_url} target="_blank" rel="noreferrer" className="text-emerald-400 text-xs">Open</a>}
+                {m.link_url && <a href={m.link_url} target="_blank" rel="noreferrer" className="text-emerald-400 text-xs">{tx('فتح', 'Open')}</a>}
               </li>
             ))}
           </ul>
@@ -103,9 +103,9 @@ const TutorLmsPanel = () => {
               <li key={a.id} className="p-3 bg-gray-900/40 rounded border border-gray-800 flex justify-between gap-2">
                 <div>
                   <div className="font-semibold text-white">{a.title}</div>
-                  <div className="text-xs text-gray-500">{a.due_date || 'No due date'}</div>
+                  <div className="text-xs text-gray-500">{a.due_date || tx('لا يوجد موعد تسليم', 'No due date')}</div>
                 </div>
-                <button type="button" onClick={() => openGrading(a.id)} className="text-xs text-emerald-400 shrink-0">Grade</button>
+                <button type="button" onClick={() => openGrading(a.id)} className="text-xs text-emerald-400 shrink-0">{tx('تقييم', 'Grade')}</button>
               </li>
             ))}
           </ul>
@@ -121,11 +121,11 @@ const TutorLmsPanel = () => {
             <div key={s.id} className="p-3 bg-gray-950 rounded border border-gray-800 text-sm space-y-2">
               <div className="font-semibold text-white">{s.profiles?.full_name}</div>
               <p className="text-gray-400">{s.content}</p>
-              {s.grade && <p className="text-emerald-400">Grade: {s.grade}</p>}
+              {s.grade && <p className="text-emerald-400">{tx('الدرجة:', 'Grade:')} {s.grade}</p>}
               <div className="flex gap-2">
-                <input className={inputCls} placeholder="Grade" value={gradeForm.grade} onChange={(e) => setGradeForm({ ...gradeForm, grade: e.target.value })} />
-                <input className={inputCls} placeholder="Feedback" value={gradeForm.feedback} onChange={(e) => setGradeForm({ ...gradeForm, feedback: e.target.value })} />
-                <button type="button" onClick={() => submitGrade(s.id)} className="px-3 py-1 bg-emerald-700 rounded text-white text-xs">Save</button>
+                <input className={inputCls} placeholder={tx('الدرجة', 'Grade')} value={gradeForm.grade} onChange={(e) => setGradeForm({ ...gradeForm, grade: e.target.value })} />
+                <input className={inputCls} placeholder={tx('الملاحظات', 'Feedback')} value={gradeForm.feedback} onChange={(e) => setGradeForm({ ...gradeForm, feedback: e.target.value })} />
+                <button type="button" onClick={() => submitGrade(s.id)} className="px-3 py-1 bg-emerald-700 rounded text-white text-xs">{tx('حفظ', 'Save')}</button>
               </div>
             </div>
           ))}

@@ -9,7 +9,7 @@ import { tx } from '../lib/tx';
 
 const TutorDashboard = () => {
   const { user, isTreasurer } = useAuth();
-  const { i18n } = useTranslation();
+  useTranslation(); // subscribe: re-render on language change
   
   const [jobs, setJobs] = useState([]);
   const [salaries, setSalaries] = useState([]);
@@ -206,7 +206,7 @@ const TutorDashboard = () => {
                 {tx('بوابة المعلمين', 'Tutor Portal')}
               </span>
               <h1 className="mt-3 text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">
-                {i18n.language === 'ar' ? `مرحباً بك، فضيلة الشيخ ${user?.username}` : `Welcome back, Sheikh ${user?.username}`}
+                {tx('مرحباً بك، فضيلة الشيخ {name}', 'Welcome back, Sheikh {name}').replace('{name}', user?.username)}
               </h1>
             </div>
           </div>
@@ -249,7 +249,7 @@ const TutorDashboard = () => {
                     <h4 className="font-bold text-white text-sm">{job.title}</h4>
                     <p className="text-xs text-gray-400 mt-1">{job.description}</p>
                     <span className="inline-block mt-2 text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded uppercase">
-                      Year: {job.academic_year}
+                      {tx('السنة', 'Year')}: {job.academic_year}
                     </span>
                   </div>
                 ))}
@@ -272,11 +272,11 @@ const TutorDashboard = () => {
                 {salaries.slice(0, 3).map((sal) => (
                   <div key={sal.id} className="flex justify-between items-center p-3 bg-gray-950/40 rounded-xl border border-gray-800/30 text-xs">
                     <div>
-                      <span className="text-[10px] text-gray-500 uppercase">Month</span>
+                      <span className="text-[10px] text-gray-500 uppercase">{tx('الشهر', 'Month')}</span>
                       <div className="font-bold text-white">{sal.month}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-amber-400 font-mono">LKR {sal.amount}</div>
+                      <div className="font-bold text-amber-400 font-mono">{tx('روبية', 'LKR')} {sal.amount}</div>
                       <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
                         sal.status === 'paid' ? 'bg-emerald-500/25 text-emerald-400' : 'bg-red-500/25 text-red-400'
                       }`}>
@@ -303,7 +303,7 @@ const TutorDashboard = () => {
                   className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 rounded p-2 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 >
                   {[1, 2, 3, 4, 5, 6, 7].map(num => (
-                    <option key={num} value={num}>Class {num}</option>
+                    <option key={num} value={num}>{tx('صف {n}', 'Class {n}').replace('{n}', num)}</option>
                   ))}
                 </select>
               </div>
@@ -328,9 +328,9 @@ const TutorDashboard = () => {
           <div className="lg:col-span-2 bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
             <div className="flex justify-between items-center border-b border-gray-800 pb-4">
               <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic">
-                📝 {i18n.language === 'ar' ? 'تسجيل حضور طلاب الصف' : `Class ${selectedClass} Student Attendance`}
+                📝 {tx('تسجيل حضور طلاب الصف {n}', 'Class {n} Student Attendance').replace('{n}', selectedClass)}
               </h2>
-              <span className="text-xs text-gray-400">Total: {students.length} Students</span>
+              <span className="text-xs text-gray-400">{tx('المجموع: {n} طالب', 'Total: {n} Students').replace('{n}', students.length)}</span>
             </div>
 
             {students.length === 0 ? (
@@ -376,7 +376,7 @@ const TutorDashboard = () => {
                   {tx('حفظ سجل حضور اليوم', 'Save Attendance Records')}
                 </button>
                 {attendanceSuccess && (
-                  <p className="text-sm text-emerald-400 text-center animate-pulse">✓ Attendance saved successfully!</p>
+                  <p className="text-sm text-emerald-400 text-center animate-pulse">✓ {tx('تم حفظ الحضور بنجاح!', 'Attendance saved successfully!')}</p>
                 )}
               </form>
             )}
@@ -407,7 +407,7 @@ const TutorDashboard = () => {
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-white text-sm">{lv.profiles?.full_name}</span>
                       <span className="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">
-                        Class {lv.profiles?.class_number}
+                        {tx('صف {n}', 'Class {n}').replace('{n}', lv.profiles?.class_number)}
                       </span>
                     </div>
                     <div className="font-mono text-gray-400 text-[10px]">{lv.start_date} ~ {lv.end_date}</div>
@@ -427,7 +427,7 @@ const TutorDashboard = () => {
                   <textarea
                     value={leaveReply}
                     onChange={(e) => setLeaveReply(e.target.value)}
-                    placeholder="Approve/Reject reason note..."
+                    placeholder={tx('ملاحظة سبب الموافقة/الرفض...', 'Approve/Reject reason note...')}
                     className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 rounded p-2 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none h-16"
                   />
                 </div>
@@ -447,7 +447,7 @@ const TutorDashboard = () => {
                 </div>
               </div>
             )}
-            {leaveSuccess && <p className="text-xs text-emerald-400 text-center animate-pulse">✓ Leave processed!</p>}
+            {leaveSuccess && <p className="text-xs text-emerald-400 text-center animate-pulse">✓ {tx('تمت معالجة الإجازة!', 'Leave processed!')}</p>}
           </div>
 
           <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl">

@@ -85,6 +85,11 @@ function RootStack() {
         <Stack.Screen name="receipt/[id]" options={{ title: t('receipt.title') }} />
         <Stack.Screen name="receive-payment" options={{ title: t('counter.title') }} />
         <Stack.Screen name="dictionary" options={{ title: t('dict.title') }} />
+        <Stack.Screen name="tasks" options={{ title: t('task.boardTitle') }} />
+        <Stack.Screen name="task/[id]" options={{ title: t('task.detail') }} />
+        <Stack.Screen name="duties" options={{ title: t('duty.title') }} />
+        <Stack.Screen name="petty-cash-spend" options={{ title: t('petty.recordSpend') }} />
+        <Stack.Screen name="mashoora" options={{ title: t('mashoora.title') }} />
       </Stack>
       <LiveToast />
     </>

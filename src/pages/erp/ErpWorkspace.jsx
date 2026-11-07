@@ -1,8 +1,9 @@
-import { Suspense, lazy, useEffect, useMemo } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Loading, useLang } from '../../components/erp/ui';
 import { tx } from '../../lib/tx';
+import { fetchActingOrg, setActingOrg } from '../../lib/erp/governanceApi';
 
 /**
  * ERP workspace shell: one place for every institution-management module.
@@ -10,63 +11,76 @@ import { tx } from '../../lib/tx';
  * UX only — the database enforces every permission (RLS + RPC checks).
  */
 const MODULES = [
-  { id: 'dashboard', en: 'Overview', ar: 'نظرة عامة', icon: '📊', group: 'core',
+  { id: 'dashboard', label: (t) => t('Overview', 'نظرة عامة'), icon: '📊', group: 'core',
     show: (a) => a.isAdmin || a.isFinanceViewer || a.isAcademicAdmin || a.isHrStaff,
     load: () => import('../../components/erp/campus/ErpDashboard') },
-  { id: 'self', en: 'My workspace', ar: 'مساحتي', icon: '🙋', group: 'core',
+  { id: 'tasks', label: (t) => t('Task board', 'لوحة المهام'), icon: '🗂️', group: 'core',
+    show: (a) => a.isEmployee,
+    load: () => import('../../components/erp/governance/TaskBoard') },
+  { id: 'self', label: (t) => t('My workspace', 'مساحتي'), icon: '🙋', group: 'core',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/MySelfServicePanel') },
-  { id: 'students', en: 'Students', ar: 'الطلاب', icon: '🎓', group: 'academic',
+  { id: 'students', label: (t) => t('Students', 'الطلاب'), icon: '🎓', group: 'academic',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/StudentsPanel') },
-  { id: 'academics', en: 'Academics & Exams', ar: 'الشؤون الأكاديمية', icon: '📚', group: 'academic',
+  { id: 'academics', label: (t) => t('Academics & Exams', 'الشؤون الأكاديمية'), icon: '📚', group: 'academic',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/AcademicsPanel') },
-  { id: 'crm', en: 'Admissions CRM', ar: 'إدارة القبول', icon: '🧭', group: 'academic',
+  { id: 'crm', label: (t) => t('Admissions CRM', 'إدارة القبول'), icon: '🧭', group: 'academic',
     show: (a) => a.isAdmissionsStaff,
     load: () => import('../../components/erp/campus/CrmPanel') },
-  { id: 'fees', en: 'Student Fees', ar: 'رسوم الطلاب', icon: '💳', group: 'finance',
+  { id: 'fees', label: (t) => t('Student Fees', 'رسوم الطلاب'), icon: '💳', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/FeeManagement') },
-  { id: 'accounting', en: 'Accounting', ar: 'المحاسبة', icon: '📒', group: 'finance',
+  { id: 'accounting', label: (t) => t('Accounting', 'المحاسبة'), icon: '📒', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/AccountingPanel') },
-  { id: 'expenses', en: 'Expenses', ar: 'المصروفات', icon: '🧾', group: 'finance',
+  { id: 'expenses', label: (t) => t('Expenses', 'المصروفات'), icon: '🧾', group: 'finance',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/finance/ExpensesPanel') },
-  { id: 'donations', en: 'Donations', ar: 'التبرعات', icon: '🤲', group: 'finance',
+  { id: 'donations', label: (t) => t('Donations', 'التبرعات'), icon: '🤲', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/DonationsPanel') },
-  { id: 'payroll', en: 'Payroll', ar: 'الرواتب', icon: '💼', group: 'people',
+  { id: 'payroll', label: (t) => t('Payroll', 'الرواتب'), icon: '💼', group: 'people',
     show: (a) => a.isHrStaff || a.isFinanceViewer,
     load: () => import('../../components/erp/finance/PayrollPanel') },
-  { id: 'hr', en: 'HR & Staff', ar: 'الموارد البشرية', icon: '👥', group: 'people',
+  { id: 'hr', label: (t) => t('HR & Staff', 'الموارد البشرية'), icon: '👥', group: 'people',
     show: (a) => a.isHrStaff || a.isPrincipal || a.isVP,
     load: () => import('../../components/erp/campus/StaffHrPanel') },
-  { id: 'hostel', en: 'Hostel', ar: 'السكن', icon: '🏠', group: 'campus',
+  { id: 'hostel', label: (t) => t('Hostel', 'السكن'), icon: '🏠', group: 'campus',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/HostelPanel') },
-  { id: 'welfare', en: 'Discipline & Welfare', ar: 'الانضباط والرعاية', icon: '🛡️', group: 'campus',
+  { id: 'welfare', label: (t) => t('Discipline & Welfare', 'الانضباط والرعاية'), icon: '🛡️', group: 'campus',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/WelfarePanel') },
-  { id: 'certificates', en: 'Certificates', ar: 'الشهادات', icon: '📜', group: 'campus',
+  { id: 'certificates', label: (t) => t('Certificates', 'الشهادات'), icon: '📜', group: 'campus',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/CertificatesPanel') },
-  { id: 'audit', en: 'Audit Log', ar: 'سجل التدقيق', icon: '🔍', group: 'admin',
+  { id: 'duties', label: (t) => t('Duties', 'المسؤوليات'), icon: '🧩', group: 'governance',
+    show: (a) => a.isEmployee,
+    load: () => import('../../components/erp/governance/DutiesPanel') },
+  { id: 'mashoora', label: (t) => t('Mashoora', 'الشورى'), icon: '🤝', group: 'governance',
+    show: (a) => a.isEmployee,
+    load: () => import('../../components/erp/governance/MashooraPanel') },
+  { id: 'pettycash', label: (t) => t('Petty cash', 'النثرية'), icon: '👛', group: 'governance',
+    show: (a) => a.isEmployee,
+    load: () => import('../../components/erp/governance/PettyCashPanel') },
+  { id: 'audit', label: (t) => t('Audit Log', 'سجل التدقيق'), icon: '🔍', group: 'admin',
     show: (a) => a.isAdmin || a.isAccountant,
     load: () => import('../../components/erp/finance/AuditLogPanel') },
-  { id: 'platform', en: 'SaaS Platform', ar: 'المنصة', icon: '🌐', group: 'admin',
+  { id: 'platform', label: (t) => t('SaaS Platform', 'المنصة'), icon: '🌐', group: 'admin',
     show: (a) => a.isSuperAdmin,
     load: () => import('../../components/erp/campus/PlatformPanel') },
 ];
 
 const GROUPS = {
-  core: ['Workspace', 'المساحة'],
-  academic: ['Academic', 'الأكاديمي'],
-  finance: ['Finance', 'المالية'],
-  people: ['People', 'الموظفون'],
-  campus: ['Campus', 'الحرم'],
-  admin: ['Administration', 'الإدارة'],
+  core: (t) => t('Workspace', 'المساحة'),
+  governance: (t) => t('Governance', 'الإدارة والشورى'),
+  academic: (t) => t('Academic', 'الأكاديمي'),
+  finance: (t) => t('Finance', 'المالية'),
+  people: (t) => t('People', 'الموظفون'),
+  campus: (t) => t('Campus', 'الحرم'),
+  admin: (t) => t('Administration', 'الإدارة'),
 };
 
 const lazyCache = new Map();
@@ -75,9 +89,47 @@ function getLazy(mod) {
   return lazyCache.get(mod.id);
 }
 
+/** Super admins "acting as" another institution see which one, with an exit. */
+function ActingOrgBanner({ userId }) {
+  const { t, lang } = useLang();
+  const [org, setOrg] = useState(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    let live = true;
+    fetchActingOrg(userId)
+      .then((o) => live && setOrg(o))
+      .catch(() => live && setOrg(null));
+    return () => {
+      live = false;
+    };
+  }, [userId]);
+  if (!org) return null;
+  const exit = async () => {
+    setBusy(true);
+    try {
+      await setActingOrg(null);
+      window.location.reload();
+    } catch (e) {
+      setBusy(false);
+      window.alert(e.message || String(e));
+    }
+  };
+  const name = (lang === 'ar' && org.name_ar) || org.name_en || org.slug;
+  return (
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-700 bg-amber-950/50 px-4 py-3 text-sm text-amber-100">
+      <span>
+        {t('You are managing this institution as super admin:', 'أنت تدير هذه المؤسسة بصفتك مشرفًا عامًا:')} <b>{name}</b>
+      </span>
+      <button type="button" disabled={busy} onClick={exit} className="rounded-xl bg-amber-600 hover:bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
+        {t('Exit', 'خروج')}
+      </button>
+    </div>
+  );
+}
+
 export default function ErpWorkspace() {
   const auth = useAuth();
-  const { t, ar } = useLang();
+  const { t } = useLang();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
 
@@ -131,7 +183,7 @@ export default function ErpWorkspace() {
               {grouped.map(({ g, items }) => (
                 <div key={g} className="flex lg:flex-col gap-1 lg:mb-3">
                   <div className="hidden lg:block px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-gray-500">
-                    {ar ? GROUPS[g][1] : GROUPS[g][0]}
+                    {GROUPS[g](t)}
                   </div>
                   {items.map((m) => (
                     <button
@@ -143,7 +195,7 @@ export default function ErpWorkspace() {
                       }`}
                     >
                       <span aria-hidden>{m.icon}</span>
-                      <span>{ar ? m.ar : m.en}</span>
+                      <span>{m.label(t)}</span>
                     </button>
                   ))}
                 </div>
@@ -157,6 +209,7 @@ export default function ErpWorkspace() {
           </div>
         </aside>
         <main className="flex-1 min-w-0">
+          {auth.isSuperAdmin && <ActingOrgBanner userId={auth.user?.id} />}
           <Suspense fallback={<Loading />}>
             <ActiveModule key={active.id} />
           </Suspense>

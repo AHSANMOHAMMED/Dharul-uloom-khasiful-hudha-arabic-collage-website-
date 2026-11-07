@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { tx } from '../lib/tx';
 
 /**
  * OfflineIndicator — shows a sticky banner when the user loses network connectivity.
  * Listens to the native online/offline browser events.
  */
 const OfflineIndicator = () => {
+  useTranslation(); // subscribe: re-render on language change
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [wasOffline, setWasOffline] = useState(false);
   const [showRestored, setShowRestored] = useState(false);
@@ -46,15 +49,15 @@ const OfflineIndicator = () => {
       {isOnline ? (
         <>
           <span className="text-lg animate-bounce">📶</span>
-          <span>Back online! Changes will sync automatically.</span>
+          <span>{tx('عاد الاتصال! ستتم مزامنة التغييرات تلقائياً.', 'Back online! Changes will sync automatically.')}</span>
         </>
       ) : (
         <>
           <span className="text-lg">📵</span>
           <div>
-            <span className="block">You are offline.</span>
+            <span className="block">{tx('أنت غير متصل بالإنترنت.', 'You are offline.')}</span>
             <span className="block text-xs font-normal text-red-300 mt-0.5">
-              Some features may be unavailable. Cached content is still accessible.
+              {tx('قد تكون بعض الميزات غير متاحة. لا يزال المحتوى المخزّن متاحاً.', 'Some features may be unavailable. Cached content is still accessible.')}
             </span>
           </div>
         </>

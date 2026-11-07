@@ -9,7 +9,7 @@ const FLOW = ['draft', 'scheduled', 'marking', 'published'];
 const EMPTY = { name: '', exam_type: 'term', academic_year_id: '', term_id: '', class_number: '', start_date: '', end_date: '' };
 
 function ExamPapers({ exam, canEdit }) {
-  const { t, ar } = useLang();
+  const { t } = useLang();
   const [busy, run] = useAction();
   const [form, setForm] = useState({ subject_id: '', exam_date: '', max_marks: '100', pass_marks: '40' });
   const [subjects] = useAsync(() => query('subjects', (q) => q.select('id, code, name_en, name_ar').eq('is_active', true).order('code')), []);
@@ -52,7 +52,7 @@ function ExamPapers({ exam, canEdit }) {
         <form onSubmit={add} className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end mb-4">
           <Field label={t('Subject', 'المادة')}>
             <Select required value={form.subject_id} onChange={(e) => setForm({ ...form, subject_id: e.target.value })} placeholder={t('Select…', 'اختر…')}
-              options={(subjects.data || []).map((s) => ({ value: s.id, label: `${s.code} · ${ar ? s.name_ar || s.name_en : s.name_en}` }))} />
+              options={(subjects.data || []).map((s) => ({ value: s.id, label: `${s.code} · ${t(s.name_en, s.name_ar)}` }))} />
           </Field>
           <Field label={t('Date', 'التاريخ')}><Input type="date" value={form.exam_date} onChange={(e) => setForm({ ...form, exam_date: e.target.value })} /></Field>
           <Field label={t('Max marks', 'الدرجة العظمى')}><Input type="number" min="1" value={form.max_marks} onChange={(e) => setForm({ ...form, max_marks: e.target.value })} /></Field>
@@ -63,7 +63,7 @@ function ExamPapers({ exam, canEdit }) {
       <AsyncView state={state}>
         {(rows) => (
           <Table rows={rows} empty={t('No papers yet.', 'لا توجد أوراق.')} columns={[
-            { key: 'subject', label: t('Subject', 'المادة'), render: (r) => `${r.subjects?.code} · ${ar ? r.subjects?.name_ar || r.subjects?.name_en : r.subjects?.name_en}` },
+            { key: 'subject', label: t('Subject', 'المادة'), render: (r) => `${r.subjects?.code} · ${t(r.subjects?.name_en, r.subjects?.name_ar)}` },
             { key: 'exam_date', label: t('Date', 'التاريخ'), render: (r) => formatDate(r.exam_date) },
             { key: 'max_marks', label: t('Max', 'العظمى') },
             { key: 'pass_marks', label: t('Pass', 'النجاح') },

@@ -13,7 +13,7 @@ import { useAction } from './hooks';
  * upserted by primary key and new rows are inserted.
  */
 export default function MarksEntry() {
-  const { t, ar } = useLang();
+  const { t } = useLang();
   const [busy, run] = useAction();
   const [examId, setExamId] = useState('');
   const [paperId, setPaperId] = useState('');
@@ -89,7 +89,7 @@ export default function MarksEntry() {
         </Field>
         <Field label={t('Paper', 'الورقة')}>
           <Select value={paperId} onChange={(e) => setPaperId(e.target.value)} placeholder={t('Select paper…', 'اختر الورقة…')}
-            options={(papers.data || []).map((p) => ({ value: p.id, label: `${p.subjects?.code} · ${ar ? p.subjects?.name_ar || p.subjects?.name_en : p.subjects?.name_en}` }))} />
+            options={(papers.data || []).map((p) => ({ value: p.id, label: `${p.subjects?.code} · ${t(p.subjects?.name_en, p.subjects?.name_ar)}` }))} />
         </Field>
         <Field label={t('Class', 'الصف')}>
           {exam?.class_number ? <Input value={`${t('Class', 'الصف')} ${exam.class_number}`} disabled /> : <ClassSelect value={cls} onChange={setCls} allLabel={t('Select class…', 'اختر الصف…')} />}

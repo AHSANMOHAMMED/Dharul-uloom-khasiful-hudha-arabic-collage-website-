@@ -30,7 +30,7 @@ export async function listNews() {
   const siteOrg = await getSiteOrgId();
   const { data, error } = await forSite(supabase
     .from('news')
-    .select('id, title_en, title_ar, content_en, content_ar, author, image, category, date')
+    .select('id, title_en, title_ar, title_ta, content_en, content_ar, content_ta, author, image, category, date')
     .eq('is_published', true), siteOrg)
     .order('date', { ascending: false });
   if (error) {
@@ -47,8 +47,8 @@ function mapNewsRow(row) {
     date: row.date,
     author: row.author,
     image: row.image,
-    title: { en: row.title_en, ar: row.title_ar },
-    content: { en: row.content_en, ar: row.content_ar },
+    title: { en: row.title_en, ar: row.title_ar, ta: row.title_ta },
+    content: { en: row.content_en, ar: row.content_ar, ta: row.content_ta },
   };
 }
 
@@ -57,7 +57,7 @@ export async function getNewsById(id) {
   if (!isSupabaseConfigured || !id) return null;
   const { data, error } = await supabase
     .from('news')
-    .select('id, title_en, title_ar, content_en, content_ar, author, image, category, date')
+    .select('id, title_en, title_ar, title_ta, content_en, content_ar, content_ta, author, image, category, date')
     .eq('id', id)
     .eq('is_published', true)
     .maybeSingle();
@@ -74,7 +74,7 @@ export async function listFaculty() {
   const siteOrg = await getSiteOrgId();
   const { data, error } = await forSite(supabase
     .from('faculty')
-    .select('id, name_en, name_ar, role_en, role_ar, bio_en, bio_ar, image, qualifications, sort_order'), siteOrg)
+    .select('id, name_en, name_ar, name_ta, role_en, role_ar, role_ta, bio_en, bio_ar, bio_ta, image, qualifications, sort_order'), siteOrg)
     .order('sort_order', { ascending: true });
   if (error) {
     console.error('[contentApi] listFaculty', error);
@@ -84,9 +84,9 @@ export async function listFaculty() {
     _id: row.id,
     image: row.image,
     qualifications: row.qualifications ?? [],
-    name: { en: row.name_en, ar: row.name_ar },
-    role: { en: row.role_en, ar: row.role_ar },
-    bio: { en: row.bio_en, ar: row.bio_ar },
+    name: { en: row.name_en, ar: row.name_ar, ta: row.name_ta },
+    role: { en: row.role_en, ar: row.role_ar, ta: row.role_ta },
+    bio: { en: row.bio_en, ar: row.bio_ar, ta: row.bio_ta },
   }));
 }
 
@@ -156,7 +156,7 @@ export async function listGalleryItems() {
   const siteOrg = await getSiteOrgId();
   const { data, error } = await forSite(supabase
     .from('gallery_items')
-    .select('id, title_en, title_ar, category, image_url, sort_order')
+    .select('id, title_en, title_ar, title_ta, category, image_url, sort_order')
     .eq('is_published', true), siteOrg)
     .order('sort_order', { ascending: true });
   if (error) {
@@ -169,7 +169,7 @@ export async function listGalleryItems() {
 function mapGalleryRow(row) {
   return {
     id: row.id,
-    title: { en: row.title_en, ar: row.title_ar },
+    title: { en: row.title_en, ar: row.title_ar, ta: row.title_ta },
     category: row.category,
     imageUrl: resolveGalleryUrl(row.image_url),
   };
@@ -182,7 +182,7 @@ export async function listCoursePrograms() {
   const siteOrg = await getSiteOrgId();
   const { data, error } = await forSite(supabase
     .from('course_programs')
-    .select('id, slug, title_en, title_ar, duration_en, duration_ar, description_en, description_ar, icon, admission_code, sort_order')
+    .select('id, slug, title_en, title_ar, title_ta, duration_en, duration_ar, duration_ta, description_en, description_ar, description_ta, icon, admission_code, sort_order')
     .eq('is_published', true), siteOrg)
     .order('sort_order', { ascending: true });
   if (error) {
@@ -198,9 +198,9 @@ function mapCourseRow(row) {
     slug: row.slug,
     icon: row.icon,
     admissionCode: row.admission_code,
-    title: { en: row.title_en, ar: row.title_ar },
-    duration: { en: row.duration_en, ar: row.duration_ar },
-    description: { en: row.description_en, ar: row.description_ar },
+    title: { en: row.title_en, ar: row.title_ar, ta: row.title_ta },
+    duration: { en: row.duration_en, ar: row.duration_ar, ta: row.duration_ta },
+    description: { en: row.description_en, ar: row.description_ar, ta: row.description_ta },
   };
 }
 
@@ -257,8 +257,10 @@ export async function adminUpsertNews(row) {
   const payload = {
     title_en: row.title_en,
     title_ar: row.title_ar || null,
+    title_ta: row.title_ta || null,
     content_en: row.content_en,
     content_ar: row.content_ar || null,
+    content_ta: row.content_ta || null,
     author: row.author || 'Admin',
     image: row.image || null,
     category: row.category || 'general',
@@ -293,10 +295,13 @@ export async function adminUpsertFaculty(row) {
   const payload = {
     name_en: row.name_en,
     name_ar: row.name_ar || null,
+    name_ta: row.name_ta || null,
     role_en: row.role_en,
     role_ar: row.role_ar || null,
+    role_ta: row.role_ta || null,
     bio_en: row.bio_en || null,
     bio_ar: row.bio_ar || null,
+    bio_ta: row.bio_ta || null,
     image: row.image || null,
     qualifications: row.qualifications || [],
     sort_order: row.sort_order ?? 0,
@@ -356,6 +361,7 @@ export async function adminUpsertGallery(row) {
   const payload = {
     title_en: row.title_en,
     title_ar: row.title_ar || null,
+    title_ta: row.title_ta || null,
     category: row.category || 'facilities',
     image_url: row.image_url || null,
     sort_order: row.sort_order ?? 0,
@@ -390,10 +396,13 @@ export async function adminUpsertCourseProgram(row) {
     slug: row.slug,
     title_en: row.title_en,
     title_ar: row.title_ar || null,
+    title_ta: row.title_ta || null,
     duration_en: row.duration_en || null,
     duration_ar: row.duration_ar || null,
+    duration_ta: row.duration_ta || null,
     description_en: row.description_en || null,
     description_ar: row.description_ar || null,
+    description_ta: row.description_ta || null,
     icon: row.icon || '📚',
     admission_code: row.admission_code || null,
     sort_order: row.sort_order ?? 0,

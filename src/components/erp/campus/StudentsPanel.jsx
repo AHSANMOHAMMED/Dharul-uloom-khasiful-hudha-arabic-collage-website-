@@ -43,7 +43,7 @@ function Directory() {
   return (
     <Card
       title={`${t('Student directory', 'دليل الطلاب')} (${rows.length})`}
-      actions={<><Button variant="secondary" size="sm" onClick={exportCsv} disabled={!rows.length}>CSV</Button><Button variant="secondary" size="sm" onClick={reload}>{t('Refresh', 'تحديث')}</Button></>}
+      actions={<><Button variant="secondary" size="sm" onClick={exportCsv} disabled={!rows.length}>{t('CSV', 'CSV')}</Button><Button variant="secondary" size="sm" onClick={reload}>{t('Refresh', 'تحديث')}</Button></>}
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Search name, index, e-mail, phone…', 'ابحث بالاسم أو الرقم أو البريد…')} />

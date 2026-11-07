@@ -64,7 +64,7 @@ const BookCard = ({ book }) => {
               </span>
             )}
             {book.year ? <span>{book.year}</span> : null}
-            {book.pages ? <span>{book.pages} pages</span> : null}
+            {book.pages ? <span>{tx('{n} صفحة', '{n} pages').replace('{n}', book.pages)}</span> : null}
           </div>
         </div>
       </Link>

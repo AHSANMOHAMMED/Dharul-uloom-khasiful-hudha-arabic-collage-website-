@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { listNews } from '../lib/contentApi'
 import { tx } from '../lib/tx';
+import { localized } from '../lib/localized';
 
 const News = () => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [news, setNews] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -87,11 +88,11 @@ const News = () => {
                     </div>
                     
                     <h2 className="text-2xl font-bold text-islamic-green mb-3">
-                      {item.title[i18n.language] || item.title.en}
+                      {localized(item.title)}
                     </h2>
                     
                     <p className="text-gray-700 leading-relaxed line-clamp-4">
-                      {item.content[i18n.language] || item.content.en}
+                      {localized(item.content)}
                     </p>
 
                     <Link

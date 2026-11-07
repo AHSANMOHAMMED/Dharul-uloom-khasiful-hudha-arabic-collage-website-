@@ -259,9 +259,9 @@ const AnalyticsDashboard = () => {
             </ResponsiveContainer>
           )}
           <div className="flex gap-3 mt-3 text-[10px] text-gray-400">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>≥85% Good</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>70–85% Warning</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500 inline-block"></span>&lt;70% Critical</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>≥85% {tx('جيد', 'Good')}</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>70–85% {tx('تحذير', 'Warning')}</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500 inline-block"></span>&lt;70% {tx('حرج', 'Critical')}</span>
           </div>
         </div>
       </div>
@@ -374,12 +374,12 @@ const AnalyticsDashboard = () => {
                 .map(f => (
                   <tr key={f.id} className="hover:bg-gray-900/30 transition">
                     <td className="py-2.5 px-3 font-medium text-white">{f.profiles?.full_name || '—'}</td>
-                    <td className="py-2.5 px-3 text-gray-400">Class {f.profiles?.class_number || '—'}</td>
+                    <td className="py-2.5 px-3 text-gray-400">{tx('صف {n}', 'Class {n}').replace('{n}', f.profiles?.class_number || '—')}</td>
                     <td className="py-2.5 px-3 text-gray-400 font-mono text-xs">{f.month}</td>
-                    <td className="py-2.5 px-3 text-right font-mono text-gray-300">LKR {f.total_due?.toLocaleString()}</td>
-                    <td className="py-2.5 px-3 text-right font-mono text-emerald-400">LKR {f.paid_amount?.toLocaleString()}</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-gray-300">{tx('روبية', 'LKR')} {f.total_due?.toLocaleString()}</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-emerald-400">{tx('روبية', 'LKR')} {f.paid_amount?.toLocaleString()}</td>
                     <td className="py-2.5 px-3 text-right font-mono text-red-400 font-bold">
-                      LKR {Math.max(0, f.total_due - f.paid_amount).toLocaleString()}
+                      {tx('روبية', 'LKR')} {Math.max(0, f.total_due - f.paid_amount).toLocaleString()}
                     </td>
                     <td className="py-2.5 px-3 text-center">
                       <span className={`px-2 py-0.5 rounded text-xs font-bold ${

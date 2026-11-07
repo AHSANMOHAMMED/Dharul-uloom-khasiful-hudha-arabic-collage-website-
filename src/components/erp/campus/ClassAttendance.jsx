@@ -13,7 +13,7 @@ const STATUSES = [
 ];
 
 export default function ClassAttendance() {
-  const { t, ar } = useLang();
+  const { t } = useLang();
   const auth = useAuth();
   const [busy, run] = useAction();
   const [cls, setCls] = useState(auth.user?.classNumber ? String(auth.user.classNumber) : '1');
@@ -60,7 +60,7 @@ export default function ClassAttendance() {
       </div>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         {STATUSES.map((s) => (
-          <Stat key={s.value} label={ar ? s.ar : s.en} value={count(s.value)} tone={{ present: 'emerald', late: 'amber', absent: 'red', excused: 'blue' }[s.value]} />
+          <Stat key={s.value} label={t(s.en, s.ar)} value={count(s.value)} tone={{ present: 'emerald', late: 'amber', absent: 'red', excused: 'blue' }[s.value]} />
         ))}
         <Stat label={t('Unmarked', 'غير مسجل')} value={unmarked} tone="gray" />
       </div>
@@ -76,7 +76,7 @@ export default function ClassAttendance() {
                   return (
                     <button key={s.value} type="button" onClick={() => setStatus(r.student_id, s.value)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${on ? `${s.cls} text-white` : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-white'}`}>
-                      {ar ? s.ar : s.en}
+                      {t(s.en, s.ar)}
                     </button>
                   );
                 })}

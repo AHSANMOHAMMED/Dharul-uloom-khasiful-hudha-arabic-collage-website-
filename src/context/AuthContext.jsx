@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { getSiteOrgSlug } from '../lib/siteOrg';
+import { tx } from '../lib/tx';
 
 const AuthContext = createContext();
 
@@ -94,7 +95,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     if (!isSupabaseConfigured) {
-      return { success: false, error: 'Authentication is not configured' };
+      return { success: false, error: tx('المصادقة غير مهيأة', 'Authentication is not configured') };
     }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
@@ -107,13 +108,13 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (username, email, password, accountType = 'guest', indexNumber = '', phone = '') => {
     if (!isSupabaseConfigured) {
-      return { success: false, error: 'Authentication is not configured' };
+      return { success: false, error: tx('المصادقة غير مهيأة', 'Authentication is not configured') };
     }
     
     // Verify index number if registration is for a student
     if (accountType === 'student') {
       if (!indexNumber) {
-        return { success: false, error: 'Index number is required for students' };
+        return { success: false, error: tx('رقم القيد مطلوب للطلاب', 'Index number is required for students') };
       }
       const { data: verifyData, error: verifyErr } = await supabase
         .rpc('verify_student_index', { p_index_number: indexNumber });
@@ -122,7 +123,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: verifyErr.message };
       }
       if (!verifyData || !verifyData.valid) {
-        return { success: false, error: verifyData?.error || 'Invalid index number' };
+        return { success: false, error: verifyData?.error || tx('رقم القيد غير صالح', 'Invalid index number') };
       }
     }
 

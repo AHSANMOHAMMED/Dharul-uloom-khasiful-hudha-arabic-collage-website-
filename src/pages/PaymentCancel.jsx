@@ -26,7 +26,7 @@ const PaymentCancel = () => {
           {tx('لم تكتمل عملية الدفع. يمكنك المحاولة مرة أخرى من لوحة التحكم.', 'Payment was not completed. You can try again from your dashboard.')}
         </p>
         {params.get('order_id') && (
-          <p className="text-xs text-gray-400 font-mono">Order: {params.get('order_id')}</p>
+          <p className="text-xs text-gray-400 font-mono">{tx('الطلب', 'Order')}: {params.get('order_id')}</p>
         )}
         {fromApp && (
           <a href={appLink} className="block mt-2 px-6 py-2 bg-emerald-700 text-white rounded-lg font-semibold">

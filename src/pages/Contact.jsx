@@ -88,9 +88,9 @@ const Contact = () => {
                       <h3 className="font-semibold text-gray-700 mb-1">
                         {t('contact.address')}
                       </h3>
-                      <p className="text-gray-600">Mudalippalli</p>
-                      <p className="text-gray-600">Kalpitiya, Puttalam District</p>
-                      <p className="text-gray-600">Sri Lanka</p>
+                      <p className="text-gray-600">{tx('مداليبالي', 'Mudalippalli')}</p>
+                      <p className="text-gray-600">{tx('كالبيتيا، مقاطعة بوتلام', 'Kalpitiya, Puttalam District')}</p>
+                      <p className="text-gray-600">{tx('سريلانكا', 'Sri Lanka')}</p>
                       <p className="text-gray-500 text-sm mt-1">5P2C+VMC</p>
                     </div>
                   </div>
@@ -107,7 +107,7 @@ const Contact = () => {
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-700"
                       >
-                        Facebook
+                        {tx('فيسبوك', 'Facebook')}
                       </a>
                     </div>
                   </div>
@@ -139,7 +139,7 @@ const Contact = () => {
                   allowFullScreen=""
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="College Location"
+                  title={tx('موقع الكلية', 'College Location')}
                 ></iframe>
               </div>
             </motion.div>

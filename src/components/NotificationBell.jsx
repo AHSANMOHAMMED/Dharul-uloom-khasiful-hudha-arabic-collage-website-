@@ -104,10 +104,10 @@ export default function NotificationBell() {
           {prefsOpen && (
             <div className="px-3 py-2 border-b border-slate-100 space-y-2 bg-slate-50">
               {[
-                ['notify_sms', 'SMS'],
+                ['notify_sms', tx('رسائل SMS', 'SMS')],
                 ['notify_whatsapp', 'WhatsApp'],
-                ['notify_email', 'Email'],
-                ['notify_push', 'Push'],
+                ['notify_email', tx('البريد الإلكتروني', 'Email')],
+                ['notify_push', tx('إشعارات الدفع', 'Push')],
               ].map(([key, label]) => (
                 <label key={key} className="flex items-center gap-2 text-xs text-slate-700">
                   <input
@@ -120,10 +120,10 @@ export default function NotificationBell() {
               ))}
               <div className="flex gap-2">
                 <button type="button" onClick={savePrefs} className="text-xs font-bold text-white bg-emerald-600 px-2 py-1 rounded-lg">
-                  Save
+                  {tx('حفظ', 'Save')}
                 </button>
                 <button type="button" onClick={enablePush} className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-1 rounded-lg">
-                  Enable push
+                  {tx('تفعيل إشعارات الدفع', 'Enable push')}
                 </button>
               </div>
             </div>

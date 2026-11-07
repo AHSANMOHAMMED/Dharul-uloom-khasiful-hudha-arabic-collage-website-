@@ -61,7 +61,7 @@ export default function FeeOverview() {
                         disabled={!days.length}
                         onClick={() => downloadCsv(`fee-collections-${range.from}-${range.to}.csv`, days)}
                       >
-                        CSV
+                        {t('CSV', 'CSV')}
                       </Button>
                     </div>
                     {days.length ? (

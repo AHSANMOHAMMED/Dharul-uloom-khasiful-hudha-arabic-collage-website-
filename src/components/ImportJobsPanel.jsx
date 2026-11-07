@@ -58,7 +58,7 @@ export default function ImportJobsPanel() {
           onClick={queueJob}
           className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold"
         >
-          Queue import job
+          {tx('إضافة مهمة استيراد', 'Queue import job')}
         </button>
       </div>
 
@@ -85,7 +85,7 @@ npm run import:shamela -- --concurrency 4
           </div>
         ))}
         {jobs.length === 0 && (
-          <p className="text-sm text-gray-500">No import jobs yet.</p>
+          <p className="text-sm text-gray-500">{tx('لا توجد مهام استيراد بعد.', 'No import jobs yet.')}</p>
         )}
       </div>
     </div>

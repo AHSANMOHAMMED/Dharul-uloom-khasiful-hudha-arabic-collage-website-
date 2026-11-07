@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { AsyncView, Button, Card, Field, Input, Modal, PageHeader, Select, Stat, StatusBadge, Table, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Stat, Table, useAsync, useLang } from '../ui';
 import { formatDate, formatMoney, rpc, updateRow } from '../../../lib/erp/rpc';
+import { setActingOrg } from '../../../lib/erp/governanceApi';
 import { useAction } from './hooks';
 
 const PLANS = ['free', 'standard', 'premium', 'enterprise'];
@@ -15,6 +16,18 @@ export default function PlatformPanel() {
   const [create, setCreate] = useState(null);
   const [created, setCreated] = useState(null);
   const [edit, setEdit] = useState(null);
+  const statusLabel = (s) => ({
+    trial: t('Trial', 'تجريبي'),
+    active: t('Active', 'نشطة'),
+    suspended: t('Suspended', 'موقوفة'),
+    archived: t('Archived', 'مؤرشفة'),
+  })[s] || s;
+  const planLabel = (p) => ({
+    free: t('Free', 'مجاني'),
+    standard: t('Standard', 'قياسي'),
+    premium: t('Premium', 'مميز'),
+    enterprise: t('Enterprise', 'مؤسسي'),
+  })[p] || p;
   const [state, reload] = useAsync(() => (auth.isSuperAdmin ? rpc('platform_overview').then((r) => r ?? []) : Promise.resolve([])), [auth.isSuperAdmin]);
 
   if (!auth.isSuperAdmin) {
@@ -39,12 +52,18 @@ export default function PlatformPanel() {
   };
   const setStatus = async (o, status) => {
     if (status === o.status) return;
+    const head = `${o.name_en} → ${statusLabel(status)}?`;
     const warn = ['suspended', 'archived'].includes(status)
-      ? t(`${status} ${o.name_en}? All its users lose access to tenant data immediately.`, `${status} ${o.name_en}؟ سيفقد جميع المستخدمين الوصول فورًا.`)
-      : t(`Set ${o.name_en} to ${status}?`, `تعيين ${o.name_en} إلى ${status}؟`);
+      ? `${head} ${t('All its users lose access to tenant data immediately.', 'سيفقد جميع المستخدمين الوصول فورًا.')}`
+      : head;
     if (!window.confirm(warn)) return;
     const res = await run(() => rpc('set_organization_status', { p_org: o.org_id, p_status: status }), t('Status updated', 'تم تحديث الحالة'));
     if (res.ok) reload();
+  };
+  const manage = async (o) => {
+    if (!window.confirm(`${t('Manage this institution', 'إدارة هذه المؤسسة')}: ${o.name_en}?`)) return;
+    const res = await run(() => setActingOrg(o.org_id));
+    if (res.ok) window.location.assign('/erp?module=dashboard');
   };
   const saveEdit = async () => {
     const res = await run(() => updateRow('organizations', edit.org_id, { plan: edit.plan, max_students: edit.max_students ? Number(edit.max_students) : null }), t('Plan updated', 'تم تحديث الخطة'));
@@ -76,7 +95,7 @@ export default function PlatformPanel() {
             <Card title={t('Tenants', 'المؤسسات')}>
               <Table rows={rows} rowKey="org_id" empty={t('No organizations.', 'لا توجد مؤسسات.')} columns={[
                 { key: 'name_en', label: t('Organization', 'المؤسسة'), render: (o) => <div><div className="font-semibold">{o.name_en}</div><div className="text-xs text-gray-500">{o.slug} · {o.code}</div></div> },
-                { key: 'plan', label: t('Plan', 'الخطة') },
+                { key: 'plan', label: t('Plan', 'الخطة'), render: (o) => planLabel(o.plan) },
                 { key: 'students', label: t('Students', 'الطلاب'), render: (o) => (
                   <span className={o.max_students && Number(o.students) >= o.max_students ? 'text-red-400 font-bold' : ''}>{o.students}{o.max_students ? ` / ${o.max_students}` : ''}</span>
                 ) },
@@ -87,11 +106,16 @@ export default function PlatformPanel() {
                 { key: 'created_at', label: t('Since', 'منذ'), render: (o) => formatDate(o.created_at) },
                 { key: 'status', label: t('Status', 'الحالة'), render: (o) => (
                   <div className="space-y-1 min-w-[130px]">
-                    <StatusBadge status={o.status} />
-                    <Select value={o.status} disabled={busy} onChange={(e) => setStatus(o, e.target.value)} options={STATUSES.map((s) => ({ value: s, label: s }))} />
+                    <Badge tone={{ active: 'green', trial: 'amber', suspended: 'red' }[o.status] || 'gray'}>{statusLabel(o.status)}</Badge>
+                    <Select value={o.status} disabled={busy} onChange={(e) => setStatus(o, e.target.value)} options={STATUSES.map((s) => ({ value: s, label: statusLabel(s) }))} />
                   </div>
                 ) },
-                { key: 'act', label: '', render: (o) => <Button size="sm" variant="secondary" onClick={() => setEdit({ org_id: o.org_id, name_en: o.name_en, plan: o.plan, max_students: o.max_students ?? '' })}>{t('Plan', 'الخطة')}</Button> },
+                { key: 'act', label: '', render: (o) => (
+                  <div className="flex flex-wrap gap-1 justify-end">
+                    <Button size="sm" disabled={busy} onClick={() => manage(o)}>{t('Manage this institution', 'إدارة هذه المؤسسة')}</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setEdit({ org_id: o.org_id, name_en: o.name_en, plan: o.plan, max_students: o.max_students ?? '' })}>{t('Plan', 'الخطة')}</Button>
+                  </div>
+                ) },
               ]} />
             </Card>
           </div>
@@ -102,12 +126,12 @@ export default function PlatformPanel() {
           <Button disabled={busy || !create?.slug || !create?.name_en || !create?.code || !create?.admin_email} onClick={submit}>{t('Create', 'إنشاء')}</Button></>}>
         {create && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label={t('Slug (URL id)', 'المعرف')} hint="e.g. al-noor-college"><Input value={create.slug} onChange={(e) => setCreate({ ...create, slug: e.target.value })} /></Field>
+            <Field label={t('Slug (URL id)', 'المعرف')} hint={`${t('e.g.', 'مثال:')} al-noor-college`}><Input value={create.slug} onChange={(e) => setCreate({ ...create, slug: e.target.value })} /></Field>
             <Field label={t('Short code', 'الرمز المختصر')} hint={t('Used in document numbers', 'يستخدم في أرقام المستندات')}><Input value={create.code} maxLength={6} onChange={(e) => setCreate({ ...create, code: e.target.value })} /></Field>
             <Field label={t('Name (English)', 'الاسم (إنجليزي)')}><Input value={create.name_en} onChange={(e) => setCreate({ ...create, name_en: e.target.value })} /></Field>
             <Field label={t('Name (Arabic)', 'الاسم (عربي)')}><Input dir="rtl" value={create.name_ar} onChange={(e) => setCreate({ ...create, name_ar: e.target.value })} /></Field>
             <div className="sm:col-span-2"><Field label={t('Admin e-mail', 'بريد المسؤول')}><Input type="email" value={create.admin_email} onChange={(e) => setCreate({ ...create, admin_email: e.target.value })} /></Field></div>
-            <Field label={t('Plan', 'الخطة')}><Select value={create.plan} onChange={(e) => setCreate({ ...create, plan: e.target.value })} options={PLANS.map((p) => ({ value: p, label: p }))} /></Field>
+            <Field label={t('Plan', 'الخطة')}><Select value={create.plan} onChange={(e) => setCreate({ ...create, plan: e.target.value })} options={PLANS.map((p) => ({ value: p, label: planLabel(p) }))} /></Field>
             <Field label={t('Max students', 'الحد الأقصى للطلاب')} hint={t('Blank = unlimited', 'فارغ = غير محدود')}><Input type="number" min="1" value={create.max_students} onChange={(e) => setCreate({ ...create, max_students: e.target.value })} /></Field>
           </div>
         )}
@@ -116,7 +140,7 @@ export default function PlatformPanel() {
         footer={<><Button variant="ghost" onClick={() => setEdit(null)}>{t('Cancel', 'إلغاء')}</Button><Button disabled={busy} onClick={saveEdit}>{t('Save', 'حفظ')}</Button></>}>
         {edit && (
           <div className="grid grid-cols-2 gap-3">
-            <Field label={t('Plan', 'الخطة')}><Select value={edit.plan} onChange={(e) => setEdit({ ...edit, plan: e.target.value })} options={PLANS.map((p) => ({ value: p, label: p }))} /></Field>
+            <Field label={t('Plan', 'الخطة')}><Select value={edit.plan} onChange={(e) => setEdit({ ...edit, plan: e.target.value })} options={PLANS.map((p) => ({ value: p, label: planLabel(p) }))} /></Field>
             <Field label={t('Max students', 'الحد الأقصى للطلاب')}><Input type="number" min="1" value={edit.max_students} onChange={(e) => setEdit({ ...edit, max_students: e.target.value })} /></Field>
           </div>
         )}

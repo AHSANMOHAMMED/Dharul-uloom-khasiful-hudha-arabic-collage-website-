@@ -109,6 +109,7 @@ FRONTEND_URL=http://localhost:5173
 | [docs/ERP_IMPLEMENTATION.md](docs/ERP_IMPLEMENTATION.md) | Audit findings + fixes, ERP/HRM/CRM/accounting/SaaS modules (0015–0020), verification & deploy order |
 | [docs/PERFORMANCE.md](docs/PERFORMANCE.md) | 10 s latency budget, load-test results (`npm run test:perf`), load balancing & scaling |
 | [docs/RECEIPT_PRINTING.md](docs/RECEIPT_PRINTING.md) | Payment slip printing: A5, two copies on A4, Epson LQ-310 dot-matrix (text / raw ESC/P), PDF |
+| [docs/GOVERNANCE.md](docs/GOVERNANCE.md) | Yearly duties decided at the mashoora, duty history, petty cash per duty, weekly task board, super-admin control, admission age rules |
 | [docs/PLATFORM_GUIDE.md](docs/PLATFORM_GUIDE.md) | Current architecture, features, data flows |
 | [docs/UI_ENHANCEMENT_SPEC.md](docs/UI_ENHANCEMENT_SPEC.md) | Web + mobile UI enhancement brief |
 | [docs/GO_LIVE.md](docs/GO_LIVE.md) | Deploy / secrets / smoke checklist |

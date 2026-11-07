@@ -85,7 +85,7 @@ const BookReaderPage = () => {
               </span>
               {book.shamela_id && (
                 <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">
-                  Shamela #{book.shamela_id}
+                  {tx('الشاملة #{n}', 'Shamela #{n}').replace('{n}', book.shamela_id)}
                 </span>
               )}
             </div>

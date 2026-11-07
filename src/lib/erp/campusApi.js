@@ -1,4 +1,5 @@
 import { query } from './rpc';
+import { tx } from '../tx';
 
 /**
  * Shared data helpers + constants for the campus / academic / HR ERP modules.
@@ -84,13 +85,13 @@ export const CERTIFICATE_TYPES = [
 ];
 
 /** Map a [{value,en,ar}] list to Select options in the active language. */
-export function toOptions(list, ar) {
-  return list.map((o) => ({ value: o.value, label: ar ? o.ar : o.en }));
+export function toOptions(list) {
+  return list.map((o) => ({ value: o.value, label: tx(o.ar, o.en) }));
 }
 
-export function labelOf(list, value, ar) {
+export function labelOf(list, value) {
   const o = list.find((x) => x.value === value);
-  return o ? (ar ? o.ar : o.en) : value ?? '—';
+  return o ? tx(o.ar, o.en) : value ?? '—';
 }
 
 export function classOptions(t) {

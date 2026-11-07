@@ -6,6 +6,7 @@ function mapAdmission(row) {
   return {
     _id: row.id,
     studentName: row.student_name,
+    dateOfBirth: row.date_of_birth ?? null,
     age: row.age,
     parentName: row.parent_name,
     phone: row.phone,
@@ -13,6 +14,7 @@ function mapAdmission(row) {
     address: row.address,
     previousEducation: row.previous_education,
     course: row.course,
+    source: row.source ?? null,
     status: row.status,
     pipelineStage: row.pipeline_stage || 'submitted',
     assignedTo: row.assigned_to,

@@ -27,7 +27,7 @@ const Navbar = () => {
             <Link to="/" className="flex items-center gap-3 group">
               <img 
                 src="/images/logo.jpg" 
-                alt="Dharul Uloom Kashiful Hudha Logo" 
+                alt={tx('شعار دار العلوم كاشف الهدى', 'Dharul Uloom Kashiful Hudha Logo')} 
                 className="w-12 h-12 object-contain rounded-xl shadow-sm border border-slate-100 group-hover:scale-105 transition-transform duration-300"
               />
               <span className="text-xl sm:text-2xl font-arabic font-extrabold text-emerald-950 tracking-wide">

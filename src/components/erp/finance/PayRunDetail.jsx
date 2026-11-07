@@ -202,7 +202,7 @@ export default function PayRunDetail({ runId, onClose, onChanged }) {
                     )
                   }
                 >
-                  CSV
+                  {t('CSV', 'CSV')}
                 </Button>
               </div>
 

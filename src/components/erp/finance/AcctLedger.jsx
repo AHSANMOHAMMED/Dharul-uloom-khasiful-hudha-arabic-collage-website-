@@ -26,7 +26,7 @@ export default function AcctLedger() {
             disabled={!state.data?.length}
             onClick={() => downloadCsv(`ledger-${account?.code || 'account'}.csv`, state.data)}
           >
-            CSV
+            {t('CSV', 'CSV')}
           </Button>
           <Button size="sm" variant="secondary" onClick={reload} disabled={!accountId}>
             {t('Refresh', 'تحديث')}

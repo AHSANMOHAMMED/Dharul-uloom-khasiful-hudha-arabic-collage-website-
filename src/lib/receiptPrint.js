@@ -1,4 +1,5 @@
 import { toast } from 'react-toastify';
+import { tx } from './tx';
 import { supabaseFunctionBaseUrl } from './supabaseClient';
 
 /**
@@ -282,7 +283,7 @@ export function printReceipt(receipt, opts = {}) {
   if (!receipt) return;
   const win = window.open('', '_blank', 'width=860,height=960');
   if (!win) {
-    toast.error('Pop-up blocked: allow pop-ups to print.');
+    toast.error(tx('تم حظر النافذة المنبثقة: اسمح بالنوافذ المنبثقة للطباعة.', 'Pop-up blocked: allow pop-ups to print.'));
     return;
   }
   win.document.write(receiptHtml(receipt, opts));

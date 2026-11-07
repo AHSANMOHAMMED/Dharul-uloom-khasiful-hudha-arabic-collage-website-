@@ -200,7 +200,7 @@ const ParentDashboard = () => {
       }
     } catch (err) {
       console.error('Error linking child:', err);
-      setLinkError(i18n.language === 'ar' ? 'تعذر إرسال طلب الربط' : (err?.message || 'Failed to link child account'));
+      setLinkError((i18n.language !== 'ar' && err?.message) || tx('تعذر إرسال طلب الربط', 'Failed to link child account'));
     }
   };
 
@@ -293,7 +293,7 @@ const ParentDashboard = () => {
                 {tx('بوابة أولياء الأمور', 'Parent Portal')}
               </span>
               <h1 className="mt-3 text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-emerald-500">
-                {i18n.language === 'ar' ? `مرحباً بك، ${user?.username}` : `Welcome back, ${user?.username}`}
+                {tx('مرحباً بك، {name}', 'Welcome back, {name}').replace('{name}', user?.username)}
               </h1>
               <p className="text-sm text-gray-400 mt-1 font-medium">
                 {tx('تابع أنشطة ومستحقات أطفالك الدراسية من مكان واحد', 'Monitor your children academic performance, attendance, and fees.')}
@@ -374,7 +374,7 @@ const ParentDashboard = () => {
                 type="text"
                 value={inviteToken}
                 onChange={(e) => setInviteToken(e.target.value)}
-                placeholder="Invite token"
+                placeholder={tx('رمز الدعوة', 'Invite token')}
                 className="w-full bg-gray-950/50 border border-gray-800 text-sm text-gray-200 placeholder-gray-600 rounded-xl p-3 focus:outline-none focus:ring-1 focus:ring-amber-500"
               />
               <button
@@ -417,9 +417,12 @@ const ParentDashboard = () => {
                           {tx('تحذير غياب الطالب!', 'Child Attendance Alert!')}
                         </h3>
                         <p className="text-xs text-red-300">
-                          {i18n.language === 'ar'
-                            ? `نسبة حضور ${selectedChild?.full_name} هي ${attendanceRate}% وهو أقل من الحد المسموح (85%). يرجى اتخاذ الإجراءات أو تبرير الغياب.`
-                            : `${selectedChild?.full_name} has an attendance of ${attendanceRate}%, falling below the required 85%.`}
+                          {tx(
+                            'نسبة حضور {name} هي {rate}% وهو أقل من الحد المسموح (85%). يرجى اتخاذ الإجراءات أو تبرير الغياب.',
+                            '{name} has an attendance of {rate}%, falling below the required 85%.',
+                          )
+                            .replace('{name}', selectedChild?.full_name)
+                            .replace('{rate}', attendanceRate)}
                         </p>
                       </div>
                     </div>
@@ -488,15 +491,15 @@ const ParentDashboard = () => {
 
                         <div className="grid grid-cols-3 gap-4 text-center">
                           <div className="p-3 bg-gray-950/20 rounded-lg">
-                            <div className="text-lg font-bold text-white font-mono">LKR {fees.total_due}</div>
+                            <div className="text-lg font-bold text-white font-mono">{tx('روبية', 'LKR')} {fees.total_due}</div>
                             <span className="text-[10px] text-gray-500">{tx('الإجمالي', 'Total')}</span>
                           </div>
                           <div className="p-3 bg-gray-950/20 rounded-lg">
-                            <div className="text-lg font-bold text-emerald-400 font-mono">LKR {fees.paid_amount}</div>
+                            <div className="text-lg font-bold text-emerald-400 font-mono">{tx('روبية', 'LKR')} {fees.paid_amount}</div>
                             <span className="text-[10px] text-gray-500">{tx('المدفوع', 'Paid')}</span>
                           </div>
                           <div className="p-3 bg-gray-950/20 rounded-lg">
-                            <div className="text-lg font-bold text-red-400 font-mono">LKR {fees.total_due - fees.paid_amount}</div>
+                            <div className="text-lg font-bold text-red-400 font-mono">{tx('روبية', 'LKR')} {fees.total_due - fees.paid_amount}</div>
                             <span className="text-[10px] text-gray-500">{tx('المتأخرات', 'Arrears')}</span>
                           </div>
                         </div>
@@ -507,7 +510,7 @@ const ParentDashboard = () => {
                             {fees.payments.map((p, idx) => (
                               <div key={idx} className="flex justify-between text-xs bg-gray-950/30 p-2 rounded">
                                 <span className="text-gray-400">{p.date}</span>
-                                <span className="font-mono text-emerald-400 font-semibold">+ LKR {p.amount}</span>
+                                <span className="font-mono text-emerald-400 font-semibold">+ {tx('روبية', 'LKR')} {p.amount}</span>
                               </div>
                             ))}
                           </div>
@@ -603,7 +606,7 @@ const ParentDashboard = () => {
                         >
                           {tx('تقديم الطلب للموافقة', 'Submit Leave Request')}
                         </button>
-                        {leaveSuccess && <p className="text-xs text-emerald-400 text-center animate-pulse">✓ Leave request submitted successfully!</p>}
+                        {leaveSuccess && <p className="text-xs text-emerald-400 text-center animate-pulse">✓ {tx('تم إرسال طلب الإجازة بنجاح!', 'Leave request submitted successfully!')}</p>}
                         {leaveError && <p className="text-xs text-red-400 text-center">{leaveError}</p>}
                       </form>
                     </div>
@@ -665,7 +668,7 @@ const ParentDashboard = () => {
                             </div>
                             <div className="text-right">
                               <span className="font-mono text-amber-400 font-bold">{res.marks_obtained} / {res.max_marks}</span>
-                              <div className="text-[10px] text-emerald-400 font-bold">Grade: {res.grade}</div>
+                              <div className="text-[10px] text-emerald-400 font-bold">{tx('التقدير', 'Grade')}: {res.grade}</div>
                             </div>
                           </div>
                         ))}

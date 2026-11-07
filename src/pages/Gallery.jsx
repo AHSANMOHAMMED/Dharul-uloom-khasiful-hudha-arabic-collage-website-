@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { listGalleryItems } from '../lib/contentApi'
 import { tx } from '../lib/tx';
+import { localized } from '../lib/localized';
 
 const Gallery = () => {
   useTranslation() // subscribe: re-render on language change
@@ -55,7 +56,7 @@ const Gallery = () => {
                   )}
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-end">
                     <div className="p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                      <h3 className="font-bold text-lg">{item.title[tx('ar', 'en')] || item.title.en}</h3>
+                      <h3 className="font-bold text-lg">{localized(item.title)}</h3>
                       <span className="text-sm opacity-90 capitalize">{item.category}</span>
                     </div>
                   </div>
@@ -80,7 +81,7 @@ const Gallery = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-white text-islamic-green rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
-              Facebook
+              {tx('فيسبوك', 'Facebook')}
             </a>
           </motion.div>
         </div>
@@ -90,8 +91,8 @@ const Gallery = () => {
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setLightbox(null)} role="presentation">
           <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()} role="presentation">
             <img src={lightbox.imageUrl} alt={lightbox.title.en} className="w-full max-h-[80vh] object-contain rounded-lg" />
-            <p className="text-white text-center mt-4 text-lg">{lightbox.title[tx('ar', 'en')] || lightbox.title.en}</p>
-            <button type="button" onClick={() => setLightbox(null)} className="mt-4 mx-auto block text-gray-300 hover:text-white">Close</button>
+            <p className="text-white text-center mt-4 text-lg">{localized(lightbox.title)}</p>
+            <button type="button" onClick={() => setLightbox(null)} className="mt-4 mx-auto block text-gray-300 hover:text-white">{tx('إغلاق', 'Close')}</button>
           </div>
         </div>
       )}

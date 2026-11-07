@@ -107,7 +107,7 @@ export default function AcctJournals() {
             </Button>
           )}
           <Button size="sm" variant="secondary" onClick={exportCsv} disabled={!state.data?.length}>
-            CSV
+            {t('CSV', 'CSV')}
           </Button>
           <Button size="sm" variant="secondary" onClick={reload}>
             {t('Refresh', 'تحديث')}

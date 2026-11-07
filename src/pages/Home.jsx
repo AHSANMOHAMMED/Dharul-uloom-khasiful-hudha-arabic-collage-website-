@@ -4,46 +4,38 @@ import { motion } from 'framer-motion';
 import { tx } from '../lib/tx';
 
 const Home = () => {
-  const { t, i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  const { t } = useTranslation();
+  const year = new Date().getFullYear();
 
   const portalGateways = [
     {
       role: 'student',
-      title_en: 'Student Portal',
-      title_ar: 'بوابة الطالب',
-      desc_en: 'Access courses, check your attendance, grades, and submit assignments.',
-      desc_ar: 'الولوج إلى المناهج التعليمية، الحضور والغياب، والدرجات الأكاديمية.',
+      title: tx('بوابة الطالب', 'Student Portal'),
+      desc: tx('الولوج إلى المناهج التعليمية، الحضور والغياب، والدرجات الأكاديمية.', 'Access courses, check your attendance, grades, and submit assignments.'),
       icon: '👨‍🎓',
       color: 'from-emerald-50/50 to-white',
       borderColor: 'border-emerald-100'
     },
     {
       role: 'parent',
-      title_en: 'Parent Portal',
-      title_ar: 'بوابة ولي الأمر',
-      desc_en: 'Monitor child progress, track attendance logs, and pay tuition fees.',
-      desc_ar: 'متابعة أداء الأبناء، والاطلاع على سجلات الحضور وسداد المصروفات.',
+      title: tx('بوابة ولي الأمر', 'Parent Portal'),
+      desc: tx('متابعة أداء الأبناء، والاطلاع على سجلات الحضور وسداد المصروفات.', 'Monitor child progress, track attendance logs, and pay tuition fees.'),
       icon: '👥',
       color: 'from-amber-50/50 to-white',
       borderColor: 'border-amber-100'
     },
     {
       role: 'tutor',
-      title_en: 'Tutor / Faculty Portal',
-      title_ar: 'بوابة المدرسين',
-      desc_en: 'Grade assignments, update student performance logs, and manage curriculum.',
-      desc_ar: 'تسجيل الدرجات، تحديث سجلات الطلاب، وإدارة المناهج والشعب الدراسية.',
+      title: tx('بوابة المدرسين', 'Tutor / Faculty Portal'),
+      desc: tx('تسجيل الدرجات، تحديث سجلات الطلاب، وإدارة المناهج والشعب الدراسية.', 'Grade assignments, update student performance logs, and manage curriculum.'),
       icon: '👨‍🏫',
       color: 'from-teal-50/50 to-white',
       borderColor: 'border-teal-100'
     },
     {
       role: 'librarian',
-      title_en: 'Library Management',
-      title_ar: 'إدارة المكتبة',
-      desc_en: 'Manage the digital Shamela library catalogs and view student reading logs.',
-      desc_ar: 'إدارة المكتبة الرقمية الشاملة وتصنيف الكتب وتتبع المطالعة.',
+      title: tx('إدارة المكتبة', 'Library Management'),
+      desc: tx('إدارة المكتبة الرقمية الشاملة وتصنيف الكتب وتتبع المطالعة.', 'Manage the digital Shamela library catalogs and view student reading logs.'),
       icon: '📚',
       color: 'from-purple-50/50 to-white',
       borderColor: 'border-purple-100'
@@ -52,30 +44,21 @@ const Home = () => {
 
   const programs = [
     {
-      title_en: 'Quran Memorization (Hifz)',
-      title_ar: 'تحفيظ القرآن الكريم (الحفظ)',
-      duration_en: '3-5 Years',
-      duration_ar: '٣ - ٥ سنوات',
-      desc_en: 'Complete memorization of the Holy Quran with correct Tajweed rules and vocal training.',
-      desc_ar: 'حفظ كامل للقرآن الكريم مع تطبيق أحكام التجويد والترتيل وتدريب الصوت.',
+      title: tx('تحفيظ القرآن الكريم (الحفظ)', 'Quran Memorization (Hifz)'),
+      duration: tx('٣ - ٥ سنوات', '3-5 Years'),
+      desc: tx('حفظ كامل للقرآن الكريم مع تطبيق أحكام التجويد والترتيل وتدريب الصوت.', 'Complete memorization of the Holy Quran with correct Tajweed rules and vocal training.'),
       icon: '🕌'
     },
     {
-      title_en: 'Arabic Grammar & Syntax',
-      title_ar: 'قواعد اللغة العربية (النحو والصرف)',
-      duration_en: '2 Years',
-      duration_ar: 'سنتان',
-      desc_en: 'In-depth study of Nahw, Sarf, and classical literature to read and speak Arabic fluently.',
-      desc_ar: 'دراسة متعمقة في علم النحو والصرف والأدب العربي لفهم وقراءة النصوص الكلاسيكية بطلاقة.',
+      title: tx('قواعد اللغة العربية (النحو والصرف)', 'Arabic Grammar & Syntax'),
+      duration: tx('سنتان', '2 Years'),
+      desc: tx('دراسة متعمقة في علم النحو والصرف والأدب العربي لفهم وقراءة النصوص الكلاسيكية بطلاقة.', 'In-depth study of Nahw, Sarf, and classical literature to read and speak Arabic fluently.'),
       icon: '📝'
     },
     {
-      title_en: 'Hadith Studies',
-      title_ar: 'دراسات الحديث الشريف',
-      duration_en: '1-2 Years',
-      duration_ar: 'سنة - سنتان',
-      desc_en: 'Examination of Prophetic traditions, chains of narrators (Isnad), and authentication principles.',
-      desc_ar: 'دراسة الأحاديث النبوية الشريفة وعلم مصطلح الحديث وفحص أسانيد الرواة.',
+      title: tx('دراسات الحديث الشريف', 'Hadith Studies'),
+      duration: tx('سنة - سنتان', '1-2 Years'),
+      desc: tx('دراسة الأحاديث النبوية الشريفة وعلم مصطلح الحديث وفحص أسانيد الرواة.', 'Examination of Prophetic traditions, chains of narrators (Isnad), and authentication principles.'),
       icon: '📜'
     }
   ];
@@ -96,7 +79,7 @@ const Home = () => {
           >
             <img 
               src="/images/logo.jpg" 
-              alt="Dharul Uloom Kashiful Hudha" 
+              alt={tx('دار العلوم كشف الهدى', 'Dharul Uloom Kashiful Hudha')} 
               className="w-24 h-24 sm:w-32 sm:h-32 object-contain rounded-3xl shadow-lg border border-white"
             />
           </motion.div>
@@ -112,7 +95,7 @@ const Home = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
             </span>
-            {tx('باب التسجيل مفتوح للعام الدراسي ٢٠٢٦', 'Admissions Open for Year 2026/2027')}
+            {tx('باب التسجيل مفتوح للعام الدراسي {year}', 'Admissions Open for Year {year}').replace('{year}', `${year}/${year + 1}`)}
           </motion.div>
 
           <div className="space-y-6">
@@ -192,10 +175,10 @@ const Home = () => {
                 <div className="space-y-4">
                   <div className="text-3xl">{portal.icon}</div>
                   <h3 className="text-xl font-bold font-arabic text-emerald-950">
-                    {ar ? portal.title_ar : portal.title_en}
+                    {portal.title}
                   </h3>
                   <p className="text-sm text-slate-600 leading-relaxed font-sans">
-                    {ar ? portal.desc_ar : portal.desc_en}
+                    {portal.desc}
                   </p>
                 </div>
                 <div className="pt-6">
@@ -237,14 +220,14 @@ const Home = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold font-arabic text-emerald-950">
-                      {ar ? prog.title_ar : prog.title_en}
+                      {prog.title}
                     </h3>
                     <div className="mt-2 text-xs font-semibold text-emerald-700">
-                      {ar ? prog.duration_ar : prog.duration_en}
+                      {prog.duration}
                     </div>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed font-sans">
-                    {ar ? prog.desc_ar : prog.desc_en}
+                    {prog.desc}
                   </p>
                 </div>
               </div>
@@ -302,7 +285,7 @@ const Home = () => {
               rel="noopener noreferrer"
               className="px-8 py-3.5 bg-[#25D366] hover:bg-[#20bd5a] font-bold rounded-xl text-sm text-white flex items-center justify-center gap-2 transition-all shadow-md shadow-[#25D366]/10"
             >
-              <span>WhatsApp Chat</span>
+              <span>{tx('محادثة واتساب', 'WhatsApp Chat')}</span>
             </a>
             <Link
               to="/contact"

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { listCoursePrograms } from '../lib/contentApi'
 import { tx } from '../lib/tx';
+import { localized } from '../lib/localized';
 
 const Courses = () => {
   useTranslation() // subscribe: re-render on language change
@@ -47,15 +48,15 @@ const Courses = () => {
                   <div className="bg-islamic-green text-white p-6">
                     <div className="text-4xl mb-3">{course.icon || '📚'}</div>
                     <h3 className="text-xl font-bold mb-2">
-                      {course.title[tx('ar', 'en')] || course.title.en}
+                      {localized(course.title)}
                     </h3>
                     <p className="text-sm text-gray-200">
-                      {course.duration[tx('ar', 'en')] || course.duration.en}
+                      {localized(course.duration)}
                     </p>
                   </div>
                   <div className="p-6">
                     <p className="text-gray-700 leading-relaxed">
-                      {course.description[tx('ar', 'en')] || course.description.en}
+                      {localized(course.description)}
                     </p>
                     {course.admissionCode && (
                       <Link

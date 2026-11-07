@@ -9,6 +9,9 @@ export default function StaffMore() {
     <SettingsView
       links={[
         ...(caps.isFinanceStaff ? [{ href: '/receive-payment', icon: 'cash-outline', label: t('counter.title') }] : []),
+        { href: '/tasks', icon: 'checkbox-outline', label: t('task.boardTitle') },
+        { href: '/duties', icon: 'ribbon-outline', label: t('duty.title') },
+        { href: '/mashoora', icon: 'people-outline', label: t('mashoora.title') },
         { href: '/timetable?tutor=me', icon: 'time-outline', label: t('staff.myTimetable') },
         { href: '/my-attendance', icon: 'calendar-outline', label: t('staff.myAttendance') },
         { href: '/staff-leave', icon: 'airplane-outline', label: t('staff.requestLeave') },

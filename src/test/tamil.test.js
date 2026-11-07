@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import i18n from '../i18n'
 import { setLanguage, toTamil, tx } from '../lib/tx'
-import ta from '../locales/ta.json'
+import taMain from '../locales/ta.json'
+import taGov from '../locales/ta.governance.json'
+
+const ta = { ...taMain, ...taGov }
 import strings from '../../scripts/i18n/strings.json'
 
 describe('Tamil (ta) support', () => {

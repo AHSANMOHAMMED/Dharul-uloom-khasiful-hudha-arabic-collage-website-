@@ -4,8 +4,7 @@ import { payFeeOnline } from '../lib/paymentsApi';
 import { tx } from '../lib/tx';
 
 const PayFeeButton = ({ fee, className = '' }) => {
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation(); // subscribe: re-render on language change
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -36,7 +35,7 @@ const PayFeeButton = ({ fee, className = '' }) => {
       >
         {loading
           ? (tx('جاري التوجيه إلى PayHere...', 'Redirecting to PayHere...'))
-          : (ar ? `ادفع LKR ${remaining.toLocaleString()} عبر الإنترنت` : `Pay LKR ${remaining.toLocaleString()} online`)}
+          : tx('ادفع LKR {amount} عبر الإنترنت', 'Pay LKR {amount} online').replace('{amount}', remaining.toLocaleString())}
       </button>
       {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
     </div>

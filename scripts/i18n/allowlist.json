@@ -1,0 +1,5 @@
+[
+  { "file": "src/components/Navbar.jsx", "text": "ERP", "reason": "Product/acronym label shown as-is in every language" },
+  { "file": "src/pages/About.jsx", "text": "MRCA/13/1/PAS/187", "reason": "Official registration number (code)" },
+  { "file": "src/pages/Contact.jsx", "text": "5P2C+VMC", "reason": "Google Plus Code for the campus location (code)" }
+]

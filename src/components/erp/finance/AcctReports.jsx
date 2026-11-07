@@ -70,7 +70,7 @@ function TrialBalance({ org }) {
               </label>
               <div className="flex gap-2 pb-0.5">
                 <Button size="sm" variant="secondary" disabled={!rows.length} onClick={() => downloadCsv(`trial-balance-${range.to || today()}.csv`, rows)}>
-                  CSV
+                  {t('CSV', 'CSV')}
                 </Button>
                 <Button
                   size="sm"
@@ -161,7 +161,7 @@ function IncomeStatement({ org }) {
                     ])
                   }
                 >
-                  CSV
+                  {t('CSV', 'CSV')}
                 </Button>
                 <Button
                   size="sm"
@@ -230,7 +230,7 @@ function BalanceSheet({ org }) {
                       ])
                     }
                   >
-                    CSV
+                    {t('CSV', 'CSV')}
                   </Button>
                   <Button
                     size="sm"

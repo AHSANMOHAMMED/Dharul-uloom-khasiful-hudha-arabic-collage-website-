@@ -138,7 +138,7 @@ const UserDashboard = () => {
           {tx('تحميل لوحة التحكم...', 'Loading your dashboard...')}
         </p>
         <button onClick={logout} className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-750 transition text-sm">
-          Logout
+          {tx('تسجيل الخروج', 'Logout')}
         </button>
       </div>
     </div>

@@ -192,7 +192,7 @@ const TreasurerDashboard = () => {
       setTimeout(() => setFeeSuccess(false), 3000);
     } catch (err) {
       console.error('Error logging payment:', err);
-      toast.error(err?.message || 'Payment could not be recorded');
+      toast.error(err?.message || tx('تعذّر تسجيل الدفعة', 'Payment could not be recorded'));
     }
   };
 
@@ -302,17 +302,17 @@ const TreasurerDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="glass-card p-8 rounded-[2rem] text-center space-y-3 group hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1">
             <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-300">💰</div>
-            <div className="text-3xl font-black text-emerald-400 mt-2 font-mono">LKR {totalCollected.toLocaleString()}</div>
+            <div className="text-3xl font-black text-emerald-400 mt-2 font-mono">{`LKR ${totalCollected.toLocaleString()}`}</div>
             <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{tx('إجمالي المحصلة', 'Total Fees Collected')}</div>
           </div>
           <div className="glass-card p-8 rounded-[2rem] text-center space-y-3 group hover:border-blue-500/30 transition-all duration-300 hover:-translate-y-1">
             <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-blue-500/10 border border-blue-500/20 group-hover:scale-110 transition-transform duration-300">📈</div>
-            <div className="text-3xl font-black text-blue-400 mt-2 font-mono">LKR {totalExpected.toLocaleString()}</div>
+            <div className="text-3xl font-black text-blue-400 mt-2 font-mono">{`LKR ${totalExpected.toLocaleString()}`}</div>
             <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{tx('المبلغ المتوقع الإجمالي', 'Total Expected Billings')}</div>
           </div>
           <div className="glass-card p-8 rounded-[2rem] text-center space-y-3 group hover:border-amber-500/30 transition-all duration-300 hover:-translate-y-1">
             <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-amber-500/10 border border-amber-500/20 group-hover:scale-110 transition-transform duration-300">📉</div>
-            <div className="text-3xl font-black text-amber-500 mt-2 font-mono">LKR {(totalExpected - totalCollected).toLocaleString()}</div>
+            <div className="text-3xl font-black text-amber-500 mt-2 font-mono">{`LKR ${(totalExpected - totalCollected).toLocaleString()}`}</div>
             <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{tx('إجمالي المتأخرات والمتبقي', 'Total Arrears (Pending)')}</div>
           </div>
         </div>
@@ -341,7 +341,7 @@ const TreasurerDashboard = () => {
               onClick={() => exportFeesCSV([], 'fees_report')}
               className="px-4 py-2.5 bg-blue-900/40 hover:bg-blue-800/50 text-blue-300 border border-blue-800/40 rounded-xl text-xs font-bold transition"
             >
-              💾 Export CSV
+              💾 {tx('تصدير CSV', 'Export CSV')}
             </button>
             <button
               onClick={handleGenerateFees}
@@ -365,7 +365,7 @@ const TreasurerDashboard = () => {
               type="text"
               value={studentSearch}
               onChange={(e) => setStudentSearch(e.target.value)}
-              placeholder="Name or index number..."
+              placeholder={tx('الاسم أو رقم القيد...', 'Name or index number...')}
               className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
             <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">
@@ -379,8 +379,8 @@ const TreasurerDashboard = () => {
                 >
                   <div className="font-bold text-white">{std.full_name}</div>
                   <div className="flex justify-between items-center text-[10px] text-gray-500 mt-1">
-                    <span>Index: {std.index_number}</span>
-                    <span>Class {std.class_number}</span>
+                    <span>{tx('رقم القيد:', 'Index:')} {std.index_number}</span>
+                    <span>{tx('الفصل {n}', 'Class {n}').replace('{n}', std.class_number)}</span>
                   </div>
                 </div>
               ))}
@@ -398,11 +398,11 @@ const TreasurerDashboard = () => {
                 <div className="p-4 bg-emerald-950/20 border border-emerald-500/20 rounded-xl flex justify-between items-center text-sm">
                   <div>
                     <h4 className="font-bold text-white text-base">{selectedStudent.full_name}</h4>
-                    <p className="text-xs text-gray-400 mt-1 font-mono">Index: {selectedStudent.index_number} | Class {selectedStudent.class_number}</p>
+                    <p className="text-xs text-gray-400 mt-1 font-mono">{tx('رقم القيد:', 'Index:')} {selectedStudent.index_number} | {tx('الفصل {n}', 'Class {n}').replace('{n}', selectedStudent.class_number)}</p>
                   </div>
                   {selectedStudentFee && (
                     <span className="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-bold rounded border border-amber-500/20">
-                      Paid: LKR {selectedStudentFee.paid_amount} / {selectedStudentFee.total_due}
+                      {tx('المدفوع:', 'Paid:')} {`LKR ${selectedStudentFee.paid_amount} / ${selectedStudentFee.total_due}`}
                     </span>
                   )}
                 </div>
@@ -449,7 +449,7 @@ const TreasurerDashboard = () => {
                         type="text"
                         value={paymentNote}
                         onChange={(e) => setPaymentNote(e.target.value)}
-                        placeholder="Receipt #, cash, bank transfer..."
+                        placeholder={tx('رقم الإيصال، نقداً، تحويل بنكي...', 'Receipt #, cash, bank transfer...')}
                         className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2.5 rounded focus:outline-none"
                       />
                     </div>
@@ -472,7 +472,7 @@ const TreasurerDashboard = () => {
                       </button>
                     )}
                     {feeSuccess && (
-                      <p className="text-sm text-emerald-400 text-center mt-3 animate-pulse">✓ Payment logged and parent notified!</p>
+                      <p className="text-sm text-emerald-400 text-center mt-3 animate-pulse">✓ {tx('تم تسجيل الدفعة وإشعار ولي الأمر!', 'Payment logged and parent notified!')}</p>
                     )}
                   </div>
                 </form>
@@ -504,7 +504,7 @@ const TreasurerDashboard = () => {
                   }`}
                 >
                   <div className="font-bold text-white">{t.full_name}</div>
-                  <span className="text-[10px] text-gray-500 block mt-1">Role: {t.assigned_tutor_role.toUpperCase()}</span>
+                  <span className="text-[10px] text-gray-500 block mt-1">{tx('الدور:', 'Role:')} {t.assigned_tutor_role.toUpperCase()}</span>
                 </div>
               ))}
             </div>
@@ -521,7 +521,7 @@ const TreasurerDashboard = () => {
                 <div className="p-4 bg-emerald-950/20 border border-emerald-500/20 rounded-xl flex justify-between items-center text-sm">
                   <div>
                     <h4 className="font-bold text-white text-base">{selectedTutor.full_name}</h4>
-                    <span className="text-[10px] text-emerald-400 uppercase font-semibold">Tutor Role: {selectedTutor.assigned_tutor_role}</span>
+                    <span className="text-[10px] text-emerald-400 uppercase font-semibold">{tx('دور المعلم:', 'Tutor Role:')} {selectedTutor.assigned_tutor_role}</span>
                   </div>
                 </div>
 
@@ -553,8 +553,8 @@ const TreasurerDashboard = () => {
                       onChange={(e) => setSalaryStatus(e.target.value)}
                       className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2.5 rounded focus:outline-none"
                     >
-                      <option value="paid">PAID</option>
-                      <option value="pending">PENDING</option>
+                      <option value="paid">{tx('مدفوع', 'PAID')}</option>
+                      <option value="pending">{tx('معلّق', 'PENDING')}</option>
                     </select>
                   </div>
                   <div className="md:col-span-3 pt-2">
@@ -565,7 +565,7 @@ const TreasurerDashboard = () => {
                       {tx('تحديث وتأكيد الصرف', 'Log Salary / Payout')}
                     </button>
                     {salarySuccess && (
-                      <p className="text-sm text-emerald-400 text-center mt-3 animate-pulse">✓ Salary status updated and tutor notified!</p>
+                      <p className="text-sm text-emerald-400 text-center mt-3 animate-pulse">✓ {tx('تم تحديث حالة الراتب وإشعار المعلم!', 'Salary status updated and tutor notified!')}</p>
                     )}
                   </div>
                 </form>
@@ -582,7 +582,7 @@ const TreasurerDashboard = () => {
                       {salaryHistories.map((sal) => (
                         <div key={sal.id} className="flex justify-between items-center p-2.5 bg-gray-950/20 border border-gray-800/40 rounded-xl text-xs">
                           <span className="font-bold text-white font-mono">{sal.month}</span>
-                          <span className="font-mono font-semibold text-amber-400">LKR {sal.amount}</span>
+                          <span className="font-mono font-semibold text-amber-400">{`LKR ${sal.amount}`}</span>
                           <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
                             sal.status === 'paid' ? 'bg-emerald-500/25 text-emerald-400' : 'bg-red-500/25 text-red-400'
                           }`}>

@@ -343,7 +343,7 @@ function RecentReceipts({ refreshKey }) {
                       {t('Print', 'طباعة')}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => openReceiptPdf(r.public_token)}>
-                      PDF
+                      {t('PDF', 'PDF')}
                     </Button>
                     {isAccountant && r.status === 'posted' && (
                       <Button size="sm" variant="danger" onClick={() => setReversing(r)}>

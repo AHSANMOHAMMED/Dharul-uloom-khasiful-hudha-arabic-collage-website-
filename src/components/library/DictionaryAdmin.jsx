@@ -186,7 +186,7 @@ function CsvImport({ onDone }) {
     <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
       <h4 className="font-bold text-slate-900">{tx('استيراد CSV', 'CSV import')}</h4>
       <p className="text-xs text-slate-600">
-        {tx('الأعمدة', 'Columns')}: <code dir="ltr">arabic,tamil,english,root,part_of_speech</code>
+        {tx('الأعمدة', 'Columns')}: <code dir="ltr">{'arabic,tamil,english,root,part_of_speech'}</code>
       </p>
       <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-900">
         {tx(
@@ -216,7 +216,7 @@ function CsvImport({ onDone }) {
       )}
       <p className="text-xs text-slate-500">
         {tx('للملفات الكبيرة استخدم سكربت الخادم', 'For very large files use the server script')}:{' '}
-        <code dir="ltr">node scripts/library/importDictionary.mjs file.csv</code>
+        <code dir="ltr">{'node scripts/library/importDictionary.mjs file.csv'}</code>
       </p>
     </div>
   );

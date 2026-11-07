@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { listCurriculum } from '../lib/contentApi';
 import { tx } from '../lib/tx';
+import { localized } from '../lib/localized';
 
 const Curriculum = () => {
   const { i18n } = useTranslation();
@@ -130,7 +131,7 @@ const Curriculum = () => {
                           <div key={idx} className="bg-gray-50 rounded-lg p-4">
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
                               <h5 className="font-semibold text-islamic-green">
-                                {module.name[i18n.language]}
+                                {localized(module.name)}
                               </h5>
                               <div className="flex gap-4 text-sm text-gray-600 mt-2 md:mt-0">
                                 <span>
@@ -142,7 +143,7 @@ const Curriculum = () => {
                               </div>
                             </div>
                             <p className="text-sm text-gray-700 mb-3">
-                              {module.description[i18n.language]}
+                              {localized(module.description)}
                             </p>
                             
                             {/* Books */}

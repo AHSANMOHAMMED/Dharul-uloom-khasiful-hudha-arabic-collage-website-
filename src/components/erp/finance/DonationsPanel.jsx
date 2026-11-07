@@ -178,7 +178,7 @@ export default function DonationsPanel() {
         actions={
           <>
             <Button size="sm" variant="secondary" disabled={!state.data?.rows.length} onClick={() => downloadCsv(`donations-${filters.from}-${filters.to}.csv`, state.data.rows)}>
-              CSV
+              {t('CSV', 'CSV')}
             </Button>
             <Button size="sm" variant="secondary" onClick={reload}>
               {t('Refresh', 'تحديث')}

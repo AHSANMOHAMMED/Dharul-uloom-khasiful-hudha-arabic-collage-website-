@@ -97,7 +97,7 @@ const About = () => {
                 <h3 className="font-semibold text-islamic-gold mb-2">
                   {tx('مسجلة', 'Registered')}
                 </h3>
-                <p>February 12, 2008</p>
+                <p>{tx('12 فبراير 2008', 'February 12, 2008')}</p>
               </div>
               <div>
                 <h3 className="font-semibold text-islamic-gold mb-2">
@@ -109,7 +109,7 @@ const About = () => {
                 <h3 className="font-semibold text-islamic-gold mb-2">
                   {tx('الموقع', 'Location')}
                 </h3>
-                <p>Mudalippalli, Kalpitiya</p>
+                <p>{tx('مداليبالي، كالبيتيا', 'Mudalippalli, Kalpitiya')}</p>
               </div>
             </div>
           </motion.div>

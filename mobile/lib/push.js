@@ -57,8 +57,17 @@ const APP_ROUTES = new Set([
   'receipt', 'notifications', 'announcements', 'fees', 'results', 'report-card', 'attendance-history',
   'timetable', 'certificates', 'hostel', 'leave-requests', 'discipline', 'child', 'assignment', 'payslips',
   'payslip', 'my-attendance', 'staff-leave', 'settings', 'student', 'parent', 'staff', 'admin',
-  'receive-payment', 'dictionary',
+  'receive-payment', 'dictionary', 'tasks', 'task', 'duties', 'mashoora', 'petty-cash-spend',
 ]);
+
+// Web ERP links (/erp?module=…) that have a mobile screen.
+const ERP_MODULE_ROUTES = { tasks: '/tasks', duties: '/duties', mashoora: '/mashoora' };
+
+function erpRoute(link) {
+  if (typeof link !== 'string' || !link.startsWith('/erp')) return null;
+  const m = link.match(/[?&]module=([\w-]+)/);
+  return (m && ERP_MODULE_ROUTES[m[1]]) || null;
+}
 
 export function isAppRoute(link) {
   if (typeof link !== 'string' || !link.startsWith('/') || link.startsWith('//')) return false;
@@ -74,8 +83,12 @@ export function notificationRoute(input) {
   const n = input || {};
   const data = n.data && typeof n.data === 'object' ? n.data : n;
   if (data.type === 'fee_receipt' && data.receipt_id) return `/receipt/${data.receipt_id}`;
+  if (data.type === 'task' && data.task_id) return `/task/${data.task_id}`;
+  if (data.type === 'duty') return '/duties';
   const link = n.link || data.link;
   if (isAppRoute(link)) return link;
+  const erp = erpRoute(link);
+  if (erp) return erp;
   return '/notifications';
 }
 

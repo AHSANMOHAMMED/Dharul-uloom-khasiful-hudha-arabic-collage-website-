@@ -12,8 +12,7 @@ const CLASSES = [1, 2, 3, 4, 5, 6, 7];
 
 const PrincipalDashboard = ({ vpMode = false }) => {
   const { user, logout } = useAuth();
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation(); // subscribe: re-render on language change
 
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
@@ -109,7 +108,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
       setResults(resultsData || []);
     } catch (err) {
       console.error('Principal dashboard error:', err);
-      toast.error('Failed to load dashboard data');
+      toast.error(tx('تعذر تحميل بيانات لوحة التحكم', 'Failed to load dashboard data'));
     } finally {
       setLoading(false);
     }
@@ -131,7 +130,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
         target_roles: [],
       });
       if (error) throw error;
-      toast.success('Announcement posted!');
+      toast.success(tx('تم نشر الإعلان!', 'Announcement posted!'));
       setNewTitle(''); setNewBody(''); setNewPinned(false);
       fetchAll();
     } catch (err) {
@@ -148,7 +147,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
 
   const handleDeleteAnnouncement = async (id) => {
     await supabase.from('announcements').delete().eq('id', id);
-    toast.info('Announcement deleted');
+    toast.info(tx('تم حذف الإعلان', 'Announcement deleted'));
     fetchAll();
   };
 
@@ -207,7 +206,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
     try {
       const { error } = await supabase.from('class_schedules').insert(schedForm);
       if (error) throw error;
-      toast.success('Schedule entry added!');
+      toast.success(tx('تمت إضافة الحصة إلى الجدول!', 'Schedule entry added!'));
       setSchedForm(f => ({ ...f, subject: '', room: '' }));
       fetchAll();
     } catch (err) {
@@ -219,7 +218,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
 
   const handleDeleteSchedule = async (id) => {
     await supabase.from('class_schedules').delete().eq('id', id);
-    toast.info('Schedule entry removed');
+    toast.info(tx('تمت إزالة الحصة من الجدول', 'Schedule entry removed'));
     fetchAll();
   };
 
@@ -282,7 +281,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                 {vpMode ? (tx('نائب الناظر', 'Vice Principal Portal')) : (tx('بوابة الناظر', 'Principal Portal'))}
               </span>
               <h1 className={`mt-3 text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r ${vpMode ? 'from-blue-200 to-blue-500' : 'from-emerald-200 to-emerald-500'}`}>
-                {ar ? `مرحباً، ${user?.username}` : `Welcome, ${user?.username}`}
+                {tx('مرحباً، {name}', 'Welcome, {name}').replace('{name}', user?.username)}
               </h1>
               <p className="text-sm text-gray-400 mt-1 font-medium">
                 {tx('إدارة شاملة للكلية والطلاب والكوادر التعليمية', 'Comprehensive college, student & staff management')}
@@ -434,7 +433,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-4">
               <h2 className="text-xl font-bold text-white">
-                {ar ? `طلبات الإجازات المعلقة (${leaves.length})` : `Pending Leave Requests (${leaves.length})`}
+                {tx('طلبات الإجازات المعلقة ({n})', 'Pending Leave Requests ({n})').replace('{n}', leaves.length)}
               </h2>
               <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
                 {leaves.map(lv => (
@@ -443,7 +442,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                     className={`p-4 bg-gray-950/40 border rounded-xl cursor-pointer transition ${selectedLeave?.id === lv.id ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-gray-800 hover:border-gray-700'}`}>
                     <div className="flex justify-between">
                       <span className="font-bold text-white text-sm">{lv.profiles?.full_name}</span>
-                      <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">Class {lv.profiles?.class_number}</span>
+                      <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">{tx('صف {n}', 'Class {n}').replace('{n}', lv.profiles?.class_number)}</span>
                     </div>
                     <p className="text-xs text-gray-500 font-mono mt-1">{lv.start_date} → {lv.end_date}</p>
                     <p className="text-xs text-gray-400 italic mt-1 line-clamp-1">&quot;{lv.reason}&quot;</p>
@@ -498,7 +497,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
         {activeTab === 'approvals' && !vpMode && (
           <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-5">
             <h2 className="text-xl font-bold text-white">
-              {ar ? `موافقات المعلمين المعلقة (${pendingTutors.length})` : `Pending Tutor Approvals (${pendingTutors.length})`}
+              {tx('موافقات المعلمين المعلقة ({n})', 'Pending Tutor Approvals ({n})').replace('{n}', pendingTutors.length)}
             </h2>
             {pendingTutors.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
@@ -557,7 +556,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                     <label className="block text-xs text-gray-400 uppercase mb-1">{tx('الصف', 'Class')}</label>
                     <select value={schedForm.class_number} onChange={e => setSchedForm(f => ({ ...f, class_number: +e.target.value }))}
                       className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none">
-                      {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
+                      {CLASSES.map(c => <option key={c} value={c}>{tx('صف {n}', 'Class {n}').replace('{n}', c)}</option>)}
                     </select>
                   </div>
                   <div>
@@ -603,7 +602,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                       <th className="py-2 px-3 bg-gray-950 border border-gray-800 text-gray-400 font-bold text-left w-24">{tx('اليوم', 'Day')}</th>
                       {CLASSES.map(c => (
                         <th key={c} className="py-2 px-2 bg-gray-950 border border-gray-800 text-emerald-400 font-bold text-center">
-                          {ar ? `صف ${c}` : `Class ${c}`}
+                          {tx('صف {n}', 'Class {n}').replace('{n}', c)}
                         </th>
                       ))}
                     </tr>
@@ -656,7 +655,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                   {results.map(r => (
                     <tr key={r.id} className="hover:bg-gray-900/30 transition">
                       <td className="py-2.5 pr-4 font-medium text-white">{r.profiles?.full_name}</td>
-                      <td className="py-2.5 pr-4 text-gray-400">Class {r.profiles?.class_number}</td>
+                      <td className="py-2.5 pr-4 text-gray-400">{tx('صف {n}', 'Class {n}').replace('{n}', r.profiles?.class_number)}</td>
                       <td className="py-2.5 pr-4 text-gray-300">{r.exam_name}</td>
                       <td className="py-2.5 pr-4 text-gray-300">{r.subject}</td>
                       <td className="py-2.5 pr-4 font-mono text-amber-400">{r.marks_obtained}/{r.max_marks}</td>

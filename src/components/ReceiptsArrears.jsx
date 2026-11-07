@@ -91,7 +91,7 @@ export default function ReceiptsArrears({ studentId }) {
                       </Link>
                       {pdf && (
                         <a href={pdf} target="_blank" rel="noreferrer" className="rounded-md border border-emerald-600/50 px-2 py-1 text-emerald-300 hover:bg-emerald-500/10">
-                          PDF
+                          {'PDF'}
                         </a>
                       )}
                     </div>

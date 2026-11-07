@@ -81,7 +81,7 @@ const BookReader = ({ book }) => {
               mode === 'embed' ? 'bg-emerald-700 text-white' : 'bg-white text-emerald-700 border border-emerald-200'
             }`}
           >
-            PDF
+            {'PDF'}
           </button>
           {pageCount > 0 && (
             <button

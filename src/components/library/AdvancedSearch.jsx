@@ -12,7 +12,7 @@ const LANGUAGES = [
 
 const AdvancedSearch = ({ categories = [], value, onChange }) => {
   const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  const dir = { ar: 'rtl' }[i18n.language] || 'ltr';
   const [draftQuery, setDraftQuery] = useState(value.query ?? '');
 
   const submit = (e) => {
@@ -30,7 +30,7 @@ const AdvancedSearch = ({ categories = [], value, onChange }) => {
           value={draftQuery}
           onChange={(e) => setDraftQuery(e.target.value)}
           placeholder={tx('ابحث بالعنوان أو المؤلف...', 'Search by title or author...')}
-          dir={tx('rtl', 'ltr')}
+          dir={dir}
           className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-islamic-gold"
         />
         <button
@@ -51,7 +51,7 @@ const AdvancedSearch = ({ categories = [], value, onChange }) => {
           >
             {LANGUAGES.map((l) => (
               <option key={l.value} value={l.value}>
-                {ar ? l.ar : l.en}
+                {tx(l.ar, l.en)}
               </option>
             ))}
           </select>
@@ -80,7 +80,7 @@ const AdvancedSearch = ({ categories = [], value, onChange }) => {
             value={value.author ?? ''}
             onChange={(e) => update({ author: e.target.value || null })}
             placeholder={tx('اسم المؤلف', 'Author name')}
-            dir={tx('rtl', 'ltr')}
+            dir={dir}
             className="rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-islamic-gold"
           />
         </label>

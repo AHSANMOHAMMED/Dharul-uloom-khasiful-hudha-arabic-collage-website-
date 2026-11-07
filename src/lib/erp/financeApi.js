@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { tx } from '../tx';
 import { query, formatMoney, formatDate } from './rpc';
 
 /**
@@ -252,7 +253,7 @@ export function printDocument({ title, org, body, rtl = false }) {
 </html>`;
   const win = window.open('', '_blank', 'width=860,height=960');
   if (!win) {
-    toast.error('Pop-up blocked: allow pop-ups to print.');
+    toast.error(tx('تم حظر النافذة المنبثقة: اسمح بالنوافذ المنبثقة للطباعة.', 'Pop-up blocked: allow pop-ups to print.'));
     return;
   }
   win.document.write(html);

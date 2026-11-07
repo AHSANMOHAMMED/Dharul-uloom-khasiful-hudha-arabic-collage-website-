@@ -83,10 +83,12 @@ function NewsCMS() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
         <h3 className="text-lg font-bold text-white">{form.id ? (tx('تعديل خبر', 'Edit news')) : (tx('خبر جديد', 'New article'))}</h3>
-        <input className={inputCls} placeholder="Title EN" value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} required />
-        <input className={inputCls} placeholder="Title AR" dir="rtl" value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} />
-        <textarea className={inputCls} rows={3} placeholder="Content EN" value={form.content_en} onChange={(e) => setForm({ ...form, content_en: e.target.value })} required />
-        <textarea className={inputCls} rows={3} placeholder="Content AR" dir="rtl" value={form.content_ar} onChange={(e) => setForm({ ...form, content_ar: e.target.value })} />
+        <input className={inputCls} placeholder={tx('العنوان (إنجليزي)', 'Title EN')} value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} required />
+        <input className={inputCls} placeholder={tx('العنوان (عربي)', 'Title AR')} dir="rtl" value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} />
+        <input className={inputCls} placeholder={tx('العنوان (تاميلي)', 'Title TA')} lang="ta" value={form.title_ta} onChange={(e) => setForm({ ...form, title_ta: e.target.value })} />
+        <textarea className={inputCls} rows={3} placeholder={tx('المحتوى (إنجليزي)', 'Content EN')} value={form.content_en} onChange={(e) => setForm({ ...form, content_en: e.target.value })} required />
+        <textarea className={inputCls} rows={3} placeholder={tx('المحتوى (عربي)', 'Content AR')} dir="rtl" value={form.content_ar} onChange={(e) => setForm({ ...form, content_ar: e.target.value })} />
+        <textarea className={inputCls} rows={3} placeholder={tx('المحتوى (تاميلي)', 'Content TA')} lang="ta" value={form.content_ta} onChange={(e) => setForm({ ...form, content_ta: e.target.value })} />
         <select className={inputCls} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
           {['general', 'admissions', 'events', 'announcements'].map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
@@ -106,11 +108,11 @@ function NewsCMS() {
           <div key={item.id} className="p-4 bg-gray-950/40 border border-gray-800 rounded-lg flex justify-between gap-2">
             <div>
               <div className="font-semibold text-white">{item.title_en}</div>
-              <div className="text-xs text-gray-500">{item.category} · {item.is_published ? 'live' : 'draft'}</div>
+              <div className="text-xs text-gray-500">{item.category} · {item.is_published ? tx('منشور', 'live') : tx('مسودة', 'draft')}</div>
             </div>
             <div className="flex gap-2 shrink-0">
-              <button type="button" onClick={() => setForm({ ...item })} className="text-xs text-emerald-400">Edit</button>
-              <button type="button" onClick={async () => { await adminDeleteNews(item.id); load(); }} className="text-xs text-red-400">Del</button>
+              <button type="button" onClick={() => setForm({ ...item })} className="text-xs text-emerald-400">{tx('تعديل', 'Edit')}</button>
+              <button type="button" onClick={async () => { await adminDeleteNews(item.id); load(); }} className="text-xs text-red-400">{tx('حذف', 'Del')}</button>
             </div>
           </div>
         ))}
@@ -129,7 +131,7 @@ function FacultyCMS() {
     e.preventDefault();
     try {
       await adminUpsertFaculty({ ...form, qualifications: form.qualificationsText.split(',').map((s) => s.trim()).filter(Boolean) });
-      toast.success('Saved');
+      toast.success(tx('تم الحفظ', 'Saved'));
       setForm(emptyFaculty());
       load();
     } catch (err) {
@@ -141,21 +143,23 @@ function FacultyCMS() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
         <h3 className="text-lg font-bold text-white">{tx('عضو هيئة التدريس', 'Faculty member')}</h3>
-        <input className={inputCls} placeholder="Name EN" value={form.name_en} onChange={(e) => setForm({ ...form, name_en: e.target.value })} required />
-        <input className={inputCls} placeholder="Name AR" dir="rtl" value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} />
-        <input className={inputCls} placeholder="Role EN" value={form.role_en} onChange={(e) => setForm({ ...form, role_en: e.target.value })} required />
-        <input className={inputCls} placeholder="Role AR" dir="rtl" value={form.role_ar} onChange={(e) => setForm({ ...form, role_ar: e.target.value })} />
-        <textarea className={inputCls} rows={2} placeholder="Bio EN" value={form.bio_en} onChange={(e) => setForm({ ...form, bio_en: e.target.value })} />
-        <input className={inputCls} placeholder="Qualifications (comma-separated)" value={form.qualificationsText} onChange={(e) => setForm({ ...form, qualificationsText: e.target.value })} />
-        <input type="number" className={inputCls} placeholder="Sort order" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} />
+        <input className={inputCls} placeholder={tx('الاسم (إنجليزي)', 'Name EN')} value={form.name_en} onChange={(e) => setForm({ ...form, name_en: e.target.value })} required />
+        <input className={inputCls} placeholder={tx('الاسم (عربي)', 'Name AR')} dir="rtl" value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} />
+        <input className={inputCls} placeholder={tx('الاسم (تاميلي)', 'Name TA')} lang="ta" value={form.name_ta} onChange={(e) => setForm({ ...form, name_ta: e.target.value })} />
+        <input className={inputCls} placeholder={tx('الدور (إنجليزي)', 'Role EN')} value={form.role_en} onChange={(e) => setForm({ ...form, role_en: e.target.value })} required />
+        <input className={inputCls} placeholder={tx('الدور (عربي)', 'Role AR')} dir="rtl" value={form.role_ar} onChange={(e) => setForm({ ...form, role_ar: e.target.value })} />
+        <input className={inputCls} placeholder={tx('الدور (تاميلي)', 'Role TA')} lang="ta" value={form.role_ta} onChange={(e) => setForm({ ...form, role_ta: e.target.value })} />
+        <textarea className={inputCls} rows={2} placeholder={tx('نبذة (إنجليزي)', 'Bio EN')} value={form.bio_en} onChange={(e) => setForm({ ...form, bio_en: e.target.value })} />
+        <input className={inputCls} placeholder={tx('المؤهلات (مفصولة بفواصل)', 'Qualifications (comma-separated)')} value={form.qualificationsText} onChange={(e) => setForm({ ...form, qualificationsText: e.target.value })} />
+        <input type="number" className={inputCls} placeholder={tx('ترتيب العرض', 'Sort order')} value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} />
         <button type="submit" className="w-full py-2 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
       </form>
       <div className="space-y-2">{items.map((item) => (
         <div key={item.id} className="p-4 bg-gray-950/40 border border-gray-800 rounded-lg flex justify-between">
           <span className="text-white">{item.name_en} — {item.role_en}</span>
           <div className="flex gap-2">
-            <button type="button" onClick={() => setForm({ ...item, qualificationsText: (item.qualifications || []).join(', ') })} className="text-xs text-emerald-400">Edit</button>
-            <button type="button" onClick={async () => { await adminDeleteFaculty(item.id); load(); }} className="text-xs text-red-400">Del</button>
+            <button type="button" onClick={() => setForm({ ...item, qualificationsText: (item.qualifications || []).join(', ') })} className="text-xs text-emerald-400">{tx('تعديل', 'Edit')}</button>
+            <button type="button" onClick={async () => { await adminDeleteFaculty(item.id); load(); }} className="text-xs text-red-400">{tx('حذف', 'Del')}</button>
           </div>
         </div>
       ))}</div>
@@ -174,10 +178,10 @@ function CurriculumCMS() {
     try {
       const parsed = JSON.parse(form.json);
       await adminUpsertCurriculum({ id: form.id, class_number: form.class_number, ...parsed });
-      toast.success('Saved');
+      toast.success(tx('تم الحفظ', 'Saved'));
       load();
     } catch (err) {
-      toast.error(err.message || 'Invalid JSON');
+      toast.error(err.message || tx('JSON غير صالح', 'Invalid JSON'));
     }
   };
 
@@ -186,7 +190,7 @@ function CurriculumCMS() {
       <p className="text-xs text-gray-400">{tx('عدّل JSON للفصل (class_name, age_range, modules, objectives, assessment_methods)', 'Edit class JSON (class_name, age_range, modules, objectives, assessment_methods)')}</p>
       <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
         <select className={inputCls} value={form.class_number} onChange={(e) => setForm({ ...form, class_number: parseInt(e.target.value) })}>
-          {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>Class {n}</option>)}
+          {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>{tx('الفصل {n}', 'Class {n}').replace('{n}', n)}</option>)}
         </select>
         <textarea className={`${inputCls} font-mono text-xs`} rows={12} value={form.json} onChange={(e) => setForm({ ...form, json: e.target.value })} />
         <button type="submit" className="py-2 px-6 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
@@ -209,7 +213,7 @@ function CurriculumCMS() {
             })}
             className="px-3 py-1 bg-gray-800 rounded text-sm text-gray-300"
           >
-            Class {item.class_number}
+            {tx('الفصل {n}', 'Class {n}').replace('{n}', item.class_number)}
           </button>
         ))}
       </div>
@@ -227,7 +231,7 @@ function GalleryCMS() {
     e.preventDefault();
     try {
       await adminUpsertGallery(form);
-      toast.success('Saved');
+      toast.success(tx('تم الحفظ', 'Saved'));
       setForm(emptyGallery());
       load();
     } catch (err) {
@@ -249,11 +253,12 @@ function GalleryCMS() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
-        <input className={inputCls} placeholder="Title EN" value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} required />
-        <input className={inputCls} placeholder="Title AR" dir="rtl" value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} />
+        <input className={inputCls} placeholder={tx('العنوان (إنجليزي)', 'Title EN')} value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} required />
+        <input className={inputCls} placeholder={tx('العنوان (عربي)', 'Title AR')} dir="rtl" value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} />
+        <input className={inputCls} placeholder={tx('العنوان (تاميلي)', 'Title TA')} lang="ta" value={form.title_ta} onChange={(e) => setForm({ ...form, title_ta: e.target.value })} />
         <select className={inputCls} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-          <option value="facilities">facilities</option>
-          <option value="events">events</option>
+          <option value="facilities">{tx('المرافق', 'facilities')}</option>
+          <option value="events">{tx('الفعاليات', 'events')}</option>
         </select>
         <input type="file" accept="image/*" onChange={onImage} className="text-xs text-gray-400" />
         {form.image_url && <img src={resolveGalleryUrl(form.image_url)} alt="" className="h-24 rounded object-cover" />}
@@ -262,11 +267,11 @@ function GalleryCMS() {
       <div className="grid grid-cols-2 gap-3">
         {items.map((item) => (
           <div key={item.id} className="p-3 bg-gray-950/40 border border-gray-800 rounded-lg">
-            {item.image_url ? <img src={resolveGalleryUrl(item.image_url)} alt="" className="w-full h-24 object-cover rounded mb-2" /> : <div className="h-24 bg-gray-800 rounded mb-2 flex items-center justify-center text-gray-600 text-xs">No photo</div>}
+            {item.image_url ? <img src={resolveGalleryUrl(item.image_url)} alt="" className="w-full h-24 object-cover rounded mb-2" /> : <div className="h-24 bg-gray-800 rounded mb-2 flex items-center justify-center text-gray-600 text-xs">{tx('لا توجد صورة', 'No photo')}</div>}
             <div className="text-sm text-white truncate">{item.title_en}</div>
             <div className="flex gap-2 mt-2">
-              <button type="button" onClick={() => setForm({ ...item })} className="text-xs text-emerald-400">Edit</button>
-              <button type="button" onClick={async () => { await adminDeleteGallery(item.id); load(); }} className="text-xs text-red-400">Del</button>
+              <button type="button" onClick={() => setForm({ ...item })} className="text-xs text-emerald-400">{tx('تعديل', 'Edit')}</button>
+              <button type="button" onClick={async () => { await adminDeleteGallery(item.id); load(); }} className="text-xs text-red-400">{tx('حذف', 'Del')}</button>
             </div>
           </div>
         ))}
@@ -285,7 +290,7 @@ function CoursesCMS() {
     e.preventDefault();
     try {
       await adminUpsertCourseProgram(form);
-      toast.success('Saved');
+      toast.success(tx('تم الحفظ', 'Saved'));
       setForm(emptyCourse());
       load();
     } catch (err) {
@@ -296,13 +301,14 @@ function CoursesCMS() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
-        <input className={inputCls} placeholder="slug (unique)" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} required />
-        <input className={inputCls} placeholder="Title EN" value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} required />
-        <input className={inputCls} placeholder="Title AR" dir="rtl" value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} />
-        <input className={inputCls} placeholder="Duration EN" value={form.duration_en} onChange={(e) => setForm({ ...form, duration_en: e.target.value })} />
-        <textarea className={inputCls} rows={3} placeholder="Description EN" value={form.description_en} onChange={(e) => setForm({ ...form, description_en: e.target.value })} />
+        <input className={inputCls} placeholder={tx('المعرّف slug (فريد)', 'slug (unique)')} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} required />
+        <input className={inputCls} placeholder={tx('العنوان (إنجليزي)', 'Title EN')} value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} required />
+        <input className={inputCls} placeholder={tx('العنوان (عربي)', 'Title AR')} dir="rtl" value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} />
+        <input className={inputCls} placeholder={tx('العنوان (تاميلي)', 'Title TA')} lang="ta" value={form.title_ta} onChange={(e) => setForm({ ...form, title_ta: e.target.value })} />
+        <input className={inputCls} placeholder={tx('المدة (إنجليزي)', 'Duration EN')} value={form.duration_en} onChange={(e) => setForm({ ...form, duration_en: e.target.value })} />
+        <textarea className={inputCls} rows={3} placeholder={tx('الوصف (إنجليزي)', 'Description EN')} value={form.description_en} onChange={(e) => setForm({ ...form, description_en: e.target.value })} />
         <select className={inputCls} value={form.admission_code || ''} onChange={(e) => setForm({ ...form, admission_code: e.target.value || null })}>
-          <option value="">— admission code —</option>
+          <option value="">{tx('— رمز القبول —', '— admission code —')}</option>
           {['quran', 'arabic', 'hadith', 'fiqh', 'islamic'].map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <button type="submit" className="w-full py-2 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
@@ -311,8 +317,8 @@ function CoursesCMS() {
         <div key={item.id} className="p-4 bg-gray-950/40 border border-gray-800 rounded-lg flex justify-between">
           <span className="text-white">{item.icon} {item.title_en}</span>
           <div className="flex gap-2">
-            <button type="button" onClick={() => setForm({ ...item })} className="text-xs text-emerald-400">Edit</button>
-            <button type="button" onClick={async () => { await adminDeleteCourseProgram(item.id); load(); }} className="text-xs text-red-400">Del</button>
+            <button type="button" onClick={() => setForm({ ...item })} className="text-xs text-emerald-400">{tx('تعديل', 'Edit')}</button>
+            <button type="button" onClick={async () => { await adminDeleteCourseProgram(item.id); load(); }} className="text-xs text-red-400">{tx('حذف', 'Del')}</button>
           </div>
         </div>
       ))}</div>
@@ -321,16 +327,16 @@ function CoursesCMS() {
 }
 
 function emptyNews() {
-  return { id: null, title_en: '', title_ar: '', content_en: '', content_ar: '', category: 'general', is_published: true, author: 'Admin', image: null };
+  return { id: null, title_en: '', title_ar: '', title_ta: '', content_en: '', content_ar: '', content_ta: '', category: 'general', is_published: true, author: 'Admin', image: null };
 }
 function emptyFaculty() {
-  return { id: null, name_en: '', name_ar: '', role_en: '', role_ar: '', bio_en: '', bio_ar: '', qualificationsText: '', sort_order: 0, image: null };
+  return { id: null, name_en: '', name_ar: '', name_ta: '', role_en: '', role_ar: '', role_ta: '', bio_en: '', bio_ar: '', bio_ta: '', qualificationsText: '', sort_order: 0, image: null };
 }
 function emptyGallery() {
-  return { id: null, title_en: '', title_ar: '', category: 'facilities', image_url: null, sort_order: 0, is_published: true };
+  return { id: null, title_en: '', title_ar: '', title_ta: '', category: 'facilities', image_url: null, sort_order: 0, is_published: true };
 }
 function emptyCourse() {
-  return { id: null, slug: '', title_en: '', title_ar: '', duration_en: '', duration_ar: '', description_en: '', description_ar: '', icon: '📚', admission_code: null, sort_order: 0, is_published: true };
+  return { id: null, slug: '', title_en: '', title_ar: '', title_ta: '', duration_en: '', duration_ar: '', duration_ta: '', description_en: '', description_ar: '', description_ta: '', icon: '📚', admission_code: null, sort_order: 0, is_published: true };
 }
 
 export default AdminContentCMS;

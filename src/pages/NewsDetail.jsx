@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getNewsById } from '../lib/contentApi';
 import { tx } from '../lib/tx';
+import { localized } from '../lib/localized';
 
 const NewsDetail = () => {
   const { id } = useParams();
@@ -59,7 +60,7 @@ const NewsDetail = () => {
           </Link>
           <span className="block text-sm text-gray-300 mb-2">{formatDate(article.date)}</span>
           <h1 className="text-3xl md:text-4xl font-bold font-arabic">
-            {article.title[tx('ar', 'en')] || article.title.en}
+            {localized(article.title)}
           </h1>
         </div>
       </section>
@@ -68,7 +69,7 @@ const NewsDetail = () => {
           <img src={article.image} alt="" className="w-full rounded-lg shadow-md mb-8 max-h-96 object-cover" />
         )}
         <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">
-          {article.content[tx('ar', 'en')] || article.content.en}
+          {localized(article.content)}
         </div>
         {article.author && (
           <p className="mt-8 text-sm text-gray-500">
