@@ -8,31 +8,32 @@ import OfflineIndicator from './components/OfflineIndicator'
 import InstallPrompt from './components/InstallPrompt'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import Home from './pages/Home'
-import About from './pages/About'
-import Courses from './pages/Courses'
-import Admissions from './pages/Admissions'
-import Faculty from './pages/Faculty'
-import Gallery from './pages/Gallery'
-import News from './pages/News'
-import Contact from './pages/Contact'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import NewsDetail from './pages/NewsDetail'
-import UserDashboard from './pages/UserDashboard'
-import AdminDashboard from './pages/AdminDashboard'
-import LibrarianDashboard from './pages/LibrarianDashboard'
-import Curriculum from './pages/Curriculum'
-import Library from './pages/Library'
-import BookReaderPage from './pages/BookReaderPage'
-import PaymentSuccess from './pages/PaymentSuccess'
-import PaymentCancel from './pages/PaymentCancel'
-import NotFound from './pages/NotFound'
 import { tx } from './lib/tx';
 
-// Heavy ERP bundle is code-split so the public site stays light.
+const Home = lazy(() => import('./pages/Home'))
+const About = lazy(() => import('./pages/About'))
+const Courses = lazy(() => import('./pages/Courses'))
+const Admissions = lazy(() => import('./pages/Admissions'))
+const Faculty = lazy(() => import('./pages/Faculty'))
+const Gallery = lazy(() => import('./pages/Gallery'))
+const News = lazy(() => import('./pages/News'))
+const Contact = lazy(() => import('./pages/Contact'))
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const NewsDetail = lazy(() => import('./pages/NewsDetail'))
+const UserDashboard = lazy(() => import('./pages/UserDashboard'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const LibrarianDashboard = lazy(() => import('./pages/LibrarianDashboard'))
+const Curriculum = lazy(() => import('./pages/Curriculum'))
+const Library = lazy(() => import('./pages/Library'))
+const BookReaderPage = lazy(() => import('./pages/BookReaderPage'))
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'))
+const PaymentCancel = lazy(() => import('./pages/PaymentCancel'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+
+// Keep public pages and authenticated workspaces out of the initial bundle.
 const ErpWorkspace = lazy(() => import('./pages/erp/ErpWorkspace'))
 const VerifyCertificate = lazy(() => import('./pages/erp/VerifyCertificate'))
 const ReceiptPublic = lazy(() => import('./pages/ReceiptPublic'))

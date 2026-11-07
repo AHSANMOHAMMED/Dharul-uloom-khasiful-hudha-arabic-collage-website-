@@ -28,9 +28,19 @@ Deno.serve(async (req) => {
   const merchantId = Deno.env.get('PAYHERE_MERCHANT_ID') || '';
   const merchantSecret = Deno.env.get('PAYHERE_MERCHANT_SECRET') || '';
   const sandbox = Deno.env.get('PAYHERE_SANDBOX') !== 'false';
-  const siteUrl = (Deno.env.get('SITE_URL') || 'http://localhost:3000').replace(/\/$/, '');
+  const configuredSiteUrl = (Deno.env.get('SITE_URL') || '').trim().replace(/\/$/, '');
 
-  if (!merchantId || !merchantSecret) return json({ error: 'Payment gateway is not configured' }, 503);
+  if (!merchantId || !merchantSecret || !configuredSiteUrl) {
+    return json({ error: 'Payment gateway is not configured' }, 503);
+  }
+  let siteUrl: URL;
+  try {
+    siteUrl = new URL(configuredSiteUrl);
+    if (!['http:', 'https:'].includes(siteUrl.protocol)) throw new Error('Unsupported protocol');
+  } catch {
+    return json({ error: 'Payment return URL is not configured correctly' }, 503);
+  }
+  const siteOrigin = siteUrl.toString().replace(/\/$/, '');
 
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) return json({ error: 'Unauthorized' }, 401);
@@ -98,8 +108,8 @@ Deno.serve(async (req) => {
   const fullName = (student?.full_name || 'Student Fee').trim();
   const params = {
     merchant_id: merchantId,
-    return_url: `${siteUrl}/payment/success?order_id=${orderId}${appFlag}`,
-    cancel_url: `${siteUrl}/payment/cancel?order_id=${orderId}${appFlag}`,
+    return_url: `${siteOrigin}/payment/success?order_id=${orderId}${appFlag}`,
+    cancel_url: `${siteOrigin}/payment/cancel?order_id=${orderId}${appFlag}`,
     notify_url: `${supabaseUrl}/functions/v1/payhere-notify`,
     order_id: orderId,
     items: `Fees ${fee.month}${fee.invoice_no ? ` (${fee.invoice_no})` : ''}`,

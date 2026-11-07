@@ -144,3 +144,41 @@ npx expo start
 | Full Shamela | SHAMELA_API_KEY |
 | PayHere live | Merchant ID/secret |
 | Store publish | Apple/Google accounts |
+| Mobile production build | Run `eas init` and replace the placeholder project ID in `mobile/app.json` |
+
+## Production safety gates
+
+Before enabling real payments or opening registration:
+
+1. Deploy to a staging Vercel project first with staging Supabase credentials.
+2. Run `npm ci`, `npm run lint`, `npm run build`, `npm test`, `npm run test:db`,
+   `deno check supabase/functions/*/index.ts`, and the edge-function tests.
+3. Configure `SITE_URL` to the canonical HTTPS origin. Payment creation now fails
+   closed when this value is missing or malformed; it never falls back to localhost.
+4. Confirm PayHere sandbox checkout, webhook retries, duplicate webhook delivery,
+   cancellation, receipt PDF access, and receipt reversal.
+5. Verify the outbox worker is running and monitor failed/retrying messages.
+6. Confirm a second organization cannot read the first organization's data.
+7. Take a Supabase backup before each migration batch and record the migration
+   version and deployed edge-function versions.
+8. Keep the previous Vercel deployment available for instant rollback. If a
+   migration has already changed the database contract, roll back the frontend
+   and edge functions only after checking compatibility with the deployed schema.
+
+## Monitoring and rollback
+
+Monitor these signals after release:
+
+- Supabase database errors, statement timeouts, connection pool saturation, and
+  authentication failures.
+- Edge-function 4xx/5xx rates and latency, especially payment and notification
+  functions.
+- Pending, failed, and retrying outbox rows.
+- PayHere transaction records that remain `pending` beyond the gateway window.
+- Vercel build status, runtime errors, and frontend asset failures.
+- Mobile crash reports, push-token registration failures, and deep-link returns.
+
+Do not place service-role keys, PayHere secrets, provider tokens, or EAS secrets
+in the repository, browser environment, mobile bundle, or chat. Store them only
+in Supabase Edge Function secrets, Vercel encrypted environment variables, or
+EAS secrets.
