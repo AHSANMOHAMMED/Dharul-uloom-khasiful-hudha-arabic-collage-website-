@@ -112,7 +112,7 @@ export function fetchStudents({ includeUnapproved = false } = {}) {
 export function fetchEmployees({ includeUnapproved = false } = {}) {
   return query('profiles', (q) => {
     let b = q
-      .select('id, full_name, email, phone, account_type, role, is_approved, assigned_tutor_role, extra_roles, created_at')
+      .select('id, full_name, email, phone, account_type, role, is_approved, assigned_tutor_role, created_at')
       .in('account_type', ['tutor', 'staff']);
     if (!includeUnapproved) b = b.eq('is_approved', true);
     return b.order('full_name');
