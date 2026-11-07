@@ -283,8 +283,8 @@ const TreasurerDashboard = () => {
   return (
     <div className="min-h-screen bg-[#FBF8F0] text-[#14201B] relative overflow-hidden py-8 sm:py-12">
       {/* Background Watermark */}
-      <div className="absolute -top-32 -right-32 w-[600px] h-[600px] pointer-events-none opacity-[0.03]">
-        <KhatamPattern className="w-full h-full text-[#0B3B2E]" />
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <KhatamPattern className="opacity-[0.04]" strokeColor="#0B3B2E" id="treasurer-khatam" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">

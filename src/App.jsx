@@ -4,6 +4,7 @@ import { useEffect, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import DashboardTopBar from './components/DashboardTopBar'
 import OfflineIndicator from './components/OfflineIndicator'
 import InstallPrompt from './components/InstallPrompt'
 import { ToastContainer, toast } from 'react-toastify'
@@ -75,7 +76,14 @@ function AppShell({ children }) {
   if (hideChrome) {
     return (
       <div className="min-h-screen flex flex-col bg-[#FBF8F0]">
+        <DashboardTopBar />
         <main className="flex-grow">{children}</main>
+        <footer className="py-4 text-center text-[11px] text-[#4A5E56] font-sans border-t border-[#E8E1D0]/60 bg-white/40">
+          {tx(
+            'دار العلوم كاشف الهدى العربية · البوابة المؤسسية المعتمدة © 2026',
+            'Dharul Uloom Kashiful Hudha Arabic College · Institutional Workspace © 2026'
+          )}
+        </footer>
         <OfflineIndicator />
         <InstallPrompt />
         <ToastContainer position="bottom-center" theme="colored" autoClose={5000} />

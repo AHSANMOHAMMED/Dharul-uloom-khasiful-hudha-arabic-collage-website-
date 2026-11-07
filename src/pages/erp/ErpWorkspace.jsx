@@ -10,52 +10,52 @@ import { tx } from '../../lib/tx';
  * Visibility here is UX only — the database enforces every permission (RLS + RPC checks).
  */
 const MODULES = [
-  { id: 'dashboard', en: 'Overview', ar: 'نظرة عامة', icon: '📊', group: 'core',
+  { id: 'dashboard', en: 'Overview', ar: 'نظرة عامة', icon: 'analytics', group: 'core',
     show: (a) => a.isAdmin || a.isFinanceViewer || a.isAcademicAdmin || a.isHrStaff,
     load: () => import('../../components/erp/campus/ErpDashboard') },
-  { id: 'self', en: 'My workspace', ar: 'مساحتي', icon: '🙋', group: 'core',
+  { id: 'self', en: 'My workspace', ar: 'مساحتي', icon: 'badge', group: 'core',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/MySelfServicePanel') },
-  { id: 'students', en: 'Students', ar: 'الطلاب', icon: '🎓', group: 'academic',
+  { id: 'students', en: 'Students', ar: 'الطلاب', icon: 'school', group: 'academic',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/StudentsPanel') },
-  { id: 'academics', en: 'Academics & Exams', ar: 'الشؤون الأكاديمية', icon: '📚', group: 'academic',
+  { id: 'academics', en: 'Academics & Exams', ar: 'الشؤون الأكاديمية', icon: 'menu_book', group: 'academic',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/AcademicsPanel') },
-  { id: 'crm', en: 'Admissions CRM', ar: 'إدارة القبول', icon: '🧭', group: 'academic',
+  { id: 'crm', en: 'Admissions CRM', ar: 'إدارة القبول', icon: 'explore', group: 'academic',
     show: (a) => a.isAdmissionsStaff,
     load: () => import('../../components/erp/campus/CrmPanel') },
-  { id: 'fees', en: 'Student Fees', ar: 'رسوم الطلاب', icon: '💳', group: 'finance',
+  { id: 'fees', en: 'Student Fees', ar: 'رسوم الطلاب', icon: 'credit_card', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/FeeManagement') },
-  { id: 'accounting', en: 'Accounting', ar: 'المحاسبة', icon: '📒', group: 'finance',
+  { id: 'accounting', en: 'Accounting', ar: 'المحاسبة', icon: 'account_balance', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/AccountingPanel') },
-  { id: 'expenses', en: 'Expenses', ar: 'المصروفات', icon: '🧾', group: 'finance',
+  { id: 'expenses', en: 'Expenses', ar: 'المصروفات', icon: 'receipt_long', group: 'finance',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/finance/ExpensesPanel') },
-  { id: 'donations', en: 'Donations', ar: 'التبرعات', icon: '🤲', group: 'finance',
+  { id: 'donations', en: 'Donations', ar: 'التبرعات', icon: 'volunteer_activism', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/DonationsPanel') },
-  { id: 'payroll', en: 'Payroll', ar: 'الرواتب', icon: '💼', group: 'people',
+  { id: 'payroll', en: 'Payroll', ar: 'الرواتب', icon: 'payments', group: 'people',
     show: (a) => a.isHrStaff || a.isFinanceViewer,
     load: () => import('../../components/erp/finance/PayrollPanel') },
-  { id: 'hr', en: 'HR & Staff', ar: 'الموارد البشرية', icon: '👥', group: 'people',
+  { id: 'hr', en: 'HR & Staff', ar: 'الموارد البشرية', icon: 'groups', group: 'people',
     show: (a) => a.isHrStaff || a.isPrincipal || a.isVP,
     load: () => import('../../components/erp/campus/StaffHrPanel') },
-  { id: 'hostel', en: 'Hostel', ar: 'السكن', icon: '🏠', group: 'campus',
+  { id: 'hostel', en: 'Hostel', ar: 'السكن', icon: 'apartment', group: 'campus',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/HostelPanel') },
-  { id: 'welfare', en: 'Discipline & Welfare', ar: 'الانضباط والرعاية', icon: '🛡️', group: 'campus',
+  { id: 'welfare', en: 'Discipline & Welfare', ar: 'الانضباط والرعاية', icon: 'health_and_safety', group: 'campus',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/WelfarePanel') },
-  { id: 'certificates', en: 'Certificates', ar: 'الشهادات', icon: '📜', group: 'campus',
+  { id: 'certificates', en: 'Certificates', ar: 'الشهادات', icon: 'workspace_premium', group: 'campus',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/CertificatesPanel') },
-  { id: 'audit', en: 'Audit Log', ar: 'سجل التدقيق', icon: '🔍', group: 'admin',
+  { id: 'audit', en: 'Audit Log', ar: 'سجل التدقيق', icon: 'history_edu', group: 'admin',
     show: (a) => a.isAdmin || a.isAccountant,
     load: () => import('../../components/erp/finance/AuditLogPanel') },
-  { id: 'platform', en: 'SaaS Platform', ar: 'المنصة', icon: '🌐', group: 'admin',
+  { id: 'platform', en: 'SaaS Platform', ar: 'المنصة', icon: 'public', group: 'admin',
     show: (a) => a.isSuperAdmin,
     load: () => import('../../components/erp/campus/PlatformPanel') },
 ];
@@ -119,7 +119,7 @@ export default function ErpWorkspace() {
     .filter((x) => x.items.length);
 
   return (
-    <div className="min-h-screen bg-parchment-50 text-ink-text-primary pt-20 relative overflow-hidden" dir={tx('rtl', 'ltr')}>
+    <div className="min-h-screen bg-parchment-50 text-ink-text-primary py-8 relative overflow-hidden" dir={tx('rtl', 'ltr')}>
       <KhatamPattern className="opacity-[0.03]" strokeColor="#0B3B2E" id="erp-bg-khatam" />
 
       <div className="max-w-[1600px] mx-auto px-4 lg:px-6 flex flex-col lg:flex-row gap-6 pb-12 relative z-10">
@@ -150,7 +150,7 @@ export default function ErpWorkspace() {
                             : 'text-ink-text-secondary hover:bg-parchment-50 hover:text-ink-green-900'
                         }`}
                       >
-                        <span aria-hidden className="text-sm">{m.icon}</span>
+                        <span aria-hidden className="material-symbols-outlined text-[18px]">{m.icon}</span>
                         <span>{ar ? m.ar : m.en}</span>
                       </button>
                     );
@@ -161,9 +161,9 @@ export default function ErpWorkspace() {
             <div className="hidden lg:block border-t border-sand-border/60 mt-2 pt-3 px-3">
               <Link
                 to={auth.isAdmin ? '/admin' : '/dashboard'}
-                className="text-xs text-ink-text-muted hover:text-emerald-700 font-medium flex items-center gap-1"
+                className="text-xs text-ink-text-muted hover:text-emerald-700 font-medium flex items-center gap-1.5"
               >
-                <span>←</span>
+                <span className="material-symbols-outlined text-[16px]">arrow_back</span>
                 <span>{t('Back to portal', 'العودة إلى البوابة')}</span>
               </Link>
             </div>
