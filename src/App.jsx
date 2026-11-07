@@ -1,7 +1,7 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useEffect, lazy, Suspense } from 'react'
-import { AuthProvider } from './context/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import OfflineIndicator from './components/OfflineIndicator'
@@ -9,6 +9,27 @@ import InstallPrompt from './components/InstallPrompt'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { tx } from './lib/tx';
+
+/**
+ * Routes that are standalone authenticated workspaces.
+ * When a user is on one of these paths the public Navbar and Footer
+ * are suppressed so the dashboard fills the full viewport.
+ */
+const DASHBOARD_ROUTES = [
+  '/admin',
+  '/dashboard',
+  '/library-admin',
+  '/erp',
+  '/payment/success',
+  '/payment/cancel',
+  '/verify',
+  '/r/',
+  '/receipt/',
+];
+
+function isDashboardPath(pathname) {
+  return DASHBOARD_ROUTES.some((r) => pathname === r || pathname.startsWith(r));
+}
 
 const Home = lazy(() => import('./pages/Home'))
 const About = lazy(() => import('./pages/About'))
@@ -38,6 +59,42 @@ const ErpWorkspace = lazy(() => import('./pages/erp/ErpWorkspace'))
 const VerifyCertificate = lazy(() => import('./pages/erp/VerifyCertificate'))
 const ReceiptPublic = lazy(() => import('./pages/ReceiptPublic'))
 
+/**
+ * AppShell — conditionally renders the public Navbar + Footer only when
+ * the user is NOT on a full-screen authenticated dashboard route.
+ */
+function AppShell({ children }) {
+  const location = useLocation();
+  const { isAdmin, isLibrarian, isTutor, isStudent, isParent, isNonTeachingStaff, isAuthenticated } = useAuth();
+  const onDashboardRoute = isDashboardPath(location.pathname);
+
+  // Hide public chrome when any logged-in staff/admin is on their workspace.
+  const isStaffUser = isAdmin || isLibrarian || isTutor || isStudent || isParent || isNonTeachingStaff;
+  const hideChrome = onDashboardRoute && isAuthenticated && isStaffUser;
+
+  if (hideChrome) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#FBF8F0]">
+        <main className="flex-grow">{children}</main>
+        <OfflineIndicator />
+        <InstallPrompt />
+        <ToastContainer position="bottom-center" theme="colored" autoClose={5000} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-grow">{children}</main>
+      <Footer />
+      <OfflineIndicator />
+      <InstallPrompt />
+      <ToastContainer position="bottom-center" theme="colored" autoClose={5000} />
+    </div>
+  );
+}
+
 function App() {
   const { i18n } = useTranslation()
 
@@ -63,10 +120,8 @@ function App() {
   return (
     <AuthProvider>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <div className="min-h-screen flex flex-col">
-          <Navbar />
-          <main className="flex-grow">
-            <Suspense fallback={<div className="min-h-[50vh]" />}>
+        <AppShell>
+          <Suspense fallback={<div className="min-h-[50vh]" />}>
             <Routes>
               <Route path="/"           element={<Home />} />
               <Route path="/about"      element={<About />} />
@@ -96,14 +151,8 @@ function App() {
               <Route path="/receipt/:id" element={<ReceiptPublic />} />
               <Route path="*"           element={<NotFound />} />
             </Routes>
-            </Suspense>
-          </main>
-          <Footer />
-          {/* Global offline banner — shown automatically when user loses connectivity */}
-          <OfflineIndicator />
-          <InstallPrompt />
-          <ToastContainer position="bottom-center" theme="colored" autoClose={5000} />
-        </div>
+          </Suspense>
+        </AppShell>
       </Router>
     </AuthProvider>
   )

@@ -73,8 +73,12 @@ export default function Login() {
     const result = await login(formData.email, formData.password);
     
     if (result.success) {
-      if (result.user.role === 'admin') {
+      const u = result.user;
+      // Route each role to its own workspace immediately after login
+      if (u.role === 'admin' || u.role === 'super_admin') {
         navigate('/admin');
+      } else if (u.role === 'librarian') {
+        navigate('/library-admin');
       } else {
         navigate('/dashboard');
       }
