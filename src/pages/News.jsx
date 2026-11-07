@@ -75,7 +75,6 @@ export default function News() {
   const { i18n } = useTranslation()
   const isRTL = i18n.language === 'ar'
   const [news, setNews] = useState([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     listNews()
@@ -87,7 +86,6 @@ export default function News() {
         }
       })
       .catch(() => setNews(FALLBACK_NEWS))
-      .finally(() => setLoading(false))
   }, [])
 
   const featured = news[0] || FALLBACK_NEWS[0]

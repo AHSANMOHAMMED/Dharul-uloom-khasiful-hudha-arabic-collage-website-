@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * KhatamPattern
  * Authentic 8-point star (Khatam Sulayman) geometric watermark.

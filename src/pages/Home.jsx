@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import KhatamPattern from '../components/KhatamPattern';
 
 export default function Home() {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
   const isRTL = i18n.language === 'ar';
   const [librarySearch, setLibrarySearch] = useState('');

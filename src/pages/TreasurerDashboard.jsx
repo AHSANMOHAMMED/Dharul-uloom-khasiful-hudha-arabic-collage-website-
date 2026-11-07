@@ -1,5 +1,4 @@
 import { generateInvoicesInBatches } from "../lib/erp/rpc";
-import { tx } from "../lib/tx";
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

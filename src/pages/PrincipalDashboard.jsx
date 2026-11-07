@@ -1,4 +1,3 @@
-import { tx } from "../lib/tx";
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

@@ -10,15 +10,13 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [mobileAcademicsOpen, setMobileAcademicsOpen] = useState(false)
   const [mobileExploreOpen, setMobileExploreOpen] = useState(false)
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const location = useLocation()
-  const { isAuthenticated, isAdmin, isLibrarian, isEmployee, isStaff, logout, user } = useAuth()
+  const { isAuthenticated, isAdmin, isLibrarian, isEmployee, isStaff, logout } = useAuth()
   const canManageLibrary = isAdmin || isLibrarian || isStaff
 
   const academicsActive = ['/courses', '/curriculum', '/faculty'].includes(location.pathname)
   const exploreActive = ['/library', '/gallery', '/news'].includes(location.pathname)
-
-  const isRTL = i18n.language === 'ar'
 
   return (
     <header className="sticky top-0 z-50 bg-paper-white/95 backdrop-blur-sm border-b border-sand-border shadow-[0_1px_8px_rgba(11,59,46,0.04)]">

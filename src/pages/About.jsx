@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import KhatamPattern from '../components/KhatamPattern'
 
 export default function About() {
-  const { t, i18n } = useTranslation()
+  const { i18n } = useTranslation()
   const isRTL = i18n.language === 'ar'
 
   const coreValues = [

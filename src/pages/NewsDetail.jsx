@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getNewsById, listNews } from '../lib/contentApi';
-import KhatamPattern from '../components/KhatamPattern';
 
 export default function NewsDetail() {
   const { id } = useParams();

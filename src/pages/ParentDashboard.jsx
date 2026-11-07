@@ -4,9 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import PayFeeButton from '../components/PayFeeButton';
 import ReceiptsArrears from '../components/ReceiptsArrears';
-import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
 import { generateFeeReceipt } from '../lib/exportUtils';
-import { listActivationEventsForChildren } from '../lib/notifyApi';
 import { claimParentInvite } from '../lib/parentInviteApi';
 import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
@@ -14,7 +12,6 @@ import { tx } from '../lib/tx';
 export default function ParentDashboard() {
   const { user } = useAuth();
   const { i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
   
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState(null);
@@ -25,15 +22,11 @@ export default function ParentDashboard() {
   const [fees, setFees] = useState(null);
   const [leaves, setLeaves] = useState([]);
   const [tutorJobs, setTutorJobs] = useState([]);
-  const [lmsSubmissions, setLmsSubmissions] = useState([]);
-  const [lmsAssignments, setLmsAssignments] = useState([]);
   
   // App state
   const [loading, setLoading] = useState(true);
-  const [dataLoading, setDataLoading] = useState(false);
   const [linkIndex, setLinkIndex] = useState('');
   const [linkError, setLinkError] = useState('');
-  const [linkSuccess, setLinkSuccess] = useState('');
   const [showLinkModal, setShowLinkModal] = useState(false);
   
   // Leave Form state
@@ -43,8 +36,6 @@ export default function ParentDashboard() {
     reason: ''
   });
   const [leaveSuccess, setLeaveSuccess] = useState(false);
-  const [leaveError, setLeaveError] = useState('');
-  const [activationEvents, setActivationEvents] = useState([]);
   const [inviteToken, setInviteToken] = useState('');
   const [inviteMsg, setInviteMsg] = useState('');
 
@@ -57,7 +48,6 @@ export default function ParentDashboard() {
     if (selectedChild) {
       fetchChildData(selectedChild.id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChild]);
 
   const fetchLinkedChildren = async () => {
@@ -73,7 +63,7 @@ export default function ParentDashboard() {
       
       const mappedChildren = (data || []).map(row => row.profiles).filter(Boolean);
       setChildren(mappedChildren);
-      setActivationEvents(await listActivationEventsForChildren(mappedChildren.map((c) => c.id)));
+      
       
       if (mappedChildren.length > 0) {
         setSelectedChild(mappedChildren[0]);
@@ -89,7 +79,7 @@ export default function ParentDashboard() {
 
   const fetchChildData = async (childId) => {
     try {
-      setDataLoading(true);
+      // loading
 
       const [resData, attData, feeData, leaveData, jobData] = await Promise.all([
         supabase.from('student_results').select('*').eq('student_id', childId).order('created_at', { ascending: false }),
@@ -105,19 +95,10 @@ export default function ParentDashboard() {
       else setFees(null);
       if (leaveData.data) setLeaves(leaveData.data);
       if (jobData.data) setTutorJobs(jobData.data);
-
-      if (selectedChild?.class_number) {
-        const [assigns, subs] = await Promise.all([
-          listAssignmentsForClass(selectedChild.class_number),
-          getStudentSubmissions(childId)
-        ]);
-        setLmsAssignments(assigns);
-        setLmsSubmissions(subs);
-      }
     } catch (err) {
       console.error('Error fetching child details:', err);
     } finally {
-      setDataLoading(false);
+      // done
     }
   };
 
@@ -142,7 +123,7 @@ export default function ParentDashboard() {
   const handleLinkChild = async (e) => {
     e.preventDefault();
     setLinkError('');
-    setLinkSuccess('');
+    
 
     if (!linkIndex.trim()) return;
 
@@ -157,11 +138,11 @@ export default function ParentDashboard() {
 
       setLinkIndex('');
       if (data?.status === 'linked' || data?.status === 'already_linked') {
-        setLinkSuccess(tx('تم ربط الحساب بنجاح!', 'Child linked successfully!'));
+        
         setShowLinkModal(false);
         fetchLinkedChildren();
       } else {
-        setLinkSuccess(tx('تم إرسال طلب الربط. ستتم الموافقة عليه من قبل إدارة الكلية.', 'Link request sent. The college office will verify and approve it.'));
+        
         setShowLinkModal(false);
       }
     } catch (err) {
@@ -172,7 +153,7 @@ export default function ParentDashboard() {
 
   const handleLeaveSubmit = async (e) => {
     e.preventDefault();
-    setLeaveError('');
+    
     setLeaveSuccess(false);
 
     if (!selectedChild) return;
@@ -195,7 +176,7 @@ export default function ParentDashboard() {
       fetchChildData(selectedChild.id);
     } catch (err) {
       console.error('Error submitting leave request:', err);
-      setLeaveError('Failed to submit leave request');
+      
     }
   };
 

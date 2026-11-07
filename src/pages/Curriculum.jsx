@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { listCurriculum } from '../lib/contentApi';
 import KhatamPattern from '../components/KhatamPattern';
 
 const STAGES = [
@@ -195,7 +194,7 @@ export default function Curriculum() {
                 </div>
 
                 <div className="pt-3 border-t border-sand-border/50 text-[11px] text-ink-text-muted flex items-center justify-between">
-                  <span>Weekly Mutala'ah: Included</span>
+                  <span>Weekly Mutala&apos;ah: Included</span>
                   <span className="text-emerald-700 font-semibold">Evaluated Termly</span>
                 </div>
               </div>

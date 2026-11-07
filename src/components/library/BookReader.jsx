@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { buildDriveDownloadUrl, buildDrivePreviewUrl } from '../../lib/booksApi';
 
 export default function BookReader({ book }) {
-  const { i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
+  
   const [theme, setTheme] = useState('paper'); // paper | sepia | dark
   const [embedFailed, setEmbedFailed] = useState(false);
 
