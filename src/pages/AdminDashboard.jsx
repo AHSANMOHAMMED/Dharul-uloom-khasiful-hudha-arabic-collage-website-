@@ -14,6 +14,7 @@ import { approveProfile } from '../lib/notifyApi';
 import AdmissionsCrmBoard from '../components/AdmissionsCrmBoard';
 import StaffHrmPanel from '../components/StaffHrmPanel';
 import ImportJobsPanel from '../components/ImportJobsPanel';
+import OrgAdminPanel from '../components/OrgAdminPanel';
 
 const COLORS = ['#059669', '#d97706', '#2563eb', '#dc2626'];
 
@@ -459,6 +460,7 @@ const AdminDashboard = () => {
             { id: 'crm', label_en: 'CRM Pipeline', label_ar: 'مسار القبول', icon: '📋' },
             { id: 'hrm', label_en: 'Staff HRM', label_ar: 'الموارد البشرية', icon: '👔' },
             { id: 'imports', label_en: 'Shamela Import', label_ar: 'استيراد الشاملة', icon: '📚' },
+            { id: 'org', label_en: 'Organization', label_ar: 'المؤسسة', icon: '🏛️' },
             { id: 'approvals', label_en: 'Signups', label_ar: 'الموافقات', icon: '🔐' },
             { id: 'tutors', label_en: 'Tutors & Roles', label_ar: 'المعلمون والوظائف', icon: '👨‍🏫' },
             { id: 'broadcast', label_en: 'Broadcast', label_ar: 'البث', icon: '📢' },
@@ -502,6 +504,12 @@ const AdminDashboard = () => {
           {activeTab === 'imports' && (
             <div className="glass-panel p-6 rounded-2xl border border-gray-800">
               <ImportJobsPanel />
+            </div>
+          )}
+
+          {activeTab === 'org' && (
+            <div className="glass-panel p-6 rounded-2xl border border-gray-800">
+              <OrgAdminPanel />
             </div>
           )}
 

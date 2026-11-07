@@ -6,6 +6,7 @@ import PayFeeButton from '../components/PayFeeButton';
 import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
 import { generateFeeReceipt } from '../lib/exportUtils';
 import { listActivationEventsForChildren } from '../lib/notifyApi';
+import { claimParentInvite } from '../lib/parentInviteApi';
 
 
 const ParentDashboard = () => {
@@ -41,6 +42,8 @@ const ParentDashboard = () => {
   const [leaveSuccess, setLeaveSuccess] = useState(false);
   const [leaveError, setLeaveError] = useState('');
   const [activationEvents, setActivationEvents] = useState([]);
+  const [inviteToken, setInviteToken] = useState('');
+  const [inviteMsg, setInviteMsg] = useState('');
 
   useEffect(() => {
     fetchLinkedChildren();
@@ -146,6 +149,24 @@ const ParentDashboard = () => {
     } finally {
       setDataLoading(false);
       setLoading(false);
+    }
+  };
+
+  const handleClaimInvite = async (e) => {
+    e.preventDefault();
+    setInviteMsg('');
+    if (!inviteToken.trim()) return;
+    try {
+      const result = await claimParentInvite(inviteToken.trim());
+      if (!result?.ok) {
+        setInviteMsg(result?.error || 'Invite failed');
+        return;
+      }
+      setInviteMsg(i18n.language === 'ar' ? 'تم ربط الطفل عبر الدعوة' : 'Child linked via invite');
+      setInviteToken('');
+      fetchLinkedChildren();
+    } catch (err) {
+      setInviteMsg(err.message || 'Invite failed');
     }
   };
 
@@ -368,6 +389,25 @@ const ParentDashboard = () => {
               </button>
               {linkError && <p className="text-xs text-red-400 mt-1">{linkError}</p>}
               {linkSuccess && <p className="text-xs text-emerald-400 mt-1">{linkSuccess}</p>}
+            </form>
+            <form onSubmit={handleClaimInvite} className="space-y-3 pt-4 border-t border-gray-800">
+              <p className="text-xs text-gray-500">
+                {i18n.language === 'ar' ? 'أو استخدم رمز دعوة ولي الأمر من الإدارة' : 'Or paste a parent invite token from admin'}
+              </p>
+              <input
+                type="text"
+                value={inviteToken}
+                onChange={(e) => setInviteToken(e.target.value)}
+                placeholder="Invite token"
+                className="w-full bg-gray-950/50 border border-gray-800 text-sm text-gray-200 placeholder-gray-600 rounded-xl p-3 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              />
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-amber-600/90 hover:bg-amber-500 text-white font-bold rounded-xl text-sm"
+              >
+                {i18n.language === 'ar' ? 'تفعيل الدعوة' : 'Claim invite'}
+              </button>
+              {inviteMsg && <p className="text-xs text-amber-300">{inviteMsg}</p>}
             </form>
           </div>
 

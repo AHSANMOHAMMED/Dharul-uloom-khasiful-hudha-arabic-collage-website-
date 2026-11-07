@@ -4,7 +4,7 @@ Complete these steps after merging the website completion work.
 
 ## 1. Supabase database
 
-Apply migrations in order (`0001` through `0013`):
+Apply migrations in order (`0001` through `0014`):
 
 ```bash
 supabase link --project-ref YOUR_PROJECT_REF

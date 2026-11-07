@@ -1,0 +1,5 @@
+{
+  "name": "generate-monthly-fees-monthly",
+  "schedule": "0 2 1 * *",
+  "notes": "Run on the 1st of each month at 02:00 UTC. Configure via Supabase Dashboard → Edge Functions → Schedules, or: supabase functions schedule create generate-monthly-fees --cron '0 2 1 * *'"
+}

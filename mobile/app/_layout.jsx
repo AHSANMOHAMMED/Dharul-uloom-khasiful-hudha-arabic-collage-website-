@@ -11,6 +11,8 @@ export default function RootLayout() {
         <Stack.Screen name="parent" options={{ title: 'Parent' }} />
         <Stack.Screen name="student" options={{ title: 'Student' }} />
         <Stack.Screen name="tutor" options={{ title: 'Tutor' }} />
+        <Stack.Screen name="payment-success" options={{ title: 'Payment success' }} />
+        <Stack.Screen name="payment-cancel" options={{ title: 'Payment cancelled' }} />
       </Stack>
     </>
   );

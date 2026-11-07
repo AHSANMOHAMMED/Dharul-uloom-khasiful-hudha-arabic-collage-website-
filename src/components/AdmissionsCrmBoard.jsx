@@ -70,8 +70,17 @@ export default function AdmissionsCrmBoard() {
   const onEnroll = async () => {
     if (!selected || !enrollIndex.trim()) return;
     try {
-      await enrollAdmission(selected._id, enrollIndex.trim(), Number(enrollClass));
-      toast.success(ar ? 'تم التسجيل وإنشاء رقم القيد' : 'Enrolled and index created');
+      const result = await enrollAdmission(selected._id, enrollIndex.trim(), Number(enrollClass));
+      const token = result?.parent_invite_token;
+      toast.success(
+        ar
+          ? `تم التسجيل. رمز دعوة ولي الأمر: ${token || '—'}`
+          : `Enrolled. Parent invite token: ${token || '—'}`
+      );
+      if (token && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(token);
+        toast.info(ar ? 'تم نسخ رمز الدعوة' : 'Invite token copied');
+      }
       setSelected(null);
       await load();
     } catch (e) {

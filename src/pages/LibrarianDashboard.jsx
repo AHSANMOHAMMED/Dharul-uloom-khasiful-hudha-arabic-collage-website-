@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { buildDrivePreviewUrl, getDriveFileIdFromUrl, searchBooks } from '../lib/booksApi';
+import { exportToCSV } from '../lib/exportUtils';
 
 const emptyForm = {
   shamela_id: '',
@@ -316,13 +317,34 @@ const LibrarianDashboard = () => {
           <div className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-xl font-bold text-gray-900">{ar ? 'آخر الكتب' : 'Latest books'}</h2>
-              <button
-                type="button"
-                onClick={loadBooks}
-                className="rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-800"
-              >
-                {ar ? 'تحديث' : 'Refresh'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    exportToCSV(
+                      books.map((b) => ({
+                        shamela_id: b.shamela_id,
+                        title_ar: b.title_ar,
+                        title_en: b.title_en,
+                        author: b.author,
+                        language: b.language,
+                        pages: b.pages,
+                      })),
+                      'library_books.csv'
+                    )
+                  }
+                  className="rounded-lg border border-amber-200 px-3 py-2 text-sm font-semibold text-amber-800"
+                >
+                  {ar ? 'تصدير CSV' : 'Export CSV'}
+                </button>
+                <button
+                  type="button"
+                  onClick={loadBooks}
+                  className="rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-800"
+                >
+                  {ar ? 'تحديث' : 'Refresh'}
+                </button>
+              </div>
             </div>
             <form
               className="mt-4 flex gap-2"

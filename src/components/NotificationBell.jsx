@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { listMyNotifications, markNotificationRead, updateNotifyPrefs } from '../lib/notifyApi';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { subscribeToPush } from '../lib/registerSW';
 
 export default function NotificationBell() {
   const { isAuthenticated } = useAuth();
@@ -60,6 +61,19 @@ export default function NotificationBell() {
     setPrefsOpen(false);
   };
 
+  const enablePush = async () => {
+    const key = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+    if (!key) {
+      alert(ar ? 'مفتاح VAPID غير مضبوط' : 'VITE_VAPID_PUBLIC_KEY is not configured');
+      return;
+    }
+    const sub = await subscribeToPush(key);
+    if (sub) {
+      setPrefs({ ...prefs, notify_push: true });
+      await updateNotifyPrefs({ ...prefs, notify_push: true });
+    }
+  };
+
   return (
     <div className="relative">
       <button
@@ -104,9 +118,14 @@ export default function NotificationBell() {
                   {label}
                 </label>
               ))}
-              <button type="button" onClick={savePrefs} className="text-xs font-bold text-white bg-emerald-600 px-2 py-1 rounded-lg">
-                Save
-              </button>
+              <div className="flex gap-2">
+                <button type="button" onClick={savePrefs} className="text-xs font-bold text-white bg-emerald-600 px-2 py-1 rounded-lg">
+                  Save
+                </button>
+                <button type="button" onClick={enablePush} className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-1 rounded-lg">
+                  Enable push
+                </button>
+              </div>
             </div>
           )}
 

@@ -9,6 +9,7 @@ import {
   printSalarySlip,
 } from '../lib/hrmApi';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 export default function StaffHrmPanel() {
   const { i18n } = useTranslation();
@@ -67,6 +68,30 @@ export default function StaffHrmPanel() {
     }
   };
 
+  const uploadStaffDoc = async (profileId, file) => {
+    if (!profileId || !file) return;
+    const path = `${profileId}/${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage.from('staff-docs').upload(path, file, { upsert: true });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const existing = records.find((r) => r.profile_id === profileId);
+    const docs = [...(existing?.documents || []), { path, name: file.name, uploaded_at: new Date().toISOString() }];
+    try {
+      await upsertStaffHr({
+        profile_id: profileId,
+        documents: docs,
+        department: existing?.department || null,
+        job_title: existing?.job_title || null,
+      });
+      toast.success(ar ? 'تم رفع المستند' : 'Document uploaded');
+      await reload();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <h2 className="text-xl font-bold text-white">{ar ? 'إدارة الموارد البشرية' : 'Staff HRM'}</h2>
@@ -112,7 +137,20 @@ export default function StaffHrmPanel() {
                 <td className="p-3">{r.department || '—'}</td>
                 <td className="p-3">{r.job_title || '—'}</td>
                 <td className="p-3">{r.employment_start || '—'}</td>
-                <td className="p-3">{r.emergency_contact || '—'} {r.emergency_phone ? `· ${r.emergency_phone}` : ''}</td>
+                <td className="p-3">
+                  <div>{r.emergency_contact || '—'} {r.emergency_phone ? `· ${r.emergency_phone}` : ''}</div>
+                  <label className="inline-block mt-2 text-xs text-emerald-400 cursor-pointer">
+                    Upload doc
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => uploadStaffDoc(r.profile_id, e.target.files?.[0])}
+                    />
+                  </label>
+                  {(r.documents || []).length > 0 && (
+                    <div className="text-[10px] text-gray-500 mt-1">{r.documents.length} file(s)</div>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
