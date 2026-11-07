@@ -1,17 +1,19 @@
+import { generateInvoicesInBatches } from "../lib/erp/rpc";
+import { tx } from "../lib/tx";
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { generateInvoicesInBatches } from '../lib/erp/rpc';
+import KhatamPattern from '../components/KhatamPattern';
 
 import { generateFeeReceipt, exportFeesCSV } from '../lib/exportUtils';
-import { toast } from 'react-toastify';
-import { tx } from '../lib/tx';
+import { notifyPaymentForStudent } from '../lib/notifyApi';
 
 const TreasurerDashboard = () => {
   const { user } = useAuth();
-  useTranslation(); // subscribe: re-render on language change
+  const { i18n } = useTranslation();
+  const ar = i18n.language === 'ar';
 
   const [students, setStudents] = useState([]);
   const [tutors, setTutors] = useState([]);
@@ -19,7 +21,7 @@ const TreasurerDashboard = () => {
   const [studentSearch, setStudentSearch] = useState('');
   
   // Student fee log form state
-  const [feeMonth, setFeeMonth] = useState('2026-06');
+  const [feeMonth, setFeeMonth] = useState(new Date().toISOString().slice(0, 7));
   const [feeTotalDue, setFeeTotalDue] = useState(5000);
   const [partialPayment, setPartialPayment] = useState('');
   const [paymentNote, setPaymentNote] = useState('');
@@ -28,7 +30,7 @@ const TreasurerDashboard = () => {
   
   // Tutor salary state
   const [selectedTutor, setSelectedTutor] = useState(null);
-  const [salaryMonth, setSalaryMonth] = useState('2026-06');
+  const [salaryMonth, setSalaryMonth] = useState(new Date().toISOString().slice(0, 7));
   const [salaryAmount, setSalaryAmount] = useState(30000);
   const [salaryStatus, setSalaryStatus] = useState('paid');
   const [salarySuccess, setSalarySuccess] = useState(false);
@@ -37,6 +39,7 @@ const TreasurerDashboard = () => {
   // Report Metrics
   const [totalCollected, setTotalCollected] = useState(0);
   const [totalExpected, setTotalExpected] = useState(0);
+  const [allFeeRows, setAllFeeRows] = useState([]);
   
   // Fee generation
   const [generatingFees, setGeneratingFees] = useState(false);
@@ -85,8 +88,9 @@ const TreasurerDashboard = () => {
       // Fetch reports summary
       const { data: feesData } = await supabase
         .from('student_fees')
-        .select('total_due, paid_amount');
+        .select('*, profiles!student_fees_student_id_fkey(full_name, index_number, class_number)');
       
+      setAllFeeRows(feesData || []);
       let collected = 0;
       let expected = 0;
       feesData?.forEach(f => {
@@ -148,51 +152,58 @@ const TreasurerDashboard = () => {
     if (isNaN(paymentVal) || paymentVal <= 0) return;
 
     try {
-      // 1. Ensure the month's invoice exists / reflects the agreed total.
-      //    (Invoice totals post to the ledger via invoice lines automatically.)
-      let fee = selectedStudentFee;
-      if (!fee) {
-        const { data: created, error: createErr } = await supabase
-          .from('student_fees')
-          .insert({ student_id: selectedStudent.id, month: feeMonth, total_due: Number(feeTotalDue) })
-          .select('*')
-          .single();
-        if (createErr) throw createErr;
-        fee = created;
-      } else if (Number(fee.total_due) !== Number(feeTotalDue)) {
-        const { data: adjusted, error: adjErr } = await supabase
-          .from('student_fees')
-          .update({ total_due: Number(feeTotalDue) })
-          .eq('id', fee.id)
-          .select('*')
-          .single();
-        if (adjErr) throw adjErr;
-        fee = adjusted;
+      let paid = paymentVal;
+      let currentPayments = [];
+      let feeId = selectedStudentFee?.id;
+
+      if (selectedStudentFee) {
+        paid = Number(selectedStudentFee.paid_amount) + paymentVal;
+        currentPayments = selectedStudentFee.payments || [];
       }
 
-      // 2. Record the receipt in the immutable ledger (numbered receipt,
-      //    journal posting, student + parent notifications happen server-side).
-      const { data: receipt, error: payErr } = await supabase.rpc('record_fee_payment', {
-        p_fee: fee.id,
-        p_amount: paymentVal,
-        p_method: 'cash',
-        p_reference: null,
-        p_notes: paymentNote || 'Monthly fee payment',
-      });
-      if (payErr) throw payErr;
+      const newPaymentLog = {
+        amount: paymentVal,
+        date: new Date().toISOString().split('T')[0],
+        notes: paymentNote || 'Monthly Fee Payment'
+      };
 
-      const { data: refreshed } = await supabase.from('student_fees').select('*').eq('id', fee.id).single();
-      setSelectedStudentFee(refreshed || fee);
+      currentPayments.push(newPaymentLog);
+
+      let status = 'partial';
+      if (paid >= feeTotalDue) {
+        status = 'completed';
+      }
+
+      const { data, error } = await supabase
+        .from('student_fees')
+        .upsert({
+          id: feeId || undefined,
+          student_id: selectedStudent.id,
+          month: feeMonth,
+          total_due: feeTotalDue,
+          paid_amount: paid,
+          payments: currentPayments,
+          status: status
+        }, { onConflict: 'student_id, month' })
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      // Update local state
+      setSelectedStudentFee(data);
       setPartialPayment('');
       setPaymentNote('');
       setFeeSuccess(true);
-      toast.success(`${tx('تم إصدار الإيصال', 'Receipt issued')}: ${receipt?.receipt_no || ''}`);
+
+      const receiptNo = `REC-${feeMonth.replace('-', '')}-${Date.now().toString().slice(-5)}`;
+      await notifyPaymentForStudent(selectedStudent.id, paymentVal, data?.id, receiptNo);
 
       fetchTreasurerData(); // Refresh metrics
-      setTimeout(() => setFeeSuccess(false), 3000);
+
+      setTimeout(() => setFeeSuccess(false), 3500);
     } catch (err) {
       console.error('Error logging payment:', err);
-      toast.error(err?.message || 'Payment could not be recorded');
     }
   };
 
@@ -226,7 +237,7 @@ const TreasurerDashboard = () => {
       setSalarySuccess(true);
       fetchTutorSalaryHistory(selectedTutor.id);
 
-      setTimeout(() => setSalarySuccess(false), 3000);
+      setTimeout(() => setSalarySuccess(false), 3500);
     } catch (err) {
       console.error('Error updating tutor salary:', err);
     }
@@ -234,8 +245,8 @@ const TreasurerDashboard = () => {
 
   // Filter students based on search string
   const filteredStudents = students.filter(s => 
-    s.full_name.toLowerCase().includes(studentSearch.toLowerCase()) || 
-    s.index_number.toLowerCase().includes(studentSearch.toLowerCase())
+    s.full_name?.toLowerCase().includes(studentSearch.toLowerCase()) || 
+    s.index_number?.toLowerCase().includes(studentSearch.toLowerCase())
   );
 
   // Call Edge Function to generate fees for current month
@@ -244,142 +255,244 @@ const TreasurerDashboard = () => {
     setGenResult(null);
     const currentMonth = new Date().toISOString().slice(0, 7);
     try {
-      // bounded batches (~1 s each) with live progress
-      const result = await generateInvoicesInBatches({ month: currentMonth, onProgress: (p) => setGenResult(p) });
-      setGenResult(result);
+      const summary = await generateInvoicesInBatches(currentMonth);
+      setGenResult(summary);
+      fetchTreasurerData();
     } catch (err) {
-      setGenResult({ error: err.message });
+      console.error("Error generating fees:", err);
+      setGenResult({ error: err.message || "Generation failed" });
     } finally {
       setGeneratingFees(false);
-      fetchTreasurerData();
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
-        <div className="relative w-16 h-16 flex items-center justify-center">
-          <div className="absolute inset-0 border-t-2 border-r-2 border-amber-500 rounded-full animate-spin"></div>
-          <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-400">⚡</div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FBF8F0]">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full border-2 border-[#C29A3A] border-t-transparent animate-spin"></div>
+          <p className="text-sm font-sans text-[#4A5E56]">
+            {ar ? 'جاري تحميل لوحة الشؤون المالية...' : 'Loading financial ledger...'}
+          </p>
         </div>
       </div>
     );
   }
 
+  const arrears = Math.max(0, totalExpected - totalCollected);
+
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Decorative Background */}
-      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-amber-900/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[#FBF8F0] text-[#14201B] relative overflow-hidden py-8 sm:py-12">
+      {/* Background Watermark */}
+      <div className="absolute -top-32 -right-32 w-[600px] h-[600px] pointer-events-none opacity-[0.03]">
+        <KhatamPattern className="w-full h-full text-[#0B3B2E]" />
+      </div>
 
-      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
         
-        {/* Header */}
-        <div className="glass-panel p-8 rounded-[2rem] border border-amber-500/20 shadow-glass flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:border-amber-500/40 transition-all duration-500 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        {/* Header Banner */}
+        <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#C29A3A]"></div>
 
-          <div className="relative z-10 flex items-center gap-6">
-            <div className="hidden sm:flex w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-600 to-amber-900 items-center justify-center shadow-glow-amber">
-              <span className="text-4xl text-white font-arabic">ص</span>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#F7EDD2] text-[#C29A3A] flex items-center justify-center font-arabic text-2xl sm:text-3xl font-bold shrink-0 shadow-sm border border-[#C29A3A]/20">
+                ص
+              </div>
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F7EDD2] text-[#C29A3A] border border-[#C29A3A]/20 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C29A3A]"></span>
+                  {ar ? 'أمين الصندوق والشؤون المالية' : 'Office of the Treasurer'}
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#0B3B2E]">
+                  {ar ? 'إدارة الشؤون المالية والحسابات' : 'Financial Ledger & Fee Collection'}
+                </h1>
+                <p className="text-xs sm:text-sm text-[#4A5E56] font-sans mt-0.5">
+                  {ar ? 'متابعة الرسوم الدراسية، تسجيل الإيداعات، صرف الرواتب، وإصدار الوصولات' : 'Tuition collection, deposit logging, salary disbursements & official receipts'}
+                </p>
+              </div>
             </div>
-            <div>
-              <span className="bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-glow-amber border border-amber-500/20">
-                {tx('أمين الصندوق', 'Treasurer Portal')}
-              </span>
-              <h1 className="mt-3 text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">
-                {tx('إدارة الشؤون المالية والحسابات', 'Financial Ledger & Payouts')}
-              </h1>
-            </div>
+
+            <Link
+              to="/dashboard?view=tutor"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
+            >
+              <svg className="w-4 h-4 text-[#11694A] stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              {ar ? 'العودة لوحة المعلم' : 'Back to Tutor Portal'}
+            </Link>
           </div>
-          <Link
-            to="/dashboard?view=tutor"
-            className="relative z-10 px-6 py-3 bg-gray-900/80 border border-gray-700 hover:bg-gray-800 text-gray-200 rounded-2xl text-sm font-bold transition-all shadow-lg hover:-translate-y-1 flex items-center gap-2"
-          >
-            ← {tx('العودة لوحة المعلم', 'Back to Tutor Portal')}
-          </Link>
         </div>
 
-        {/* Analytics Section */}
+        {/* Analytics Section — 3 KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="glass-card p-8 rounded-[2rem] text-center space-y-3 group hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1">
-            <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-300">💰</div>
-            <div className="text-3xl font-black text-emerald-400 mt-2 font-mono">LKR {totalCollected.toLocaleString()}</div>
-            <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{tx('إجمالي المحصلة', 'Total Fees Collected')}</div>
+          {/* Total Collected */}
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#4A5E56]">
+                {ar ? 'إجمالي المحصلة' : 'Total Fees Collected'}
+              </span>
+              <div className="w-9 h-9 rounded-xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
+                <svg className="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-3 text-3xl font-serif font-bold text-[#11694A] font-mono tabular-nums">
+              LKR {totalCollected.toLocaleString()}
+            </div>
+            <p className="mt-1 text-xs text-[#4A5E56]">
+              {ar ? 'مجموع المدفوعات المسجلة في النظام' : 'Cumulative verified receipts'}
+            </p>
           </div>
-          <div className="glass-card p-8 rounded-[2rem] text-center space-y-3 group hover:border-blue-500/30 transition-all duration-300 hover:-translate-y-1">
-            <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-blue-500/10 border border-blue-500/20 group-hover:scale-110 transition-transform duration-300">📈</div>
-            <div className="text-3xl font-black text-blue-400 mt-2 font-mono">LKR {totalExpected.toLocaleString()}</div>
-            <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{tx('المبلغ المتوقع الإجمالي', 'Total Expected Billings')}</div>
+
+          {/* Expected Billings */}
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#4A5E56]">
+                {ar ? 'المبلغ المتوقع الإجمالي' : 'Total Expected Billings'}
+              </span>
+              <div className="w-9 h-9 rounded-xl bg-[#E0F2F1] text-[#0F7C86] flex items-center justify-center">
+                <svg className="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-3 text-3xl font-serif font-bold text-[#0B3B2E] font-mono tabular-nums">
+              LKR {totalExpected.toLocaleString()}
+            </div>
+            <p className="mt-1 text-xs text-[#4A5E56]">
+              {ar ? 'إجمالي مستحقات الطلاب النشطين' : 'Gross active tuition billed'}
+            </p>
           </div>
-          <div className="glass-card p-8 rounded-[2rem] text-center space-y-3 group hover:border-amber-500/30 transition-all duration-300 hover:-translate-y-1">
-            <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-amber-500/10 border border-amber-500/20 group-hover:scale-110 transition-transform duration-300">📉</div>
-            <div className="text-3xl font-black text-amber-500 mt-2 font-mono">LKR {(totalExpected - totalCollected).toLocaleString()}</div>
-            <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{tx('إجمالي المتأخرات والمتبقي', 'Total Arrears (Pending)')}</div>
+
+          {/* Arrears */}
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#4A5E56]">
+                {ar ? 'إجمالي المتأخرات والمتبقي' : 'Total Arrears (Pending)'}
+              </span>
+              <div className="w-9 h-9 rounded-xl bg-[#F7EDD2] text-[#C29A3A] flex items-center justify-center">
+                <svg className="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-3 text-3xl font-serif font-bold text-[#C29A3A] font-mono tabular-nums">
+              LKR {arrears.toLocaleString()}
+            </div>
+            <p className="mt-1 text-xs text-[#4A5E56]">
+              {ar ? 'المبالغ غير المسددة حتى تاريخه' : 'Outstanding student balances'}
+            </p>
           </div>
         </div>
 
         {/* Auto Fee Generation Panel */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <h3 className="font-bold text-white text-base">
-              ⚡ {tx('توليد رسوم الشهر الحالي تلقائياً', 'Auto-Generate This Month\'s Fees')}
-            </h3>
-            <p className="text-xs text-gray-400 mt-1">
-              {tx('يقوم بإنشاء سجل رسوم لكل طالب معتمد للشهر الحالي (متجاهلاً من تم إنشاؤه بالفعل).', 'Creates a fee record for every approved student for the current month. Safe to run multiple times (idempotent).')}
+        <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-[#F7EDD2] text-[#C29A3A] flex items-center justify-center">
+                <svg className="w-3.5 h-3.5 stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="font-serif font-bold text-base text-[#0B3B2E]">
+                {ar ? 'توليد رسوم الشهر الحالي تلقائياً' : 'Monthly Fee Generation & Batch Export'}
+              </h3>
+            </div>
+            <p className="text-xs text-[#4A5E56]">
+              {ar
+                ? 'يقوم بإنشاء سجل رسوم لكل طالب معتمد للشهر الحالي (عملية آمنة ولا تكرر السجلات الموجودة).'
+                : 'Generates standard monthly fee ledger entries for all approved active students. Safe and idempotent.'}
             </p>
             {genResult && (
-              <div className={`mt-2 text-xs px-3 py-2 rounded-lg border ${
+              <div className={`mt-2 text-xs px-3 py-1.5 rounded-lg border inline-block ${
                 genResult.error
-                  ? 'bg-red-950/30 border-red-500/30 text-red-300'
-                  : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
+                  ? 'bg-[#FEE2E2] border-[#FCA5A5] text-[#991B1B]'
+                  : 'bg-[#E3F1EA] border-[#11694A]/20 text-[#11694A]'
               }`}>
-                {genResult.error ? `❌ ${genResult.error}` : `✅ ${genResult.message}`}
+                {genResult.error ? `Error: ${genResult.error}` : `Success: ${genResult.message || 'Fees generated'}`}
               </div>
             )}
           </div>
-          <div className="flex gap-3 shrink-0">
+
+          <div className="flex flex-wrap gap-2.5 shrink-0 self-end md:self-auto">
             <button
-              onClick={() => exportFeesCSV([], 'fees_report')}
-              className="px-4 py-2.5 bg-blue-900/40 hover:bg-blue-800/50 text-blue-300 border border-blue-800/40 rounded-xl text-xs font-bold transition"
+              onClick={() => exportFeesCSV(allFeeRows, 'kashiful_hudha_fees_report')}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FBF8F0] hover:bg-white text-[#0B3B2E] border border-[#E8E1D0] rounded-xl text-xs font-bold transition shadow-sm"
             >
-              💾 Export CSV
+              <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              {ar ? 'تصدير CSV' : 'Export CSV'}
             </button>
             <button
               onClick={handleGenerateFees}
               disabled={generatingFees}
-              className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 disabled:bg-gray-800 text-white font-bold rounded-xl text-xs transition"
+              className="inline-flex items-center gap-1.5 px-5 py-2 bg-[#11694A] hover:bg-[#0B3B2E] disabled:bg-[#60736C] text-white font-bold rounded-xl text-xs transition shadow-sm"
             >
-              {generatingFees ? '⏳ Generating...' : `🚀 ${tx('توليد الرسوم', 'Generate Fees')}`}
+              {generatingFees ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  {ar ? 'جاري التوليد...' : 'Generating...'}
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  {ar ? 'توليد الرسوم' : 'Generate Monthly Fees'}
+                </>
+              )}
             </button>
           </div>
         </div>
 
         {/* Student Fee Payment Management */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Search roster */}
-          <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 shadow-xl space-y-4">
-            <h3 className="text-base font-bold text-white font-arabic">
-              🔍 {tx('البحث عن طالب', 'Select Student')}
-            </h3>
-            <input
-              type="text"
-              value={studentSearch}
-              onChange={(e) => setStudentSearch(e.target.value)}
-              placeholder="Name or index number..."
-              className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
-            />
-            <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">
-              {filteredStudents.map((std) => (
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+            <div className="flex items-center gap-2.5 pb-2 border-b border-[#E8E1D0]">
+              <div className="w-7 h-7 rounded-lg bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
+                <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-serif font-bold text-[#0B3B2E]">
+                {ar ? 'البحث عن طالب' : 'Select Student'}
+              </h3>
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+                placeholder={ar ? 'الاسم أو رقم القيد...' : 'Name or index number...'}
+                className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#11694A]"
+              />
+            </div>
+
+            <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+              {filteredStudents.length === 0 ? (
+                <p className="text-xs text-[#4A5E56] py-4 text-center">
+                  {ar ? 'لا يوجد طلاب مطابقون.' : 'No students found matching search.'}
+                </p>
+              ) : filteredStudents.map((std) => (
                 <div
                   key={std.id}
                   onClick={() => setSelectedStudent(std)}
-                  className={`p-2.5 bg-gray-950/20 border border-gray-800/40 rounded-lg text-xs cursor-pointer transition ${
-                    selectedStudent?.id === std.id ? 'ring-1 ring-amber-500 bg-gray-950/60' : ''
+                  className={`p-2.5 rounded-xl border text-xs cursor-pointer transition ${
+                    selectedStudent?.id === std.id 
+                      ? 'border-[#11694A] bg-[#E3F1EA]/50 font-semibold' 
+                      : 'border-[#E8E1D0] bg-[#FBF8F0] hover:border-[#11694A]/40'
                   }`}
                 >
-                  <div className="font-bold text-white">{std.full_name}</div>
-                  <div className="flex justify-between items-center text-[10px] text-gray-500 mt-1">
-                    <span>Index: {std.index_number}</span>
+                  <div className="font-bold text-[#0B3B2E]">{std.full_name}</div>
+                  <div className="flex justify-between items-center text-[10px] text-[#4A5E56] mt-0.5">
+                    <span className="font-mono tabular-nums">Index: {std.index_number}</span>
                     <span>Class {std.class_number}</span>
                   </div>
                 </div>
@@ -388,98 +501,120 @@ const TreasurerDashboard = () => {
           </div>
 
           {/* Student Payment logger */}
-          <div className="lg:col-span-2 bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic border-b border-gray-800 pb-4">
-              📝 {tx('تسجيل دفعة رسوم شهرية', 'Student Tuition Logger')}
-            </h2>
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-6">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#E8E1D0]">
+              <div className="w-8 h-8 rounded-lg bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
+                <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                {ar ? 'تسجيل دفعة رسوم شهرية' : 'Student Tuition Logger'}
+              </h2>
+            </div>
 
             {selectedStudent ? (
               <div className="space-y-6">
-                <div className="p-4 bg-emerald-950/20 border border-emerald-500/20 rounded-xl flex justify-between items-center text-sm">
+                <div className="p-4 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-sm">
                   <div>
-                    <h4 className="font-bold text-white text-base">{selectedStudent.full_name}</h4>
-                    <p className="text-xs text-gray-400 mt-1 font-mono">Index: {selectedStudent.index_number} | Class {selectedStudent.class_number}</p>
+                    <h4 className="font-bold text-[#0B3B2E] text-base">{selectedStudent.full_name}</h4>
+                    <p className="text-xs text-[#4A5E56] mt-0.5 font-mono tabular-nums">
+                      Index: {selectedStudent.index_number} | Class {selectedStudent.class_number}
+                    </p>
                   </div>
                   {selectedStudentFee && (
-                    <span className="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-bold rounded border border-amber-500/20">
-                      Paid: LKR {selectedStudentFee.paid_amount} / {selectedStudentFee.total_due}
+                    <span className="px-3 py-1 bg-[#E3F1EA] text-[#11694A] text-xs font-bold rounded-lg border border-[#11694A]/20 tabular-nums">
+                      Paid: LKR {Number(selectedStudentFee.paid_amount || 0).toLocaleString()} / {Number(selectedStudentFee.total_due || 0).toLocaleString()}
                     </span>
                   )}
                 </div>
 
-                <form onSubmit={handleLogFeePayment} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('الشهر المستحق', 'Billing Month')}</label>
-                      <input
-                        type="month"
-                        value={feeMonth}
-                        onChange={(e) => setFeeMonth(e.target.value)}
-                        className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2.5 rounded focus:outline-none"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('إجمالي الرسوم المحددة للمقعد', 'Total Tuition Due (LKR)')}</label>
-                      <input
-                        type="number"
-                        value={feeTotalDue}
-                        onChange={(e) => setFeeTotalDue(Number(e.target.value))}
-                        className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2.5 rounded focus:outline-none"
-                        required
-                      />
-                    </div>
+                <form onSubmit={handleLogFeePayment} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'الشهر المستحق' : 'Billing Month'}
+                    </label>
+                    <input
+                      type="month"
+                      value={feeMonth}
+                      onChange={(e) => setFeeMonth(e.target.value)}
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#11694A]"
+                      required
+                    />
                   </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('المبلغ المستلم كدفعة جزئية', 'Deposit Amount (LKR)')}</label>
-                      <input
-                        type="number"
-                        value={partialPayment}
-                        onChange={(e) => setPartialPayment(e.target.value)}
-                        placeholder="e.g. 500, 1500, 2500"
-                        className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2.5 rounded focus:outline-none"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('ملاحظة المعاملة', 'Reference / Remarks')}</label>
-                      <input
-                        type="text"
-                        value={paymentNote}
-                        onChange={(e) => setPaymentNote(e.target.value)}
-                        placeholder="Receipt #, cash, bank transfer..."
-                        className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2.5 rounded focus:outline-none"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'إجمالي الرسوم المحددة' : 'Total Tuition Due (LKR)'}
+                    </label>
+                    <input
+                      type="number"
+                      value={feeTotalDue}
+                      onChange={(e) => setFeeTotalDue(Number(e.target.value))}
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#11694A]"
+                      required
+                    />
                   </div>
 
-                  <div className="md:col-span-2 pt-2 flex gap-3">
+                  <div>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'المبلغ المستلم كدفعة' : 'Deposit Amount (LKR)'}
+                    </label>
+                    <input
+                      type="number"
+                      value={partialPayment}
+                      onChange={(e) => setPartialPayment(e.target.value)}
+                      placeholder="e.g. 500, 1500, 5000"
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#11694A]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'رقم الإيصال / ملاحظة' : 'Reference / Remarks'}
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentNote}
+                      onChange={(e) => setPaymentNote(e.target.value)}
+                      placeholder="Receipt #, cash, bank transfer..."
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#11694A]"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2 pt-2 flex flex-wrap gap-3">
                     <button
                       type="submit"
-                      className="flex-1 py-3 bg-emerald-700 hover:bg-emerald-600 font-bold rounded-xl text-white text-sm transition"
+                      className="flex-1 py-2.5 px-4 bg-[#11694A] hover:bg-[#0B3B2E] font-bold rounded-xl text-white text-xs sm:text-sm transition shadow-sm"
                     >
-                      {tx('تسجيل وتحديث الرصيد', 'Log Payment Deposit')}
+                      {ar ? 'تسجيل وتحديث الرصيد' : 'Log Payment Deposit'}
                     </button>
                     {selectedStudentFee && (
                       <button
                         type="button"
                         onClick={() => generateFeeReceipt(selectedStudent, selectedStudentFee, user?.username)}
-                        className="px-4 py-3 bg-blue-900/40 hover:bg-blue-800/60 text-blue-300 border border-blue-800/40 font-bold rounded-xl text-sm transition"
+                        className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-[#FBF8F0] text-[#0B3B2E] border border-[#E8E1D0] font-bold rounded-xl text-xs sm:text-sm transition shadow-sm"
                       >
-                        🖨 {tx('طباعة وصل', 'Print Receipt')}
+                        <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        {ar ? 'طباعة وصل' : 'Print Receipt'}
                       </button>
                     )}
-                    {feeSuccess && (
-                      <p className="text-sm text-emerald-400 text-center mt-3 animate-pulse">✓ Payment logged and parent notified!</p>
-                    )}
                   </div>
+                  {feeSuccess && (
+                    <div className="md:col-span-2 text-center">
+                      <p className="text-xs text-[#11694A] font-bold animate-pulse">
+                        ✓ {ar ? 'تم تسجيل الدفعة وإرسال الإشعار لولي الأمر!' : 'Payment logged and parent notified!'}
+                      </p>
+                    </div>
+                  )}
                 </form>
               </div>
             ) : (
-              <div className="text-center py-20 text-gray-500">
-                {tx('الرجاء اختيار طالب لتسجيل الحساب المالي', 'Please select a student from the list to log a fee payment.')}
+              <div className="text-center py-16 text-[#4A5E56] text-xs">
+                {ar ? 'الرجاء اختيار طالب من القائمة لتسجيل الحساب المالي.' : 'Please select a student from the list to log a fee payment.'}
               </div>
             )}
           </div>
@@ -487,71 +622,98 @@ const TreasurerDashboard = () => {
         </div>
 
         {/* Tutor Salaries Payouts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Select Tutor */}
-          <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 shadow-xl space-y-4">
-            <h3 className="text-base font-bold text-white font-arabic">
-              🔍 {tx('البحث عن معلم', 'Select Tutor / Staff')}
-            </h3>
-            <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+            <div className="flex items-center gap-2.5 pb-2 border-b border-[#E8E1D0]">
+              <div className="w-7 h-7 rounded-lg bg-[#F7EDD2] text-[#C29A3A] flex items-center justify-center">
+                <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-serif font-bold text-[#0B3B2E]">
+                {ar ? 'اختيار المعلم أو الموظف' : 'Select Tutor / Staff'}
+              </h3>
+            </div>
+
+            <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
               {tutors.map((t) => (
                 <div
                   key={t.id}
                   onClick={() => setSelectedTutor(t)}
-                  className={`p-2.5 bg-gray-950/20 border border-gray-800/40 rounded-lg text-xs cursor-pointer transition ${
-                    selectedTutor?.id === t.id ? 'ring-1 ring-amber-500 bg-gray-950/60' : ''
+                  className={`p-2.5 rounded-xl border text-xs cursor-pointer transition ${
+                    selectedTutor?.id === t.id 
+                      ? 'border-[#C29A3A] bg-[#F7EDD2]/50 font-semibold' 
+                      : 'border-[#E8E1D0] bg-[#FBF8F0] hover:border-[#C29A3A]/40'
                   }`}
                 >
-                  <div className="font-bold text-white">{t.full_name}</div>
-                  <span className="text-[10px] text-gray-500 block mt-1">Role: {t.assigned_tutor_role.toUpperCase()}</span>
+                  <div className="font-bold text-[#0B3B2E]">{t.full_name}</div>
+                  <span className="text-[10px] text-[#4A5E56] block mt-0.5">
+                    Role: {t.assigned_tutor_role?.toUpperCase() || 'TUTOR'}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Salary logger */}
-          <div className="lg:col-span-2 bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic border-b border-gray-800 pb-4">
-              📝 {tx('صرف وتحديث رواتب المعلمين', 'Tutor Payout Logger')}
-            </h2>
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-6">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#E8E1D0]">
+              <div className="w-8 h-8 rounded-lg bg-[#F7EDD2] text-[#C29A3A] flex items-center justify-center">
+                <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                {ar ? 'صرف وتحديث رواتب المعلمين' : 'Tutor Payout Logger'}
+              </h2>
+            </div>
 
             {selectedTutor ? (
               <div className="space-y-6">
-                <div className="p-4 bg-emerald-950/20 border border-emerald-500/20 rounded-xl flex justify-between items-center text-sm">
+                <div className="p-4 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl flex justify-between items-center text-sm">
                   <div>
-                    <h4 className="font-bold text-white text-base">{selectedTutor.full_name}</h4>
-                    <span className="text-[10px] text-emerald-400 uppercase font-semibold">Tutor Role: {selectedTutor.assigned_tutor_role}</span>
+                    <h4 className="font-bold text-[#0B3B2E] text-base">{selectedTutor.full_name}</h4>
+                    <span className="text-[10px] text-[#0F7C86] uppercase font-bold tracking-wider">
+                      Role: {selectedTutor.assigned_tutor_role || 'Tutor'}
+                    </span>
                   </div>
                 </div>
 
                 <form onSubmit={handleUpdateSalary} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                   <div>
-                    <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('شهر الراتب', 'Month')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'شهر الراتب' : 'Month'}
+                    </label>
                     <input
                       type="month"
                       value={salaryMonth}
                       onChange={(e) => setSalaryMonth(e.target.value)}
-                      className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2.5 rounded focus:outline-none"
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#C29A3A]"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('مبلغ الراتب', 'Salary Amount (LKR)')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'مبلغ الراتب' : 'Salary Amount (LKR)'}
+                    </label>
                     <input
                       type="number"
                       value={salaryAmount}
                       onChange={(e) => setSalaryAmount(Number(e.target.value))}
-                      className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2.5 rounded focus:outline-none"
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#C29A3A]"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('الحالة', 'Status')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'الحالة' : 'Status'}
+                    </label>
                     <select
                       value={salaryStatus}
                       onChange={(e) => setSalaryStatus(e.target.value)}
-                      className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2.5 rounded focus:outline-none"
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#C29A3A]"
                     >
                       <option value="paid">PAID</option>
                       <option value="pending">PENDING</option>
@@ -560,31 +722,35 @@ const TreasurerDashboard = () => {
                   <div className="md:col-span-3 pt-2">
                     <button
                       type="submit"
-                      className="w-full py-3 bg-emerald-700 hover:bg-emerald-600 font-bold rounded-xl text-white text-sm transition"
+                      className="w-full py-2.5 bg-[#C29A3A] hover:bg-[#A8822B] font-bold rounded-xl text-[#0B3B2E] text-xs sm:text-sm transition shadow-sm"
                     >
-                      {tx('تحديث وتأكيد الصرف', 'Log Salary / Payout')}
+                      {ar ? 'تحديث وتأكيد الصرف' : 'Log Salary / Payout'}
                     </button>
                     {salarySuccess && (
-                      <p className="text-sm text-emerald-400 text-center mt-3 animate-pulse">✓ Salary status updated and tutor notified!</p>
+                      <p className="text-xs text-[#11694A] text-center mt-2 font-bold animate-pulse">
+                        ✓ {ar ? 'تم تحديث حالة الراتب وإشعار المعلم!' : 'Salary status updated and tutor notified!'}
+                      </p>
                     )}
                   </div>
                 </form>
 
                 {/* Salary histories table */}
-                <div className="space-y-3 pt-4 border-t border-gray-800">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide">
-                    {tx('السجل المالي الأخير للمعلم', 'Recent Payout History')}
+                <div className="space-y-3 pt-3 border-t border-[#E8E1D0]">
+                  <h4 className="text-xs font-bold text-[#4A5E56] uppercase tracking-wider">
+                    {ar ? 'السجل المالي الأخير للمعلم' : 'Recent Payout History'}
                   </h4>
                   {salaryHistories.length === 0 ? (
-                    <p className="text-xs text-gray-500 py-3">{tx('لا يوجد سجل رواتب', 'No payout history logged for this tutor.')}</p>
+                    <p className="text-xs text-[#4A5E56] py-3 text-center">
+                      {ar ? 'لا يوجد سجل رواتب سابق لهذا المعلم.' : 'No payout history logged for this tutor.'}
+                    </p>
                   ) : (
                     <div className="space-y-2">
                       {salaryHistories.map((sal) => (
-                        <div key={sal.id} className="flex justify-between items-center p-2.5 bg-gray-950/20 border border-gray-800/40 rounded-xl text-xs">
-                          <span className="font-bold text-white font-mono">{sal.month}</span>
-                          <span className="font-mono font-semibold text-amber-400">LKR {sal.amount}</span>
-                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                            sal.status === 'paid' ? 'bg-emerald-500/25 text-emerald-400' : 'bg-red-500/25 text-red-400'
+                        <div key={sal.id} className="flex justify-between items-center p-2.5 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl text-xs">
+                          <span className="font-mono font-bold text-[#0B3B2E] tabular-nums">{sal.month}</span>
+                          <span className="font-mono font-semibold text-[#11694A] tabular-nums">LKR {Number(sal.amount).toLocaleString()}</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            sal.status === 'paid' ? 'bg-[#E3F1EA] text-[#11694A]' : 'bg-[#FEE2E2] text-[#B91C1C]'
                           }`}>
                             {sal.status.toUpperCase()}
                           </span>
@@ -595,8 +761,8 @@ const TreasurerDashboard = () => {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-20 text-gray-500">
-                {tx('الرجاء اختيار معلم لمراجعة السجل المالي', 'Please select a tutor from the list to review salary reports.')}
+              <div className="text-center py-16 text-[#4A5E56] text-xs">
+                {ar ? 'الرجاء اختيار معلم من القائمة لمراجعة السجل المالي.' : 'Please select a tutor from the list to review salary reports.'}
               </div>
             )}
           </div>

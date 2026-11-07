@@ -5,7 +5,7 @@ import { formatDate, formatMoney, query, rpc } from '../lib/erp/rpc';
 import { receiptPdfUrl } from '../lib/receiptPrint';
 import { tx } from '../lib/tx';
 
-/** Compact "Receipts & arrears" card for the student / parent portals. */
+/** Modern Manuscript "Receipts & arrears" card for the student / parent portals. */
 export default function ReceiptsArrears({ studentId }) {
   useTranslation();
   const [state, setState] = useState({ loading: true, arrears: null, receipts: [], error: null });
@@ -40,57 +40,86 @@ export default function ReceiptsArrears({ studentId }) {
   const months = state.arrears?.months || [];
 
   return (
-    <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-base font-bold text-white">🧾 {tx('الإيصالات والمتأخرات', 'Receipts & arrears')}</h3>
-        <button type="button" onClick={load} className="text-xs text-gray-400 hover:text-white">
-          {tx('تحديث', 'Refresh')}
+    <div className="bg-paper-white rounded-[14px] p-6 border border-sand-border shadow-manuscript-sm space-y-4">
+      <div className="flex items-center justify-between gap-2 border-b border-sand-border/60 pb-3">
+        <h3 className="font-serif text-base font-bold text-ink-green-900 flex items-center gap-2">
+          <span className="material-symbols-outlined text-emerald-700 text-[20px]">receipt_long</span>
+          <span>{tx('الإيصالات والمتأخرات', 'Receipts & Fee Arrears')}</span>
+        </h3>
+        <button
+          type="button"
+          onClick={load}
+          className="text-xs text-ink-text-muted hover:text-emerald-700 transition-colors flex items-center gap-1 font-medium"
+        >
+          <span className="material-symbols-outlined text-[16px]">refresh</span>
+          <span>{tx('تحديث', 'Refresh')}</span>
         </button>
       </div>
 
       {state.loading && !state.arrears ? (
         <div className="flex justify-center py-6">
-          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-emerald-500" />
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-emerald-700 border-t-transparent" />
         </div>
       ) : state.error ? (
-        <p className="text-sm text-red-300">{state.error.message || String(state.error)}</p>
+        <p className="text-sm text-feedback-danger">{state.error.message || String(state.error)}</p>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 text-center">
-            <div className="p-3 bg-gray-950/30 rounded-lg">
-              <div className={`text-lg font-bold font-mono ${total > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>{formatMoney(total)}</div>
-              <span className="text-[10px] text-gray-500">
+            <div className="p-3 bg-parchment-50 rounded-[10px] border border-sand-border">
+              <div className={`text-lg font-bold font-mono ${total > 0 ? 'text-feedback-warning' : 'text-emerald-700'}`}>
+                {formatMoney(total)}
+              </div>
+              <span className="text-[11px] text-ink-text-muted font-medium">
                 {tx('إجمالي المتأخرات', 'Total arrears')} · {months.length} {tx('أشهر', 'months')}
               </span>
             </div>
-            <div className="p-3 bg-gray-950/30 rounded-lg">
-              <div className={`text-lg font-bold font-mono ${overdue > 0 ? 'text-red-400' : 'text-gray-300'}`}>{formatMoney(overdue)}</div>
-              <span className="text-[10px] text-gray-500">{tx('متأخر', 'Overdue')}</span>
+            <div className="p-3 bg-parchment-50 rounded-[10px] border border-sand-border">
+              <div className={`text-lg font-bold font-mono ${overdue > 0 ? 'text-feedback-danger' : 'text-ink-text-secondary'}`}>
+                {formatMoney(overdue)}
+              </div>
+              <span className="text-[11px] text-ink-text-muted font-medium">{tx('متأخر', 'Overdue')}</span>
             </div>
           </div>
 
           {state.receipts.length === 0 ? (
-            <p className="text-center text-xs text-gray-500 py-2">{tx('لا توجد إيصالات بعد', 'No receipts yet')}</p>
+            <p className="text-center text-xs text-ink-text-muted py-3">
+              {tx('لا توجد إيصالات مسجلة بعد', 'No fee receipts issued yet')}
+            </p>
           ) : (
             <ul className="space-y-2">
               {state.receipts.map((r) => {
                 const pdf = receiptPdfUrl(r.public_token);
                 return (
-                  <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-gray-950/30 p-2.5 text-xs">
+                  <li
+                    key={r.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] bg-parchment-50 border border-sand-border/80 p-3 text-xs"
+                  >
                     <div>
-                      <div className="font-mono text-gray-200">{r.receipt_no}</div>
-                      <div className="text-gray-500">
+                      <div className="font-mono font-semibold text-ink-green-900">{r.receipt_no}</div>
+                      <div className="text-ink-text-muted text-[11px]">
                         {formatDate(r.paid_at)}
-                        {r.status === 'reversed' && <span className="ms-2 text-red-400 font-bold">{tx('معكوس', 'Reversed')}</span>}
+                        {r.status === 'reversed' && (
+                          <span className="ms-2 text-feedback-danger font-bold uppercase">{tx('معكوس', 'Reversed')}</span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-semibold text-emerald-400">{formatMoney(r.amount, r.currency || 'LKR')}</span>
-                      <Link to={`/receipt/${r.id}`} className="rounded-md border border-gray-700 px-2 py-1 text-gray-200 hover:bg-gray-800">
+                      <span className="font-mono font-bold text-emerald-700 tabular-nums">
+                        {formatMoney(r.amount, r.currency || 'LKR')}
+                      </span>
+                      <Link
+                        to={`/receipt/${r.id}`}
+                        className="rounded-[6px] border border-sand-border bg-paper-white px-2.5 py-1 text-ink-text-primary hover:border-emerald-700 hover:text-emerald-700 transition-colors font-medium text-[11px]"
+                      >
                         {tx('عرض', 'View')}
                       </Link>
                       {pdf && (
-                        <a href={pdf} target="_blank" rel="noreferrer" className="rounded-md border border-emerald-600/50 px-2 py-1 text-emerald-300 hover:bg-emerald-500/10">
+                        <a
+                          href={pdf}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-[6px] border border-emerald-700/30 bg-mint-wash-100 px-2.5 py-1 text-emerald-700 hover:bg-emerald-700 hover:text-white transition-colors font-medium text-[11px]"
+                        >
                           PDF
                         </a>
                       )}

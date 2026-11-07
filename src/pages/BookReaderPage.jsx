@@ -4,20 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import BookReader from '../components/library/BookReader';
 import { getBook } from '../lib/booksApi';
-import { tx } from '../lib/tx';
 
-function InfoBadge({ label, value }) {
-  return (
-    <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-2">
-      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700">{label}</div>
-      <div className="mt-1 text-sm font-semibold text-emerald-950">{value}</div>
-    </div>
-  )
-}
-
-const BookReaderPage = () => {
+export default function BookReaderPage() {
   const { id } = useParams();
-  useTranslation(); // subscribe: re-render on language change
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
 
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,106 +28,99 @@ const BookReaderPage = () => {
   }, [id]);
 
   if (loading) {
-    return <div className="py-20 text-center text-gray-400">{tx('جارٍ التحميل...', 'Loading...')}</div>;
+    return (
+      <div className="min-h-screen bg-parchment-50 flex items-center justify-center p-8">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs text-ink-text-muted">Opening manuscript folio...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!book) {
     return (
-      <div className="py-20 text-center">
-        <p className="mb-4 text-gray-500">{tx('لم يتم العثور على الكتاب.', 'Book not found.')}</p>
-        <Link to="/library" className="text-islamic-green underline">
-          {tx('العودة إلى المكتبة', 'Back to library')}
+      <div className="min-h-screen bg-parchment-50 flex flex-col items-center justify-center p-8 text-center space-y-4">
+        <span className="material-symbols-outlined text-4xl text-ink-text-muted">auto_stories</span>
+        <h2 className="font-serif text-2xl font-semibold text-ink-green-900">
+          Manuscript Not Found
+        </h2>
+        <p className="text-xs text-ink-text-secondary max-w-sm">
+          The requested book folio could not be found or may have been moved within the digital catalog.
+        </p>
+        <Link
+          to="/library"
+          className="px-5 py-2.5 rounded-[10px] bg-emerald-700 text-white text-xs font-semibold"
+        >
+          Return to Library
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-amber-50 px-4 py-8">
+    <div className="w-full bg-parchment-50 text-ink-text-primary min-h-screen py-8">
       <Helmet>
-        <title>{book.title_ar}</title>
+        <title>{book.title_ar} — Maktabah Kashifiyyah</title>
         <meta
           name="description"
           content={book.description || book.title_en || book.title_ar}
         />
       </Helmet>
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <Link to="/library" className="inline-block text-sm text-islamic-green hover:underline">
-            {tx('← العودة إلى المكتبة', '← Back to library')}
+
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        
+        {/* Navigation Breadcrumb */}
+        <div className="flex items-center justify-between pb-4 border-b border-sand-border">
+          <Link
+            to="/library"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-ink-green-900"
+          >
+            <span className="material-symbols-outlined text-[16px]">
+              {isRTL ? 'arrow_forward' : 'arrow_back'}
+            </span>
+            <span>Back to Digital Library Catalog</span>
           </Link>
-          {book.drive_preview_url && (
-            <a
-              href={book.drive_preview_url}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-bold text-emerald-800 shadow-sm"
-            >
-              {tx('فتح في Google Drive', 'Open in Google Drive')}
-            </a>
+
+          <span className="text-xs text-ink-text-muted">
+            Catalog ID: <span className="font-mono text-ink-text-primary">{book.id}</span>
+          </span>
+        </div>
+
+        {/* Reader Component */}
+        <BookReader book={book} />
+
+        {/* Manuscript Metadata Drawer */}
+        <div className="p-6 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript space-y-4">
+          <h3 className="font-serif text-xl font-semibold text-ink-green-900">
+            Manuscript Dossier & Catalog Metadata
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+            <div className="p-3 rounded-lg bg-parchment-50 border border-sand-border/60">
+              <span className="text-ink-text-muted block text-[11px] uppercase tracking-wider">Arabic Title</span>
+              <span className="font-arabic font-bold text-ink-green-900 text-sm mt-0.5 block" dir="rtl">{book.title_ar}</span>
+            </div>
+            <div className="p-3 rounded-lg bg-parchment-50 border border-sand-border/60">
+              <span className="text-ink-text-muted block text-[11px] uppercase tracking-wider">English Title</span>
+              <span className="font-semibold text-ink-green-900 mt-0.5 block">{book.title_en || 'Classical Text'}</span>
+            </div>
+            <div className="p-3 rounded-lg bg-parchment-50 border border-sand-border/60">
+              <span className="text-ink-text-muted block text-[11px] uppercase tracking-wider">Author / Transmitter</span>
+              <span className="font-arabic font-medium text-ink-green-900 mt-0.5 block" dir="rtl">{book.author || 'Scholarly Attributed'}</span>
+            </div>
+            <div className="p-3 rounded-lg bg-parchment-50 border border-sand-border/60">
+              <span className="text-ink-text-muted block text-[11px] uppercase tracking-wider">Primary Category</span>
+              <span className="font-semibold text-emerald-700 mt-0.5 block">{book.categories?.[0] || 'General Studies'}</span>
+            </div>
+          </div>
+          {book.description && (
+            <p className="text-xs text-ink-text-secondary leading-relaxed pt-2">
+              {book.description}
+            </p>
           )}
         </div>
 
-        <header className="mb-6 overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm">
-          <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-800 px-6 py-8 text-white">
-            <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-100">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">
-                {book.language || 'ar'}
-              </span>
-              {book.shamela_id && (
-                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">
-                  Shamela #{book.shamela_id}
-                </span>
-              )}
-            </div>
-            <h1 dir="rtl" className="mt-4 font-arabic text-3xl font-bold leading-tight md:text-4xl">
-              {book.title_ar}
-            </h1>
-            {book.title_en && <p className="mt-2 max-w-3xl text-emerald-50/90">{book.title_en}</p>}
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 p-6 sm:grid-cols-2 lg:grid-cols-4">
-            <InfoBadge label={tx('المؤلف', 'Author')} value={book.author} />
-            <InfoBadge label={tx('اللغة', 'Language')} value={book.language || 'ar'} />
-            <InfoBadge label={tx('الصفحات', 'Pages')} value={book.pages ? String(book.pages) : '—'} />
-            <InfoBadge label={tx('السنة', 'Year')} value={book.year ? String(book.year) : '—'} />
-          </div>
-
-          {book.categories?.length > 0 && (
-            <div className="px-6 pb-6">
-              <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-500">
-                {tx('التصنيفات', 'Categories')}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {book.categories.map((category) => (
-                  <span
-                    key={category}
-                    dir="rtl"
-                    className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800"
-                  >
-                    {category}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {book.description && (
-            <div className="border-t border-emerald-100 px-6 py-5">
-              <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-500">
-                {tx('الوصف', 'Description')}
-              </div>
-              <p dir="rtl" className="font-arabic leading-relaxed text-gray-700">
-                {book.description}
-              </p>
-            </div>
-          )}
-        </header>
-
-        <BookReader book={book} />
       </div>
     </div>
   );
-};
-
-export default BookReaderPage;
+}

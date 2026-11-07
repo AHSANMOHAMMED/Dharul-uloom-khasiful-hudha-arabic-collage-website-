@@ -20,9 +20,8 @@ import {
   uploadGalleryImage,
   resolveGalleryUrl,
 } from '../lib/contentApi';
-import { tx } from '../lib/tx';
 
-const inputCls = 'w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 p-2.5 rounded focus:outline-none focus:border-emerald-600';
+const inputCls = 'w-full bg-white border border-[#E8E1D0] text-xs sm:text-sm text-[#14201B] p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#11694A]';
 
 const AdminContentCMS = ({ section }) => {
   const { i18n } = useTranslation();
@@ -36,7 +35,7 @@ const AdminContentCMS = ({ section }) => {
   return null;
 };
 
-function NewsCMS() {
+function NewsCMS({ ar }) {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(emptyNews());
   const [loading, setLoading] = useState(true);
@@ -58,7 +57,7 @@ function NewsCMS() {
     e.preventDefault();
     try {
       await adminUpsertNews(form);
-      toast.success(tx('تم الحفظ', 'Saved'));
+      toast.success(ar ? 'تم الحفظ' : 'Saved');
       setForm(emptyNews());
       load();
     } catch (err) {
@@ -77,12 +76,12 @@ function NewsCMS() {
     }
   };
 
-  if (loading) return <p className="text-gray-500 text-sm">{tx('جاري التحميل...', 'Loading...')}</p>;
+  if (loading) return <p className="text-[#4A5E56] text-xs py-4">{ar ? 'جاري التحميل...' : 'Loading news...'}</p>;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
-        <h3 className="text-lg font-bold text-white">{form.id ? (tx('تعديل خبر', 'Edit news')) : (tx('خبر جديد', 'New article'))}</h3>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <form onSubmit={save} className="space-y-3 bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0]">
+        <h3 className="text-base font-serif font-bold text-[#0B3B2E]">{form.id ? (ar ? 'تعديل مقال' : 'Edit News Article') : (ar ? 'مقال إخباري جديد' : 'New News Article')}</h3>
         <input className={inputCls} placeholder="Title EN" value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} required />
         <input className={inputCls} placeholder="Title AR" dir="rtl" value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} />
         <textarea className={inputCls} rows={3} placeholder="Content EN" value={form.content_en} onChange={(e) => setForm({ ...form, content_en: e.target.value })} required />
@@ -90,27 +89,27 @@ function NewsCMS() {
         <select className={inputCls} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
           {['general', 'admissions', 'events', 'announcements'].map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <label className="block text-xs text-gray-400">{tx('صورة', 'Image')}</label>
-        <input type="file" accept="image/*" onChange={onImage} className="text-xs text-gray-400" />
-        <label className="flex items-center gap-2 text-sm text-gray-300">
+        <label className="block text-[11px] text-[#4A5E56] font-bold uppercase">{ar ? 'صورة المقال' : 'Article Image'}</label>
+        <input type="file" accept="image/*" onChange={onImage} className="text-xs text-[#4A5E56]" />
+        <label className="flex items-center gap-2 text-xs text-[#0B3B2E] font-medium cursor-pointer">
           <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
-          {tx('منشور', 'Published')}
+          {ar ? 'منشور للعامة' : 'Published on public portal'}
         </label>
-        <div className="flex gap-2">
-          <button type="submit" className="flex-1 py-2 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
-          {form.id && <button type="button" onClick={() => setForm(emptyNews())} className="px-4 py-2 bg-gray-800 rounded text-sm">{tx('إلغاء', 'Cancel')}</button>}
+        <div className="flex gap-2 pt-1">
+          <button type="submit" className="flex-1 py-2 bg-[#11694A] hover:bg-[#0B3B2E] rounded-xl text-white text-xs font-bold transition">{ar ? 'حفظ' : 'Save Article'}</button>
+          {form.id && <button type="button" onClick={() => setForm(emptyNews())} className="px-4 py-2 bg-white border border-[#E8E1D0] rounded-xl text-xs">{ar ? 'إلغاء' : 'Cancel'}</button>}
         </div>
       </form>
-      <div className="space-y-2 max-h-[600px] overflow-y-auto">
+      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
         {items.map((item) => (
-          <div key={item.id} className="p-4 bg-gray-950/40 border border-gray-800 rounded-lg flex justify-between gap-2">
+          <div key={item.id} className="p-3 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl flex justify-between gap-2">
             <div>
-              <div className="font-semibold text-white">{item.title_en}</div>
-              <div className="text-xs text-gray-500">{item.category} · {item.is_published ? 'live' : 'draft'}</div>
+              <div className="font-bold text-[#0B3B2E] text-xs sm:text-sm">{item.title_en}</div>
+              <div className="text-[10px] text-[#4A5E56] mt-0.5">{item.category} · <span className={item.is_published ? 'text-[#11694A] font-bold' : 'text-[#C29A3A]'}>{item.is_published ? 'Published' : 'Draft'}</span></div>
             </div>
-            <div className="flex gap-2 shrink-0">
-              <button type="button" onClick={() => setForm({ ...item })} className="text-xs text-emerald-400">Edit</button>
-              <button type="button" onClick={async () => { await adminDeleteNews(item.id); load(); }} className="text-xs text-red-400">Del</button>
+            <div className="flex gap-2 shrink-0 items-center">
+              <button type="button" onClick={() => setForm({ ...item })} className="text-xs font-bold text-[#11694A] hover:underline">Edit</button>
+              <button type="button" onClick={async () => { await adminDeleteNews(item.id); load(); }} className="text-xs font-bold text-[#B91C1C] hover:underline">Del</button>
             </div>
           </div>
         ))}
@@ -119,7 +118,7 @@ function NewsCMS() {
   );
 }
 
-function FacultyCMS() {
+function FacultyCMS({ ar }) {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(emptyFaculty());
   const load = async () => setItems(await adminListFaculty());
@@ -138,9 +137,9 @@ function FacultyCMS() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
-        <h3 className="text-lg font-bold text-white">{tx('عضو هيئة التدريس', 'Faculty member')}</h3>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <form onSubmit={save} className="space-y-3 bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0]">
+        <h3 className="text-base font-serif font-bold text-[#0B3B2E]">{ar ? 'عضو هيئة التدريس' : 'Faculty Member Profile'}</h3>
         <input className={inputCls} placeholder="Name EN" value={form.name_en} onChange={(e) => setForm({ ...form, name_en: e.target.value })} required />
         <input className={inputCls} placeholder="Name AR" dir="rtl" value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} />
         <input className={inputCls} placeholder="Role EN" value={form.role_en} onChange={(e) => setForm({ ...form, role_en: e.target.value })} required />
@@ -148,22 +147,27 @@ function FacultyCMS() {
         <textarea className={inputCls} rows={2} placeholder="Bio EN" value={form.bio_en} onChange={(e) => setForm({ ...form, bio_en: e.target.value })} />
         <input className={inputCls} placeholder="Qualifications (comma-separated)" value={form.qualificationsText} onChange={(e) => setForm({ ...form, qualificationsText: e.target.value })} />
         <input type="number" className={inputCls} placeholder="Sort order" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} />
-        <button type="submit" className="w-full py-2 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
+        <button type="submit" className="w-full py-2 bg-[#11694A] hover:bg-[#0B3B2E] rounded-xl text-white text-xs font-bold transition">{ar ? 'حفظ' : 'Save Member'}</button>
       </form>
-      <div className="space-y-2">{items.map((item) => (
-        <div key={item.id} className="p-4 bg-gray-950/40 border border-gray-800 rounded-lg flex justify-between">
-          <span className="text-white">{item.name_en} — {item.role_en}</span>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setForm({ ...item, qualificationsText: (item.qualifications || []).join(', ') })} className="text-xs text-emerald-400">Edit</button>
-            <button type="button" onClick={async () => { await adminDeleteFaculty(item.id); load(); }} className="text-xs text-red-400">Del</button>
+      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+        {items.map((item) => (
+          <div key={item.id} className="p-3 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl flex justify-between items-center">
+            <div>
+              <span className="font-bold text-[#0B3B2E] text-xs sm:text-sm">{item.name_en}</span>
+              <span className="text-[11px] text-[#4A5E56] block">{item.role_en}</span>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button type="button" onClick={() => setForm({ ...item, qualificationsText: (item.qualifications || []).join(', ') })} className="text-xs font-bold text-[#11694A] hover:underline">Edit</button>
+              <button type="button" onClick={async () => { await adminDeleteFaculty(item.id); load(); }} className="text-xs font-bold text-[#B91C1C] hover:underline">Del</button>
+            </div>
           </div>
-        </div>
-      ))}</div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function CurriculumCMS() {
+function CurriculumCMS({ ar }) {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState({ id: null, class_number: 1, json: '{}' });
   const load = async () => setItems(await adminListCurriculum());
@@ -183,13 +187,13 @@ function CurriculumCMS() {
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-gray-400">{tx('عدّل JSON للفصل (class_name, age_range, modules, objectives, assessment_methods)', 'Edit class JSON (class_name, age_range, modules, objectives, assessment_methods)')}</p>
-      <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
+      <p className="text-xs text-[#4A5E56]">{ar ? 'عدّل JSON للمنهج (class_name, age_range, modules, objectives)' : 'Configure structured class curriculum JSON definitions'}</p>
+      <form onSubmit={save} className="space-y-3 bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0]">
         <select className={inputCls} value={form.class_number} onChange={(e) => setForm({ ...form, class_number: parseInt(e.target.value) })}>
           {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>Class {n}</option>)}
         </select>
-        <textarea className={`${inputCls} font-mono text-xs`} rows={12} value={form.json} onChange={(e) => setForm({ ...form, json: e.target.value })} />
-        <button type="submit" className="py-2 px-6 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
+        <textarea className={`${inputCls} font-mono text-xs`} rows={10} value={form.json} onChange={(e) => setForm({ ...form, json: e.target.value })} />
+        <button type="submit" className="py-2 px-6 bg-[#11694A] hover:bg-[#0B3B2E] rounded-xl text-white text-xs font-bold transition">{ar ? 'حفظ المنهج' : 'Save Curriculum'}</button>
       </form>
       <div className="flex flex-wrap gap-2">
         {items.map((item) => (
@@ -207,7 +211,7 @@ function CurriculumCMS() {
                 assessment_methods: item.assessment_methods,
               }, null, 2),
             })}
-            className="px-3 py-1 bg-gray-800 rounded text-sm text-gray-300"
+            className="px-3 py-1.5 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl text-xs font-bold text-[#0B3B2E] hover:bg-white"
           >
             Class {item.class_number}
           </button>
@@ -217,7 +221,7 @@ function CurriculumCMS() {
   );
 }
 
-function GalleryCMS() {
+function GalleryCMS({ ar }) {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(emptyGallery());
   const load = async () => setItems(await adminListGallery());
@@ -247,26 +251,31 @@ function GalleryCMS() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <form onSubmit={save} className="space-y-3 bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0]">
+        <h3 className="text-base font-serif font-bold text-[#0B3B2E]">{ar ? 'إضافة صورة للمعرض' : 'Add Gallery Photograph'}</h3>
         <input className={inputCls} placeholder="Title EN" value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} required />
         <input className={inputCls} placeholder="Title AR" dir="rtl" value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} />
         <select className={inputCls} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
           <option value="facilities">facilities</option>
           <option value="events">events</option>
         </select>
-        <input type="file" accept="image/*" onChange={onImage} className="text-xs text-gray-400" />
-        {form.image_url && <img src={resolveGalleryUrl(form.image_url)} alt="" className="h-24 rounded object-cover" />}
-        <button type="submit" className="w-full py-2 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
+        <input type="file" accept="image/*" onChange={onImage} className="text-xs text-[#4A5E56]" />
+        {form.image_url && <img src={resolveGalleryUrl(form.image_url)} alt="" className="h-20 rounded-xl object-cover border border-[#E8E1D0]" />}
+        <button type="submit" className="w-full py-2 bg-[#11694A] hover:bg-[#0B3B2E] rounded-xl text-white text-xs font-bold transition">{ar ? 'حفظ الصورة' : 'Save Photo'}</button>
       </form>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 max-h-[500px] overflow-y-auto pr-1">
         {items.map((item) => (
-          <div key={item.id} className="p-3 bg-gray-950/40 border border-gray-800 rounded-lg">
-            {item.image_url ? <img src={resolveGalleryUrl(item.image_url)} alt="" className="w-full h-24 object-cover rounded mb-2" /> : <div className="h-24 bg-gray-800 rounded mb-2 flex items-center justify-center text-gray-600 text-xs">No photo</div>}
-            <div className="text-sm text-white truncate">{item.title_en}</div>
-            <div className="flex gap-2 mt-2">
-              <button type="button" onClick={() => setForm({ ...item })} className="text-xs text-emerald-400">Edit</button>
-              <button type="button" onClick={async () => { await adminDeleteGallery(item.id); load(); }} className="text-xs text-red-400">Del</button>
+          <div key={item.id} className="p-2.5 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl">
+            {item.image_url ? (
+              <img src={resolveGalleryUrl(item.image_url)} alt="" className="w-full h-24 object-cover rounded-lg mb-1.5" />
+            ) : (
+              <div className="h-24 bg-white rounded-lg mb-1.5 flex items-center justify-center text-[#4A5E56] text-[10px]">No photo</div>
+            )}
+            <div className="text-xs font-bold text-[#0B3B2E] truncate">{item.title_en}</div>
+            <div className="flex gap-2 mt-1.5">
+              <button type="button" onClick={() => setForm({ ...item })} className="text-[11px] font-bold text-[#11694A] hover:underline">Edit</button>
+              <button type="button" onClick={async () => { await adminDeleteGallery(item.id); load(); }} className="text-[11px] font-bold text-[#B91C1C] hover:underline">Del</button>
             </div>
           </div>
         ))}
@@ -275,7 +284,7 @@ function GalleryCMS() {
   );
 }
 
-function CoursesCMS() {
+function CoursesCMS({ ar }) {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(emptyCourse());
   const load = async () => setItems(await adminListCoursePrograms());
@@ -294,28 +303,31 @@ function CoursesCMS() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <form onSubmit={save} className="space-y-3 bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0]">
+        <h3 className="text-base font-serif font-bold text-[#0B3B2E]">{ar ? 'إدارة البرامج الدراسية' : 'Course Program Configuration'}</h3>
         <input className={inputCls} placeholder="slug (unique)" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} required />
         <input className={inputCls} placeholder="Title EN" value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} required />
         <input className={inputCls} placeholder="Title AR" dir="rtl" value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} />
         <input className={inputCls} placeholder="Duration EN" value={form.duration_en} onChange={(e) => setForm({ ...form, duration_en: e.target.value })} />
-        <textarea className={inputCls} rows={3} placeholder="Description EN" value={form.description_en} onChange={(e) => setForm({ ...form, description_en: e.target.value })} />
+        <textarea className={inputCls} rows={2} placeholder="Description EN" value={form.description_en} onChange={(e) => setForm({ ...form, description_en: e.target.value })} />
         <select className={inputCls} value={form.admission_code || ''} onChange={(e) => setForm({ ...form, admission_code: e.target.value || null })}>
           <option value="">— admission code —</option>
           {['quran', 'arabic', 'hadith', 'fiqh', 'islamic'].map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <button type="submit" className="w-full py-2 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
+        <button type="submit" className="w-full py-2 bg-[#11694A] hover:bg-[#0B3B2E] rounded-xl text-white text-xs font-bold transition">{ar ? 'حفظ البرنامج' : 'Save Course'}</button>
       </form>
-      <div className="space-y-2">{items.map((item) => (
-        <div key={item.id} className="p-4 bg-gray-950/40 border border-gray-800 rounded-lg flex justify-between">
-          <span className="text-white">{item.icon} {item.title_en}</span>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setForm({ ...item })} className="text-xs text-emerald-400">Edit</button>
-            <button type="button" onClick={async () => { await adminDeleteCourseProgram(item.id); load(); }} className="text-xs text-red-400">Del</button>
+      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+        {items.map((item) => (
+          <div key={item.id} className="p-3 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl flex justify-between items-center">
+            <span className="font-bold text-[#0B3B2E] text-xs sm:text-sm">{item.title_en}</span>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setForm({ ...item })} className="text-xs font-bold text-[#11694A] hover:underline">Edit</button>
+              <button type="button" onClick={async () => { await adminDeleteCourseProgram(item.id); load(); }} className="text-xs font-bold text-[#B91C1C] hover:underline">Del</button>
+            </div>
           </div>
-        </div>
-      ))}</div>
+        ))}
+      </div>
     </div>
   );
 }

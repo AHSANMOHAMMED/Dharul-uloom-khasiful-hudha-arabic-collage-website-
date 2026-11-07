@@ -4,431 +4,452 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import NotificationBell from './NotificationBell'
 import LanguageSelect from './LanguageSelect'
-import { tx } from '../lib/tx';
+import { tx } from '../lib/tx'
 
-const Navbar = () => {
+export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [mobileAcademicsOpen, setMobileAcademicsOpen] = useState(false)
   const [mobileExploreOpen, setMobileExploreOpen] = useState(false)
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const location = useLocation()
-  const { isAuthenticated, isAdmin, isLibrarian, isEmployee, logout } = useAuth()
-  const canManageLibrary = isAdmin || isLibrarian
-
+  const { isAuthenticated, isAdmin, isLibrarian, isEmployee, isStaff, logout, user } = useAuth()
+  const canManageLibrary = isAdmin || isLibrarian || isStaff
 
   const academicsActive = ['/courses', '/curriculum', '/faculty'].includes(location.pathname)
   const exploreActive = ['/library', '/gallery', '/news'].includes(location.pathname)
 
+  const isRTL = i18n.language === 'ar'
+
   return (
-    <nav className="bg-white/95 sticky top-0 z-50 border-b border-slate-100 shadow-sm backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-3 group">
-              <img 
-                src="/images/logo.jpg" 
-                alt="Dharul Uloom Kashiful Hudha Logo" 
-                className="w-12 h-12 object-contain rounded-xl shadow-sm border border-slate-100 group-hover:scale-105 transition-transform duration-300"
-              />
-              <span className="text-xl sm:text-2xl font-arabic font-extrabold text-emerald-950 tracking-wide">
-                {tx('كاشف الهدى', 'Kashiful Hudha')}
-              </span>
-            </Link>
+    <header className="sticky top-0 z-50 bg-paper-white/95 backdrop-blur-sm border-b border-sand-border shadow-[0_1px_8px_rgba(11,59,46,0.04)]">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        
+        {/* Brand Logo & Name */}
+        <Link to="/" className="flex items-center gap-3 shrink-0 group">
+          <img 
+            src="/images/logo.jpg" 
+            alt="Kashiful Hudha Emblem" 
+            className="w-10 h-10 object-contain rounded-lg border border-sand-border shadow-xs group-hover:border-emerald-700 transition-colors"
+          />
+          <div className="flex flex-col">
+            <span className="font-serif text-base sm:text-lg font-semibold text-ink-green-900 leading-tight tracking-tight">
+              {tx('دار العلوم كاشف الهدى', 'Dharul Uloom Kashiful Hudha')}
+            </span>
+            <span className="text-xs text-ink-text-muted leading-none hidden sm:inline font-arabic" dir="rtl">
+              كاشف الهدى العربية
+            </span>
           </div>
+        </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1 ml-8">
-            <Link
-              to="/"
-              className={`relative px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
-                location.pathname === '/' ? 'text-emerald-700' : 'text-slate-600 hover:text-emerald-700'
-              }`}
-            >
-              <span className="relative z-10">{t('nav.home')}</span>
-              {location.pathname === '/' && (
-                <div className="absolute inset-0 bg-emerald-50 rounded-xl border border-emerald-100/50 z-0"></div>
-              )}
-            </Link>
+        {/* Desktop Navigation Links */}
+        <nav className="hidden xl:flex items-center gap-6" aria-label="Main Navigation">
+          <Link
+            to="/"
+            className={`text-sm transition-colors ${
+              location.pathname === '/' 
+                ? 'text-emerald-700 font-semibold' 
+                : 'text-ink-text-secondary hover:text-ink-green-900 font-medium'
+            }`}
+          >
+            {tx('الرئيسية', t('nav.home') || 'Home')}
+          </Link>
 
-            <Link
-              to="/about"
-              className={`relative px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
-                location.pathname === '/about' ? 'text-emerald-700' : 'text-slate-600 hover:text-emerald-700'
-              }`}
-            >
-              <span className="relative z-10">{t('nav.about')}</span>
-              {location.pathname === '/about' && (
-                <div className="absolute inset-0 bg-emerald-50 rounded-xl border border-emerald-100/50 z-0"></div>
-              )}
-            </Link>
+          <Link
+            to="/about"
+            className={`text-sm transition-colors ${
+              location.pathname === '/about' 
+                ? 'text-emerald-700 font-semibold' 
+                : 'text-ink-text-secondary hover:text-ink-green-900 font-medium'
+            }`}
+          >
+            {tx('من نحن', t('nav.about') || 'About')}
+          </Link>
 
-            {/* Academics Dropdown */}
-            <div className="relative group py-2">
-              <button
-                className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
-                  academicsActive ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600 hover:text-emerald-700'
-                }`}
-              >
-                <span>{t('nav.academics')}</span>
-                <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div className="absolute left-0 top-full mt-1 w-48 rounded-xl bg-white border border-slate-100 shadow-xl py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300">
-                <Link
-                  to="/courses"
-                  className={`block px-4 py-2 text-sm font-semibold transition-all hover:bg-emerald-50 hover:text-emerald-700 ${
-                    location.pathname === '/courses' ? 'text-emerald-700 bg-emerald-50' : 'text-slate-700'
-                  }`}
-                >
-                  {t('nav.courses')}
-                </Link>
-                <Link
-                  to="/curriculum"
-                  className={`block px-4 py-2 text-sm font-semibold transition-all hover:bg-emerald-50 hover:text-emerald-700 ${
-                    location.pathname === '/curriculum' ? 'text-emerald-700 bg-emerald-50' : 'text-slate-700'
-                  }`}
-                >
-                  {t('nav.curriculum')}
-                </Link>
-                <Link
-                  to="/faculty"
-                  className={`block px-4 py-2 text-sm font-semibold transition-all hover:bg-emerald-50 hover:text-emerald-700 ${
-                    location.pathname === '/faculty' ? 'text-emerald-700 bg-emerald-50' : 'text-slate-700'
-                  }`}
-                >
-                  {t('nav.faculty')}
-                </Link>
-              </div>
-            </div>
-
-            <Link
-              to="/admissions"
-              className={`relative px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
-                location.pathname === '/admissions' ? 'text-emerald-700' : 'text-slate-600 hover:text-emerald-700'
-              }`}
-            >
-              <span className="relative z-10">{t('nav.admissions')}</span>
-              {location.pathname === '/admissions' && (
-                <div className="absolute inset-0 bg-emerald-50 rounded-xl border border-emerald-100/50 z-0"></div>
-              )}
-            </Link>
-
-            {/* Explore Dropdown */}
-            <div className="relative group py-2">
-              <button
-                className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
-                  exploreActive ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600 hover:text-emerald-700'
-                }`}
-              >
-                <span>{t('nav.explore')}</span>
-                <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div className="absolute left-0 top-full mt-1 w-48 rounded-xl bg-white border border-slate-100 shadow-xl py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300">
-                <Link
-                  to="/library"
-                  className={`block px-4 py-2 text-sm font-semibold transition-all hover:bg-emerald-50 hover:text-emerald-700 ${
-                    location.pathname === '/library' ? 'text-emerald-700 bg-emerald-50' : 'text-slate-700'
-                  }`}
-                >
-                  {t('nav.library')}
-                </Link>
-                <Link
-                  to="/gallery"
-                  className={`block px-4 py-2 text-sm font-semibold transition-all hover:bg-emerald-50 hover:text-emerald-700 ${
-                    location.pathname === '/gallery' ? 'text-emerald-700 bg-emerald-50' : 'text-slate-700'
-                  }`}
-                >
-                  {t('nav.gallery')}
-                </Link>
-                <Link
-                  to="/news"
-                  className={`block px-4 py-2 text-sm font-semibold transition-all hover:bg-emerald-50 hover:text-emerald-700 ${
-                    location.pathname === '/news' ? 'text-emerald-700 bg-emerald-50' : 'text-slate-700'
-                  }`}
-                >
-                  {t('nav.news')}
-                </Link>
-              </div>
-            </div>
-
-            <Link
-              to="/contact"
-              className={`relative px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
-                location.pathname === '/contact' ? 'text-emerald-700' : 'text-slate-600 hover:text-emerald-700'
-              }`}
-            >
-              <span className="relative z-10">{t('nav.contact')}</span>
-              {location.pathname === '/contact' && (
-                <div className="absolute inset-0 bg-emerald-50 rounded-xl border border-emerald-100/50 z-0"></div>
-              )}
-            </Link>
-
-            <div className="h-6 w-px bg-slate-200 mx-4"></div>
-
-            <NotificationBell />
-
-            {/* Auth Buttons */}
-            {isAuthenticated ? (
-              <div className="flex items-center gap-3">
-                {isAdmin ? (
-                  <Link
-                    to="/admin"
-                    className="px-4 py-2 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm"
-                  >
-                    {tx('لوحة الإدارة', 'Admin Portal')}
-                  </Link>
-                ) : (
-                  <Link
-                    to="/dashboard"
-                    className="px-4 py-2 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm"
-                  >
-                    {tx('البوابة', 'My Portal')}
-                  </Link>
-                )}
-                {isEmployee && (
-                  <Link
-                    to="/erp"
-                    className="px-4 py-2 rounded-xl text-sm font-bold bg-sky-50 text-sky-700 border border-sky-100 hover:bg-sky-100 transition-all shadow-sm"
-                  >
-                    ERP
-                  </Link>
-                )}
-                {canManageLibrary && (
-                  <Link
-                    to="/library-admin"
-                    className="px-4 py-2 rounded-xl text-sm font-bold bg-amber-50 text-amber-700 border border-amber-100 hover:bg-amber-100 transition-all shadow-sm"
-                  >
-                    {tx('إدارة المكتبة', 'Library Admin')}
-                  </Link>
-                )}
-                <button
-                  onClick={logout}
-                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all"
-                >
-                  {tx('خروج', 'Logout')}
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Link
-                  to="/login"
-                  className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:text-slate-900 transition-all"
-                >
-                  {tx('دخول', 'Sign In')}
-                </Link>
-                <Link
-                  to="/register"
-                  className="px-5 py-2.5 rounded-xl bg-emerald-700 text-white font-bold hover:bg-emerald-600 transition-all shadow-sm border border-emerald-800/20"
-                >
-                  {tx('تسجيل', 'Register')}
-                </Link>
-              </div>
-            )}
-
-            <LanguageSelect className="ms-4" />
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="lg:hidden flex items-center gap-4">
-            <LanguageSelect />
+          {/* Academics Dropdown */}
+          <div className="relative group py-2">
             <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-slate-600 hover:text-emerald-700 focus:outline-none p-2 rounded-lg bg-slate-50 border border-slate-200"
+              type="button"
+              className={`flex items-center gap-1 text-sm font-medium transition-colors ${
+                academicsActive ? 'text-emerald-700 font-semibold' : 'text-ink-text-secondary hover:text-ink-green-900'
+              }`}
             >
-              <svg className="h-6 w-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                {isOpen ? <path d="M6 18L18 6M6 6l12 12" /> : <path d="M4 6h16M4 12h16M4 18h16" />}
-              </svg>
+              <span>{tx('الدراسة', t('nav.academics') || 'Academics')}</span>
+              <span className="material-symbols-outlined text-[18px] transition-transform group-hover:rotate-180">
+                expand_more
+              </span>
             </button>
+            <div className="absolute left-0 top-full mt-1 w-48 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all">
+              <Link
+                to="/courses"
+                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                  location.pathname === '/courses' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                }`}
+              >
+                {tx('المساقات الدراسية', t('nav.courses') || 'Courses')}
+              </Link>
+              <Link
+                to="/curriculum"
+                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                  location.pathname === '/curriculum' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                }`}
+              >
+                {tx('المنهج الدراسي', t('nav.curriculum') || 'Curriculum')}
+              </Link>
+              <Link
+                to="/faculty"
+                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                  location.pathname === '/faculty' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                }`}
+              >
+                {tx('هيئة التدريس', t('nav.faculty') || 'Faculty')}
+              </Link>
+            </div>
           </div>
+
+          {/* Explore Dropdown */}
+          <div className="relative group py-2">
+            <button
+              type="button"
+              className={`flex items-center gap-1 text-sm font-medium transition-colors ${
+                exploreActive ? 'text-emerald-700 font-semibold' : 'text-ink-text-secondary hover:text-ink-green-900'
+              }`}
+            >
+              <span>{tx('استكشف', t('nav.explore') || 'Explore')}</span>
+              <span className="material-symbols-outlined text-[18px] transition-transform group-hover:rotate-180">
+                expand_more
+              </span>
+            </button>
+            <div className="absolute left-0 top-full mt-1 w-48 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all">
+              <Link
+                to="/library"
+                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                  location.pathname === '/library' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                }`}
+              >
+                {tx('المكتبة الرقمية', t('nav.library') || 'Islamic Library')}
+              </Link>
+              <Link
+                to="/gallery"
+                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                  location.pathname === '/gallery' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                }`}
+              >
+                {tx('معرض الصور', t('nav.gallery') || 'Campus Gallery')}
+              </Link>
+              <Link
+                to="/news"
+                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                  location.pathname === '/news' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                }`}
+              >
+                {tx('الأخبار والفعاليات', t('nav.news') || 'News & Events')}
+              </Link>
+            </div>
+          </div>
+
+          <Link
+            to="/admissions"
+            className={`text-sm transition-colors ${
+              location.pathname === '/admissions' 
+                ? 'text-emerald-700 font-semibold' 
+                : 'text-ink-text-secondary hover:text-ink-green-900 font-medium'
+            }`}
+          >
+            {tx('القبول والتسجيل', t('nav.admissions') || 'Admissions')}
+          </Link>
+
+          <Link
+            to="/contact"
+            className={`text-sm transition-colors ${
+              location.pathname === '/contact' 
+                ? 'text-emerald-700 font-semibold' 
+                : 'text-ink-text-secondary hover:text-ink-green-900 font-medium'
+            }`}
+          >
+            {tx('اتصل بنا', t('nav.contact') || 'Contact')}
+          </Link>
+
+          {isEmployee && (
+            <Link
+              to="/erp"
+              className={`text-sm transition-colors font-semibold ${
+                location.pathname.startsWith('/erp')
+                  ? 'text-brass-gold-500 font-bold'
+                  : 'text-emerald-700 hover:text-ink-green-900'
+              }`}
+            >
+              {tx('نظام الإدارة (ERP)', 'College ERP')}
+            </Link>
+          )}
+        </nav>
+
+        {/* Right Actions: Language Switcher, Notifications, Auth */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          
+          {/* Trilingual Language Selector */}
+          <LanguageSelect className="text-xs bg-paper-white border border-sand-border text-ink-green-900 py-1 px-2 rounded-lg" />
+
+          {/* Authenticated State vs Public CTA */}
+          {isAuthenticated ? (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <NotificationBell />
+
+              {isAdmin ? (
+                <Link
+                  to="/admin"
+                  className="hidden sm:inline-flex items-center h-9 px-3.5 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[16px] mr-1.5">admin_panel_settings</span>
+                  <span>{tx('لوحة الإدارة', 'Admin Console')}</span>
+                </Link>
+              ) : (
+                <Link
+                  to="/dashboard"
+                  className="hidden sm:inline-flex items-center h-9 px-3.5 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[16px] mr-1.5">dashboard</span>
+                  <span>{tx('البوابة', 'My Portal')}</span>
+                </Link>
+              )}
+
+              {isEmployee && (
+                <Link
+                  to="/erp"
+                  className="hidden lg:inline-flex items-center h-9 px-3 rounded-[10px] bg-sand-border/30 text-ink-green-900 text-xs font-semibold border border-sand-border hover:bg-mint-wash-100 transition-colors"
+                >
+                  <span>{tx('نظام الإدارة', 'ERP')}</span>
+                </Link>
+              )}
+
+              {canManageLibrary && (
+                <Link
+                  to="/library-admin"
+                  className="hidden md:inline-flex items-center h-9 px-3 rounded-[10px] bg-gold-wash-100 text-brass-gold-500 text-xs font-semibold border border-brass-gold-500/20 hover:bg-brass-gold-500 hover:text-white transition-colors"
+                >
+                  <span>{tx('إدارة المكتبة', 'Maktabah')}</span>
+                </Link>
+              )}
+
+              <button
+                type="button"
+                onClick={logout}
+                title={tx('تسجيل الخروج', 'Sign out')}
+                className="inline-flex items-center justify-center w-9 h-9 rounded-[10px] border border-sand-border text-ink-text-secondary hover:text-feedback-danger hover:border-feedback-danger/30 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">logout</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Link
+                to="/login"
+                className="hidden md:inline-flex items-center h-9 px-3 rounded-[10px] text-xs font-medium text-ink-text-secondary hover:text-ink-green-900 hover:bg-sand-border/30 transition-colors"
+              >
+                <span>{tx('دخول', 'Sign in')}</span>
+              </Link>
+
+              <Link
+                to="/admissions"
+                className="inline-flex items-center justify-center h-9 px-3.5 sm:px-4 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 active:bg-ink-green-900 text-white text-xs font-medium shadow-xs transition-colors"
+              >
+                <span>{tx('التقديم للقبول', 'Apply for Admission')}</span>
+              </Link>
+            </div>
+          )}
+
+          {/* Mobile Menu Hamburger */}
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            className="xl:hidden inline-flex items-center justify-center w-9 h-9 rounded-[10px] border border-sand-border text-ink-text-primary hover:bg-sand-border/30 focus:outline-none"
+            aria-label="Toggle navigation menu"
+          >
+            <span className="material-symbols-outlined text-[22px]">
+              {isOpen ? 'close' : 'menu'}
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Drawer Navigation */}
       {isOpen && (
-        <div className="lg:hidden bg-white border-t border-slate-100 absolute w-full left-0 top-full shadow-lg">
-          <div className="px-4 py-4 space-y-2 max-h-[80vh] overflow-y-auto">
-            <Link
-              to="/"
-              onClick={() => setIsOpen(false)}
-              className={`block px-4 py-3 rounded-xl text-base font-bold transition-all ${
-                location.pathname === '/' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50'
-              }`}
+        <div className="xl:hidden bg-paper-white border-b border-sand-border px-4 pt-3 pb-6 space-y-2 shadow-manuscript-lg">
+          <Link
+            to="/"
+            onClick={() => setIsOpen(false)}
+            className={`block px-3 py-2 rounded-lg text-sm font-medium ${
+              location.pathname === '/' ? 'bg-mint-wash-100 text-emerald-700 font-semibold' : 'text-ink-text-primary'
+            }`}
+          >
+            {tx('الرئيسية', t('nav.home') || 'Home')}
+          </Link>
+
+          <Link
+            to="/about"
+            onClick={() => setIsOpen(false)}
+            className={`block px-3 py-2 rounded-lg text-sm font-medium ${
+              location.pathname === '/about' ? 'bg-mint-wash-100 text-emerald-700 font-semibold' : 'text-ink-text-primary'
+            }`}
+          >
+            {tx('من نحن', t('nav.about') || 'About')}
+          </Link>
+
+          {/* Mobile Academics Submenu */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setMobileAcademicsOpen(!mobileAcademicsOpen)}
+              className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm font-medium text-ink-text-primary"
             >
-              {t('nav.home')}
-            </Link>
+              <span>{tx('الدراسة', t('nav.academics') || 'Academics')}</span>
+              <span className="material-symbols-outlined text-[18px]">
+                {mobileAcademicsOpen ? 'expand_less' : 'expand_more'}
+              </span>
+            </button>
+            {mobileAcademicsOpen && (
+              <div className="pl-4 space-y-1 mt-1 border-l-2 border-sand-border ml-3">
+                <Link
+                  to="/courses"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-3 py-1.5 text-sm text-ink-text-secondary hover:text-emerald-700"
+                >
+                  {tx('المساقات', t('nav.courses') || 'Courses')}
+                </Link>
+                <Link
+                  to="/curriculum"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-3 py-1.5 text-sm text-ink-text-secondary hover:text-emerald-700"
+                >
+                  {tx('المنهج', t('nav.curriculum') || 'Curriculum')}
+                </Link>
+                <Link
+                  to="/faculty"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-3 py-1.5 text-sm text-ink-text-secondary hover:text-emerald-700"
+                >
+                  {tx('هيئة التدريس', t('nav.faculty') || 'Faculty')}
+                </Link>
+              </div>
+            )}
+          </div>
 
-            <Link
-              to="/about"
-              onClick={() => setIsOpen(false)}
-              className={`block px-4 py-3 rounded-xl text-base font-bold transition-all ${
-                location.pathname === '/about' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50'
-              }`}
+          {/* Mobile Explore Submenu */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setMobileExploreOpen(!mobileExploreOpen)}
+              className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm font-medium text-ink-text-primary"
             >
-              {t('nav.about')}
-            </Link>
+              <span>{tx('استكشف', t('nav.explore') || 'Explore')}</span>
+              <span className="material-symbols-outlined text-[18px]">
+                {mobileExploreOpen ? 'expand_less' : 'expand_more'}
+              </span>
+            </button>
+            {mobileExploreOpen && (
+              <div className="pl-4 space-y-1 mt-1 border-l-2 border-sand-border ml-3">
+                <Link
+                  to="/library"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-3 py-1.5 text-sm text-ink-text-secondary hover:text-emerald-700"
+                >
+                  {tx('المكتبة', t('nav.library') || 'Islamic Library')}
+                </Link>
+                <Link
+                  to="/gallery"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-3 py-1.5 text-sm text-ink-text-secondary hover:text-emerald-700"
+                >
+                  {tx('معرض الصور', t('nav.gallery') || 'Gallery')}
+                </Link>
+                <Link
+                  to="/news"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-3 py-1.5 text-sm text-ink-text-secondary hover:text-emerald-700"
+                >
+                  {tx('الأخبار', t('nav.news') || 'News & Events')}
+                </Link>
+              </div>
+            )}
+          </div>
 
-            {/* Mobile Academics Collapse */}
-            <div>
-              <button
-                onClick={() => setMobileAcademicsOpen(!mobileAcademicsOpen)}
-                className={`flex justify-between items-center w-full px-4 py-3 rounded-xl text-base font-bold transition-all ${
-                  academicsActive ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <span>{t('nav.academics')}</span>
-                <svg className={`w-5 h-5 transition-transform ${mobileAcademicsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {mobileAcademicsOpen && (
-                <div className="pl-6 pr-4 py-2 space-y-2 bg-slate-50 rounded-xl mt-1 border border-slate-100">
-                  <Link
-                    to="/courses"
-                    onClick={() => setIsOpen(false)}
-                    className="block py-2 text-sm font-semibold text-slate-600 hover:text-emerald-700"
-                  >
-                    {t('nav.courses')}
-                  </Link>
-                  <Link
-                    to="/curriculum"
-                    onClick={() => setIsOpen(false)}
-                    className="block py-2 text-sm font-semibold text-slate-600 hover:text-emerald-700"
-                  >
-                    {t('nav.curriculum')}
-                  </Link>
-                  <Link
-                    to="/faculty"
-                    onClick={() => setIsOpen(false)}
-                    className="block py-2 text-sm font-semibold text-slate-600 hover:text-emerald-700"
-                  >
-                    {t('nav.faculty')}
-                  </Link>
-                </div>
-              )}
-            </div>
+          <Link
+            to="/admissions"
+            onClick={() => setIsOpen(false)}
+            className={`block px-3 py-2 rounded-lg text-sm font-medium ${
+              location.pathname === '/admissions' ? 'bg-mint-wash-100 text-emerald-700 font-semibold' : 'text-ink-text-primary'
+            }`}
+          >
+            {tx('القبول', t('nav.admissions') || 'Admissions')}
+          </Link>
 
+          <Link
+            to="/contact"
+            onClick={() => setIsOpen(false)}
+            className={`block px-3 py-2 rounded-lg text-sm font-medium ${
+              location.pathname === '/contact' ? 'bg-mint-wash-100 text-emerald-700 font-semibold' : 'text-ink-text-primary'
+            }`}
+          >
+            {tx('اتصل بنا', t('nav.contact') || 'Contact')}
+          </Link>
+
+          {isEmployee && (
             <Link
-              to="/admissions"
+              to="/erp"
               onClick={() => setIsOpen(false)}
-              className={`block px-4 py-3 rounded-xl text-base font-bold transition-all ${
-                location.pathname === '/admissions' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50'
-              }`}
+              className="block px-3 py-2 rounded-lg text-sm font-semibold bg-mint-wash-100 text-emerald-700"
             >
-              {t('nav.admissions')}
+              {tx('نظام الإدارة (ERP)', 'College ERP')}
             </Link>
+          )}
 
-            {/* Mobile Explore Collapse */}
-            <div>
-              <button
-                onClick={() => setMobileExploreOpen(!mobileExploreOpen)}
-                className={`flex justify-between items-center w-full px-4 py-3 rounded-xl text-base font-bold transition-all ${
-                  exploreActive ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <span>{t('nav.explore')}</span>
-                <svg className={`w-5 h-5 transition-transform ${mobileExploreOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {mobileExploreOpen && (
-                <div className="pl-6 pr-4 py-2 space-y-2 bg-slate-50 rounded-xl mt-1 border border-slate-100">
-                  <Link
-                    to="/library"
-                    onClick={() => setIsOpen(false)}
-                    className="block py-2 text-sm font-semibold text-slate-600 hover:text-emerald-700"
-                  >
-                    {t('nav.library')}
-                  </Link>
-                  <Link
-                    to="/gallery"
-                    onClick={() => setIsOpen(false)}
-                    className="block py-2 text-sm font-semibold text-slate-600 hover:text-emerald-700"
-                  >
-                    {t('nav.gallery')}
-                  </Link>
-                  <Link
-                    to="/news"
-                    onClick={() => setIsOpen(false)}
-                    className="block py-2 text-sm font-semibold text-slate-600 hover:text-emerald-700"
-                  >
-                    {t('nav.news')}
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            <Link
-              to="/contact"
-              onClick={() => setIsOpen(false)}
-              className={`block px-4 py-3 rounded-xl text-base font-bold transition-all ${
-                location.pathname === '/contact' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700'
-              }`}
-            >
-              {t('nav.contact')}
-            </Link>
-
-            <div className="h-px w-full bg-slate-200 my-4"></div>
-
+          <div className="pt-3 border-t border-sand-border flex flex-col gap-2">
             {isAuthenticated ? (
-              <div className="space-y-2">
+              <>
                 <Link
                   to={isAdmin ? "/admin" : "/dashboard"}
                   onClick={() => setIsOpen(false)}
-                  className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-emerald-50 text-emerald-700 border border-emerald-100"
+                  className="flex items-center justify-center h-10 rounded-[10px] bg-emerald-700 text-white font-medium text-sm"
                 >
-                  {tx('الذهاب للوحة التحكم', 'Go to Portal')}
+                  {isAdmin ? tx('لوحة الإدارة', 'Admin Console') : tx('بوابة المستخدم', 'Go to Portal')}
                 </Link>
-                {isEmployee && (
-                  <Link
-                    to="/erp"
-                    onClick={() => setIsOpen(false)}
-                    className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-sky-50 text-sky-700 border border-sky-100"
-                  >
-                    {tx('نظام الإدارة (ERP)', 'College ERP')}
-                  </Link>
-                )}
                 {canManageLibrary && (
                   <Link
                     to="/library-admin"
                     onClick={() => setIsOpen(false)}
-                    className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-amber-50 text-amber-700 border border-amber-100"
+                    className="flex items-center justify-center h-10 rounded-[10px] bg-gold-wash-100 text-brass-gold-500 font-medium text-sm border border-brass-gold-500/20"
                   >
                     {tx('إدارة المكتبة', 'Library Admin')}
                   </Link>
                 )}
                 <button
+                  type="button"
                   onClick={() => { logout(); setIsOpen(false); }}
-                  className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-slate-100 border border-slate-200 text-red-600"
+                  className="flex items-center justify-center h-10 rounded-[10px] border border-sand-border text-feedback-danger font-medium text-sm"
                 >
-                  {tx('تسجيل الخروج', 'Logout')}
+                  {tx('تسجيل الخروج', 'Sign Out')}
                 </button>
-              </div>
+              </>
             ) : (
-              <div className="space-y-2">
+              <>
                 <Link
                   to="/login"
                   onClick={() => setIsOpen(false)}
-                  className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold text-slate-700 border border-slate-200 bg-slate-50"
+                  className="flex items-center justify-center h-10 rounded-[10px] border border-sand-border text-ink-text-primary font-medium text-sm"
                 >
                   {tx('دخول', 'Sign In')}
                 </Link>
                 <Link
-                  to="/register"
+                  to="/admissions"
                   onClick={() => setIsOpen(false)}
-                  className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-emerald-700 text-white"
+                  className="flex items-center justify-center h-10 rounded-[10px] bg-emerald-700 text-white font-medium text-sm"
                 >
-                  {tx('تسجيل جديد', 'Register Account')}
+                  {tx('التقديم للقبول', 'Apply for Admission')}
                 </Link>
-              </div>
+              </>
             )}
           </div>
         </div>
       )}
-    </nav>
+    </header>
   )
 }
-
-export default Navbar

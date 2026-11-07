@@ -1,3 +1,4 @@
+import { tx } from "../lib/tx";
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -5,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { tx } from '../lib/tx';
+import KhatamPattern from '../components/KhatamPattern';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const CLASSES = [1, 2, 3, 4, 5, 6, 7];
@@ -131,7 +132,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
         target_roles: [],
       });
       if (error) throw error;
-      toast.success('Announcement posted!');
+      toast.success(ar ? 'تم نشر الإعلان بنجاح' : 'Announcement posted!');
       setNewTitle(''); setNewBody(''); setNewPinned(false);
       fetchAll();
     } catch (err) {
@@ -148,7 +149,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
 
   const handleDeleteAnnouncement = async (id) => {
     await supabase.from('announcements').delete().eq('id', id);
-    toast.info('Announcement deleted');
+    toast.info(ar ? 'تم حذف الإعلان' : 'Announcement deleted');
     fetchAll();
   };
 
@@ -163,10 +164,10 @@ const PrincipalDashboard = ({ vpMode = false }) => {
       if (error) throw error;
       await supabase.from('notifications').insert({
         user_id: selectedLeave.student_id,
-        title: `Leave Request ${status === 'approved' ? 'Approved ✅' : 'Rejected ❌'}`,
+        title: `Leave Request ${status === 'approved' ? 'Approved' : 'Rejected'}`,
         message: `Your leave (${selectedLeave.start_date} – ${selectedLeave.end_date}) was ${status}. ${leaveNote ? 'Note: ' + leaveNote : ''}`
       });
-      toast.success(`Leave ${status}`);
+      toast.success(ar ? `تم ${status === 'approved' ? 'قبول' : 'رفض'} الإجازة` : `Leave ${status}`);
       setSelectedLeave(null); setLeaveNote('');
       fetchAll();
     } catch (err) {
@@ -180,17 +181,18 @@ const PrincipalDashboard = ({ vpMode = false }) => {
   const handleTutorApproval = async (tutorId, approve) => {
     setApproving(tutorId);
     try {
-      // approve_account checks the principal's rights server-side and notifies the user.
       const { error: approveErr } = await supabase.rpc('approve_account', { p_profile_id: tutorId, p_approve: approve });
       if (approveErr) throw approveErr;
-      if (!approve) {
+      if (approve) {
+        await supabase.rpc('notify_profile_activated', { p_profile_id: tutorId });
+      } else {
         await supabase.from('notifications').insert({
           user_id: tutorId,
-          title: 'Account Rejected',
+          title: 'Account Registration Status',
           message: 'Your tutor account registration has not been approved at this time.',
         });
       }
-      toast.success(approve ? 'Tutor approved!' : 'Tutor rejected');
+      toast.success(approve ? (ar ? 'تم اعتماد المعلم' : 'Tutor approved!') : (ar ? 'تم رفض الحساب' : 'Tutor rejected'));
       fetchAll();
     } catch (err) {
       toast.error(err.message);
@@ -207,7 +209,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
     try {
       const { error } = await supabase.from('class_schedules').insert(schedForm);
       if (error) throw error;
-      toast.success('Schedule entry added!');
+      toast.success(ar ? 'تمت إضافة الحصة بنجاح' : 'Schedule entry added!');
       setSchedForm(f => ({ ...f, subject: '', room: '' }));
       fetchAll();
     } catch (err) {
@@ -219,7 +221,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
 
   const handleDeleteSchedule = async (id) => {
     await supabase.from('class_schedules').delete().eq('id', id);
-    toast.info('Schedule entry removed');
+    toast.info(ar ? 'تم حذف الحصة' : 'Schedule entry removed');
     fetchAll();
   };
 
@@ -235,84 +237,167 @@ const PrincipalDashboard = ({ vpMode = false }) => {
     return grid;
   };
 
-  // ── Tabs config ────────────────────────────────────────────────────────────
+  // ── Tabs config with outline SVGs ──────────────────────────────────────────
   const tabs = [
-    { id: 'overview',       label: tx('نظرة عامة', 'Overview'),       icon: '📊' },
-    { id: 'announcements',  label: tx('الإعلانات', 'Announcements'),   icon: '📢' },
-    { id: 'leaves',         label: tx('الإجازات', 'Leave Requests'),   icon: '📋' },
-    ...(!vpMode ? [{ id: 'approvals', label: tx('الموافقات', 'Approvals'), icon: '✅' }] : []),
-    { id: 'timetable',      label: tx('الجدول الدراسي', 'Timetable'),  icon: '🗓️' },
-    { id: 'results',        label: tx('النتائج', 'Results Overview'),  icon: '📝' },
+    {
+      id: 'overview',
+      label: ar ? 'نظرة عامة' : 'Overview',
+      icon: (
+        <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      )
+    },
+    {
+      id: 'announcements',
+      label: ar ? 'الإعلانات' : 'Announcements',
+      icon: (
+        <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+        </svg>
+      )
+    },
+    {
+      id: 'leaves',
+      label: ar ? 'الإجازات' : 'Leave Requests',
+      badge: leaves.length,
+      icon: (
+        <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )
+    },
+    ...(!vpMode ? [{
+      id: 'approvals',
+      label: ar ? 'الموافقات' : 'Approvals',
+      badge: pendingTutors.length,
+      icon: (
+        <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      )
+    }] : []),
+    {
+      id: 'timetable',
+      label: ar ? 'الجدول الدراسي' : 'Timetable',
+      icon: (
+        <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      )
+    },
+    {
+      id: 'results',
+      label: ar ? 'النتائج' : 'Results',
+      icon: (
+        <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+      )
+    },
   ];
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#FBF8F0]">
         <div className="text-center space-y-4">
-          <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-            <div className="absolute inset-0 border-t-2 border-r-2 border-emerald-500 rounded-full animate-spin"></div>
-            <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">⚡</div>
-          </div>
-          <p className="text-gray-400 text-sm font-light tracking-wide">{tx('تحميل لوحة القيادة...', 'Loading dashboard...')}</p>
+          <div className="w-12 h-12 mx-auto rounded-full border-2 border-[#0B3B2E] border-t-transparent animate-spin"></div>
+          <p className="text-sm font-sans text-[#4A5E56]">
+            {ar ? 'جاري تحميل لوحة القيادة الأكاديمية...' : 'Loading governance dashboard...'}
+          </p>
         </div>
       </div>
     );
   }
 
   const timetableGrid = buildTimetableGrid();
+  const roleColor = vpMode ? '#3949AB' : '#0B3B2E';
+  const roleBg = vpMode ? '#E8EAF6' : '#E3F1EA';
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Decorative Background */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-900/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[#FBF8F0] text-[#14201B] relative overflow-hidden py-8 sm:py-12">
+      {/* Background Watermark */}
+      <div className="absolute -top-32 -right-32 w-[600px] h-[600px] pointer-events-none opacity-[0.03]">
+        <KhatamPattern className="w-full h-full text-[#0B3B2E]" />
+      </div>
 
-      <ToastContainer position="top-right" theme="dark" />
-      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+      <ToastContainer position="top-right" theme="light" autoClose={3000} />
 
-        {/* Header */}
-        <div className="glass-panel p-8 rounded-[2rem] border border-emerald-500/20 shadow-glass flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:border-emerald-500/40 transition-all duration-500 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
 
-          <div className="relative z-10 flex items-center gap-6">
-            <div className={`hidden sm:flex w-20 h-20 rounded-2xl bg-gradient-to-br ${vpMode ? 'from-blue-600 to-blue-900 shadow-glow-blue' : 'from-emerald-600 to-emerald-900 shadow-glow-emerald'} items-center justify-center`}>
-              <span className="text-4xl text-white font-arabic">{vpMode ? 'ن' : 'م'}</span>
+        {/* Header Banner */}
+        <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: roleColor }}></div>
+
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="flex items-center gap-5">
+              <div
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center font-arabic text-2xl sm:text-3xl font-bold shrink-0 shadow-sm border"
+                style={{ backgroundColor: roleBg, color: roleColor, borderColor: `${roleColor}30` }}
+              >
+                {vpMode ? 'ن' : 'ع'}
+              </div>
+              <div>
+                <div
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border mb-1.5"
+                  style={{ backgroundColor: roleBg, color: roleColor, borderColor: `${roleColor}30` }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: roleColor }}></span>
+                  {vpMode ? (ar ? 'ديوان نائب الناظر' : 'Office of the Vice Principal') : (ar ? 'ديوان الناظر العام' : 'Office of the Principal')}
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#0B3B2E]">
+                  {ar ? `فضيلة الشيخ ${user?.username || ''}` : `Sheikh ${user?.username || 'Executive'}`}
+                </h1>
+                <p className="text-xs sm:text-sm text-[#4A5E56] font-sans mt-0.5">
+                  {ar ? 'الحوكمة الأكاديمية الشاملة، الإعلانات الرسمية، الجداول والنتائج' : 'Academic governance, faculty management, timetable scheduling & student evaluations'}
+                </p>
+              </div>
             </div>
-            <div>
-              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border ${vpMode ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-glow-blue' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-glow-emerald'}`}>
-                {vpMode ? (tx('نائب الناظر', 'Vice Principal Portal')) : (tx('بوابة الناظر', 'Principal Portal'))}
-              </span>
-              <h1 className={`mt-3 text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r ${vpMode ? 'from-blue-200 to-blue-500' : 'from-emerald-200 to-emerald-500'}`}>
-                {ar ? `مرحباً، ${user?.username}` : `Welcome, ${user?.username}`}
-              </h1>
-              <p className="text-sm text-gray-400 mt-1 font-medium">
-                {tx('إدارة شاملة للكلية والطلاب والكوادر التعليمية', 'Comprehensive college, student & staff management')}
-              </p>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to="/library"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
+              >
+                <svg className="w-4 h-4 text-[#11694A] stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                {ar ? 'المكتبة الرقمية' : 'Digital Library'}
+              </Link>
+              <button
+                onClick={logout}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FEE2E2] hover:bg-[#FCA5A5] text-[#991B1B] font-sans font-semibold text-xs sm:text-sm rounded-xl transition"
+              >
+                <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                {ar ? 'خروج' : 'Logout'}
+              </button>
             </div>
-          </div>
-          <div className="relative z-10 flex flex-wrap gap-4">
-            <Link to="/library" className="px-6 py-3 bg-gray-900/80 border border-gray-700 hover:bg-gray-800 text-gray-200 rounded-2xl text-sm font-bold transition-all shadow-lg hover:-translate-y-1 flex items-center gap-2">
-              <span className="text-xl">📖</span> {tx('المكتبة', 'Library')}
-            </Link>
-            <button onClick={logout} className="px-6 py-3 bg-red-900/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded-2xl text-sm font-bold transition-all shadow-lg hover:-translate-y-1">
-              {tx('خروج', 'Logout')}
-            </button>
           </div>
         </div>
 
-        {/* Tabs */}
-        {/* Tabs */}
-        <div className="glass-panel p-2 rounded-2xl flex overflow-x-auto gap-2 relative z-10 hide-scrollbar border border-gray-800/60 shadow-lg">
+        {/* Segmented Navigation Tabs */}
+        <div className="bg-white p-1.5 rounded-2xl border border-[#E8E1D0] shadow-sm flex overflow-x-auto gap-1 hide-scrollbar">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all duration-300 ${
+              className={`flex-1 min-w-[130px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-sans font-semibold text-xs sm:text-sm whitespace-nowrap transition-all ${
                 activeTab === tab.id
-                  ? `bg-gradient-to-r ${vpMode ? 'from-blue-600 to-teal-600 shadow-glow-blue border-blue-400/20' : 'from-emerald-600 to-teal-600 shadow-glow-emerald border-emerald-400/20'} text-white border`
-                  : 'bg-transparent text-gray-400 hover:bg-gray-800/50 hover:text-white border border-transparent'
+                  ? 'bg-[#0B3B2E] text-white shadow-sm'
+                  : 'text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-[#FBF8F0]'
               }`}
             >
-              <span className="text-lg">{tab.icon}</span> <span>{tab.label}</span>
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+              {typeof tab.badge === 'number' && tab.badge > 0 && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  activeTab === tab.id ? 'bg-[#C29A3A] text-[#0B3B2E]' : 'bg-[#FEE2E2] text-[#B91C1C]'
+                }`}>
+                  {tab.badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -320,49 +405,74 @@ const PrincipalDashboard = ({ vpMode = false }) => {
         {/* ── OVERVIEW TAB ─────────────────────────────────────────── */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {/* Stats Grid: 6 KPI Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {[
-                { label: tx('الطلاب', 'Students'), value: stats.totalStudents, icon: '🎓', color: 'emerald' },
-                { label: tx('المعلمون', 'Tutors'), value: stats.totalTutors, icon: '👨‍🏫', color: 'blue' },
-                { label: tx('إجازات معلقة', 'Pending Leaves'), value: stats.pendingLeaves, icon: '📋', color: 'amber' },
-                { label: tx('موافقات معلقة', 'Pending Approvals'), value: stats.pendingApprovals, icon: '⏳', color: 'red' },
-                { label: tx('رسوم محصلة', 'Fees Collected'), value: `LKR ${stats.monthlyFeeCollected.toLocaleString()}`, icon: '💰', color: 'emerald' },
-                { label: tx('متأخرات', 'Outstanding'), value: `LKR ${stats.monthlyFeeOutstanding.toLocaleString()}`, icon: '⚠️', color: 'amber' },
+                { label: ar ? 'الطلاب المعتمدون' : 'Active Students', value: stats.totalStudents, badge: 'Enrolled' },
+                { label: ar ? 'أعضاء التدريس' : 'Active Faculty', value: stats.totalTutors, badge: 'Faculty' },
+                { label: ar ? 'إجازات معلقة' : 'Pending Leaves', value: stats.pendingLeaves, badge: 'Action Req' },
+                { label: ar ? 'موافقات معلقة' : 'Pending Signups', value: stats.pendingApprovals, badge: 'Review' },
+                { label: ar ? 'رسوم محصلة' : 'Fees Collected', value: `LKR ${stats.monthlyFeeCollected.toLocaleString()}`, badge: 'MTD' },
+                { label: ar ? 'متأخرات الرسوم' : 'Outstanding', value: `LKR ${stats.monthlyFeeOutstanding.toLocaleString()}`, badge: 'Arrears' },
               ].map((stat, i) => (
-                <div key={i} className="glass-card rounded-3xl p-6 text-center space-y-3 group hover:border-gray-600 transition-all duration-300 hover:-translate-y-1">
-                  <div className={`w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-${stat.color}-500/10 text-${stat.color}-400 border border-${stat.color}-500/20 group-hover:scale-110 transition-transform duration-300`}>
-                    {stat.icon}
+                <div key={i} className="bg-white rounded-2xl border border-[#E8E1D0] p-4 text-center shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#C29A3A]">
+                    {stat.badge}
+                  </span>
+                  <div className="text-xl lg:text-2xl font-serif font-bold text-[#0B3B2E] font-mono tabular-nums">
+                    {stat.value}
                   </div>
-                  <div className="text-xl lg:text-2xl font-extrabold text-white font-mono tracking-tight">{stat.value}</div>
-                  <div className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">{stat.label}</div>
+                  <div className="text-[11px] text-[#4A5E56] font-medium leading-tight">
+                    {stat.label}
+                  </div>
                 </div>
               ))}
             </div>
 
             {/* Recent Announcements preview */}
-            <div className="glass-card rounded-[2rem] p-8 space-y-6 hover:border-emerald-500/30 transition-all duration-300">
-              <h3 className="text-lg font-bold text-white flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">📢</span>
-                {tx('آخر الإعلانات', 'Recent Announcements')}
-              </h3>
+            <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E8E1D0]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
+                    <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                    {ar ? 'آخر الإعلانات والتعميمات' : 'Recent College Circulars'}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setActiveTab('announcements')}
+                  className="text-xs font-bold text-[#11694A] hover:underline"
+                >
+                  {ar ? 'إدارة الإعلانات' : 'Manage All'} →
+                </button>
+              </div>
+
               {announcements.slice(0, 3).map(ann => (
-                <div key={ann.id} className="p-5 bg-gray-950/40 border border-gray-800/50 rounded-2xl flex gap-4 items-start hover:bg-gray-900/60 transition-colors">
+                <div key={ann.id} className="p-4 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl flex gap-3.5 items-start">
                   {ann.is_pinned ? (
-                    <span className="text-amber-400 text-lg mt-1 shadow-glow-amber bg-amber-500/10 w-8 h-8 rounded-lg flex items-center justify-center shrink-0">📌</span>
+                    <span className="w-7 h-7 rounded-lg bg-[#F7EDD2] text-[#C29A3A] flex items-center justify-center shrink-0 text-xs font-bold">
+                      📌
+                    </span>
                   ) : (
-                    <span className="text-gray-500 text-lg mt-1 bg-gray-800 w-8 h-8 rounded-lg flex items-center justify-center shrink-0">📣</span>
+                    <span className="w-7 h-7 rounded-lg bg-white border border-[#E8E1D0] text-[#4A5E56] flex items-center justify-center shrink-0">
+                      <svg className="w-3.5 h-3.5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                      </svg>
+                    </span>
                   )}
-                  <div>
-                    <p className="font-bold text-white text-base leading-tight">{ann.title}</p>
-                    <p className="text-sm text-gray-400 mt-2 leading-relaxed line-clamp-2">{ann.body}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-[#0B3B2E] text-sm">{ann.title}</p>
+                    <p className="text-xs text-[#4A5E56] mt-1 line-clamp-2 leading-relaxed">{ann.body}</p>
                   </div>
                 </div>
               ))}
               {announcements.length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 text-sm">{tx('لا توجد إعلانات', 'No announcements yet.')}</p>
-                </div>
+                <p className="text-center text-xs text-[#4A5E56] py-6">
+                  {ar ? 'لا توجد إعلانات منشورة بعد.' : 'No circulars posted yet.'}
+                </p>
               )}
             </div>
           </div>
@@ -370,60 +480,104 @@ const PrincipalDashboard = ({ vpMode = false }) => {
 
         {/* ── ANNOUNCEMENTS TAB ─────────────────────────────────────── */}
         {activeTab === 'announcements' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Post new */}
-            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-5">
-              <h2 className="text-xl font-bold text-white">{tx('إنشاء إعلان جديد', 'Post New Announcement')}</h2>
-              <form onSubmit={handlePostAnnouncement} className="space-y-4">
+            <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+              <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                {ar ? 'إنشاء إعلان رسمي جديد' : 'Publish College Circular'}
+              </h2>
+              <form onSubmit={handlePostAnnouncement} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs text-gray-400 uppercase mb-1">{tx('العنوان', 'Title')}</label>
-                  <input value={newTitle} onChange={e => setNewTitle(e.target.value)}
-                    className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    placeholder={tx('عنوان الإعلان', 'Announcement title...')} />
+                  <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                    {ar ? 'العنوان' : 'Title'}
+                  </label>
+                  <input
+                    value={newTitle}
+                    onChange={e => setNewTitle(e.target.value)}
+                    className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-[#14201B] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-[#11694A]"
+                    placeholder={ar ? 'عنوان الإعلان أو التعميم...' : 'Circular heading...'}
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 uppercase mb-1">{tx('المحتوى', 'Body')}</label>
-                  <textarea value={newBody} onChange={e => setNewBody(e.target.value)} rows={4}
-                    className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
-                    placeholder={tx('محتوى الإعلان...', 'Announcement body...')} />
+                  <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                    {ar ? 'المحتوى' : 'Content Body'}
+                  </label>
+                  <textarea
+                    value={newBody}
+                    onChange={e => setNewBody(e.target.value)}
+                    rows={4}
+                    className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-[#14201B] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-[#11694A] resize-none"
+                    placeholder={ar ? 'نص التعميم الأكاديمي أو التوجيهي...' : 'Full text of the announcement...'}
+                    required
+                  />
                 </div>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={newPinned} onChange={e => setNewPinned(e.target.checked)} className="rounded accent-amber-500" />
-                  <span className="text-sm text-gray-300">{tx('تثبيت الإعلان', 'Pin this announcement')}</span>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={newPinned}
+                    onChange={e => setNewPinned(e.target.checked)}
+                    className="rounded text-[#C29A3A] focus:ring-[#C29A3A]"
+                  />
+                  <span className="text-xs text-[#0B3B2E] font-medium">
+                    {ar ? 'تثبيت الإعلان في أعلى البوابة' : 'Pin this circular to top of dashboard'}
+                  </span>
                 </label>
-                <button type="submit" disabled={announceSaving}
-                  className="w-full py-3 bg-emerald-700 hover:bg-emerald-600 disabled:bg-gray-800 text-white font-bold rounded-xl text-sm transition">
-                  {announceSaving ? '...' : (tx('نشر الإعلان', 'Post Announcement'))}
+                <button
+                  type="submit"
+                  disabled={announceSaving}
+                  className="w-full py-2.5 bg-[#11694A] hover:bg-[#0B3B2E] disabled:bg-[#60736C] text-white font-bold rounded-xl text-xs sm:text-sm transition shadow-sm"
+                >
+                  {announceSaving ? (ar ? 'جاري النشر...' : 'Publishing...') : (ar ? 'نشر الإعلان' : 'Publish Circular')}
                 </button>
               </form>
             </div>
 
             {/* Existing announcements */}
-            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-4">
-              <h2 className="text-xl font-bold text-white">{tx('الإعلانات المنشورة', 'Published Announcements')}</h2>
+            <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+              <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                {ar ? 'الإعلانات المنشورة' : 'Active Circulars'}
+              </h2>
               <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
                 {announcements.map(ann => (
-                  <div key={ann.id} className="p-4 bg-gray-950/50 border border-gray-800/60 rounded-xl space-y-2">
+                  <div key={ann.id} className="p-4 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl space-y-2">
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-white text-sm truncate">{ann.is_pinned && '📌 '}{ann.title}</p>
-                        <p className="text-xs text-gray-500">by {ann.profiles?.full_name} · {new Date(ann.created_at).toLocaleDateString()}</p>
+                        <p className="font-bold text-[#0B3B2E] text-sm truncate">
+                          {ann.is_pinned && <span className="text-[#C29A3A] mr-1">📌</span>}
+                          {ann.title}
+                        </p>
+                        <p className="text-[10px] text-[#4A5E56]">
+                          by {ann.profiles?.full_name || 'Admin'} · {new Date(ann.created_at).toLocaleDateString()}
+                        </p>
                       </div>
-                      <div className="flex gap-1 shrink-0">
-                        <button onClick={() => handleTogglePin(ann)}
-                          className={`px-2 py-1 rounded text-xs font-bold transition ${ann.is_pinned ? 'bg-amber-500/20 text-amber-400' : 'bg-gray-800 text-gray-400 hover:text-amber-400'}`}>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button
+                          onClick={() => handleTogglePin(ann)}
+                          title="Toggle pin"
+                          className={`p-1.5 rounded-lg text-xs font-bold transition ${
+                            ann.is_pinned ? 'bg-[#F7EDD2] text-[#C29A3A]' : 'bg-white border border-[#E8E1D0] text-[#4A5E56]'
+                          }`}
+                        >
                           📌
                         </button>
-                        <button onClick={() => handleDeleteAnnouncement(ann.id)}
-                          className="px-2 py-1 rounded text-xs bg-red-900/30 text-red-400 hover:bg-red-900/60 transition">
+                        <button
+                          onClick={() => handleDeleteAnnouncement(ann.id)}
+                          title="Delete"
+                          className="p-1.5 rounded-lg text-xs bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FCA5A5] transition"
+                        >
                           ✕
                         </button>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-400 line-clamp-2">{ann.body}</p>
+                    <p className="text-xs text-[#4A5E56] line-clamp-2 leading-relaxed">{ann.body}</p>
                   </div>
                 ))}
-                {announcements.length === 0 && <p className="text-center text-gray-500 text-sm py-8">{tx('لا توجد إعلانات بعد', 'No announcements yet.')}</p>}
+                {announcements.length === 0 && (
+                  <p className="text-center text-xs text-[#4A5E56] py-8">
+                    {ar ? 'لا توجد إعلانات بعد.' : 'No circulars posted yet.'}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -431,63 +585,88 @@ const PrincipalDashboard = ({ vpMode = false }) => {
 
         {/* ── LEAVE REQUESTS TAB ────────────────────────────────────── */}
         {activeTab === 'leaves' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-4">
-              <h2 className="text-xl font-bold text-white">
-                {ar ? `طلبات الإجازات المعلقة (${leaves.length})` : `Pending Leave Requests (${leaves.length})`}
-              </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+              <div className="flex justify-between items-center pb-3 border-b border-[#E8E1D0]">
+                <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                  {ar ? `طلبات الإجازات المعلقة (${leaves.length})` : `Pending Leave Requests (${leaves.length})`}
+                </h2>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#FEE2E2] text-[#B91C1C] tabular-nums">
+                  {leaves.length}
+                </span>
+              </div>
               <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
                 {leaves.map(lv => (
-                  <div key={lv.id}
+                  <div
+                    key={lv.id}
                     onClick={() => { setSelectedLeave(lv); setLeaveNote(''); }}
-                    className={`p-4 bg-gray-950/40 border rounded-xl cursor-pointer transition ${selectedLeave?.id === lv.id ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-gray-800 hover:border-gray-700'}`}>
-                    <div className="flex justify-between">
-                      <span className="font-bold text-white text-sm">{lv.profiles?.full_name}</span>
-                      <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">Class {lv.profiles?.class_number}</span>
+                    className={`p-3.5 rounded-xl border cursor-pointer transition ${
+                      selectedLeave?.id === lv.id
+                        ? 'border-[#11694A] bg-[#E3F1EA]/50 font-semibold'
+                        : 'border-[#E8E1D0] bg-[#FBF8F0] hover:border-[#11694A]/40'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-[#0B3B2E] text-sm">{lv.profiles?.full_name}</span>
+                      <span className="text-[10px] bg-white text-[#4A5E56] border border-[#E8E1D0] px-2 py-0.5 rounded-full">
+                        Class {lv.profiles?.class_number}
+                      </span>
                     </div>
-                    <p className="text-xs text-gray-500 font-mono mt-1">{lv.start_date} → {lv.end_date}</p>
-                    <p className="text-xs text-gray-400 italic mt-1 line-clamp-1">&quot;{lv.reason}&quot;</p>
+                    <p className="text-[10px] text-[#4A5E56] font-mono mt-1 tabular-nums">{lv.start_date} → {lv.end_date}</p>
+                    <p className="text-xs text-[#14201B] italic mt-1 line-clamp-1">&quot;{lv.reason}&quot;</p>
                   </div>
                 ))}
                 {leaves.length === 0 && (
-                  <div className="text-center py-12 text-gray-500">
-                    <div className="text-4xl mb-2">✅</div>
-                    <p className="text-sm">{tx('لا توجد طلبات إجازة معلقة', 'No pending leave requests.')}</p>
-                  </div>
+                  <p className="text-center text-xs text-[#4A5E56] py-12">
+                    ✓ {ar ? 'لا توجد طلبات إجازة معلقة.' : 'All leave requests are cleared!'}
+                  </p>
                 )}
               </div>
             </div>
 
-            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-4">
-              <h2 className="text-xl font-bold text-white">{tx('مراجعة الطلب', 'Review Selected Leave')}</h2>
+            <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+              <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                {ar ? 'مراجعة واعتماد الطلب' : 'Review Selected Leave'}
+              </h2>
               {selectedLeave ? (
                 <div className="space-y-4">
-                  <div className="p-4 bg-gray-950/50 border border-gray-800 rounded-xl space-y-2">
-                    <p className="font-bold text-white">{selectedLeave.profiles?.full_name}</p>
-                    <p className="text-xs text-gray-400 font-mono">{selectedLeave.start_date} → {selectedLeave.end_date}</p>
-                    <p className="text-sm text-gray-300">{selectedLeave.reason}</p>
+                  <div className="p-4 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl space-y-1.5">
+                    <p className="font-bold text-[#0B3B2E] text-sm">{selectedLeave.profiles?.full_name}</p>
+                    <p className="text-[11px] text-[#4A5E56] font-mono tabular-nums">{selectedLeave.start_date} → {selectedLeave.end_date}</p>
+                    <p className="text-xs text-[#14201B] bg-white p-2 rounded-lg border border-[#E8E1D0] mt-1">{selectedLeave.reason}</p>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('ملاحظة الرد', 'Response Note (Optional)')}</label>
-                    <textarea value={leaveNote} onChange={e => setLeaveNote(e.target.value)} rows={3}
-                      className="w-full bg-gray-950 border border-gray-800 text-white text-sm rounded-xl px-4 py-2.5 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                      placeholder={tx('ملاحظة اختيارية...', 'Optional note to student...')} />
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'ملاحظة الرد (اختياري)' : 'Feedback / Response Note'}
+                    </label>
+                    <textarea
+                      value={leaveNote}
+                      onChange={e => setLeaveNote(e.target.value)}
+                      rows={3}
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-[#14201B] text-xs rounded-xl p-2.5 resize-none focus:outline-none focus:ring-1 focus:ring-[#11694A]"
+                      placeholder={ar ? 'ملاحظة توجيهية للطالب أو المعلم...' : 'Optional approval / rejection remark...'}
+                    />
                   </div>
                   <div className="flex gap-3">
-                    <button onClick={() => handleReviewLeave('approved')} disabled={leaveProcessing}
-                      className="flex-1 py-2.5 bg-emerald-700 hover:bg-emerald-600 disabled:bg-gray-800 text-white font-bold rounded-xl text-sm transition">
-                      ✅ {tx('قبول', 'Approve')}
+                    <button
+                      onClick={() => handleReviewLeave('approved')}
+                      disabled={leaveProcessing}
+                      className="flex-1 py-2.5 bg-[#11694A] hover:bg-[#0B3B2E] disabled:bg-[#60736C] text-white font-bold rounded-xl text-xs transition"
+                    >
+                      ✓ {ar ? 'قبول الإجازة' : 'Approve'}
                     </button>
-                    <button onClick={() => handleReviewLeave('rejected')} disabled={leaveProcessing}
-                      className="flex-1 py-2.5 bg-red-700 hover:bg-red-600 disabled:bg-gray-800 text-white font-bold rounded-xl text-sm transition">
-                      ❌ {tx('رفض', 'Reject')}
+                    <button
+                      onClick={() => handleReviewLeave('rejected')}
+                      disabled={leaveProcessing}
+                      className="flex-1 py-2.5 bg-[#B91C1C] hover:bg-[#991B1B] disabled:bg-[#60736C] text-white font-bold rounded-xl text-xs transition"
+                    >
+                      ✕ {ar ? 'رفض الإجازة' : 'Reject'}
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-16 text-gray-500">
-                  <div className="text-4xl mb-2">👈</div>
-                  <p className="text-sm">{tx('اختر طلباً للمراجعة', 'Select a leave request to review')}</p>
+                <div className="text-center py-16 text-[#4A5E56] text-xs">
+                  {ar ? 'اختر طلباً من القائمة لمراجعته.' : 'Select a leave request from the list to review.'}
                 </div>
               )}
             </div>
@@ -496,38 +675,47 @@ const PrincipalDashboard = ({ vpMode = false }) => {
 
         {/* ── TUTOR APPROVALS TAB (Principal only) ──────────────────── */}
         {activeTab === 'approvals' && !vpMode && (
-          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-5">
-            <h2 className="text-xl font-bold text-white">
-              {ar ? `موافقات المعلمين المعلقة (${pendingTutors.length})` : `Pending Tutor Approvals (${pendingTutors.length})`}
-            </h2>
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-5">
+            <div className="flex justify-between items-center pb-3 border-b border-[#E8E1D0]">
+              <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                {ar ? `موافقات المعلمين المعلقة (${pendingTutors.length})` : `Pending Tutor Approvals (${pendingTutors.length})`}
+              </h2>
+            </div>
             {pendingTutors.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <div className="text-4xl mb-2">✅</div>
-                <p className="text-sm">{tx('لا توجد موافقات معلقة', 'No pending tutor approvals.')}</p>
-              </div>
+              <p className="text-center text-xs text-[#4A5E56] py-12">
+                ✓ {ar ? 'لا توجد طلبات تسجيل معلمين جديدة.' : 'No pending tutor registrations.'}
+              </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {pendingTutors.map(tutor => (
-                  <div key={tutor.id} className="bg-gray-950/50 border border-gray-800 rounded-2xl p-5 space-y-3">
+                  <div key={tutor.id} className="bg-[#FBF8F0] border border-[#E8E1D0] rounded-2xl p-4 space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold">
+                      <div className="h-10 w-10 rounded-full bg-[#E3F1EA] text-[#11694A] flex items-center justify-center font-bold">
                         {tutor.full_name?.charAt(0)?.toUpperCase() || '?'}
                       </div>
                       <div>
-                        <p className="font-bold text-white text-sm">{tutor.full_name}</p>
-                        <p className="text-xs text-gray-500">{tutor.email}</p>
+                        <p className="font-bold text-[#0B3B2E] text-sm">{tutor.full_name}</p>
+                        <p className="text-[10px] text-[#4A5E56]">{tutor.email}</p>
                       </div>
                     </div>
-                    {tutor.phone && <p className="text-xs text-gray-400">📞 {tutor.phone}</p>}
-                    <p className="text-xs text-gray-500">{tx('تسجيل', 'Registered')}: {new Date(tutor.created_at).toLocaleDateString()}</p>
+                    {tutor.phone && <p className="text-xs text-[#4A5E56]">Phone: {tutor.phone}</p>}
+                    <p className="text-[10px] text-[#4A5E56]">
+                      {ar ? 'تاريخ التسجيل' : 'Registered'}: {new Date(tutor.created_at).toLocaleDateString()}
+                    </p>
                     <div className="flex gap-2">
-                      <button onClick={() => handleTutorApproval(tutor.id, true)} disabled={approving === tutor.id}
-                        className="flex-1 py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition disabled:bg-gray-800">
-                        {tx('قبول', 'Approve')}
+                      <button
+                        onClick={() => handleTutorApproval(tutor.id, true)}
+                        disabled={approving === tutor.id}
+                        className="flex-1 py-1.5 bg-[#11694A] hover:bg-[#0B3B2E] text-white font-bold rounded-xl text-xs transition disabled:bg-[#60736C]"
+                      >
+                        {ar ? 'قبول' : 'Approve'}
                       </button>
-                      <button onClick={() => handleTutorApproval(tutor.id, false)} disabled={approving === tutor.id}
-                        className="flex-1 py-2 bg-red-800/60 hover:bg-red-700 text-red-200 font-bold rounded-xl text-xs transition disabled:bg-gray-800">
-                        {tx('رفض', 'Reject')}
+                      <button
+                        onClick={() => handleTutorApproval(tutor.id, false)}
+                        disabled={approving === tutor.id}
+                        className="flex-1 py-1.5 bg-[#FEE2E2] hover:bg-[#FCA5A5] text-[#991B1B] font-bold rounded-xl text-xs transition disabled:bg-gray-200"
+                      >
+                        {ar ? 'رفض' : 'Reject'}
                       </button>
                     </div>
                   </div>
@@ -539,54 +727,91 @@ const PrincipalDashboard = ({ vpMode = false }) => {
 
         {/* ── TIMETABLE TAB ─────────────────────────────────────────── */}
         {activeTab === 'timetable' && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Add schedule form (principal only) */}
             {!vpMode && (
-              <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
-                <h2 className="text-xl font-bold text-white mb-4">{tx('إضافة حصة دراسية', 'Add Schedule Entry')}</h2>
-                <form onSubmit={handleAddSchedule} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+                <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                  {ar ? 'إضافة حصة دراسية للجدول' : 'Add Weekly Schedule Slot'}
+                </h2>
+                <form onSubmit={handleAddSchedule} className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
                   <div className="col-span-2">
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('المعلم', 'Tutor')}</label>
-                    <select value={schedForm.tutor_id} onChange={e => setSchedForm(f => ({ ...f, tutor_id: e.target.value }))}
-                      className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                      <option value="">{tx('اختر معلماً', 'Select tutor...')}</option>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'المعلم' : 'Tutor'}
+                    </label>
+                    <select
+                      value={schedForm.tutor_id}
+                      onChange={e => setSchedForm(f => ({ ...f, tutor_id: e.target.value }))}
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-[#14201B] rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#11694A]"
+                    >
+                      <option value="">{ar ? 'اختر معلماً...' : 'Select tutor...'}</option>
                       {tutorsList.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('الصف', 'Class')}</label>
-                    <select value={schedForm.class_number} onChange={e => setSchedForm(f => ({ ...f, class_number: +e.target.value }))}
-                      className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none">
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'الصف' : 'Class'}
+                    </label>
+                    <select
+                      value={schedForm.class_number}
+                      onChange={e => setSchedForm(f => ({ ...f, class_number: +e.target.value }))}
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-[#14201B] rounded-xl px-3 py-2 text-xs focus:outline-none"
+                    >
                       {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('اليوم', 'Day')}</label>
-                    <select value={schedForm.day_of_week} onChange={e => setSchedForm(f => ({ ...f, day_of_week: e.target.value }))}
-                      className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none">
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'اليوم' : 'Day'}
+                    </label>
+                    <select
+                      value={schedForm.day_of_week}
+                      onChange={e => setSchedForm(f => ({ ...f, day_of_week: e.target.value }))}
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-[#14201B] rounded-xl px-3 py-2 text-xs focus:outline-none"
+                    >
                       {DAYS.map(d => <option key={d}>{d}</option>)}
                     </select>
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('المادة', 'Subject')}</label>
-                    <input value={schedForm.subject} onChange={e => setSchedForm(f => ({ ...f, subject: e.target.value }))}
-                      placeholder={tx('مثال: نحو', 'e.g. Arabic Grammar')}
-                      className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'المادة' : 'Subject'}
+                    </label>
+                    <input
+                      value={schedForm.subject}
+                      onChange={e => setSchedForm(f => ({ ...f, subject: e.target.value }))}
+                      placeholder={ar ? 'مثال: نحو، تفسير، فقه' : 'e.g. Arabic Grammar, Fiqh'}
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-[#14201B] rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#11694A]"
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('من', 'From')}</label>
-                    <input type="time" value={schedForm.start_time} onChange={e => setSchedForm(f => ({ ...f, start_time: e.target.value }))}
-                      className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none" />
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'من' : 'From'}
+                    </label>
+                    <input
+                      type="time"
+                      value={schedForm.start_time}
+                      onChange={e => setSchedForm(f => ({ ...f, start_time: e.target.value }))}
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-[#14201B] rounded-xl px-3 py-2 text-xs focus:outline-none"
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('إلى', 'To')}</label>
-                    <input type="time" value={schedForm.end_time} onChange={e => setSchedForm(f => ({ ...f, end_time: e.target.value }))}
-                      className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none" />
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                      {ar ? 'إلى' : 'To'}
+                    </label>
+                    <input
+                      type="time"
+                      value={schedForm.end_time}
+                      onChange={e => setSchedForm(f => ({ ...f, end_time: e.target.value }))}
+                      className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-[#14201B] rounded-xl px-3 py-2 text-xs focus:outline-none"
+                    />
                   </div>
-                  <div className="col-span-4">
-                    <button type="submit" disabled={schedSaving || !schedForm.tutor_id || !schedForm.subject}
-                      className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-600 disabled:bg-gray-800 text-white font-bold rounded-xl text-sm transition">
-                      {schedSaving ? '...' : (tx('إضافة الحصة', 'Add Entry'))}
+                  <div className="col-span-2 md:col-span-4 pt-1">
+                    <button
+                      type="submit"
+                      disabled={schedSaving || !schedForm.tutor_id || !schedForm.subject}
+                      className="px-6 py-2 bg-[#11694A] hover:bg-[#0B3B2E] disabled:bg-[#60736C] text-white font-bold rounded-xl text-xs transition"
+                    >
+                      {schedSaving ? (ar ? 'جاري الإضافة...' : 'Saving...') : (ar ? 'إضافة الحصة للجدول' : 'Add Slot')}
                     </button>
                   </div>
                 </form>
@@ -594,15 +819,19 @@ const PrincipalDashboard = ({ vpMode = false }) => {
             )}
 
             {/* Timetable grid */}
-            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4">{tx('الجدول الأسبوعي', 'Weekly Timetable Grid')}</h2>
+            <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+              <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                {ar ? 'مصفوفة الجدول الأسبوعي' : 'Weekly Timetable Grid'}
+              </h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs border-collapse">
                   <thead>
                     <tr>
-                      <th className="py-2 px-3 bg-gray-950 border border-gray-800 text-gray-400 font-bold text-left w-24">{tx('اليوم', 'Day')}</th>
+                      <th className="py-2.5 px-3 bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-bold text-left w-24">
+                        {ar ? 'اليوم' : 'Day'}
+                      </th>
                       {CLASSES.map(c => (
-                        <th key={c} className="py-2 px-2 bg-gray-950 border border-gray-800 text-emerald-400 font-bold text-center">
+                        <th key={c} className="py-2.5 px-2 bg-[#FBF8F0] border border-[#E8E1D0] text-[#11694A] font-bold text-center">
                           {ar ? `صف ${c}` : `Class ${c}`}
                         </th>
                       ))}
@@ -611,17 +840,23 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                   <tbody>
                     {DAYS.map(day => (
                       <tr key={day}>
-                        <td className="py-2 px-3 bg-gray-900/40 border border-gray-800 font-bold text-gray-300">{day}</td>
+                        <td className="py-2 px-3 bg-[#FBF8F0] border border-[#E8E1D0] font-bold text-[#0B3B2E]">
+                          {day}
+                        </td>
                         {CLASSES.map(cls => (
-                          <td key={cls} className="py-1.5 px-2 bg-gray-950/30 border border-gray-800 align-top min-w-[100px]">
+                          <td key={cls} className="py-1.5 px-2 bg-white border border-[#E8E1D0] align-top min-w-[110px]">
                             {timetableGrid[day]?.[cls]?.map(s => (
-                              <div key={s.id} className="mb-1 p-1.5 bg-emerald-950/40 border border-emerald-500/20 rounded text-[10px] group relative">
-                                <div className="font-bold text-emerald-300 truncate">{s.subject}</div>
-                                <div className="text-gray-500 truncate">{s.profiles?.full_name}</div>
-                                <div className="text-gray-600 font-mono">{s.start_time?.slice(0,5)}–{s.end_time?.slice(0,5)}</div>
+                              <div key={s.id} className="mb-1.5 p-2 bg-[#E3F1EA] border border-[#11694A]/20 rounded-lg text-[10px] group relative">
+                                <div className="font-bold text-[#0B3B2E] truncate">{s.subject}</div>
+                                <div className="text-[#4A5E56] truncate">{s.profiles?.full_name}</div>
+                                <div className="text-[#11694A] font-mono tabular-nums">{s.start_time?.slice(0,5)}–{s.end_time?.slice(0,5)}</div>
                                 {!vpMode && (
-                                  <button onClick={() => handleDeleteSchedule(s.id)}
-                                    className="absolute top-0.5 right-0.5 text-red-500/50 hover:text-red-400 opacity-0 group-hover:opacity-100 transition text-[10px]">✕</button>
+                                  <button
+                                    onClick={() => handleDeleteSchedule(s.id)}
+                                    className="absolute top-1 right-1 text-[#991B1B] opacity-0 group-hover:opacity-100 transition text-[10px]"
+                                  >
+                                    ✕
+                                  </button>
                                 )}
                               </div>
                             ))}
@@ -638,40 +873,48 @@ const PrincipalDashboard = ({ vpMode = false }) => {
 
         {/* ── RESULTS OVERVIEW TAB ──────────────────────────────────── */}
         {activeTab === 'results' && (
-          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-4">
-            <h2 className="text-xl font-bold text-white">{tx('ملخص نتائج الامتحانات', 'Exam Results Overview')}</h2>
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+            <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+              {ar ? 'ملخص نتائج الامتحانات' : 'Examination Results Ledger'}
+            </h2>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-xs">
                 <thead>
-                  <tr className="text-left text-xs text-gray-400 uppercase border-b border-gray-800">
-                    <th className="py-2 pr-4">{tx('الطالب', 'Student')}</th>
-                    <th className="py-2 pr-4">{tx('الصف', 'Class')}</th>
-                    <th className="py-2 pr-4">{tx('الامتحان', 'Exam')}</th>
-                    <th className="py-2 pr-4">{tx('المادة', 'Subject')}</th>
-                    <th className="py-2 pr-4">{tx('الدرجة', 'Marks')}</th>
-                    <th className="py-2">{tx('التقدير', 'Grade')}</th>
+                  <tr className="text-left text-[#4A5E56] font-bold uppercase tracking-wider border-b border-[#E8E1D0]">
+                    <th className="py-2.5 pr-4">{ar ? 'الطالب' : 'Student'}</th>
+                    <th className="py-2.5 pr-4">{ar ? 'الصف' : 'Class'}</th>
+                    <th className="py-2.5 pr-4">{ar ? 'الامتحان' : 'Exam'}</th>
+                    <th className="py-2.5 pr-4">{ar ? 'المادة' : 'Subject'}</th>
+                    <th className="py-2.5 pr-4">{ar ? 'الدرجة' : 'Marks'}</th>
+                    <th className="py-2.5">{ar ? 'التقدير' : 'Grade'}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-800/50">
+                <tbody className="divide-y divide-[#E8E1D0]">
                   {results.map(r => (
-                    <tr key={r.id} className="hover:bg-gray-900/30 transition">
-                      <td className="py-2.5 pr-4 font-medium text-white">{r.profiles?.full_name}</td>
-                      <td className="py-2.5 pr-4 text-gray-400">Class {r.profiles?.class_number}</td>
-                      <td className="py-2.5 pr-4 text-gray-300">{r.exam_name}</td>
-                      <td className="py-2.5 pr-4 text-gray-300">{r.subject}</td>
-                      <td className="py-2.5 pr-4 font-mono text-amber-400">{r.marks_obtained}/{r.max_marks}</td>
+                    <tr key={r.id} className="hover:bg-[#FBF8F0] transition">
+                      <td className="py-2.5 pr-4 font-bold text-[#0B3B2E]">{r.profiles?.full_name}</td>
+                      <td className="py-2.5 pr-4 text-[#4A5E56]">Class {r.profiles?.class_number}</td>
+                      <td className="py-2.5 pr-4 text-[#14201B]">{r.exam_name}</td>
+                      <td className="py-2.5 pr-4 text-[#14201B]">{r.subject}</td>
+                      <td className="py-2.5 pr-4 font-mono font-bold text-[#11694A] tabular-nums">
+                        {r.marks_obtained}/{r.max_marks}
+                      </td>
                       <td className="py-2.5">
-                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                          r.grade?.startsWith('A') ? 'bg-emerald-500/20 text-emerald-400' :
-                          r.grade?.startsWith('B') ? 'bg-blue-500/20 text-blue-400' :
-                          r.grade?.startsWith('C') ? 'bg-amber-500/20 text-amber-400' :
-                          'bg-red-500/20 text-red-400'
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          r.grade?.startsWith('A') ? 'bg-[#E3F1EA] text-[#11694A]' :
+                          r.grade?.startsWith('B') ? 'bg-[#E0F2F1] text-[#0F7C86]' :
+                          r.grade?.startsWith('C') ? 'bg-[#F7EDD2] text-[#C29A3A]' :
+                          'bg-[#FEE2E2] text-[#B91C1C]'
                         }`}>{r.grade}</span>
                       </td>
                     </tr>
                   ))}
                   {results.length === 0 && (
-                    <tr><td colSpan={6} className="py-12 text-center text-gray-500">{tx('لا توجد نتائج بعد', 'No results recorded yet.')}</td></tr>
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-[#4A5E56]">
+                        {ar ? 'لا توجد نتائج مسجلة حتى الآن.' : 'No results recorded yet.'}
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>

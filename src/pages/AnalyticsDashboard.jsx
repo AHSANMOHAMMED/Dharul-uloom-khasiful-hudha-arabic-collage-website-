@@ -6,23 +6,22 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { tx } from '../lib/tx';
 
-// ── Colour Palette ─────────────────────────────────────────────────────────────
-const GREEN   = '#1a8a52';
-const AMBER   = '#c9a227';
-const RED     = '#dc2626';
-const BLUE    = '#2563eb';
-const PURPLE  = '#7c3aed';
-const TEAL    = '#0d9488';
-const GRADE_COLORS = { 'A+': GREEN, A: GREEN, B: BLUE, C: AMBER, D: '#f97316', F: RED, Fail: RED };
+// ── Colour Palette (Modern Manuscript) ─────────────────────────────────────────
+const GREEN   = '#11694A';
+const AMBER   = '#C29A3A';
+const RED     = '#B91C1C';
+const BLUE    = '#0F7C86';
+const PURPLE  = '#3949AB';
+const TEAL    = '#047857';
+const GRADE_COLORS = { 'A+': GREEN, A: GREEN, B: BLUE, C: AMBER, D: '#EA580C', F: RED, Fail: RED };
 
 // ── Custom Tooltip ─────────────────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-gray-900 border border-gray-700 rounded-xl p-3 shadow-xl text-xs">
-      {label && <p className="text-gray-400 mb-1 font-mono">{label}</p>}
+    <div className="bg-white border border-[#E8E1D0] rounded-xl p-3 shadow-md text-xs text-[#0B3B2E]">
+      {label && <p className="text-[#4A5E56] mb-1 font-mono">{label}</p>}
       {payload.map((p, i) => (
         <p key={i} style={{ color: p.color }} className="font-semibold">
           {p.name}: {typeof p.value === 'number' && p.name?.toLowerCase().includes('lkr')
@@ -35,29 +34,32 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
-const KPICard = ({ icon, label, value, sub, color = 'emerald' }) => {
+const KPICard = ({ label, value, sub, color = 'emerald' }) => {
   const colorMap = {
-    emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-    amber:   'bg-amber-500/10  border-amber-500/20  text-amber-400',
-    blue:    'bg-blue-500/10   border-blue-500/20   text-blue-400',
-    red:     'bg-red-500/10    border-red-500/20    text-red-400',
-    purple:  'bg-purple-500/10 border-purple-500/20 text-purple-400',
+    emerald: 'bg-[#E3F1EA] text-[#11694A]',
+    amber:   'bg-[#F7EDD2] text-[#C29A3A]',
+    blue:    'bg-[#E0F2F1] text-[#0F7C86]',
+    red:     'bg-[#FEE2E2] text-[#B91C1C]',
+    purple:  'bg-[#E8EAF6] text-[#3949AB]',
   };
   return (
-    <div className={`rounded-2xl border p-5 flex items-center gap-4 ${colorMap[color]}`}>
-      <div className="text-3xl">{icon}</div>
-      <div>
-        <div className="text-2xl font-black text-white font-mono">{value}</div>
-        <div className="text-xs font-semibold uppercase tracking-wide mt-0.5">{label}</div>
-        {sub && <div className="text-[10px] mt-0.5 opacity-70">{sub}</div>}
+    <div className="bg-white rounded-2xl border border-[#E8E1D0] p-4 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-1">
+      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${colorMap[color] || colorMap.emerald}`}>
+        {color.toUpperCase()}
+      </span>
+      <div className="text-xl sm:text-2xl font-serif font-bold text-[#0B3B2E] font-mono tabular-nums">
+        {value}
       </div>
+      <div className="text-[11px] font-semibold text-[#4A5E56] uppercase tracking-wider">{label}</div>
+      {sub && <div className="text-[10px] text-[#4A5E56] opacity-80">{sub}</div>}
     </div>
   );
 };
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 const AnalyticsDashboard = () => {
-  useTranslation(); // subscribe: re-render on language change
+  const { i18n } = useTranslation();
+  const ar = i18n.language === 'ar';
   const [loading, setLoading] = useState(true);
 
   // Raw data
@@ -77,34 +79,6 @@ const AnalyticsDashboard = () => {
     avgAttendance: 0, passRate: 0,
   });
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [
-        { data: fees },
-        { data: results },
-        { data: attendance },
-        { data: profiles },
-      ] = await Promise.all([
-        supabase.from('student_fees').select('*, profiles!student_fees_student_id_fkey(full_name, index_number, class_number)').order('month'),
-        supabase.from('student_results').select('*, profiles!student_results_student_id_fkey(full_name, class_number)').order('created_at'),
-        supabase.from('attendance').select('student_id, date, status, profiles!attendance_student_id_fkey(class_number)').order('date'),
-        supabase.from('profiles').select('id, account_type, is_approved, class_number, created_at').eq('is_approved', true),
-      ]);
-
-      setAllFees(fees || []);
-      setAllResults(results || []);
-
-      buildCharts(fees || [], results || [], attendance || [], profiles || []);
-    } catch (err) {
-      console.error('Analytics fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchAll(); }, [fetchAll]);
-
   const buildCharts = (fees, results, attendance, profiles) => {
     // ── Fee chart: monthly collected vs outstanding ──────────────────────────
     const feeByMonth = {};
@@ -113,7 +87,7 @@ const AnalyticsDashboard = () => {
       feeByMonth[f.month].collected  += f.paid_amount || 0;
       feeByMonth[f.month].outstanding += Math.max(0, (f.total_due || 0) - (f.paid_amount || 0));
     });
-    const feeData = Object.values(feeByMonth).slice(-6); // Last 6 months
+    const feeData = Object.values(feeByMonth).slice(-6);
     setFeeChartData(feeData);
 
     // ── Attendance chart: % per class ────────────────────────────────────────
@@ -165,70 +139,104 @@ const AnalyticsDashboard = () => {
     setKpi({ totalStudents: students, totalTutors: tutors, totalCollected: collected, totalOutstanding: outstanding, avgAttendance: avgAtt, passRate });
   };
 
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [
+        { data: fees },
+        { data: results },
+        { data: attendance },
+        { data: profiles },
+      ] = await Promise.all([
+        supabase.from('student_fees').select('*, profiles!student_fees_student_id_fkey(full_name, index_number, class_number)').order('month'),
+        supabase.from('student_results').select('*, profiles!student_results_student_id_fkey(full_name, class_number)').order('created_at'),
+        supabase.from('attendance').select('student_id, date, status, profiles!attendance_student_id_fkey(class_number)').order('date'),
+        supabase.from('profiles').select('id, account_type, is_approved, class_number, created_at').eq('is_approved', true),
+      ]);
+
+      setAllFees(fees || []);
+      setAllResults(results || []);
+
+      buildCharts(fees || [], results || [], attendance || [], profiles || []);
+    } catch (err) {
+      console.error('Analytics fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4 text-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-emerald-500"></div>
-        <p className="text-gray-400 text-sm">{tx('تحميل بيانات التحليلات...', 'Loading analytics data...')}</p>
+      <div className="flex flex-col items-center justify-center py-20 gap-3 text-[#4A5E56]">
+        <div className="w-10 h-10 border-2 border-[#11694A] border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs font-sans">{ar ? 'تحميل بيانات التحليلات...' : 'Loading analytics...'}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Section Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-[#E8E1D0]">
         <div>
-          <h2 className="text-2xl font-bold text-white">
-            📊 {tx('لوحة التحليلات والإحصاءات', 'Analytics & Reporting Dashboard')}
+          <h2 className="text-xl font-serif font-bold text-[#0B3B2E]">
+            {ar ? 'لوحة التحليلات والإحصاءات المؤسسية' : 'Institutional Analytics & Reporting'}
           </h2>
-          <p className="text-sm text-gray-400 mt-1">
-            {tx('نظرة شاملة على الأداء الأكاديمي والمالي للكلية', 'College-wide academic and financial performance overview')}
+          <p className="text-xs text-[#4A5E56] mt-0.5">
+            {ar ? 'نظرة شاملة على الأداء الأكاديمي والمالي للكلية' : 'Comprehensive academic performance, student attendance & financial metrics'}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => exportFeesCSV(allFees)}
-            className="px-4 py-2 bg-emerald-900/50 hover:bg-emerald-800/60 text-emerald-300 border border-emerald-700/40 rounded-xl text-xs font-bold transition"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E3F1EA] hover:bg-[#11694A] hover:text-white text-[#11694A] rounded-xl text-xs font-bold transition shadow-sm"
           >
-            💾 {tx('تصدير الرسوم CSV', 'Export Fees CSV')}
+            <svg className="w-3.5 h-3.5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            {ar ? 'تصدير الرسوم CSV' : 'Export Fees CSV'}
           </button>
           <button
             onClick={() => exportResultsCSV(allResults)}
-            className="px-4 py-2 bg-blue-900/50 hover:bg-blue-800/60 text-blue-300 border border-blue-700/40 rounded-xl text-xs font-bold transition"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E0F2F1] hover:bg-[#0F7C86] hover:text-white text-[#0F7C86] rounded-xl text-xs font-bold transition shadow-sm"
           >
-            💾 {tx('تصدير النتائج CSV', 'Export Results CSV')}
+            <svg className="w-3.5 h-3.5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            {ar ? 'تصدير النتائج CSV' : 'Export Results CSV'}
           </button>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <KPICard icon="🎓" label={tx('إجمالي الطلاب', 'Total Students')} value={kpi.totalStudents} color="emerald" />
-        <KPICard icon="👨‍🏫" label={tx('المعلمون', 'Total Tutors')} value={kpi.totalTutors} color="blue" />
-        <KPICard icon="💰" label={tx('رسوم محصلة', 'Fees Collected')} value={`LKR ${kpi.totalCollected.toLocaleString()}`} color="emerald" />
-        <KPICard icon="⚠️" label={tx('متأخرات', 'Outstanding')} value={`LKR ${kpi.totalOutstanding.toLocaleString()}`} color="red" />
-        <KPICard icon="📅" label={tx('معدل الحضور', 'Avg Attendance')} value={`${kpi.avgAttendance}%`} sub={tx('متوسط الكلية', 'College average')} color="amber" />
-        <KPICard icon="✅" label={tx('نسبة النجاح', 'Pass Rate')} value={`${kpi.passRate}%`} sub={tx('كل الامتحانات', 'All exams')} color="purple" />
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5">
+        <KPICard label={ar ? 'إجمالي الطلاب' : 'Total Students'} value={kpi.totalStudents} color="emerald" />
+        <KPICard label={ar ? 'المعلمون' : 'Total Tutors'} value={kpi.totalTutors} color="blue" />
+        <KPICard label={ar ? 'رسوم محصلة' : 'Fees Collected'} value={`LKR ${kpi.totalCollected.toLocaleString()}`} color="emerald" />
+        <KPICard label={ar ? 'متأخرات' : 'Outstanding'} value={`LKR ${kpi.totalOutstanding.toLocaleString()}`} color="red" />
+        <KPICard label={ar ? 'معدل الحضور' : 'Avg Attendance'} value={`${kpi.avgAttendance}%`} sub={ar ? 'متوسط الكلية' : 'College average'} color="amber" />
+        <KPICard label={ar ? 'نسبة النجاح' : 'Pass Rate'} value={`${kpi.passRate}%`} sub={ar ? 'كل الامتحانات' : 'All exams'} color="purple" />
       </div>
 
       {/* Charts Row 1: Fee Chart + Attendance Chart */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Monthly Fee Chart */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            💳 {tx('الرسوم الشهرية (آخر 6 أشهر)', 'Monthly Fee Collection (Last 6 Months)')}
+        <div className="bg-[#FBF8F0] border border-[#E8E1D0] rounded-2xl p-5 space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#0B3B2E]">
+            {ar ? 'الرسوم الشهرية (آخر 6 أشهر)' : 'Monthly Fee Collection (Last 6 Months)'}
           </h3>
           {feeChartData.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 text-sm">{tx('لا توجد بيانات رسوم', 'No fee data available')}</div>
+            <div className="text-center py-10 text-[#4A5E56] text-xs">{ar ? 'لا توجد بيانات رسوم' : 'No fee data available'}</div>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={210}>
               <BarChart data={feeChartData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="month" tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E8E1D0" />
+                <XAxis dataKey="month" tick={{ fill: '#4A5E56', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#4A5E56', fontSize: 10 }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 11, color: '#9ca3af' }} />
+                <Legend wrapperStyle={{ fontSize: 11, color: '#4A5E56' }} />
                 <Bar dataKey="collected" name="Collected (LKR)" fill={GREEN} radius={[4,4,0,0]} />
                 <Bar dataKey="outstanding" name="Outstanding (LKR)" fill={RED} radius={[4,4,0,0]} />
               </BarChart>
@@ -237,18 +245,18 @@ const AnalyticsDashboard = () => {
         </div>
 
         {/* Attendance Rate per Class */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            📅 {tx('نسبة الحضور لكل صف', 'Attendance Rate per Class')}
+        <div className="bg-[#FBF8F0] border border-[#E8E1D0] rounded-2xl p-5 space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#0B3B2E]">
+            {ar ? 'نسبة الحضور لكل صف' : 'Attendance Rate per Class'}
           </h3>
           {attendanceChart.every(d => d.rate === 0) ? (
-            <div className="text-center py-10 text-gray-500 text-sm">{tx('لا توجد بيانات حضور', 'No attendance data yet')}</div>
+            <div className="text-center py-10 text-[#4A5E56] text-xs">{ar ? 'لا توجد بيانات حضور' : 'No attendance data yet'}</div>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={210}>
               <BarChart data={attendanceChart}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="class" tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                <YAxis domain={[0, 100]} tick={{ fill: '#9ca3af', fontSize: 11 }} tickFormatter={v => `${v}%`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E8E1D0" />
+                <XAxis dataKey="class" tick={{ fill: '#4A5E56', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fill: '#4A5E56', fontSize: 10 }} tickFormatter={v => `${v}%`} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} formatter={(v) => [`${v}%`, 'Attendance Rate']} />
                 <Bar dataKey="rate" name="Attendance %" radius={[4,4,0,0]}>
                   {attendanceChart.map((entry, i) => (
@@ -258,10 +266,10 @@ const AnalyticsDashboard = () => {
               </BarChart>
             </ResponsiveContainer>
           )}
-          <div className="flex gap-3 mt-3 text-[10px] text-gray-400">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>≥85% Good</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>70–85% Warning</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500 inline-block"></span>&lt;70% Critical</span>
+          <div className="flex gap-4 pt-1 text-[10px] text-[#4A5E56]">
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#11694A] inline-block"></span>≥85% Optimal</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#C29A3A] inline-block"></span>70–85% Caution</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#B91C1C] inline-block"></span>&lt;70% Critical</span>
           </div>
         </div>
       </div>
@@ -269,20 +277,20 @@ const AnalyticsDashboard = () => {
       {/* Charts Row 2: Grade Pie + Enrollment Line */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Grade Distribution Pie */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            🎓 {tx('توزيع التقديرات', 'Grade Distribution')}
+        <div className="bg-[#FBF8F0] border border-[#E8E1D0] rounded-2xl p-5 space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#0B3B2E]">
+            {ar ? 'توزيع التقديرات والدرجات' : 'Exam Grade Distribution'}
           </h3>
           {gradeChart.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 text-sm">{tx('لا توجد بيانات نتائج', 'No results data yet')}</div>
+            <div className="text-center py-10 text-[#4A5E56] text-xs">{ar ? 'لا توجد بيانات نتائج' : 'No results data yet'}</div>
           ) : (
             <div className="flex items-center gap-4">
-              <ResponsiveContainer width="60%" height={220}>
+              <ResponsiveContainer width="60%" height={200}>
                 <PieChart>
                   <Pie
                     data={gradeChart}
                     cx="50%" cy="50%"
-                    innerRadius={55} outerRadius={90}
+                    innerRadius={50} outerRadius={80}
                     paddingAngle={3}
                     dataKey="value"
                   >
@@ -296,15 +304,15 @@ const AnalyticsDashboard = () => {
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="flex flex-col gap-2 text-xs">
+              <div className="flex flex-col gap-1.5 text-xs">
                 {gradeChart.map((entry, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <span
-                      className="w-3 h-3 rounded-full shrink-0"
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
                       style={{ background: GRADE_COLORS[entry.name] || [GREEN,BLUE,AMBER,TEAL,PURPLE,RED][i % 6] }}
                     />
-                    <span className="text-gray-300 font-bold">{entry.name}</span>
-                    <span className="text-gray-500">({entry.value})</span>
+                    <span className="text-[#0B3B2E] font-bold">{entry.name}</span>
+                    <span className="text-[#4A5E56]">({entry.value})</span>
                   </div>
                 ))}
               </div>
@@ -313,18 +321,18 @@ const AnalyticsDashboard = () => {
         </div>
 
         {/* Student Enrollment Trend */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            📈 {tx('اتجاه التسجيل الشهري', 'Monthly Student Enrollment Trend')}
+        <div className="bg-[#FBF8F0] border border-[#E8E1D0] rounded-2xl p-5 space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#0B3B2E]">
+            {ar ? 'اتجاه التسجيل الشهري' : 'Monthly Student Enrollment Trend'}
           </h3>
           {enrollmentChart.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 text-sm">{tx('لا توجد بيانات تسجيل', 'No enrollment data yet')}</div>
+            <div className="text-center py-10 text-[#4A5E56] text-xs">{ar ? 'لا توجد بيانات تسجيل' : 'No enrollment data yet'}</div>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={200}>
               <LineChart data={enrollmentChart}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="month" tick={{ fill: '#9ca3af', fontSize: 10 }} />
-                <YAxis allowDecimals={false} tick={{ fill: '#9ca3af', fontSize: 11 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E8E1D0" />
+                <XAxis dataKey="month" tick={{ fill: '#4A5E56', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fill: '#4A5E56', fontSize: 10 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <Line
                   type="monotone"
@@ -342,56 +350,58 @@ const AnalyticsDashboard = () => {
       </div>
 
       {/* Detailed Fee Arrears Table */}
-      <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-sm font-bold text-white">
-            ⚠️ {tx('الطلاب ذوو المتأخرات المالية', 'Students with Outstanding Fee Balances')}
+      <div className="bg-[#FBF8F0] border border-[#E8E1D0] rounded-2xl p-5 space-y-3">
+        <div className="flex justify-between items-center pb-2 border-b border-[#E8E1D0]">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#0B3B2E]">
+            {ar ? 'الطلاب ذوو المتأخرات المالية' : 'Students with Outstanding Fee Balances'}
           </h3>
           <button
             onClick={() => exportFeesCSV(allFees.filter(f => f.status !== 'completed'), 'arrears_report')}
-            className="px-3 py-1.5 bg-red-900/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 rounded-xl text-xs font-bold transition"
+            className="px-3 py-1 bg-[#FEE2E2] hover:bg-[#FCA5A5] text-[#991B1B] rounded-lg text-xs font-bold transition"
           >
-            💾 {tx('تصدير المتأخرات', 'Export Arrears CSV')}
+            {ar ? 'تصدير المتأخرات' : 'Export Arrears CSV'}
           </button>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-xs">
             <thead>
-              <tr className="text-xs text-gray-400 uppercase border-b border-gray-800">
-                <th className="py-2 px-3 text-left">{tx('الطالب', 'Student')}</th>
-                <th className="py-2 px-3 text-left">{tx('الصف', 'Class')}</th>
-                <th className="py-2 px-3 text-left">{tx('الشهر', 'Month')}</th>
-                <th className="py-2 px-3 text-right">{tx('المستحق', 'Due')}</th>
-                <th className="py-2 px-3 text-right">{tx('المدفوع', 'Paid')}</th>
-                <th className="py-2 px-3 text-right">{tx('المتبقي', 'Balance')}</th>
-                <th className="py-2 px-3 text-center">{tx('الحالة', 'Status')}</th>
+              <tr className="text-[#4A5E56] font-bold uppercase tracking-wider border-b border-[#E8E1D0]">
+                <th className="py-2 px-3 text-left">{ar ? 'الطالب' : 'Student'}</th>
+                <th className="py-2 px-3 text-left">{ar ? 'الصف' : 'Class'}</th>
+                <th className="py-2 px-3 text-left">{ar ? 'الشهر' : 'Month'}</th>
+                <th className="py-2 px-3 text-right">{ar ? 'المستحق' : 'Due'}</th>
+                <th className="py-2 px-3 text-right">{ar ? 'المدفوع' : 'Paid'}</th>
+                <th className="py-2 px-3 text-right">{ar ? 'المتبقي' : 'Balance'}</th>
+                <th className="py-2 px-3 text-center">{ar ? 'الحالة' : 'Status'}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800/50">
+            <tbody className="divide-y divide-[#E8E1D0]">
               {allFees
                 .filter(f => f.status !== 'completed')
                 .slice(0, 15)
                 .map(f => (
-                  <tr key={f.id} className="hover:bg-gray-900/30 transition">
-                    <td className="py-2.5 px-3 font-medium text-white">{f.profiles?.full_name || '—'}</td>
-                    <td className="py-2.5 px-3 text-gray-400">Class {f.profiles?.class_number || '—'}</td>
-                    <td className="py-2.5 px-3 text-gray-400 font-mono text-xs">{f.month}</td>
-                    <td className="py-2.5 px-3 text-right font-mono text-gray-300">LKR {f.total_due?.toLocaleString()}</td>
-                    <td className="py-2.5 px-3 text-right font-mono text-emerald-400">LKR {f.paid_amount?.toLocaleString()}</td>
-                    <td className="py-2.5 px-3 text-right font-mono text-red-400 font-bold">
-                      LKR {Math.max(0, f.total_due - f.paid_amount).toLocaleString()}
+                  <tr key={f.id} className="hover:bg-white transition">
+                    <td className="py-2.5 px-3 font-bold text-[#0B3B2E]">{f.profiles?.full_name || '—'}</td>
+                    <td className="py-2.5 px-3 text-[#4A5E56]">Class {f.profiles?.class_number || '—'}</td>
+                    <td className="py-2.5 px-3 text-[#4A5E56] font-mono tabular-nums">{f.month}</td>
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-[#14201B]">LKR {Number(f.total_due || 0).toLocaleString()}</td>
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-[#11694A]">LKR {Number(f.paid_amount || 0).toLocaleString()}</td>
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-[#B91C1C] font-bold">
+                      LKR {Math.max(0, (f.total_due || 0) - (f.paid_amount || 0)).toLocaleString()}
                     </td>
                     <td className="py-2.5 px-3 text-center">
-                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                        f.status === 'partial' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        f.status === 'partial' ? 'bg-[#F7EDD2] text-[#C29A3A]' : 'bg-[#FEE2E2] text-[#B91C1C]'
                       }`}>{f.status.toUpperCase()}</span>
                     </td>
                   </tr>
                 ))}
               {allFees.filter(f => f.status !== 'completed').length === 0 && (
-                <tr><td colSpan={7} className="py-10 text-center text-gray-500 text-sm">
-                  ✅ {tx('لا توجد متأخرات', 'No outstanding fees — all students are up to date!')}
-                </td></tr>
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-[#4A5E56]">
+                    ✓ {ar ? 'لا توجد متأخرات مالية — جميع الرسوم مستوفاة!' : 'No outstanding fees — all balances cleared!'}
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

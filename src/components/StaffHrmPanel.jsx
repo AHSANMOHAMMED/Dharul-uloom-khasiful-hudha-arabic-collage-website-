@@ -10,11 +10,11 @@ import {
 } from '../lib/hrmApi';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { tx } from '../lib/tx';
 
 export default function StaffHrmPanel() {
-  useTranslation(); // subscribe: re-render on language change
+  const { i18n } = useTranslation();
   const { user } = useAuth();
+  const ar = i18n.language === 'ar';
   const [records, setRecords] = useState([]);
   const [tutors, setTutors] = useState([]);
   const [salaries, setSalaries] = useState([]);
@@ -52,7 +52,7 @@ export default function StaffHrmPanel() {
         emergency_phone: form.emergency_phone || null,
         notes: form.notes || null,
       });
-      toast.success(tx('تم حفظ سجل الموظفين', 'Staff HR record saved'));
+      toast.success(ar ? 'تم حفظ سجل الموظف بنجاح' : 'Staff HR record saved');
       setForm({
         profile_id: '',
         department: '',
@@ -85,7 +85,7 @@ export default function StaffHrmPanel() {
         department: existing?.department || null,
         job_title: existing?.job_title || null,
       });
-      toast.success(tx('تم رفع المستند', 'Document uploaded'));
+      toast.success(ar ? 'تم رفع المستند بنجاح' : 'Document uploaded successfully');
       await reload();
     } catch (err) {
       toast.error(err.message);
@@ -93,54 +93,62 @@ export default function StaffHrmPanel() {
   };
 
   return (
-    <div className="space-y-8">
-      <h2 className="text-xl font-bold text-white">{tx('إدارة الموارد البشرية', 'Staff HRM')}</h2>
+    <div className="space-y-6">
+      <div className="pb-3 border-b border-[#E8E1D0]">
+        <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+          {ar ? 'إدارة شؤون الموظفين والموارد البشرية (HRM)' : 'Staff Human Resources Management'}
+        </h2>
+        <p className="text-xs text-[#4A5E56]">
+          {ar ? 'سجلات أعضاء هيئة التدريس، عقود العمل، مستندات الاعتماد، وقسائم الرواتب' : 'Faculty roster, contracts, emergency records & monthly payroll slips'}
+        </p>
+      </div>
 
-      <form onSubmit={onSave} className="grid md:grid-cols-2 gap-3 rounded-2xl border border-gray-800 bg-gray-900/50 p-4">
+      <form onSubmit={onSave} className="grid md:grid-cols-2 gap-3.5 rounded-2xl border border-[#E8E1D0] bg-[#FBF8F0] p-5">
         <select
           required
-          className="bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200"
+          className="bg-white border border-[#E8E1D0] rounded-xl p-2.5 text-xs text-[#14201B] focus:outline-none"
           value={form.profile_id}
           onChange={(e) => setForm({ ...form, profile_id: e.target.value })}
         >
-          <option value="">{tx('اختر موظفاً', 'Select staff')}</option>
+          <option value="">{ar ? 'اختر عضواً من الهيئة التدريسية' : 'Select Faculty Member'}</option>
           {tutors.map((t) => (
             <option key={t.id} value={t.id}>{t.full_name}</option>
           ))}
         </select>
-        <input className="bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200" placeholder="Department" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} />
-        <input className="bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200" placeholder="Job title" value={form.job_title} onChange={(e) => setForm({ ...form, job_title: e.target.value })} />
-        <input type="date" className="bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200" value={form.employment_start} onChange={(e) => setForm({ ...form, employment_start: e.target.value })} />
-        <input className="bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200" placeholder="Emergency contact" value={form.emergency_contact} onChange={(e) => setForm({ ...form, emergency_contact: e.target.value })} />
-        <input className="bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200" placeholder="Emergency phone" value={form.emergency_phone} onChange={(e) => setForm({ ...form, emergency_phone: e.target.value })} />
-        <textarea className="md:col-span-2 bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200" rows={2} placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-        <button type="submit" className="md:col-span-2 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-sm">
-          {tx('حفظ', 'Save HR record')}
+        <input className="bg-white border border-[#E8E1D0] rounded-xl p-2.5 text-xs text-[#14201B] focus:outline-none" placeholder="Department (e.g. Sharia, Quran, Language)" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} />
+        <input className="bg-white border border-[#E8E1D0] rounded-xl p-2.5 text-xs text-[#14201B] focus:outline-none" placeholder="Official Job Title" value={form.job_title} onChange={(e) => setForm({ ...form, job_title: e.target.value })} />
+        <input type="date" className="bg-white border border-[#E8E1D0] rounded-xl p-2.5 text-xs text-[#14201B] focus:outline-none" value={form.employment_start} onChange={(e) => setForm({ ...form, employment_start: e.target.value })} />
+        <input className="bg-white border border-[#E8E1D0] rounded-xl p-2.5 text-xs text-[#14201B] focus:outline-none" placeholder="Emergency Contact Name" value={form.emergency_contact} onChange={(e) => setForm({ ...form, emergency_contact: e.target.value })} />
+        <input className="bg-white border border-[#E8E1D0] rounded-xl p-2.5 text-xs text-[#14201B] focus:outline-none" placeholder="Emergency Contact Phone" value={form.emergency_phone} onChange={(e) => setForm({ ...form, emergency_phone: e.target.value })} />
+        <textarea className="md:col-span-2 bg-white border border-[#E8E1D0] rounded-xl p-2.5 text-xs text-[#14201B] focus:outline-none resize-none" rows={2} placeholder="Staff notes, academic qualifications or specialized halaqah..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+        <button type="submit" className="md:col-span-2 py-2.5 rounded-xl bg-[#11694A] hover:bg-[#0B3B2E] text-white font-bold text-xs transition shadow-sm">
+          {ar ? 'حفظ وتحديث سجل الموظف' : 'Save Staff HR Record'}
         </button>
       </form>
 
-      <div className="rounded-2xl border border-gray-800 overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-900 text-gray-400">
+      {/* Staff Roster Table */}
+      <div className="rounded-2xl border border-[#E8E1D0] overflow-hidden">
+        <table className="w-full text-xs text-left">
+          <thead className="bg-[#FBF8F0] text-[#0B3B2E] border-b border-[#E8E1D0] uppercase font-bold tracking-wider">
             <tr>
               <th className="p-3">Name</th>
               <th className="p-3">Department</th>
               <th className="p-3">Title</th>
-              <th className="p-3">Start</th>
-              <th className="p-3">Emergency</th>
+              <th className="p-3">Start Date</th>
+              <th className="p-3">Emergency & Documents</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[#E8E1D0]">
             {records.map((r) => (
-              <tr key={r.id} className="border-t border-gray-800 text-gray-200">
-                <td className="p-3">{r.profiles?.full_name}</td>
-                <td className="p-3">{r.department || '—'}</td>
-                <td className="p-3">{r.job_title || '—'}</td>
-                <td className="p-3">{r.employment_start || '—'}</td>
+              <tr key={r.id} className="text-[#14201B] hover:bg-[#FBF8F0] transition">
+                <td className="p-3 font-bold text-[#0B3B2E]">{r.profiles?.full_name}</td>
+                <td className="p-3 text-[#4A5E56]">{r.department || '—'}</td>
+                <td className="p-3 text-[#11694A] font-semibold">{r.job_title || '—'}</td>
+                <td className="p-3 text-[#4A5E56] font-mono tabular-nums">{r.employment_start || '—'}</td>
                 <td className="p-3">
                   <div>{r.emergency_contact || '—'} {r.emergency_phone ? `· ${r.emergency_phone}` : ''}</div>
-                  <label className="inline-block mt-2 text-xs text-emerald-400 cursor-pointer">
-                    Upload doc
+                  <label className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-[#11694A] hover:underline cursor-pointer">
+                    + Upload Document
                     <input
                       type="file"
                       className="hidden"
@@ -148,43 +156,55 @@ export default function StaffHrmPanel() {
                     />
                   </label>
                   {(r.documents || []).length > 0 && (
-                    <div className="text-[10px] text-gray-500 mt-1">{r.documents.length} file(s)</div>
+                    <div className="text-[10px] text-[#4A5E56] mt-0.5">{r.documents.length} document(s) filed</div>
                   )}
                 </td>
               </tr>
             ))}
+            {records.length === 0 && (
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-[#4A5E56]">
+                  No HR records filed yet.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <h3 className="text-lg font-bold text-white">{tx('قسائم الرواتب', 'Payroll slips')}</h3>
+      {/* Payroll Slips section */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-bold text-[#0B3B2E] uppercase tracking-wider">
+            {ar ? 'قسائم الرواتب الشهرية' : 'Monthly Payroll Slips'}
+          </h3>
           <input
             type="month"
-            className="bg-gray-950 border border-gray-800 rounded-lg px-3 py-1 text-sm text-gray-200"
+            className="bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl px-3 py-1 text-xs text-[#14201B] focus:outline-none"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
           />
         </div>
         <div className="space-y-2">
           {salaries.map((s) => (
-            <div key={s.id} className="flex justify-between items-center p-3 rounded-xl border border-gray-800 bg-gray-900/40">
-              <div className="text-sm text-gray-200">
-                <div className="font-semibold">{s.profiles?.full_name}</div>
-                <div className="text-xs text-gray-500">LKR {s.amount} · {s.status}</div>
+            <div key={s.id} className="flex justify-between items-center p-3 rounded-xl border border-[#E8E1D0] bg-[#FBF8F0]">
+              <div className="text-xs text-[#14201B]">
+                <div className="font-bold text-[#0B3B2E]">{s.profiles?.full_name}</div>
+                <div className="text-[11px] text-[#4A5E56] font-mono tabular-nums">
+                  LKR {Number(s.amount).toLocaleString()} · <span className="uppercase font-bold text-[#11694A]">{s.status}</span>
+                </div>
               </div>
               <button
                 type="button"
-                className="text-xs px-3 py-1.5 rounded-lg border border-emerald-500/40 text-emerald-300"
+                className="text-xs font-bold px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-[#0B3B2E] hover:border-[#11694A] transition"
                 onClick={() => printSalarySlip(s.profiles, s, user?.username || 'Admin')}
               >
-                Print slip
+                Print Slip
               </button>
             </div>
           ))}
           {salaries.length === 0 && (
-            <p className="text-sm text-gray-500">No salary rows for this month.</p>
+            <p className="text-xs text-[#4A5E56] text-center py-6">No salary records for this month.</p>
           )}
         </div>
       </div>

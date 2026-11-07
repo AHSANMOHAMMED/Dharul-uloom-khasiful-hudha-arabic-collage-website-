@@ -9,7 +9,6 @@ import {
   listAdmissionNotes,
 } from '../lib/crmApi';
 import { toast } from 'react-toastify';
-import { tx } from '../lib/tx';
 
 const STAGE_LABELS = {
   lead: { en: 'Lead', ar: 'عميل محتمل' },
@@ -49,7 +48,7 @@ export default function AdmissionsCrmBoard() {
   const onMove = async (id, stage) => {
     try {
       await moveAdmissionStage(id, stage);
-      toast.success(tx('تم تحديث المرحلة', 'Stage updated'));
+      toast.success(ar ? 'تم تحديث المرحلة' : 'Stage updated');
       await load();
     } catch (e) {
       toast.error(e.message);
@@ -62,7 +61,7 @@ export default function AdmissionsCrmBoard() {
       await addAdmissionNote(selected._id, noteBody.trim());
       setNoteBody('');
       setNotes(await listAdmissionNotes(selected._id));
-      toast.success(tx('تمت إضافة الملاحظة', 'Note added'));
+      toast.success(ar ? 'تمت إضافة الملاحظة' : 'Note added');
     } catch (e) {
       toast.error(e.message);
     }
@@ -80,7 +79,7 @@ export default function AdmissionsCrmBoard() {
       );
       if (token && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(token);
-        toast.info(tx('تم نسخ رمز الدعوة', 'Invite token copied'));
+        toast.info(ar ? 'تم نسخ رمز الدعوة' : 'Invite token copied');
       }
       setSelected(null);
       await load();
@@ -90,21 +89,26 @@ export default function AdmissionsCrmBoard() {
   };
 
   if (loading) {
-    return <div className="text-gray-400 text-sm py-8 text-center">Loading CRM…</div>;
+    return <div className="text-[#4A5E56] text-xs py-12 text-center">Loading CRM pipeline…</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-xl font-bold text-white">
-          {tx('لوحة CRM للقبول', 'Admissions CRM pipeline')}
-        </h2>
+      <div className="flex items-center justify-between gap-4 pb-3 border-b border-[#E8E1D0]">
+        <div>
+          <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+            {ar ? 'مسار القبول والتسجيل (CRM)' : 'Admissions CRM Pipeline'}
+          </h2>
+          <p className="text-xs text-[#4A5E56]">
+            {ar ? 'تتبع مراحل المتقدمين من الاستفسار حتى التسجيل النهائي' : 'Stage management from prospective inquiries to enrollment'}
+          </p>
+        </div>
         <button
           type="button"
           onClick={load}
-          className="text-sm px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800"
+          className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-[#E8E1D0] bg-[#FBF8F0] text-[#0B3B2E] hover:bg-white transition"
         >
-          Refresh
+          ↻ Refresh
         </button>
       </div>
 
@@ -112,26 +116,35 @@ export default function AdmissionsCrmBoard() {
         {CRM_STAGES.map((stage) => {
           const items = rows.filter((r) => (r.pipelineStage || 'submitted') === stage);
           return (
-            <div key={stage} className="rounded-2xl border border-gray-800 bg-gray-900/50 p-3 min-h-[180px]">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-bold text-emerald-300">
-                  {ar ? STAGE_LABELS[stage].ar : STAGE_LABELS[stage].en}
-                </span>
-                <span className="text-xs text-gray-500">{items.length}</span>
-              </div>
-              <div className="space-y-2 max-h-80 overflow-y-auto">
-                {items.map((item) => (
-                  <button
-                    key={item._id}
-                    type="button"
-                    onClick={() => setSelected(item)}
-                    className="w-full text-left p-3 rounded-xl bg-gray-950/60 border border-gray-800 hover:border-emerald-500/40"
-                  >
-                    <div className="font-semibold text-white text-sm">{item.studentName}</div>
-                    <div className="text-xs text-gray-400 mt-1">{item.course} · {item.parentName}</div>
-                    <div className="text-xs text-gray-500">{item.phone}</div>
-                  </button>
-                ))}
+            <div key={stage} className="rounded-2xl border border-[#E8E1D0] bg-[#FBF8F0] p-3.5 min-h-[190px] flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-center mb-3 pb-2 border-b border-[#E8E1D0]">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#0B3B2E]">
+                    {ar ? STAGE_LABELS[stage].ar : STAGE_LABELS[stage].en}
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-[#4A5E56] border border-[#E8E1D0]">
+                    {items.length}
+                  </span>
+                </div>
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {items.map((item) => (
+                    <button
+                      key={item._id}
+                      type="button"
+                      onClick={() => setSelected(item)}
+                      className="w-full text-left p-3 rounded-xl bg-white border border-[#E8E1D0] hover:border-[#11694A] transition shadow-xs"
+                    >
+                      <div className="font-bold text-[#0B3B2E] text-xs sm:text-sm">{item.studentName}</div>
+                      <div className="text-[11px] text-[#4A5E56] mt-0.5">
+                        <span className="font-semibold text-[#11694A]">{item.course}</span> · {item.parentName}
+                      </div>
+                      <div className="text-[10px] text-[#60736C] font-mono mt-0.5">{item.phone}</div>
+                    </button>
+                  ))}
+                  {items.length === 0 && (
+                    <p className="text-[11px] text-[#60736C] text-center py-6 italic">No applicants in this stage</p>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -139,57 +152,66 @@ export default function AdmissionsCrmBoard() {
       </div>
 
       {selected && (
-        <div className="rounded-2xl border border-emerald-500/30 bg-gray-900/80 p-5 space-y-4">
-          <div className="flex justify-between gap-4 flex-wrap">
+        <div className="rounded-2xl border border-[#E8E1D0] bg-[#FBF8F0] p-6 space-y-5">
+          <div className="flex justify-between items-start gap-4 pb-3 border-b border-[#E8E1D0]">
             <div>
-              <h3 className="text-lg font-bold text-white">{selected.studentName}</h3>
-              <p className="text-sm text-gray-400">
-                {selected.parentName} · {selected.phone} · {selected.course}
+              <span className="text-[10px] uppercase font-bold text-[#C29A3A]">Applicant Details</span>
+              <h3 className="text-lg font-serif font-bold text-[#0B3B2E]">{selected.studentName}</h3>
+              <p className="text-xs text-[#4A5E56] mt-0.5">
+                Parent: {selected.parentName} · Phone: {selected.phone} · Course: <span className="font-semibold text-[#11694A]">{selected.course}</span>
               </p>
             </div>
-            <button type="button" className="text-gray-400 text-sm" onClick={() => setSelected(null)}>
-              Close
+            <button
+              type="button"
+              className="text-xs font-bold px-2.5 py-1 rounded-lg bg-white border border-[#E8E1D0] text-[#4A5E56] hover:text-[#0B3B2E]"
+              onClick={() => setSelected(null)}
+            >
+              ✕ Close
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {CRM_STAGES.map((stage) => (
-              <button
-                key={stage}
-                type="button"
-                onClick={() => onMove(selected._id, stage)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${
-                  selected.pipelineStage === stage
-                    ? 'bg-emerald-600 border-emerald-400 text-white'
-                    : 'border-gray-700 text-gray-300 hover:bg-gray-800'
-                }`}
-              >
-                {ar ? STAGE_LABELS[stage].ar : STAGE_LABELS[stage].en}
-              </button>
-            ))}
+          <div className="space-y-2">
+            <label className="text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider block">Move Pipeline Stage</label>
+            <div className="flex flex-wrap gap-2">
+              {CRM_STAGES.map((stage) => (
+                <button
+                  key={stage}
+                  type="button"
+                  onClick={() => onMove(selected._id, stage)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                    selected.pipelineStage === stage
+                      ? 'bg-[#11694A] border-[#11694A] text-white shadow-xs'
+                      : 'border-[#E8E1D0] bg-white text-[#4A5E56] hover:border-[#11694A] hover:text-[#0B3B2E]'
+                  }`}
+                >
+                  {ar ? STAGE_LABELS[stage].ar : STAGE_LABELS[stage].en}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs text-gray-400 uppercase">Notes</label>
+          <div className="grid md:grid-cols-2 gap-6 pt-2">
+            <div className="space-y-3 bg-white p-4 rounded-xl border border-[#E8E1D0]">
+              <label className="text-xs font-bold text-[#0B3B2E] uppercase tracking-wider block">Admissions Notes</label>
               <textarea
-                className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200"
-                rows={3}
+                className="w-full bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl p-2.5 text-xs text-[#14201B] focus:outline-none focus:ring-1 focus:ring-[#11694A] resize-none"
+                rows={2}
+                placeholder="Log interview feedback or document checklist notes..."
                 value={noteBody}
                 onChange={(e) => setNoteBody(e.target.value)}
               />
               <button
                 type="button"
                 onClick={onAddNote}
-                className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold"
+                className="px-4 py-1.5 rounded-xl bg-[#11694A] hover:bg-[#0B3B2E] text-white text-xs font-bold transition"
               >
-                Add note
+                Add Note
               </button>
-              <ul className="space-y-2 max-h-40 overflow-y-auto">
+              <ul className="space-y-2 max-h-40 overflow-y-auto pt-2 border-t border-[#E8E1D0]">
                 {notes.map((n) => (
-                  <li key={n.id} className="text-xs text-gray-300 border-b border-gray-800 pb-2">
-                    {n.body}
-                    <div className="text-gray-500 mt-1">
+                  <li key={n.id} className="text-xs text-[#14201B] border-b border-[#E8E1D0] pb-2">
+                    <p className="leading-relaxed">{n.body}</p>
+                    <div className="text-[10px] text-[#4A5E56] mt-0.5">
                       {n.profiles?.full_name || 'Staff'} · {new Date(n.created_at).toLocaleString()}
                     </div>
                   </li>
@@ -197,29 +219,35 @@ export default function AdmissionsCrmBoard() {
               </ul>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs text-gray-400 uppercase">Enroll student</label>
-              <input
-                className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200"
-                placeholder="KASHIF-2026-101"
-                value={enrollIndex}
-                onChange={(e) => setEnrollIndex(e.target.value)}
-              />
-              <select
-                className="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200"
-                value={enrollClass}
-                onChange={(e) => setEnrollClass(e.target.value)}
-              >
-                {[1, 2, 3, 4, 5, 6, 7].map((c) => (
-                  <option key={c} value={c}>Class {c}</option>
-                ))}
-              </select>
+            <div className="space-y-3 bg-white p-4 rounded-xl border border-[#E8E1D0]">
+              <label className="text-xs font-bold text-[#0B3B2E] uppercase tracking-wider block">Official Enrollment</label>
+              <div>
+                <label className="block text-[10px] text-[#4A5E56] uppercase mb-1">Assigned Student Index Number</label>
+                <input
+                  className="w-full bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl p-2.5 text-xs text-[#14201B] focus:outline-none focus:ring-1 focus:ring-[#11694A]"
+                  placeholder="e.g. KASHIF-2026-101"
+                  value={enrollIndex}
+                  onChange={(e) => setEnrollIndex(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-[#4A5E56] uppercase mb-1">Class Placement</label>
+                <select
+                  className="w-full bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl p-2.5 text-xs text-[#14201B] focus:outline-none focus:ring-1 focus:ring-[#11694A]"
+                  value={enrollClass}
+                  onChange={(e) => setEnrollClass(e.target.value)}
+                >
+                  {[1, 2, 3, 4, 5, 6, 7].map((c) => (
+                    <option key={c} value={c}>Class {c}</option>
+                  ))}
+                </select>
+              </div>
               <button
                 type="button"
                 onClick={onEnroll}
-                className="px-4 py-2 rounded-xl bg-amber-600 text-white text-sm font-bold"
+                className="w-full py-2 rounded-xl bg-[#C29A3A] hover:bg-[#A8822B] text-[#0B3B2E] text-xs font-bold transition shadow-xs"
               >
-                Create index + enroll
+                Create Index & Issue Parent Invite
               </button>
             </div>
           </div>
