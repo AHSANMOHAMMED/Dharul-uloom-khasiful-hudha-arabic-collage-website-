@@ -1,19 +1,106 @@
-import { Stack } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { I18nProvider, useI18n } from '../lib/i18n';
+import { AuthProvider, useAuth } from '../lib/auth';
+import { colors } from '../lib/theme';
+import { handleInitialPush, listenForPushTaps, registerForPush } from '../lib/push';
+import { LiveProvider } from '../lib/live';
+import LiveToast from '../components/LiveToast';
+
+// Routes reachable without a session (deep links included).
+const PUBLIC = new Set(['login', 'payment-success', 'payment-cancel']);
+
+function AuthGate() {
+  const { session, loading } = useAuth();
+  const segments = useSegments();
+  useEffect(() => {
+    if (loading) return;
+    const first = segments[0];
+    if (!session && first && !PUBLIC.has(first)) router.replace('/login');
+  }, [session, loading, segments]);
+
+  // Register this device for native push once signed in.
+  const userId = session?.user?.id;
+  useEffect(() => {
+    if (userId) registerForPush();
+  }, [userId]);
+  useEffect(() => listenForPushTaps(), []);
+
+  // Cold start from a push tap: route once the session is restored and the
+  // role router has had a moment to place the user in their portal.
+  const initialHandled = useRef(false);
+  useEffect(() => {
+    if (loading || !userId || initialHandled.current) return undefined;
+    initialHandled.current = true;
+    const timer = setTimeout(handleInitialPush, 700);
+    return () => clearTimeout(timer);
+  }, [loading, userId]);
+  return null;
+}
+
+function RootStack() {
+  const { t, ready } = useI18n();
+  if (!ready) return null;
+  const header = {
+    headerStyle: { backgroundColor: colors.primaryDark },
+    headerTintColor: colors.white,
+    headerTitleStyle: { fontWeight: '700' },
+    contentStyle: { backgroundColor: colors.bg },
+  };
+  return (
+    <>
+      <StatusBar style="light" />
+      <AuthGate />
+      <Stack screenOptions={header}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="pending" options={{ title: t('pending.title') }} />
+        <Stack.Screen name="student" options={{ headerShown: false }} />
+        <Stack.Screen name="parent" options={{ headerShown: false }} />
+        <Stack.Screen name="staff" options={{ headerShown: false }} />
+        <Stack.Screen name="admin" options={{ headerShown: false }} />
+        <Stack.Screen name="payment-success" options={{ title: t('payment.successTitle') }} />
+        <Stack.Screen name="payment-cancel" options={{ title: t('payment.cancelTitle') }} />
+        <Stack.Screen name="notifications" options={{ title: t('notif.title') }} />
+        <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
+        <Stack.Screen name="fees" options={{ title: t('fees.title') }} />
+        <Stack.Screen name="results" options={{ title: t('results.title') }} />
+        <Stack.Screen name="report-card" options={{ title: t('results.reportCard') }} />
+        <Stack.Screen name="attendance-history" options={{ title: t('attendance.history') }} />
+        <Stack.Screen name="timetable" options={{ title: t('timetable.title') }} />
+        <Stack.Screen name="certificates" options={{ title: t('cert.title') }} />
+        <Stack.Screen name="hostel" options={{ title: t('hostel.title') }} />
+        <Stack.Screen name="leave-requests" options={{ title: t('leave.title') }} />
+        <Stack.Screen name="discipline" options={{ title: t('child.discipline') }} />
+        <Stack.Screen name="announcements" options={{ title: t('home.announcements') }} />
+        <Stack.Screen name="link-child" options={{ title: t('parent.link') }} />
+        <Stack.Screen name="child/[id]" options={{ title: t('child.overview') }} />
+        <Stack.Screen name="assignment/[id]" options={{ title: t('lms.assignments') }} />
+        <Stack.Screen name="payslip/[id]" options={{ title: t('staff.payslips') }} />
+        <Stack.Screen name="my-attendance" options={{ title: t('staff.myAttendance') }} />
+        <Stack.Screen name="staff-leave" options={{ title: t('staff.requestLeave') }} />
+        <Stack.Screen name="payslips" options={{ title: t('staff.payslips') }} />
+        <Stack.Screen name="receipt/[id]" options={{ title: t('receipt.title') }} />
+        <Stack.Screen name="receive-payment" options={{ title: t('counter.title') }} />
+        <Stack.Screen name="dictionary" options={{ title: t('dict.title') }} />
+      </Stack>
+      <LiveToast />
+    </>
+  );
+}
 
 export default function RootLayout() {
   return (
-    <>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: true, headerTintColor: '#047857' }}>
-        <Stack.Screen name="index" options={{ title: 'Kashiful Hudha' }} />
-        <Stack.Screen name="login" options={{ title: 'Sign in' }} />
-        <Stack.Screen name="parent" options={{ title: 'Parent' }} />
-        <Stack.Screen name="student" options={{ title: 'Student' }} />
-        <Stack.Screen name="tutor" options={{ title: 'Tutor' }} />
-        <Stack.Screen name="payment-success" options={{ title: 'Payment success' }} />
-        <Stack.Screen name="payment-cancel" options={{ title: 'Payment cancelled' }} />
-      </Stack>
-    </>
+    <SafeAreaProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <LiveProvider>
+            <RootStack />
+          </LiveProvider>
+        </AuthProvider>
+      </I18nProvider>
+    </SafeAreaProvider>
   );
 }

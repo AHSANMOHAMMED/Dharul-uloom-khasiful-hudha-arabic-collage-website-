@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import BookReader from '../components/library/BookReader';
 import { getBook } from '../lib/booksApi';
+import { tx } from '../lib/tx';
 
 function InfoBadge({ label, value }) {
   return (
@@ -16,8 +17,7 @@ function InfoBadge({ label, value }) {
 
 const BookReaderPage = () => {
   const { id } = useParams();
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation(); // subscribe: re-render on language change
 
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,15 +37,15 @@ const BookReaderPage = () => {
   }, [id]);
 
   if (loading) {
-    return <div className="py-20 text-center text-gray-400">{ar ? 'جارٍ التحميل...' : 'Loading...'}</div>;
+    return <div className="py-20 text-center text-gray-400">{tx('جارٍ التحميل...', 'Loading...')}</div>;
   }
 
   if (!book) {
     return (
       <div className="py-20 text-center">
-        <p className="mb-4 text-gray-500">{ar ? 'لم يتم العثور على الكتاب.' : 'Book not found.'}</p>
+        <p className="mb-4 text-gray-500">{tx('لم يتم العثور على الكتاب.', 'Book not found.')}</p>
         <Link to="/library" className="text-islamic-green underline">
-          {ar ? 'العودة إلى المكتبة' : 'Back to library'}
+          {tx('العودة إلى المكتبة', 'Back to library')}
         </Link>
       </div>
     );
@@ -63,7 +63,7 @@ const BookReaderPage = () => {
       <div className="mx-auto max-w-6xl">
         <div className="mb-4 flex items-center justify-between gap-3">
           <Link to="/library" className="inline-block text-sm text-islamic-green hover:underline">
-            {ar ? '← العودة إلى المكتبة' : '← Back to library'}
+            {tx('← العودة إلى المكتبة', '← Back to library')}
           </Link>
           {book.drive_preview_url && (
             <a
@@ -72,7 +72,7 @@ const BookReaderPage = () => {
               rel="noreferrer"
               className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-bold text-emerald-800 shadow-sm"
             >
-              {ar ? 'فتح في Google Drive' : 'Open in Google Drive'}
+              {tx('فتح في Google Drive', 'Open in Google Drive')}
             </a>
           )}
         </div>
@@ -96,16 +96,16 @@ const BookReaderPage = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-3 p-6 sm:grid-cols-2 lg:grid-cols-4">
-            <InfoBadge label={ar ? 'المؤلف' : 'Author'} value={book.author} />
-            <InfoBadge label={ar ? 'اللغة' : 'Language'} value={book.language || 'ar'} />
-            <InfoBadge label={ar ? 'الصفحات' : 'Pages'} value={book.pages ? String(book.pages) : '—'} />
-            <InfoBadge label={ar ? 'السنة' : 'Year'} value={book.year ? String(book.year) : '—'} />
+            <InfoBadge label={tx('المؤلف', 'Author')} value={book.author} />
+            <InfoBadge label={tx('اللغة', 'Language')} value={book.language || 'ar'} />
+            <InfoBadge label={tx('الصفحات', 'Pages')} value={book.pages ? String(book.pages) : '—'} />
+            <InfoBadge label={tx('السنة', 'Year')} value={book.year ? String(book.year) : '—'} />
           </div>
 
           {book.categories?.length > 0 && (
             <div className="px-6 pb-6">
               <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-500">
-                {ar ? 'التصنيفات' : 'Categories'}
+                {tx('التصنيفات', 'Categories')}
               </div>
               <div className="flex flex-wrap gap-2">
                 {book.categories.map((category) => (
@@ -124,7 +124,7 @@ const BookReaderPage = () => {
           {book.description && (
             <div className="border-t border-emerald-100 px-6 py-5">
               <div className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-gray-500">
-                {ar ? 'الوصف' : 'Description'}
+                {tx('الوصف', 'Description')}
               </div>
               <p dir="rtl" className="font-arabic leading-relaxed text-gray-700">
                 {book.description}

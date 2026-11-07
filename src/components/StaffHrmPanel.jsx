@@ -10,11 +10,11 @@ import {
 } from '../lib/hrmApi';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import { tx } from '../lib/tx';
 
 export default function StaffHrmPanel() {
-  const { i18n } = useTranslation();
+  useTranslation(); // subscribe: re-render on language change
   const { user } = useAuth();
-  const ar = i18n.language === 'ar';
   const [records, setRecords] = useState([]);
   const [tutors, setTutors] = useState([]);
   const [salaries, setSalaries] = useState([]);
@@ -52,7 +52,7 @@ export default function StaffHrmPanel() {
         emergency_phone: form.emergency_phone || null,
         notes: form.notes || null,
       });
-      toast.success(ar ? 'تم حفظ سجل الموظفين' : 'Staff HR record saved');
+      toast.success(tx('تم حفظ سجل الموظفين', 'Staff HR record saved'));
       setForm({
         profile_id: '',
         department: '',
@@ -85,7 +85,7 @@ export default function StaffHrmPanel() {
         department: existing?.department || null,
         job_title: existing?.job_title || null,
       });
-      toast.success(ar ? 'تم رفع المستند' : 'Document uploaded');
+      toast.success(tx('تم رفع المستند', 'Document uploaded'));
       await reload();
     } catch (err) {
       toast.error(err.message);
@@ -94,7 +94,7 @@ export default function StaffHrmPanel() {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-xl font-bold text-white">{ar ? 'إدارة الموارد البشرية' : 'Staff HRM'}</h2>
+      <h2 className="text-xl font-bold text-white">{tx('إدارة الموارد البشرية', 'Staff HRM')}</h2>
 
       <form onSubmit={onSave} className="grid md:grid-cols-2 gap-3 rounded-2xl border border-gray-800 bg-gray-900/50 p-4">
         <select
@@ -103,7 +103,7 @@ export default function StaffHrmPanel() {
           value={form.profile_id}
           onChange={(e) => setForm({ ...form, profile_id: e.target.value })}
         >
-          <option value="">{ar ? 'اختر موظفاً' : 'Select staff'}</option>
+          <option value="">{tx('اختر موظفاً', 'Select staff')}</option>
           {tutors.map((t) => (
             <option key={t.id} value={t.id}>{t.full_name}</option>
           ))}
@@ -115,7 +115,7 @@ export default function StaffHrmPanel() {
         <input className="bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200" placeholder="Emergency phone" value={form.emergency_phone} onChange={(e) => setForm({ ...form, emergency_phone: e.target.value })} />
         <textarea className="md:col-span-2 bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-200" rows={2} placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         <button type="submit" className="md:col-span-2 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-sm">
-          {ar ? 'حفظ' : 'Save HR record'}
+          {tx('حفظ', 'Save HR record')}
         </button>
       </form>
 
@@ -159,7 +159,7 @@ export default function StaffHrmPanel() {
 
       <div className="space-y-3">
         <div className="flex items-center gap-3">
-          <h3 className="text-lg font-bold text-white">{ar ? 'قسائم الرواتب' : 'Payroll slips'}</h3>
+          <h3 className="text-lg font-bold text-white">{tx('قسائم الرواتب', 'Payroll slips')}</h3>
           <input
             type="month"
             className="bg-gray-950 border border-gray-800 rounded-lg px-3 py-1 text-sm text-gray-200"

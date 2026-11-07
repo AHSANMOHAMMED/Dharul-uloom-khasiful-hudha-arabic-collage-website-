@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { tx } from '../../lib/tx';
 
 const LANGUAGE_LABELS = {
   ar: { ar: 'عربي', en: 'Arabic' },
@@ -10,9 +11,8 @@ const LANGUAGE_LABELS = {
 };
 
 const BookCard = ({ book }) => {
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
-  const languageLabel = LANGUAGE_LABELS[book.language]?.[ar ? 'ar' : 'en'];
+  useTranslation(); // subscribe: re-render on language change
+  const languageLabel = LANGUAGE_LABELS[book.language]?.[tx('ar', 'en')];
   const primaryCategory = book.categories?.[0];
 
   return (

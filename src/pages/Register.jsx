@@ -3,9 +3,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
+import { tx } from '../lib/tx';
 
 const Register = () => {
-  const { i18n } = useTranslation();
+  useTranslation(); // subscribe: re-render on language change
   const { register } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -31,21 +32,19 @@ const Register = () => {
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      setError(i18n.language === 'ar' ? 'كلمات المرور غير متطابقة' : 'Passwords do not match');
+      setError(tx('كلمات المرور غير متطابقة', 'Passwords do not match'));
       return;
     }
 
     // Validate password length
     if (formData.password.length < 8) {
-      setError(i18n.language === 'ar' 
-        ? 'يجب أن تكون كلمة المرور 8 أحرف على الأقل' 
-        : 'Password must be at least 8 characters');
+      setError(tx('يجب أن تكون كلمة المرور 8 أحرف على الأقل', 'Password must be at least 8 characters'));
       return;
     }
 
     // Validate index number if student
     if (formData.role === 'student' && !formData.indexNumber.trim()) {
-      setError(i18n.language === 'ar' ? 'رقم القيد مطلوب للطلاب' : 'Index number is required for students');
+      setError(tx('رقم القيد مطلوب للطلاب', 'Index number is required for students'));
       return;
     }
 
@@ -65,9 +64,7 @@ const Register = () => {
         // Email confirmation is enabled on the project; no session yet.
         navigate('/login', {
           state: {
-            message: i18n.language === 'ar'
-              ? 'تم إنشاء حسابك. يرجى تأكيد بريدك الإلكتروني ثم تسجيل الدخول.'
-              : 'Account created. Please confirm your email, then sign in.'
+            message: tx('تم إنشاء حسابك. يرجى تأكيد بريدك الإلكتروني ثم تسجيل الدخول.', 'Account created. Please confirm your email, then sign in.')
           }
         });
       } else {
@@ -91,12 +88,12 @@ const Register = () => {
       >
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-islamic-green">
-            {i18n.language === 'ar' ? 'إنشاء حساب' : 'Create Account'}
+            {tx('إنشاء حساب', 'Create Account')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {i18n.language === 'ar' ? 'أو ' : 'Or '}
+            {tx('أو ', 'Or ')}
             <Link to="/login" className="font-medium text-islamic-green hover:text-islamic-dark">
-              {i18n.language === 'ar' ? 'تسجيل الدخول إلى حسابك' : 'sign in to your account'}
+              {tx('تسجيل الدخول إلى حسابك', 'sign in to your account')}
             </Link>
           </p>
         </div>
@@ -111,7 +108,7 @@ const Register = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {i18n.language === 'ar' ? 'الاسم' : 'Full Name'}
+                {tx('الاسم', 'Full Name')}
               </label>
               <input
                 name="username"
@@ -120,13 +117,13 @@ const Register = () => {
                 value={formData.username}
                 onChange={handleChange}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                placeholder={i18n.language === 'ar' ? 'أدخل اسمك الكامل' : 'Enter your full name'}
+                placeholder={tx('أدخل اسمك الكامل', 'Enter your full name')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {i18n.language === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}
+                {tx('البريد الإلكتروني', 'Email Address')}
               </label>
               <input
                 name="email"
@@ -135,13 +132,13 @@ const Register = () => {
                 value={formData.email}
                 onChange={handleChange}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                placeholder={i18n.language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
+                placeholder={tx('أدخل بريدك الإلكتروني', 'Enter your email')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {i18n.language === 'ar' ? 'نوع الحساب' : 'Account Type'}
+                {tx('نوع الحساب', 'Account Type')}
               </label>
               <select
                 name="role"
@@ -149,16 +146,17 @@ const Register = () => {
                 onChange={handleChange}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
               >
-                <option value="parent">{i18n.language === 'ar' ? 'ولي أمر' : 'Parent'}</option>
-                <option value="student">{i18n.language === 'ar' ? 'طالب' : 'Student'}</option>
-                <option value="tutor">{i18n.language === 'ar' ? 'معلم / أستاذ' : 'Teacher / Tutor'}</option>
+                <option value="parent">{tx('ولي أمر', 'Parent')}</option>
+                <option value="student">{tx('طالب', 'Student')}</option>
+                <option value="tutor">{tx('معلم / أستاذ', 'Teacher / Tutor')}</option>
+                <option value="staff">{tx('موظف إداري', 'Non-teaching staff')}</option>
               </select>
             </div>
 
             {formData.role === 'student' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {i18n.language === 'ar' ? 'رقم القيد' : 'Index Number'}
+                  {tx('رقم القيد', 'Index Number')}
                 </label>
                 <input
                   name="indexNumber"
@@ -167,14 +165,14 @@ const Register = () => {
                   value={formData.indexNumber}
                   onChange={handleChange}
                   className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                  placeholder={i18n.language === 'ar' ? 'أدخل رقم القيد الخاص بك (مثال: KASHIF-2026-001)' : 'Enter your index number (e.g., KASHIF-2026-001)'}
+                  placeholder={tx('أدخل رقم القيد الخاص بك (مثال: KASHIF-2026-001)', 'Enter your index number (e.g., KASHIF-2026-001)')}
                 />
               </div>
             )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {i18n.language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                {tx('رقم الهاتف', 'Phone Number')}
               </label>
               <input
                 name="phone"
@@ -183,13 +181,13 @@ const Register = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                placeholder={i18n.language === 'ar' ? 'أدخل رقم الهاتف' : 'Enter phone number'}
+                placeholder={tx('أدخل رقم الهاتف', 'Enter phone number')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {i18n.language === 'ar' ? 'كلمة المرور' : 'Password'}
+                {tx('كلمة المرور', 'Password')}
               </label>
               <input
                 name="password"
@@ -198,13 +196,13 @@ const Register = () => {
                 value={formData.password}
                 onChange={handleChange}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                placeholder={i18n.language === 'ar' ? 'أدخل كلمة المرور (8 أحرف على الأقل)' : 'Enter password (min 8 characters)'}
+                placeholder={tx('أدخل كلمة المرور (8 أحرف على الأقل)', 'Enter password (min 8 characters)')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {i18n.language === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm Password'}
+                {tx('تأكيد كلمة المرور', 'Confirm Password')}
               </label>
               <input
                 name="confirmPassword"
@@ -213,7 +211,7 @@ const Register = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                placeholder={i18n.language === 'ar' ? 'أعد إدخال كلمة المرور' : 'Re-enter password'}
+                placeholder={tx('أعد إدخال كلمة المرور', 'Re-enter password')}
               />
             </div>
           </div>
@@ -224,8 +222,8 @@ const Register = () => {
             className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-islamic-green hover:bg-islamic-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-islamic-green disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading 
-              ? (i18n.language === 'ar' ? 'جاري التسجيل...' : 'Creating account...')
-              : (i18n.language === 'ar' ? 'إنشاء حساب' : 'Create account')
+              ? (tx('جاري التسجيل...', 'Creating account...'))
+              : (tx('إنشاء حساب', 'Create account'))
             }
           </button>
 
@@ -234,7 +232,7 @@ const Register = () => {
               to="/"
               className="text-sm font-medium text-gray-600 hover:text-islamic-green"
             >
-              {i18n.language === 'ar' ? '← العودة إلى الصفحة الرئيسية' : '← Back to home'}
+              {tx('← العودة إلى الصفحة الرئيسية', '← Back to home')}
             </Link>
           </div>
         </form>

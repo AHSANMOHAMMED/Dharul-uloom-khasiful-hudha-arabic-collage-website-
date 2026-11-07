@@ -42,7 +42,7 @@ Nurturing faith and knowledge through quality Islamic education, serving as a fo
 - **Framework**: React.js with Vite
 - **Styling**: Tailwind CSS
 - **Routing**: React Router
-- **Internationalization**: react-i18next (English/Arabic)
+- **Internationalization**: react-i18next (English / Arabic / Tamil)
 - **Forms**: React Hook Form
 - **Animations**: Framer Motion
 - **SEO**: React Helmet
@@ -106,6 +106,8 @@ FRONTEND_URL=http://localhost:5173
 | Doc | Purpose |
 |-----|---------|
 | [docs/MASTER_PRD.md](docs/MASTER_PRD.md) | Master product requirements (full ERP vision, phases, AI prompt) |
+| [docs/ERP_IMPLEMENTATION.md](docs/ERP_IMPLEMENTATION.md) | Audit findings + fixes, ERP/HRM/CRM/accounting/SaaS modules (0015–0020), verification & deploy order |
+| [docs/PERFORMANCE.md](docs/PERFORMANCE.md) | 10 s latency budget, load-test results (`npm run test:perf`), load balancing & scaling |
 | [docs/PLATFORM_GUIDE.md](docs/PLATFORM_GUIDE.md) | Current architecture, features, data flows |
 | [docs/UI_ENHANCEMENT_SPEC.md](docs/UI_ENHANCEMENT_SPEC.md) | Web + mobile UI enhancement brief |
 | [docs/GO_LIVE.md](docs/GO_LIVE.md) | Deploy / secrets / smoke checklist |
@@ -114,7 +116,7 @@ FRONTEND_URL=http://localhost:5173
 ## Features
 
 ### Implemented
-- Bilingual support (English/Arabic) with RTL
+- Trilingual UI — English, Arabic (RTL) and Tamil — on web and mobile
 - Supabase auth with role dashboards (student, parent, tutor, treasurer, principal, librarian, admin)
 - Admin CMS for news, faculty, curriculum, gallery, and courses
 - Online admissions with validation
@@ -124,7 +126,8 @@ FRONTEND_URL=http://localhost:5173
 - PWA: install prompt, offline shell, service worker
 - 7-year curriculum, gallery, faculty, news from Supabase
 - Google Maps & WhatsApp integration
-- CI: lint, build, Vitest
+- CI: lint, build, Vitest, database migrations + 135 RLS/ERP tests (`npm run test:db`), `deno check` for edge functions
+- College ERP workspace at `/erp`: students & academics, exams/report cards, admissions CRM, fees ledger, double-entry accounting, expenses, donations, payroll (EPF/ETF), HR & leave, hostel, discipline/welfare, certificates (`/verify/:code`), audit log, SaaS tenant admin
 
 ### Optional / external setup
 - PayHere merchant account (sandbox available)

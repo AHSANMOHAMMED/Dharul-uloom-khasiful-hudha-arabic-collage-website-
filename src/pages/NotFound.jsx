@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
+import { tx } from '../lib/tx';
 
 const NotFound = () => {
-  const { i18n } = useTranslation()
-  const isAr = i18n.language === 'ar'
+  useTranslation() // subscribe: re-render on language change
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -16,18 +16,16 @@ const NotFound = () => {
       >
         <p className="text-7xl md:text-9xl font-bold text-islamic-green">404</p>
         <h1 className="mt-4 text-2xl md:text-3xl font-bold text-islamic-dark">
-          {isAr ? 'الصفحة غير موجودة' : 'Page Not Found'}
+          {tx('الصفحة غير موجودة', 'Page Not Found')}
         </h1>
         <p className="mt-2 text-gray-600 max-w-md mx-auto">
-          {isAr
-            ? 'عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.'
-            : "Sorry, the page you are looking for doesn't exist or has been moved."}
+          {tx('عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.', "Sorry, the page you are looking for doesn't exist or has been moved.")}
         </p>
         <Link
           to="/"
           className="inline-block mt-8 px-6 py-3 bg-islamic-green text-white rounded-lg font-semibold hover:bg-islamic-dark transition-colors"
         >
-          {isAr ? 'العودة إلى الرئيسية' : 'Back to Home'}
+          {tx('العودة إلى الرئيسية', 'Back to Home')}
         </Link>
       </motion.div>
     </div>

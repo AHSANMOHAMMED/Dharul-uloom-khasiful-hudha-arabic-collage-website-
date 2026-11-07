@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { listCurriculum } from '../lib/contentApi';
+import { tx } from '../lib/tx';
 
 const Curriculum = () => {
   const { i18n } = useTranslation();
@@ -37,7 +38,7 @@ const Curriculum = () => {
             animate={{ y: 0, opacity: 1 }}
             className="text-4xl md:text-5xl font-bold mb-4"
           >
-            {i18n.language === 'ar' ? 'المنهج الدراسي' : '7-Year Curriculum'}
+            {tx('المنهج الدراسي', '7-Year Curriculum')}
           </motion.h1>
           <motion.p
             initial={{ y: -10, opacity: 0 }}
@@ -45,9 +46,7 @@ const Curriculum = () => {
             transition={{ delay: 0.2 }}
             className="text-xl text-gray-200"
           >
-            {i18n.language === 'ar'
-              ? 'برنامج شامل من 7 سنوات للتعليم الإسلامي (الأعمار 5-12)'
-              : 'Comprehensive 7-Year Program for Islamic Education (Ages 5-12)'}
+            {tx('برنامج شامل من 7 سنوات للتعليم الإسلامي (الأعمار 5-12)', 'Comprehensive 7-Year Program for Islamic Education (Ages 5-12)')}
           </motion.p>
         </div>
       </section>
@@ -59,7 +58,7 @@ const Curriculum = () => {
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-islamic-green mx-auto"></div>
               <p className="mt-4 text-gray-600">
-                {i18n.language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+                {tx('جاري التحميل...', 'Loading...')}
               </p>
             </div>
           ) : (
@@ -81,12 +80,12 @@ const Curriculum = () => {
                       <div className="w-12 h-12 bg-islamic-green text-white rounded-full flex items-center justify-center font-bold text-xl">
                         {curriculum.classNumber}
                       </div>
-                      <div className={`text-${i18n.language === 'ar' ? 'right' : 'left'}`}>
+                      <div className={`text-${tx('right', 'left')}`}>
                         <h3 className="text-xl font-bold text-islamic-green">
                           {curriculum.className[i18n.language]}
                         </h3>
                         <p className="text-sm text-gray-600">
-                          {i18n.language === 'ar' ? 'الأعمار' : 'Ages'}: {curriculum.ageRange.min}-{curriculum.ageRange.max}
+                          {tx('الأعمار', 'Ages')}: {curriculum.ageRange.min}-{curriculum.ageRange.max}
                         </p>
                       </div>
                     </div>
@@ -113,7 +112,7 @@ const Curriculum = () => {
                       {/* Objectives */}
                       <div className="mt-4 mb-6">
                         <h4 className="font-semibold text-lg mb-2 text-islamic-green">
-                          {i18n.language === 'ar' ? 'الأهداف التعليمية' : 'Learning Objectives'}
+                          {tx('الأهداف التعليمية', 'Learning Objectives')}
                         </h4>
                         <ul className="list-disc list-inside space-y-1 text-gray-700">
                           {curriculum.objectives[i18n.language].map((objective, idx) => (
@@ -125,7 +124,7 @@ const Curriculum = () => {
                       {/* Modules */}
                       <div className="space-y-4">
                         <h4 className="font-semibold text-lg text-islamic-green">
-                          {i18n.language === 'ar' ? 'الوحدات الدراسية' : 'Modules'}
+                          {tx('الوحدات الدراسية', 'Modules')}
                         </h4>
                         {curriculum.modules.map((module, idx) => (
                           <div key={idx} className="bg-gray-50 rounded-lg p-4">
@@ -135,10 +134,10 @@ const Curriculum = () => {
                               </h5>
                               <div className="flex gap-4 text-sm text-gray-600 mt-2 md:mt-0">
                                 <span>
-                                  {i18n.language === 'ar' ? 'الساعات' : 'Credits'}: {module.credits}
+                                  {tx('الساعات', 'Credits')}: {module.credits}
                                 </span>
                                 <span>
-                                  {i18n.language === 'ar' ? 'ساعات/أسبوع' : 'Hours/Week'}: {module.hoursPerWeek}
+                                  {tx('ساعات/أسبوع', 'Hours/Week')}: {module.hoursPerWeek}
                                 </span>
                               </div>
                             </div>
@@ -150,7 +149,7 @@ const Curriculum = () => {
                             {module.books && module.books.length > 0 && (
                               <div>
                                 <p className="text-xs font-semibold text-gray-600 mb-2">
-                                  {i18n.language === 'ar' ? 'الكتب المقررة' : 'Assigned Books'}:
+                                  {tx('الكتب المقررة', 'Assigned Books')}:
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                   {module.books.map((book, bookIdx) => (
@@ -170,7 +169,7 @@ const Curriculum = () => {
                       {/* Assessment Methods */}
                       <div className="mt-6">
                         <h4 className="font-semibold text-lg mb-2 text-islamic-green">
-                          {i18n.language === 'ar' ? 'طرق التقييم' : 'Assessment Methods'}
+                          {tx('طرق التقييم', 'Assessment Methods')}
                         </h4>
                         <div className="flex flex-wrap gap-2">
                           {curriculum.assessmentMethods[i18n.language].map((method, idx) => (
@@ -198,29 +197,29 @@ const Curriculum = () => {
             className="mt-12 bg-gradient-to-br from-islamic-green to-islamic-dark text-white p-8 rounded-lg"
           >
             <h3 className="text-2xl font-bold mb-4">
-              {i18n.language === 'ar' ? 'عن منهجنا الدراسي' : 'About Our Curriculum'}
+              {tx('عن منهجنا الدراسي', 'About Our Curriculum')}
             </h3>
             <div className="grid md:grid-cols-2 gap-6 text-sm">
               <div>
                 <h4 className="font-semibold mb-2 text-islamic-gold">
-                  {i18n.language === 'ar' ? 'المبادئ الأساسية' : 'Core Principles'}
+                  {tx('المبادئ الأساسية', 'Core Principles')}
                 </h4>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>{i18n.language === 'ar' ? 'تعليم تدريجي من الأساس إلى المتقدم' : 'Progressive learning from foundation to advanced'}</li>
-                  <li>{i18n.language === 'ar' ? 'التركيز على حفظ القرآن الكريم' : 'Focus on Quran memorization (Hifz)'}</li>
-                  <li>{i18n.language === 'ar' ? 'فهم شامل للغة العربية' : 'Comprehensive Arabic language understanding'}</li>
-                  <li>{i18n.language === 'ar' ? 'دراسة عميقة للفقه الحنفي' : 'In-depth Hanafi fiqh study'}</li>
+                  <li>{tx('تعليم تدريجي من الأساس إلى المتقدم', 'Progressive learning from foundation to advanced')}</li>
+                  <li>{tx('التركيز على حفظ القرآن الكريم', 'Focus on Quran memorization (Hifz)')}</li>
+                  <li>{tx('فهم شامل للغة العربية', 'Comprehensive Arabic language understanding')}</li>
+                  <li>{tx('دراسة عميقة للفقه الحنفي', 'In-depth Hanafi fiqh study')}</li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold mb-2 text-islamic-gold">
-                  {i18n.language === 'ar' ? 'المحاذاة الأكاديمية' : 'Academic Alignment'}
+                  {tx('المحاذاة الأكاديمية', 'Academic Alignment')}
                 </h4>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>{i18n.language === 'ar' ? 'منهج درس نظامي التقليدي' : 'Traditional Dars-e-Nizami curriculum'}</li>
-                  <li>{i18n.language === 'ar' ? 'معايير وزارة الشؤون الدينية' : 'Ministry of Religious Affairs standards'}</li>
-                  <li>{i18n.language === 'ar' ? 'توافق مع SEUSL (جامعة سري لانكا)' : 'SEUSL (Sri Lankan university) alignment'}</li>
-                  <li>{i18n.language === 'ar' ? 'نصوص معتمدة من علماء موثوقين' : 'Texts authenticated by trusted scholars'}</li>
+                  <li>{tx('منهج درس نظامي التقليدي', 'Traditional Dars-e-Nizami curriculum')}</li>
+                  <li>{tx('معايير وزارة الشؤون الدينية', 'Ministry of Religious Affairs standards')}</li>
+                  <li>{tx('توافق مع SEUSL (جامعة سري لانكا)', 'SEUSL (Sri Lankan university) alignment')}</li>
+                  <li>{tx('نصوص معتمدة من علماء موثوقين', 'Texts authenticated by trusted scholars')}</li>
                 </ul>
               </div>
             </div>

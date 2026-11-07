@@ -9,6 +9,7 @@ import { submitAdmission } from '../lib/admissionsApi'
 import { sendContactMessage } from '../lib/contentApi'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { tx } from '../lib/tx';
 
 // Validation schema
 const admissionSchema = yup.object().shape({
@@ -28,7 +29,7 @@ const admissionSchema = yup.object().shape({
 })
 
 const Admissions = () => {
-  const { i18n } = useTranslation()
+  useTranslation() // subscribe: re-render on language change
   const { isAuthenticated } = useAuth()
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -43,9 +44,7 @@ const Admissions = () => {
       if (isAuthenticated) {
         // Persist as a tracked application for the signed-in user.
         await submitAdmission(data)
-        toast.success(i18n.language === 'ar' 
-          ? 'تم تقديم طلبك بنجاح! يمكنك متابعة حالته من لوحة التحكم.'
-          : 'Application submitted successfully! Track it in your dashboard.')
+        toast.success(tx('تم تقديم طلبك بنجاح! يمكنك متابعة حالته من لوحة التحكم.', 'Application submitted successfully! Track it in your dashboard.'))
       } else {
         // Guests have no account to track against, so route to the contact inbox.
         await sendContactMessage({
@@ -55,17 +54,13 @@ const Admissions = () => {
           subject: 'Admission Application',
           message: `Admission Application:\nStudent: ${data.studentName}\nAge: ${data.age}\nCourse: ${data.course}\nAddress: ${data.address}\nPrevious Education: ${data.previousEducation || 'N/A'}`
         })
-        toast.success(i18n.language === 'ar'
-          ? 'تم إرسال طلبك بنجاح! سنتواصل معك قريباً.'
-          : 'Application sent successfully! We will contact you soon.')
+        toast.success(tx('تم إرسال طلبك بنجاح! سنتواصل معك قريباً.', 'Application sent successfully! We will contact you soon.'))
       }
       setSubmitted(true)
       reset()
       setTimeout(() => setSubmitted(false), 5000)
     } catch (error) {
-      toast.error(i18n.language === 'ar'
-        ? 'حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.'
-        : 'Error submitting application. Please try again.')
+      toast.error(tx('حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.', 'Error submitting application. Please try again.'))
       console.error('Submission error:', error)
     } finally {
       setLoading(false)
@@ -78,12 +73,10 @@ const Admissions = () => {
       <section className="bg-islamic-green text-white py-16 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {i18n.language === 'ar' ? 'القبول' : 'Admissions'}
+            {tx('القبول', 'Admissions')}
           </h1>
           <p className="text-xl text-gray-200">
-            {i18n.language === 'ar'
-              ? 'التسجيل الآن مفتوح للعام 2025'
-              : 'Admissions now open for 2025'}
+            {tx('التسجيل الآن مفتوح للعام 2025', 'Admissions now open for 2025')}
           </p>
         </div>
       </section>
@@ -98,21 +91,19 @@ const Admissions = () => {
             className="bg-white rounded-lg shadow-lg p-8 mb-8"
           >
             <h2 className="text-2xl font-bold text-islamic-green mb-4">
-              {i18n.language === 'ar' ? 'معلومات القبول' : 'Admission Information'}
+              {tx('معلومات القبول', 'Admission Information')}
             </h2>
             <div className="space-y-4 text-gray-700">
               <p>
-                <strong>{i18n.language === 'ar' ? 'العمر المطلوب:' : 'Age Requirement:'}</strong>{' '}
-                {i18n.language === 'ar' ? '5-15 سنة' : '5-15 years'}
+                <strong>{tx('العمر المطلوب:', 'Age Requirement:')}</strong>{' '}
+                {tx('5-15 سنة', '5-15 years')}
               </p>
               <p>
-                <strong>{i18n.language === 'ar' ? 'الرسوم:' : 'Fees:'}</strong>{' '}
-                {i18n.language === 'ar' 
-                  ? 'التعليم القائم على التبرعات - لا توجد رسوم إلزامية'
-                  : 'Donation-based education - No mandatory fees'}
+                <strong>{tx('الرسوم:', 'Fees:')}</strong>{' '}
+                {tx('التعليم القائم على التبرعات - لا توجد رسوم إلزامية', 'Donation-based education - No mandatory fees')}
               </p>
               <p>
-                <strong>{i18n.language === 'ar' ? 'الاتصال:' : 'Contact:'}</strong>{' '}
+                <strong>{tx('الاتصال:', 'Contact:')}</strong>{' '}
                 032-5612355, 070-5668463, 071-5576060
               </p>
             </div>
@@ -126,22 +117,18 @@ const Admissions = () => {
             className="bg-white rounded-lg shadow-lg p-8"
           >
             <h2 className="text-2xl font-bold text-islamic-green mb-6">
-              {i18n.language === 'ar' ? 'نموذج التقديم' : 'Application Form'}
+              {tx('نموذج التقديم', 'Application Form')}
             </h2>
 
             {!isAuthenticated && (
               <div className="mb-6 p-4 bg-blue-100 text-blue-700 rounded-lg">
-                {i18n.language === 'ar'
-                  ? 'لتتبع حالة طلبك، يرجى تسجيل الدخول أو إنشاء حساب.'
-                  : 'To track your application status, please login or create an account.'}
+                {tx('لتتبع حالة طلبك، يرجى تسجيل الدخول أو إنشاء حساب.', 'To track your application status, please login or create an account.')}
               </div>
             )}
             
             {submitted && (
               <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg">
-                {i18n.language === 'ar'
-                  ? 'شكرا لك! تم إرسال طلبك بنجاح. سنتواصل معك قريبًا.'
-                  : 'Thank you! Your application has been submitted successfully. We will contact you soon.'}
+                {tx('شكرا لك! تم إرسال طلبك بنجاح. سنتواصل معك قريبًا.', 'Thank you! Your application has been submitted successfully. We will contact you soon.')}
               </div>
             )}
 
@@ -150,7 +137,7 @@ const Admissions = () => {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  {i18n.language === 'ar' ? 'اسم الطالب *' : 'Student Name *'}
+                  {tx('اسم الطالب *', 'Student Name *')}
                 </label>
                 <input
                   type="text"
@@ -167,7 +154,7 @@ const Admissions = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2">
-                    {i18n.language === 'ar' ? 'العمر *' : 'Age *'}
+                    {tx('العمر *', 'Age *')}
                   </label>
                   <input
                     type="number"
@@ -185,7 +172,7 @@ const Admissions = () => {
 
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2">
-                    {i18n.language === 'ar' ? 'اسم ولي الأمر *' : 'Parent Name *'}
+                    {tx('اسم ولي الأمر *', 'Parent Name *')}
                   </label>
                   <input
                     type="text"
@@ -203,7 +190,7 @@ const Admissions = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2">
-                    {i18n.language === 'ar' ? 'الهاتف *' : 'Phone *'}
+                    {tx('الهاتف *', 'Phone *')}
                   </label>
                   <input
                     type="tel"
@@ -220,7 +207,7 @@ const Admissions = () => {
 
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2">
-                    {i18n.language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                    {tx('البريد الإلكتروني', 'Email')}
                   </label>
                   <input
                     type="email"
@@ -237,7 +224,7 @@ const Admissions = () => {
 
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  {i18n.language === 'ar' ? 'العنوان *' : 'Address *'}
+                  {tx('العنوان *', 'Address *')}
                 </label>
                 <textarea
                   {...register('address')}
@@ -253,7 +240,7 @@ const Admissions = () => {
 
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  {i18n.language === 'ar' ? 'التعليم السابق' : 'Previous Education'}
+                  {tx('التعليم السابق', 'Previous Education')}
                 </label>
                 <input
                   type="text"
@@ -264,7 +251,7 @@ const Admissions = () => {
 
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  {i18n.language === 'ar' ? 'الدورة المطلوبة *' : 'Desired Course *'}
+                  {tx('الدورة المطلوبة *', 'Desired Course *')}
                 </label>
                 <select
                   {...register('course')}
@@ -273,22 +260,22 @@ const Admissions = () => {
                   }`}
                 >
                   <option value="">
-                    {i18n.language === 'ar' ? 'اختر دورة' : 'Select a course'}
+                    {tx('اختر دورة', 'Select a course')}
                   </option>
                   <option value="quran">
-                    {i18n.language === 'ar' ? 'حفظ القرآن' : 'Quran Memorization'}
+                    {tx('حفظ القرآن', 'Quran Memorization')}
                   </option>
                   <option value="arabic">
-                    {i18n.language === 'ar' ? 'قواعد اللغة العربية' : 'Arabic Grammar'}
+                    {tx('قواعد اللغة العربية', 'Arabic Grammar')}
                   </option>
                   <option value="hadith">
-                    {i18n.language === 'ar' ? 'دراسات الحديث' : 'Hadith Studies'}
+                    {tx('دراسات الحديث', 'Hadith Studies')}
                   </option>
                   <option value="fiqh">
-                    {i18n.language === 'ar' ? 'الفقه الإسلامي' : 'Islamic Jurisprudence'}
+                    {tx('الفقه الإسلامي', 'Islamic Jurisprudence')}
                   </option>
                   <option value="islamic">
-                    {i18n.language === 'ar' ? 'الدراسات الإسلامية' : 'Islamic Studies'}
+                    {tx('الدراسات الإسلامية', 'Islamic Studies')}
                   </option>
                 </select>
                 {errors.course && (
@@ -302,8 +289,8 @@ const Admissions = () => {
                 className="w-full bg-islamic-green text-white py-3 px-6 rounded-lg font-semibold hover:bg-islamic-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading
-                  ? (i18n.language === 'ar' ? 'جاري الإرسال...' : 'Submitting...')
-                  : (i18n.language === 'ar' ? 'إرسال الطلب' : 'Submit Application')
+                  ? (tx('جاري الإرسال...', 'Submitting...'))
+                  : (tx('إرسال الطلب', 'Submit Application'))
                 }
               </button>
             </form>

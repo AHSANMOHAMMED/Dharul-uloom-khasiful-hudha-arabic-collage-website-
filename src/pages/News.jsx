@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { listNews } from '../lib/contentApi'
+import { tx } from '../lib/tx';
 
 const News = () => {
   const { t, i18n } = useTranslation()
@@ -24,7 +25,7 @@ const News = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString(i18n.language === 'ar' ? 'ar-SA' : 'en-US', {
+    return date.toLocaleDateString(tx('ar-SA', 'en-US'), {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -48,9 +49,7 @@ const News = () => {
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('news.title')}</h1>
           <p className="text-xl text-gray-200">
-            {i18n.language === 'ar'
-              ? 'ابق على اطلاع بأحدث الأخبار والفعاليات'
-              : 'Stay updated with our latest news and events'}
+            {tx('ابق على اطلاع بأحدث الأخبار والفعاليات', 'Stay updated with our latest news and events')}
           </p>
         </div>
       </section>
@@ -60,11 +59,11 @@ const News = () => {
         <div className="max-w-4xl mx-auto">
           {loading ? (
             <div className="text-center text-gray-600">
-              {i18n.language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+              {tx('جاري التحميل...', 'Loading...')}
             </div>
           ) : news.length === 0 ? (
             <div className="text-center text-gray-600">
-              {i18n.language === 'ar' ? 'لا توجد أخبار حالياً' : 'No news available at the moment'}
+              {tx('لا توجد أخبار حالياً', 'No news available at the moment')}
             </div>
           ) : (
             <div className="space-y-8">
@@ -104,7 +103,7 @@ const News = () => {
                     
                     {item.author && (
                       <p className="mt-4 text-sm text-gray-500">
-                        {i18n.language === 'ar' ? 'بواسطة ' : 'By '}{item.author}
+                        {tx('بواسطة ', 'By ')}{item.author}
                       </p>
                     )}
                   </div>
@@ -122,12 +121,10 @@ const News = () => {
             className="mt-12 bg-islamic-green text-white rounded-lg shadow-lg p-8 text-center"
           >
             <h3 className="text-2xl font-bold mb-4">
-              {i18n.language === 'ar' ? 'تابعنا على وسائل التواصل' : 'Follow Us on Social Media'}
+              {tx('تابعنا على وسائل التواصل', 'Follow Us on Social Media')}
             </h3>
             <p className="mb-6">
-              {i18n.language === 'ar'
-                ? 'ابق على اطلاع بأحدث الأخبار والفعاليات على Facebook'
-                : 'Stay updated with our latest news and events on Facebook'}
+              {tx('ابق على اطلاع بأحدث الأخبار والفعاليات على Facebook', 'Stay updated with our latest news and events on Facebook')}
             </p>
             <a
               href="https://www.facebook.com/100088419063008"
@@ -138,7 +135,7 @@ const News = () => {
               <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
               </svg>
-              {i18n.language === 'ar' ? 'Facebook' : 'Facebook'}
+              {tx('Facebook', 'Facebook')}
             </a>
           </motion.div>
         </div>

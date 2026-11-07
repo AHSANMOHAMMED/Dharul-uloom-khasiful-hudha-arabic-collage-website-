@@ -24,7 +24,9 @@
     "setup:auth-urls": "node scripts/configureAuthRedirects.mjs",
     "deploy:functions": "node scripts/deployEdgeFunctions.mjs",
     "setup:service-role": "node scripts/setServiceRoleKey.mjs",
-    "install:all": "npm install && cd backend && npm install"
+    "install:all": "npm install && cd backend && npm install",
+    "test:db": "bash scripts/testDatabase.sh",
+    "test:perf": "bash scripts/perf/run.sh --concurrency 50 --requests 3000"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",

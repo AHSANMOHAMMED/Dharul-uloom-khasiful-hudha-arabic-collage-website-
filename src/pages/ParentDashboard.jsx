@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import PayFeeButton from '../components/PayFeeButton';
+import ReceiptsArrears from '../components/ReceiptsArrears';
 import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
 import { generateFeeReceipt } from '../lib/exportUtils';
 import { listActivationEventsForChildren } from '../lib/notifyApi';
 import { claimParentInvite } from '../lib/parentInviteApi';
+import { tx } from '../lib/tx';
 
 
 const ParentDashboard = () => {
@@ -162,7 +164,7 @@ const ParentDashboard = () => {
         setInviteMsg(result?.error || 'Invite failed');
         return;
       }
-      setInviteMsg(i18n.language === 'ar' ? 'تم ربط الطفل عبر الدعوة' : 'Child linked via invite');
+      setInviteMsg(tx('تم ربط الطفل عبر الدعوة', 'Child linked via invite'));
       setInviteToken('');
       fetchLinkedChildren();
     } catch (err) {
@@ -179,48 +181,26 @@ const ParentDashboard = () => {
     if (!linkIndex.trim()) return;
 
     try {
-      // Find student profile by index number
-      const { data: student, error: studentErr } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .eq('index_number', linkIndex.trim())
-        .eq('account_type', 'student')
-        .maybeSingle();
-
-      if (studentErr || !student) {
-        setLinkError(i18n.language === 'ar' ? 'لم يتم العثور على طالب برقم القيد هذا' : 'Student index number not found');
-        return;
-      }
-
-      // Check if already linked
-      const { data: existingLink } = await supabase
-        .from('parent_children')
-        .select('*')
-        .eq('parent_id', user.id)
-        .eq('child_id', student.id)
-        .maybeSingle();
-
-      if (existingLink) {
-        setLinkError(i18n.language === 'ar' ? 'هذا الطفل مرتبط بالفعل بحسابك' : 'This child is already linked to your account');
-        return;
-      }
-
-      // Add link
-      const { error: insertErr } = await supabase
-        .from('parent_children')
-        .insert({
-          parent_id: user.id,
-          child_id: student.id
-        });
-
-      if (insertErr) throw insertErr;
+      // Server-side linking: auto-links when the parent's phone/e-mail matches the
+      // enrolment record for this index, otherwise queues a request for staff
+      // approval. (Direct inserts into parent_children are no longer allowed.)
+      const { data, error } = await supabase.rpc('request_child_link', {
+        p_index: linkIndex.trim(),
+        p_relationship: 'guardian',
+        p_note: null,
+      });
+      if (error) throw error;
 
       setLinkIndex('');
-      setLinkSuccess(i18n.language === 'ar' ? 'تم ربط الحساب بنجاح!' : 'Child linked successfully!');
-      fetchLinkedChildren();
+      if (data?.status === 'linked' || data?.status === 'already_linked') {
+        setLinkSuccess(tx('تم ربط الحساب بنجاح!', 'Child linked successfully!'));
+        fetchLinkedChildren();
+      } else {
+        setLinkSuccess(tx('تم إرسال طلب الربط. ستتم الموافقة عليه من قبل إدارة الكلية.', 'Link request sent. The college office will verify and approve it.'));
+      }
     } catch (err) {
       console.error('Error linking child:', err);
-      setLinkError('Failed to link child account');
+      setLinkError(i18n.language === 'ar' ? 'تعذر إرسال طلب الربط' : (err?.message || 'Failed to link child account'));
     }
   };
 
@@ -282,7 +262,7 @@ const ParentDashboard = () => {
         {activationEvents.length > 0 && (
           <div className="glass-panel p-5 rounded-2xl border border-amber-500/30 bg-amber-950/20 space-y-3">
             <h2 className="text-sm font-bold uppercase tracking-wider text-amber-300">
-              {i18n.language === 'ar' ? 'تفعيل الطلاب' : 'Student activation updates'}
+              {tx('تفعيل الطلاب', 'Student activation updates')}
             </h2>
             <ul className="space-y-2">
               {activationEvents.slice(0, 5).map((ev) => (
@@ -310,15 +290,13 @@ const ParentDashboard = () => {
             </div>
             <div>
               <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-glow-emerald border border-emerald-500/20">
-                {i18n.language === 'ar' ? 'بوابة أولياء الأمور' : 'Parent Portal'}
+                {tx('بوابة أولياء الأمور', 'Parent Portal')}
               </span>
               <h1 className="mt-3 text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-emerald-500">
                 {i18n.language === 'ar' ? `مرحباً بك، ${user?.username}` : `Welcome back, ${user?.username}`}
               </h1>
               <p className="text-sm text-gray-400 mt-1 font-medium">
-                {i18n.language === 'ar' 
-                  ? 'تابع أنشطة ومستحقات أطفالك الدراسية من مكان واحد'
-                  : 'Monitor your children academic performance, attendance, and fees.'}
+                {tx('تابع أنشطة ومستحقات أطفالك الدراسية من مكان واحد', 'Monitor your children academic performance, attendance, and fees.')}
               </p>
             </div>
           </div>
@@ -365,12 +343,10 @@ const ParentDashboard = () => {
           <div className="glass-card rounded-[2rem] p-8 space-y-5 hover:border-emerald-500/30 transition-all duration-300">
             <h3 className="text-xl font-extrabold text-white flex items-center gap-3 font-arabic">
               <span className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">🔗</span>
-              {i18n.language === 'ar' ? 'ربط حساب طفل جديد' : 'Link Child Account'}
+              {tx('ربط حساب طفل جديد', 'Link Child Account')}
             </h3>
             <p className="text-sm text-gray-400">
-              {i18n.language === 'ar' 
-                ? 'أدخل رقم القيد المخصص لطفلك للوصول إلى تفاصيل حضوره ونتائجه.'
-                : 'Enter your child unique student index number to link their profile.'}
+              {tx('أدخل رقم القيد المخصص لطفلك للوصول إلى تفاصيل حضوره ونتائجه.', 'Enter your child unique student index number to link their profile.')}
             </p>
             <form onSubmit={handleLinkChild} className="space-y-4">
               <input
@@ -385,14 +361,14 @@ const ParentDashboard = () => {
                 type="submit"
                 className="w-full py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold rounded-xl text-sm transition-all shadow-lg hover:-translate-y-1"
               >
-                {i18n.language === 'ar' ? 'ربط الطالب' : 'Link Student'}
+                {tx('ربط الطالب', 'Link Student')}
               </button>
               {linkError && <p className="text-xs text-red-400 mt-1">{linkError}</p>}
               {linkSuccess && <p className="text-xs text-emerald-400 mt-1">{linkSuccess}</p>}
             </form>
             <form onSubmit={handleClaimInvite} className="space-y-3 pt-4 border-t border-gray-800">
               <p className="text-xs text-gray-500">
-                {i18n.language === 'ar' ? 'أو استخدم رمز دعوة ولي الأمر من الإدارة' : 'Or paste a parent invite token from admin'}
+                {tx('أو استخدم رمز دعوة ولي الأمر من الإدارة', 'Or paste a parent invite token from admin')}
               </p>
               <input
                 type="text"
@@ -405,7 +381,7 @@ const ParentDashboard = () => {
                 type="submit"
                 className="w-full py-2.5 bg-amber-600/90 hover:bg-amber-500 text-white font-bold rounded-xl text-sm"
               >
-                {i18n.language === 'ar' ? 'تفعيل الدعوة' : 'Claim invite'}
+                {tx('تفعيل الدعوة', 'Claim invite')}
               </button>
               {inviteMsg && <p className="text-xs text-amber-300">{inviteMsg}</p>}
             </form>
@@ -416,12 +392,10 @@ const ParentDashboard = () => {
             <div className="lg:col-span-2 bg-gray-900/30 backdrop-blur-md rounded-2xl p-12 border border-gray-800/50 text-center flex flex-col items-center justify-center space-y-4">
               <span className="text-5xl">🧸</span>
               <h2 className="text-xl font-bold text-gray-300">
-                {i18n.language === 'ar' ? 'لم تقم بربط أي حساب طالب بعد' : 'No children linked to your parent portal'}
+                {tx('لم تقم بربط أي حساب طالب بعد', 'No children linked to your parent portal')}
               </h2>
               <p className="text-sm text-gray-500 max-w-sm">
-                {i18n.language === 'ar'
-                  ? 'يرجى ربط حساب ابنك باستخدام رقم القيد المرفق من إدارة الكلية لعرض التقارير.'
-                  : 'Please use the linking panel to enter your child index number provided by the college.'}
+                {tx('يرجى ربط حساب ابنك باستخدام رقم القيد المرفق من إدارة الكلية لعرض التقارير.', 'Please use the linking panel to enter your child index number provided by the college.')}
               </p>
             </div>
           ) : (
@@ -440,7 +414,7 @@ const ParentDashboard = () => {
                       <span className="text-2xl">⚠️</span>
                       <div>
                         <h3 className="font-bold text-sm">
-                          {i18n.language === 'ar' ? 'تحذير غياب الطالب!' : 'Child Attendance Alert!'}
+                          {tx('تحذير غياب الطالب!', 'Child Attendance Alert!')}
                         </h3>
                         <p className="text-xs text-red-300">
                           {i18n.language === 'ar'
@@ -457,20 +431,20 @@ const ParentDashboard = () => {
                     {/* Attendance summary */}
                     <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
                       <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        📅 {i18n.language === 'ar' ? 'سجل الحضور' : 'Attendance Log'}
+                        📅 {tx('سجل الحضور', 'Attendance Log')}
                       </h3>
                       <div className="flex justify-between items-center p-3 bg-gray-950/40 rounded-xl border border-gray-800/30">
                         <div className="text-center">
                           <span className="text-2xl font-black text-emerald-400">{attendanceRate}%</span>
-                          <p className="text-[10px] text-gray-500 uppercase">{i18n.language === 'ar' ? 'الحضور' : 'Attendance'}</p>
+                          <p className="text-[10px] text-gray-500 uppercase">{tx('الحضور', 'Attendance')}</p>
                         </div>
                         <div className="text-center">
                           <span className="text-2xl font-black text-amber-500">{presentDays}</span>
-                          <p className="text-[10px] text-gray-500 uppercase">{i18n.language === 'ar' ? 'أيام الحضور' : 'Present'}</p>
+                          <p className="text-[10px] text-gray-500 uppercase">{tx('أيام الحضور', 'Present')}</p>
                         </div>
                         <div className="text-center">
                           <span className="text-2xl font-black text-red-400">{absentDays}</span>
-                          <p className="text-[10px] text-gray-500 uppercase">{i18n.language === 'ar' ? 'أيام الغياب' : 'Absent'}</p>
+                          <p className="text-[10px] text-gray-500 uppercase">{tx('أيام الغياب', 'Absent')}</p>
                         </div>
                       </div>
                     </div>
@@ -478,7 +452,7 @@ const ParentDashboard = () => {
                     {/* Class Teacher Contact */}
                     <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
                       <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        📞 {i18n.language === 'ar' ? 'معلومات معلم الصف' : 'Class Teacher Contact'}
+                        📞 {tx('معلومات معلم الصف', 'Class Teacher Contact')}
                       </h3>
                       {tutorJobs.slice(0, 1).map(job => (
                         <div key={job.id} className="p-3.5 bg-emerald-950/20 border border-emerald-500/20 rounded-xl">
@@ -494,13 +468,13 @@ const ParentDashboard = () => {
                   {/* Monthly Fees Invoice Log */}
                   <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-6">
                     <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      💳 {i18n.language === 'ar' ? 'رسوم الطفل ومستحقاته المالية' : 'Student Fees & Arrears'}
+                      💳 {tx('رسوم الطفل ومستحقاته المالية', 'Student Fees & Arrears')}
                     </h3>
                     {fees ? (
                       <div className="space-y-4">
                         <div className="flex justify-between items-center p-3.5 bg-gray-950/40 border border-gray-800/30 rounded-xl text-sm">
                           <div>
-                            <span className="text-xs text-gray-500 uppercase">{i18n.language === 'ar' ? 'شهر الرسوم' : 'Bill Month'}</span>
+                            <span className="text-xs text-gray-500 uppercase">{tx('شهر الرسوم', 'Bill Month')}</span>
                             <div className="font-bold text-white text-base">{fees.month}</div>
                           </div>
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
@@ -515,21 +489,21 @@ const ParentDashboard = () => {
                         <div className="grid grid-cols-3 gap-4 text-center">
                           <div className="p-3 bg-gray-950/20 rounded-lg">
                             <div className="text-lg font-bold text-white font-mono">LKR {fees.total_due}</div>
-                            <span className="text-[10px] text-gray-500">{i18n.language === 'ar' ? 'الإجمالي' : 'Total'}</span>
+                            <span className="text-[10px] text-gray-500">{tx('الإجمالي', 'Total')}</span>
                           </div>
                           <div className="p-3 bg-gray-950/20 rounded-lg">
                             <div className="text-lg font-bold text-emerald-400 font-mono">LKR {fees.paid_amount}</div>
-                            <span className="text-[10px] text-gray-500">{i18n.language === 'ar' ? 'المدفوع' : 'Paid'}</span>
+                            <span className="text-[10px] text-gray-500">{tx('المدفوع', 'Paid')}</span>
                           </div>
                           <div className="p-3 bg-gray-950/20 rounded-lg">
                             <div className="text-lg font-bold text-red-400 font-mono">LKR {fees.total_due - fees.paid_amount}</div>
-                            <span className="text-[10px] text-gray-500">{i18n.language === 'ar' ? 'المتأخرات' : 'Arrears'}</span>
+                            <span className="text-[10px] text-gray-500">{tx('المتأخرات', 'Arrears')}</span>
                           </div>
                         </div>
 
                         {fees.payments && fees.payments.length > 0 && (
                           <div className="space-y-1.5">
-                            <span className="text-[10px] font-bold text-gray-500 uppercase">{i18n.language === 'ar' ? 'دفعات الرسوم الجزئية' : 'Partial Payment Details'}</span>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase">{tx('دفعات الرسوم الجزئية', 'Partial Payment Details')}</span>
                             {fees.payments.map((p, idx) => (
                               <div key={idx} className="flex justify-between text-xs bg-gray-950/30 p-2 rounded">
                                 <span className="text-gray-400">{p.date}</span>
@@ -545,24 +519,26 @@ const ParentDashboard = () => {
                             onClick={() => generateFeeReceipt(selectedChild, fees, 'Parent Portal')}
                             className="px-4 py-2 rounded-xl border border-emerald-500/40 text-emerald-300 text-sm font-semibold hover:bg-emerald-500/10"
                           >
-                            {i18n.language === 'ar' ? 'طباعة الإيصال' : 'Print receipt'}
+                            {tx('طباعة الإيصال', 'Print receipt')}
                           </button>
                         </div>
                       </div>
                     ) : (
                       <div className="text-center py-6 text-xs text-gray-500">
-                        {i18n.language === 'ar' ? 'لا توجد مستحقات رسوم مفعلة حالياً' : 'No generated monthly fees for this child.'}
+                        {tx('لا توجد مستحقات رسوم مفعلة حالياً', 'No generated monthly fees for this child.')}
                       </div>
                     )}
                   </div>
 
+                  <ReceiptsArrears studentId={selectedChild?.id} />
+
                   {/* Child LMS progress */}
                   <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-3">
                     <h3 className="text-base font-bold text-white">
-                      📚 {i18n.language === 'ar' ? 'الواجبات والتقدم' : 'Assignments & Progress'}
+                      📚 {tx('الواجبات والتقدم', 'Assignments & Progress')}
                     </h3>
                     {lmsAssignments.length === 0 ? (
-                      <p className="text-xs text-gray-500">{i18n.language === 'ar' ? 'لا واجبات حالياً' : 'No assignments yet'}</p>
+                      <p className="text-xs text-gray-500">{tx('لا واجبات حالياً', 'No assignments yet')}</p>
                     ) : (
                       <ul className="space-y-2 text-sm">
                         {lmsAssignments.map((a) => {
@@ -586,12 +562,12 @@ const ParentDashboard = () => {
                     {/* Submit leave request */}
                     <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
                       <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        📝 {i18n.language === 'ar' ? 'طلب إجازة للمستقبل' : 'Submit Leave Request'}
+                        📝 {tx('طلب إجازة للمستقبل', 'Submit Leave Request')}
                       </h3>
                       <form onSubmit={handleLeaveSubmit} className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'تاريخ البدء' : 'Start Date'}</label>
+                            <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('تاريخ البدء', 'Start Date')}</label>
                             <input
                               type="date"
                               value={leaveForm.startDate}
@@ -601,7 +577,7 @@ const ParentDashboard = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'تاريخ الانتهاء' : 'End Date'}</label>
+                            <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('تاريخ الانتهاء', 'End Date')}</label>
                             <input
                               type="date"
                               value={leaveForm.endDate}
@@ -612,12 +588,12 @@ const ParentDashboard = () => {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'سبب الغياب' : 'Reason'}</label>
+                          <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('سبب الغياب', 'Reason')}</label>
                           <textarea
                             value={leaveForm.reason}
                             onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
                             className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 rounded p-2 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none h-16"
-                            placeholder={i18n.language === 'ar' ? 'اذكر سبب طلب الإجازة...' : 'Medical, family travel, etc...'}
+                            placeholder={tx('اذكر سبب طلب الإجازة...', 'Medical, family travel, etc...')}
                             required
                           />
                         </div>
@@ -625,7 +601,7 @@ const ParentDashboard = () => {
                           type="submit"
                           className="w-full py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded text-xs transition"
                         >
-                          {i18n.language === 'ar' ? 'تقديم الطلب للموافقة' : 'Submit Leave Request'}
+                          {tx('تقديم الطلب للموافقة', 'Submit Leave Request')}
                         </button>
                         {leaveSuccess && <p className="text-xs text-emerald-400 text-center animate-pulse">✓ Leave request submitted successfully!</p>}
                         {leaveError && <p className="text-xs text-red-400 text-center">{leaveError}</p>}
@@ -635,11 +611,11 @@ const ParentDashboard = () => {
                     {/* Past leave requests & teacher responses */}
                     <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
                       <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        📋 {i18n.language === 'ar' ? 'سجل الإجازات والموافقات' : 'Leave Status & Replies'}
+                        📋 {tx('سجل الإجازات والموافقات', 'Leave Status & Replies')}
                       </h3>
                       {leaves.length === 0 ? (
                         <div className="text-center py-12 text-xs text-gray-500">
-                          {i18n.language === 'ar' ? 'لا توجد طلبات إجازة حالية' : 'No submitted leave requests.'}
+                          {tx('لا توجد طلبات إجازة حالية', 'No submitted leave requests.')}
                         </div>
                       ) : (
                         <div className="space-y-3 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
@@ -655,10 +631,10 @@ const ParentDashboard = () => {
                                   {lv.status.toUpperCase()}
                                 </span>
                               </div>
-                              <p className="text-gray-300"><span className="text-gray-500">{i18n.language === 'ar' ? 'السبب: ' : 'Reason: '}</span>{lv.reason}</p>
+                              <p className="text-gray-300"><span className="text-gray-500">{tx('السبب: ', 'Reason: ')}</span>{lv.reason}</p>
                               {lv.response_note && (
                                 <div className="mt-2 p-2 bg-gray-950/40 border-l border-amber-500 rounded text-[11px] italic text-amber-300">
-                                  <span className="font-bold text-gray-400 block not-italic text-[9px] uppercase tracking-wider">{i18n.language === 'ar' ? 'رد المعلم: ' : 'Tutor Reply:'}</span>
+                                  <span className="font-bold text-gray-400 block not-italic text-[9px] uppercase tracking-wider">{tx('رد المعلم: ', 'Tutor Reply:')}</span>
                                   {lv.response_note}
                                 </div>
                               )}
@@ -673,11 +649,11 @@ const ParentDashboard = () => {
                   {/* Results & Academic report */}
                   <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
                     <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      🎓 {i18n.language === 'ar' ? 'التقرير الدراسي للطفل' : 'Child Grades Report'}
+                      🎓 {tx('التقرير الدراسي للطفل', 'Child Grades Report')}
                     </h3>
                     {results.length === 0 ? (
                       <div className="text-center py-8 text-xs text-gray-500">
-                        {i18n.language === 'ar' ? 'لم تنشر أي نتائج دراسية للامتحانات' : 'No academic reports generated.'}
+                        {tx('لم تنشر أي نتائج دراسية للامتحانات', 'No academic reports generated.')}
                       </div>
                     ) : (
                       <div className="space-y-3">

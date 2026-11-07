@@ -9,6 +9,7 @@ import {
   listAdmissionNotes,
 } from '../lib/crmApi';
 import { toast } from 'react-toastify';
+import { tx } from '../lib/tx';
 
 const STAGE_LABELS = {
   lead: { en: 'Lead', ar: 'عميل محتمل' },
@@ -48,7 +49,7 @@ export default function AdmissionsCrmBoard() {
   const onMove = async (id, stage) => {
     try {
       await moveAdmissionStage(id, stage);
-      toast.success(ar ? 'تم تحديث المرحلة' : 'Stage updated');
+      toast.success(tx('تم تحديث المرحلة', 'Stage updated'));
       await load();
     } catch (e) {
       toast.error(e.message);
@@ -61,7 +62,7 @@ export default function AdmissionsCrmBoard() {
       await addAdmissionNote(selected._id, noteBody.trim());
       setNoteBody('');
       setNotes(await listAdmissionNotes(selected._id));
-      toast.success(ar ? 'تمت إضافة الملاحظة' : 'Note added');
+      toast.success(tx('تمت إضافة الملاحظة', 'Note added'));
     } catch (e) {
       toast.error(e.message);
     }
@@ -79,7 +80,7 @@ export default function AdmissionsCrmBoard() {
       );
       if (token && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(token);
-        toast.info(ar ? 'تم نسخ رمز الدعوة' : 'Invite token copied');
+        toast.info(tx('تم نسخ رمز الدعوة', 'Invite token copied'));
       }
       setSelected(null);
       await load();
@@ -96,7 +97,7 @@ export default function AdmissionsCrmBoard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h2 className="text-xl font-bold text-white">
-          {ar ? 'لوحة CRM للقبول' : 'Admissions CRM pipeline'}
+          {tx('لوحة CRM للقبول', 'Admissions CRM pipeline')}
         </h2>
         <button
           type="button"

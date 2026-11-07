@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { getSiteOrgId } from './siteOrg';
 
 /**
  * Public content data layer (replaces the Express /api/news, /api/faculty,
@@ -11,13 +12,26 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
  * page markup needs no structural changes.
  */
 
+// ── Tenant of this public site (SaaS) — see ./siteOrg.js ─────────────────────
+export { getSiteOrgId } from './siteOrg';
+
+/**
+ * Apply the site tenant filter when it could be resolved. Synchronous on
+ * purpose: query builders are thenables, so returning one from an async
+ * function would execute it prematurely.
+ */
+function forSite(query, orgId) {
+  return orgId ? query.eq('org_id', orgId) : query;
+}
+
 /** News articles, newest first. */
 export async function listNews() {
   if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
+  const siteOrg = await getSiteOrgId();
+  const { data, error } = await forSite(supabase
     .from('news')
     .select('id, title_en, title_ar, content_en, content_ar, author, image, category, date')
-    .eq('is_published', true)
+    .eq('is_published', true), siteOrg)
     .order('date', { ascending: false });
   if (error) {
     console.error('[contentApi] listNews', error);
@@ -57,9 +71,10 @@ export async function getNewsById(id) {
 /** Faculty directory, ordered by sort_order. */
 export async function listFaculty() {
   if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
+  const siteOrg = await getSiteOrgId();
+  const { data, error } = await forSite(supabase
     .from('faculty')
-    .select('id, name_en, name_ar, role_en, role_ar, bio_en, bio_ar, image, qualifications, sort_order')
+    .select('id, name_en, name_ar, role_en, role_ar, bio_en, bio_ar, image, qualifications, sort_order'), siteOrg)
     .order('sort_order', { ascending: true });
   if (error) {
     console.error('[contentApi] listFaculty', error);
@@ -78,9 +93,10 @@ export async function listFaculty() {
 /** 7-year curriculum, ordered by class number. */
 export async function listCurriculum() {
   if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
+  const siteOrg = await getSiteOrgId();
+  const { data, error } = await forSite(supabase
     .from('curriculum')
-    .select('id, class_number, class_name, age_range, modules, objectives, assessment_methods')
+    .select('id, class_number, class_name, age_range, modules, objectives, assessment_methods'), siteOrg)
     .order('class_number', { ascending: true });
   if (error) {
     console.error('[contentApi] listCurriculum', error);
@@ -100,7 +116,9 @@ export async function listCurriculum() {
 /** Submit a public contact / enquiry message. */
 export async function sendContactMessage(form) {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured');
+  const orgId = await getSiteOrgId();
   const { error } = await supabase.from('contact_messages').insert({
+    ...(orgId ? { org_id: orgId } : {}),
     name: form.name,
     email: form.email,
     phone: form.phone || null,
@@ -135,10 +153,11 @@ export async function sendContactMessage(form) {
 
 export async function listGalleryItems() {
   if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
+  const siteOrg = await getSiteOrgId();
+  const { data, error } = await forSite(supabase
     .from('gallery_items')
     .select('id, title_en, title_ar, category, image_url, sort_order')
-    .eq('is_published', true)
+    .eq('is_published', true), siteOrg)
     .order('sort_order', { ascending: true });
   if (error) {
     console.error('[contentApi] listGalleryItems', error);
@@ -160,10 +179,11 @@ function mapGalleryRow(row) {
 
 export async function listCoursePrograms() {
   if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
+  const siteOrg = await getSiteOrgId();
+  const { data, error } = await forSite(supabase
     .from('course_programs')
     .select('id, slug, title_en, title_ar, duration_en, duration_ar, description_en, description_ar, icon, admission_code, sort_order')
-    .eq('is_published', true)
+    .eq('is_published', true), siteOrg)
     .order('sort_order', { ascending: true });
   if (error) {
     console.error('[contentApi] listCoursePrograms', error);

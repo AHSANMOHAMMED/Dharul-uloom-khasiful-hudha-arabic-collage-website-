@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -30,21 +30,25 @@ import BookReaderPage from './pages/BookReaderPage'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import NotFound from './pages/NotFound'
+import { tx } from './lib/tx';
+
+// Heavy ERP bundle is code-split so the public site stays light.
+const ErpWorkspace = lazy(() => import('./pages/erp/ErpWorkspace'))
+const VerifyCertificate = lazy(() => import('./pages/erp/VerifyCertificate'))
+const ReceiptPublic = lazy(() => import('./pages/ReceiptPublic'))
 
 function App() {
   const { i18n } = useTranslation()
 
   useEffect(() => {
-    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr'
+    document.documentElement.dir = tx('rtl', 'ltr')
     document.documentElement.lang = i18n.language
   }, [i18n.language])
 
   useEffect(() => {
     const onSwUpdate = () => {
       toast.info(
-        i18n.language === 'ar'
-          ? 'تحديث جديد متاح — أعد تحميل الصفحة'
-          : 'Update available — reload to get the latest version',
+        tx('تحديث جديد متاح — أعد تحميل الصفحة', 'Update available — reload to get the latest version'),
         {
           onClick: () => window.location.reload(),
           autoClose: false,
@@ -61,6 +65,7 @@ function App() {
         <div className="min-h-screen flex flex-col">
           <Navbar />
           <main className="flex-grow">
+            <Suspense fallback={<div className="min-h-[50vh]" />}>
             <Routes>
               <Route path="/"           element={<Home />} />
               <Route path="/about"      element={<About />} />
@@ -83,8 +88,14 @@ function App() {
               <Route path="/library/:id" element={<BookReaderPage />} />
               <Route path="/payment/success" element={<PaymentSuccess />} />
               <Route path="/payment/cancel"  element={<PaymentCancel />} />
+              <Route path="/erp"        element={<ErpWorkspace />} />
+              <Route path="/verify"     element={<VerifyCertificate />} />
+              <Route path="/verify/:code" element={<VerifyCertificate />} />
+              <Route path="/r/:token"   element={<ReceiptPublic />} />
+              <Route path="/receipt/:id" element={<ReceiptPublic />} />
               <Route path="*"           element={<NotFound />} />
             </Routes>
+            </Suspense>
           </main>
           <Footer />
           {/* Global offline banner — shown automatically when user loses connectivity */}

@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { getDefaultOrganization, updateOrganizationBranding } from '../lib/orgApi';
+import { tx } from '../lib/tx';
 
 export default function OrgAdminPanel() {
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation(); // subscribe: re-render on language change
   const [org, setOrg] = useState(null);
   const [form, setForm] = useState({
     primaryColor: '#047857',
@@ -37,7 +37,7 @@ export default function OrgAdminPanel() {
     try {
       const updated = await updateOrganizationBranding(org.id, form);
       setOrg(updated);
-      toast.success(ar ? 'تم حفظ إعدادات المؤسسة' : 'Organization branding saved');
+      toast.success(tx('تم حفظ إعدادات المؤسسة', 'Organization branding saved'));
     } catch (err) {
       toast.error(err.message);
     }
@@ -50,7 +50,7 @@ export default function OrgAdminPanel() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-xl font-bold text-white">{ar ? 'إعدادات المؤسسة (SaaS)' : 'Organization (SaaS foundation)'}</h2>
+        <h2 className="text-xl font-bold text-white">{tx('إعدادات المؤسسة (SaaS)', 'Organization (SaaS foundation)')}</h2>
         <p className="text-sm text-gray-400 mt-1">
           {org.name_en} · slug: <code className="text-emerald-300">{org.slug}</code>
         </p>

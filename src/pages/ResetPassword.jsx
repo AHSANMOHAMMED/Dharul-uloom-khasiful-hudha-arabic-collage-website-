@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { tx } from '../lib/tx';
 
 const ResetPassword = () => {
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation(); // subscribe: re-render on language change
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -59,19 +59,19 @@ const ResetPassword = () => {
     e.preventDefault();
     setError('');
     if (password.length < 8) {
-      setError(ar ? 'كلمة المرور يجب أن تكون 8 أحرف على الأقل' : 'Password must be at least 8 characters');
+      setError(tx('كلمة المرور يجب أن تكون 8 أحرف على الأقل', 'Password must be at least 8 characters'));
       return;
     }
     if (password !== confirm) {
-      setError(ar ? 'كلمتا المرور غير متطابقتين' : 'Passwords do not match');
+      setError(tx('كلمتا المرور غير متطابقتين', 'Passwords do not match'));
       return;
     }
     if (!isSupabaseConfigured) {
-      setError(ar ? 'خدمة المصادقة غير مهيأة' : 'Authentication is not configured');
+      setError(tx('خدمة المصادقة غير مهيأة', 'Authentication is not configured'));
       return;
     }
     if (!linkReady) {
-      setError(ar ? 'رابط غير صالح أو منتهي. اطلب رابطاً جديداً.' : 'Invalid or expired link. Request a new reset link.');
+      setError(tx('رابط غير صالح أو منتهي. اطلب رابطاً جديداً.', 'Invalid or expired link. Request a new reset link.'));
       return;
     }
     setLoading(true);
@@ -81,29 +81,27 @@ const ResetPassword = () => {
       setError(updateError.message);
       return;
     }
-    navigate('/login', { state: { message: ar ? 'تم تحديث كلمة المرور. يمكنك تسجيل الدخول الآن.' : 'Password updated. You can sign in now.' } });
+    navigate('/login', { state: { message: tx('تم تحديث كلمة المرور. يمكنك تسجيل الدخول الآن.', 'Password updated. You can sign in now.') } });
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full space-y-8">
         <h2 className="text-center text-3xl font-extrabold text-islamic-green">
-          {ar ? 'كلمة مرور جديدة' : 'Set New Password'}
+          {tx('كلمة مرور جديدة', 'Set New Password')}
         </h2>
 
         {checkingLink ? (
           <div className="bg-white p-8 rounded-lg shadow-md text-center text-gray-600">
-            {ar ? 'جاري التحقق من الرابط...' : 'Verifying reset link...'}
+            {tx('جاري التحقق من الرابط...', 'Verifying reset link...')}
           </div>
         ) : !linkReady ? (
           <div className="bg-white p-8 rounded-lg shadow-md text-center space-y-4">
             <p className="text-red-700">
-              {ar
-                ? 'رابط إعادة التعيين غير صالح أو منتهي الصلاحية.'
-                : 'This password reset link is invalid or has expired.'}
+              {tx('رابط إعادة التعيين غير صالح أو منتهي الصلاحية.', 'This password reset link is invalid or has expired.')}
             </p>
             <Link to="/forgot-password" className="text-islamic-green font-medium hover:underline">
-              {ar ? 'طلب رابط جديد' : 'Request a new link'}
+              {tx('طلب رابط جديد', 'Request a new link')}
             </Link>
           </div>
         ) : (
@@ -113,7 +111,7 @@ const ResetPassword = () => {
           )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              {ar ? 'كلمة المرور الجديدة' : 'New password'}
+              {tx('كلمة المرور الجديدة', 'New password')}
             </label>
             <input
               type="password"
@@ -126,7 +124,7 @@ const ResetPassword = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              {ar ? 'تأكيد كلمة المرور' : 'Confirm password'}
+              {tx('تأكيد كلمة المرور', 'Confirm password')}
             </label>
             <input
               type="password"
@@ -142,11 +140,11 @@ const ResetPassword = () => {
             disabled={loading}
             className="w-full py-3 bg-islamic-green text-white rounded-lg font-medium hover:bg-islamic-dark disabled:opacity-50"
           >
-            {loading ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ كلمة المرور' : 'Save password')}
+            {loading ? (tx('جاري الحفظ...', 'Saving...')) : (tx('حفظ كلمة المرور', 'Save password'))}
           </button>
           <div className="text-center">
             <Link to="/login" className="text-sm text-gray-600 hover:text-islamic-green">
-              {ar ? '← العودة لتسجيل الدخول' : '← Back to sign in'}
+              {tx('← العودة لتسجيل الدخول', '← Back to sign in')}
             </Link>
           </div>
         </form>

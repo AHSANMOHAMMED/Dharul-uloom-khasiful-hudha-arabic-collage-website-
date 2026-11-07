@@ -3,16 +3,9 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
 /** Mark profile approved and notify student + linked parents (in-app + outbox). */
 export async function approveProfile(profileId) {
   if (!isSupabaseConfigured) throw new Error('Not configured');
-  const { error } = await supabase
-    .from('profiles')
-    .update({ is_approved: true })
-    .eq('id', profileId);
+  // approve_account: server-side permission check + activation notifications.
+  const { error } = await supabase.rpc('approve_account', { p_profile_id: profileId, p_approve: true });
   if (error) throw error;
-
-  const { error: notifyErr } = await supabase.rpc('notify_profile_activated', {
-    p_profile_id: profileId,
-  });
-  if (notifyErr) console.error('[notifyApi] notify_profile_activated', notifyErr);
 
   // Best-effort flush SMS/WhatsApp/email queue
   try {

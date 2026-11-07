@@ -19,8 +19,20 @@ if (!isSupabaseConfigured && import.meta.env.DEV) {
   );
 }
 
+// Every API call is bounded: a request that has not answered within 10 s is
+// aborted so the UI can show an error instead of hanging. Realtime (websocket)
+// and storage uploads are not affected.
+export const REQUEST_TIMEOUT_MS = 10_000;
+export function fetchWithTimeout(input, init = {}) {
+  if (init.signal || typeof AbortSignal === 'undefined' || !AbortSignal.timeout) return fetch(input, init);
+  const url = typeof input === 'string' ? input : input?.url || '';
+  if (url.includes('/storage/v1/object')) return fetch(input, init);
+  return fetch(input, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+}
+
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
+      global: { fetch: fetchWithTimeout },
       auth: {
         persistSession: true,
         autoRefreshToken: true,

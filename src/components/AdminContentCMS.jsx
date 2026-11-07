@@ -20,6 +20,7 @@ import {
   uploadGalleryImage,
   resolveGalleryUrl,
 } from '../lib/contentApi';
+import { tx } from '../lib/tx';
 
 const inputCls = 'w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 p-2.5 rounded focus:outline-none focus:border-emerald-600';
 
@@ -35,7 +36,7 @@ const AdminContentCMS = ({ section }) => {
   return null;
 };
 
-function NewsCMS({ ar }) {
+function NewsCMS() {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(emptyNews());
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,7 @@ function NewsCMS({ ar }) {
     e.preventDefault();
     try {
       await adminUpsertNews(form);
-      toast.success(ar ? 'تم الحفظ' : 'Saved');
+      toast.success(tx('تم الحفظ', 'Saved'));
       setForm(emptyNews());
       load();
     } catch (err) {
@@ -76,12 +77,12 @@ function NewsCMS({ ar }) {
     }
   };
 
-  if (loading) return <p className="text-gray-500 text-sm">{ar ? 'جاري التحميل...' : 'Loading...'}</p>;
+  if (loading) return <p className="text-gray-500 text-sm">{tx('جاري التحميل...', 'Loading...')}</p>;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
-        <h3 className="text-lg font-bold text-white">{form.id ? (ar ? 'تعديل خبر' : 'Edit news') : (ar ? 'خبر جديد' : 'New article')}</h3>
+        <h3 className="text-lg font-bold text-white">{form.id ? (tx('تعديل خبر', 'Edit news')) : (tx('خبر جديد', 'New article'))}</h3>
         <input className={inputCls} placeholder="Title EN" value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} required />
         <input className={inputCls} placeholder="Title AR" dir="rtl" value={form.title_ar} onChange={(e) => setForm({ ...form, title_ar: e.target.value })} />
         <textarea className={inputCls} rows={3} placeholder="Content EN" value={form.content_en} onChange={(e) => setForm({ ...form, content_en: e.target.value })} required />
@@ -89,15 +90,15 @@ function NewsCMS({ ar }) {
         <select className={inputCls} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
           {['general', 'admissions', 'events', 'announcements'].map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <label className="block text-xs text-gray-400">{ar ? 'صورة' : 'Image'}</label>
+        <label className="block text-xs text-gray-400">{tx('صورة', 'Image')}</label>
         <input type="file" accept="image/*" onChange={onImage} className="text-xs text-gray-400" />
         <label className="flex items-center gap-2 text-sm text-gray-300">
           <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
-          {ar ? 'منشور' : 'Published'}
+          {tx('منشور', 'Published')}
         </label>
         <div className="flex gap-2">
-          <button type="submit" className="flex-1 py-2 bg-emerald-700 rounded text-white text-sm font-bold">{ar ? 'حفظ' : 'Save'}</button>
-          {form.id && <button type="button" onClick={() => setForm(emptyNews())} className="px-4 py-2 bg-gray-800 rounded text-sm">{ar ? 'إلغاء' : 'Cancel'}</button>}
+          <button type="submit" className="flex-1 py-2 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
+          {form.id && <button type="button" onClick={() => setForm(emptyNews())} className="px-4 py-2 bg-gray-800 rounded text-sm">{tx('إلغاء', 'Cancel')}</button>}
         </div>
       </form>
       <div className="space-y-2 max-h-[600px] overflow-y-auto">
@@ -118,7 +119,7 @@ function NewsCMS({ ar }) {
   );
 }
 
-function FacultyCMS({ ar }) {
+function FacultyCMS() {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(emptyFaculty());
   const load = async () => setItems(await adminListFaculty());
@@ -139,7 +140,7 @@ function FacultyCMS({ ar }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
-        <h3 className="text-lg font-bold text-white">{ar ? 'عضو هيئة التدريس' : 'Faculty member'}</h3>
+        <h3 className="text-lg font-bold text-white">{tx('عضو هيئة التدريس', 'Faculty member')}</h3>
         <input className={inputCls} placeholder="Name EN" value={form.name_en} onChange={(e) => setForm({ ...form, name_en: e.target.value })} required />
         <input className={inputCls} placeholder="Name AR" dir="rtl" value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} />
         <input className={inputCls} placeholder="Role EN" value={form.role_en} onChange={(e) => setForm({ ...form, role_en: e.target.value })} required />
@@ -147,7 +148,7 @@ function FacultyCMS({ ar }) {
         <textarea className={inputCls} rows={2} placeholder="Bio EN" value={form.bio_en} onChange={(e) => setForm({ ...form, bio_en: e.target.value })} />
         <input className={inputCls} placeholder="Qualifications (comma-separated)" value={form.qualificationsText} onChange={(e) => setForm({ ...form, qualificationsText: e.target.value })} />
         <input type="number" className={inputCls} placeholder="Sort order" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} />
-        <button type="submit" className="w-full py-2 bg-emerald-700 rounded text-white text-sm font-bold">{ar ? 'حفظ' : 'Save'}</button>
+        <button type="submit" className="w-full py-2 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
       </form>
       <div className="space-y-2">{items.map((item) => (
         <div key={item.id} className="p-4 bg-gray-950/40 border border-gray-800 rounded-lg flex justify-between">
@@ -162,7 +163,7 @@ function FacultyCMS({ ar }) {
   );
 }
 
-function CurriculumCMS({ ar }) {
+function CurriculumCMS() {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState({ id: null, class_number: 1, json: '{}' });
   const load = async () => setItems(await adminListCurriculum());
@@ -182,13 +183,13 @@ function CurriculumCMS({ ar }) {
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-gray-400">{ar ? 'عدّل JSON للفصل (class_name, age_range, modules, objectives, assessment_methods)' : 'Edit class JSON (class_name, age_range, modules, objectives, assessment_methods)'}</p>
+      <p className="text-xs text-gray-400">{tx('عدّل JSON للفصل (class_name, age_range, modules, objectives, assessment_methods)', 'Edit class JSON (class_name, age_range, modules, objectives, assessment_methods)')}</p>
       <form onSubmit={save} className="space-y-3 bg-gray-950/40 p-6 rounded-xl border border-gray-800">
         <select className={inputCls} value={form.class_number} onChange={(e) => setForm({ ...form, class_number: parseInt(e.target.value) })}>
           {[1, 2, 3, 4, 5, 6, 7].map((n) => <option key={n} value={n}>Class {n}</option>)}
         </select>
         <textarea className={`${inputCls} font-mono text-xs`} rows={12} value={form.json} onChange={(e) => setForm({ ...form, json: e.target.value })} />
-        <button type="submit" className="py-2 px-6 bg-emerald-700 rounded text-white text-sm font-bold">{ar ? 'حفظ' : 'Save'}</button>
+        <button type="submit" className="py-2 px-6 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
       </form>
       <div className="flex flex-wrap gap-2">
         {items.map((item) => (
@@ -216,7 +217,7 @@ function CurriculumCMS({ ar }) {
   );
 }
 
-function GalleryCMS({ ar }) {
+function GalleryCMS() {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(emptyGallery());
   const load = async () => setItems(await adminListGallery());
@@ -256,7 +257,7 @@ function GalleryCMS({ ar }) {
         </select>
         <input type="file" accept="image/*" onChange={onImage} className="text-xs text-gray-400" />
         {form.image_url && <img src={resolveGalleryUrl(form.image_url)} alt="" className="h-24 rounded object-cover" />}
-        <button type="submit" className="w-full py-2 bg-emerald-700 rounded text-white text-sm font-bold">{ar ? 'حفظ' : 'Save'}</button>
+        <button type="submit" className="w-full py-2 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
       </form>
       <div className="grid grid-cols-2 gap-3">
         {items.map((item) => (
@@ -274,7 +275,7 @@ function GalleryCMS({ ar }) {
   );
 }
 
-function CoursesCMS({ ar }) {
+function CoursesCMS() {
   const [items, setItems] = useState([]);
   const [form, setForm] = useState(emptyCourse());
   const load = async () => setItems(await adminListCoursePrograms());
@@ -304,7 +305,7 @@ function CoursesCMS({ ar }) {
           <option value="">— admission code —</option>
           {['quran', 'arabic', 'hadith', 'fiqh', 'islamic'].map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <button type="submit" className="w-full py-2 bg-emerald-700 rounded text-white text-sm font-bold">{ar ? 'حفظ' : 'Save'}</button>
+        <button type="submit" className="w-full py-2 bg-emerald-700 rounded text-white text-sm font-bold">{tx('حفظ', 'Save')}</button>
       </form>
       <div className="space-y-2">{items.map((item) => (
         <div key={item.id} className="p-4 bg-gray-950/40 border border-gray-800 rounded-lg flex justify-between">

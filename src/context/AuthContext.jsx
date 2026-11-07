@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { getSiteOrgSlug } from '../lib/siteOrg';
 
 const AuthContext = createContext();
 
@@ -31,10 +32,14 @@ export const AuthProvider = ({ children }) => {
     let profile = null;
     const { data } = await supabase
       .from('profiles')
-      .select('full_name, role, account_type, email, is_approved, index_number, assigned_tutor_role, class_number')
+      .select('full_name, role, account_type, email, is_approved, index_number, assigned_tutor_role, extra_roles, class_number, org_id, phone')
       .eq('id', authUser.id)
       .maybeSingle();
     profile = data;
+    const staffRoles = [
+      ...(profile?.assigned_tutor_role && profile.assigned_tutor_role !== 'none' ? [profile.assigned_tutor_role] : []),
+      ...(profile?.extra_roles || []),
+    ];
     return {
       id: authUser.id,
       email: authUser.email ?? profile?.email ?? '',
@@ -42,10 +47,14 @@ export const AuthProvider = ({ children }) => {
       role: profile?.role || 'user',
       accountType: profile?.account_type || authUser.user_metadata?.account_type || 'guest',
       isVerified: Boolean(authUser.email_confirmed_at || authUser.confirmed_at),
-      isApproved: profile ? profile.is_approved : true,
+      // No profile row means the account is not provisioned yet: never treat it as approved.
+      isApproved: profile ? profile.is_approved : false,
       indexNumber: profile?.index_number || '',
       assignedTutorRole: profile?.assigned_tutor_role || 'none',
+      staffRoles,
       classNumber: profile?.class_number || null,
+      orgId: profile?.org_id || null,
+      phone: profile?.phone || '',
     };
   }, []);
 
@@ -126,6 +135,9 @@ export const AuthProvider = ({ children }) => {
           account_type: accountType,
           index_number: indexNumber || null,
           phone: phone || null,
+          // SaaS tenant: ?org=<slug> on the sign-up link, else the deployment default.
+          // The DB validates it (and invitations/index records take precedence).
+          org_slug: await getSiteOrgSlug(),
         }
       },
     });
@@ -153,6 +165,19 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  // Mirrors the SQL helpers in 0015_security_tenancy.sql. UI gating only —
+  // authorization is enforced by RLS / RPC checks in the database.
+  const isSuperAdmin = user?.role === 'super_admin';
+  const isAdmin = user?.role === 'admin' || isSuperAdmin;
+  const isEmployeeType = user?.accountType === 'tutor' || user?.accountType === 'staff';
+  const hasRole = (...roles) =>
+    Boolean(user && user.isApproved && isEmployeeType && roles.some((r) => user.staffRoles?.includes(r)));
+  const isTreasurer = hasRole('treasurer');
+  const isAccountant = isAdmin || hasRole('accountant');
+  const isFinanceStaff = isAdmin || hasRole('treasurer', 'accountant');
+  const isPrincipal = hasRole('principal');
+  const isVP = hasRole('vice_principal');
+
   const value = {
     user,
     login,
@@ -160,16 +185,34 @@ export const AuthProvider = ({ children }) => {
     logout,
     loading,
     isAuthenticated: !!user,
-    isAdmin: user?.role === 'admin',
-    isLibrarian: user?.role === 'librarian',
-    isStaff: user?.role === 'admin' || user?.role === 'librarian',
+    isSuperAdmin,
+    isAdmin,
+    isLibrarian: user?.role === 'librarian' || hasRole('librarian'),
+    // "staff" = organization administrator (librarians use isLibrarian)
+    isStaff: isAdmin,
     isStudent: user?.accountType === 'student',
     isParent: user?.accountType === 'parent',
     isTutor: user?.accountType === 'tutor',
-    isTreasurer: user?.accountType === 'tutor' && user?.assignedTutorRole === 'treasurer',
-    isPrincipal: user?.accountType === 'tutor' && user?.assignedTutorRole === 'principal',
-    isVP: user?.accountType === 'tutor' && user?.assignedTutorRole === 'vice_principal',
+    isNonTeachingStaff: user?.accountType === 'staff',
+    isEmployee: isAdmin || (isEmployeeType && Boolean(user?.isApproved)),
+    hasRole,
+    isTreasurer,
+    isPrincipal,
+    isVP,
+    isAccountant,
+    isFinanceStaff,
+    isFinanceViewer: isFinanceStaff || isPrincipal || isVP,
+    isHrStaff: isAdmin || hasRole('hr_manager'),
+    isAcademicAdmin: isAdmin || hasRole('principal', 'vice_principal', 'exam_officer'),
+    isAdmissionsStaff: isAdmin || hasRole('admissions_officer', 'principal', 'vice_principal'),
+    isWelfareStaff: isAdmin || hasRole('principal', 'vice_principal', 'counselor', 'warden'),
+    isHostelStaff: isAdmin || hasRole('warden', 'principal', 'vice_principal'),
     isApproved: user?.isApproved ?? false,
+    refreshUser: async () => {
+      if (!isSupabaseConfigured) return;
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      setUser(await buildUser(authUser ?? null));
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

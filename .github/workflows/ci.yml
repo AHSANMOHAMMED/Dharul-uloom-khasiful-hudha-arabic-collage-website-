@@ -56,3 +56,55 @@ jobs:
           npm test --silent
         env:
           CI: true
+
+  database:
+    name: Database — migrations + RLS/ERP tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply all migrations and run security/ERP test suite
+        run: bash scripts/testDatabase.sh
+        env:
+          TEST_DATABASE_URL: postgres://postgres:test@localhost:5432/postgres
+
+  edge-functions:
+    name: Edge Functions — deno check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check functions
+        run: deno check supabase/functions/*/index.ts
+      - name: PayHere crypto unit tests
+        run: deno test supabase/functions/_shared/
+
+  api-latency:
+    name: API latency — PostgREST load test (< 10 s budget)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Seed 2,000-student college, run concurrent load
+        run: bash scripts/perf/run.sh --concurrency 30 --requests 1500

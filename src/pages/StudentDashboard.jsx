@@ -5,8 +5,10 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { motion } from 'framer-motion';
 import PayFeeButton from '../components/PayFeeButton';
+import ReceiptsArrears from '../components/ReceiptsArrears';
 import StudentLmsPanel from '../components/StudentLmsPanel';
 import { generateFeeReceipt } from '../lib/exportUtils';
+import { tx } from '../lib/tx';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
@@ -137,15 +139,13 @@ const StudentDashboard = () => {
               </div>
               <div>
                 <span className="bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-glow-amber border border-amber-500/20">
-                  {i18n.language === 'ar' ? 'بوابة الطالب' : 'Student Portal'}
+                  {tx('بوابة الطالب', 'Student Portal')}
                 </span>
                 <h1 className="mt-4 text-3xl md:text-5xl font-extrabold font-arabic tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">
                   {i18n.language === 'ar' ? `مرحباً بك، ${user?.username}` : `Welcome back, ${user?.username}`}
                 </h1>
                 <p className="mt-3 text-gray-400 text-sm max-w-xl font-medium">
-                  {i18n.language === 'ar' 
-                    ? 'رقم القيد الخاص بك: ' 
-                    : 'Your Student Index Number: '}
+                  {tx('رقم القيد الخاص بك: ', 'Your Student Index Number: ')}
                   <span className="font-mono text-emerald-400 font-bold bg-gray-900 px-2.5 py-1 rounded-lg ml-1 border border-gray-800">
                     {user?.indexNumber}
                   </span>
@@ -157,7 +157,7 @@ const StudentDashboard = () => {
                 to="/library" 
                 className="px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl transition-all shadow-glow-emerald border border-emerald-400/20 flex items-center gap-3 hover:scale-105"
               >
-                <span className="text-xl">📖</span> {i18n.language === 'ar' ? 'المكتبة الرقمية' : 'Digital Library'}
+                <span className="text-xl">📖</span> {tx('المكتبة الرقمية', 'Digital Library')}
               </Link>
             </div>
           </div>
@@ -190,7 +190,7 @@ const StudentDashboard = () => {
             <span className="text-2xl">⚠️</span>
             <div>
               <h3 className="font-bold text-sm">
-                {i18n.language === 'ar' ? 'تنبيه الحضور والمواظبة!' : 'Attendance Alert!'}
+                {tx('تنبيه الحضور والمواظبة!', 'Attendance Alert!')}
               </h3>
               <p className="text-xs text-red-300">
                 {i18n.language === 'ar' 
@@ -208,33 +208,33 @@ const StudentDashboard = () => {
           <div className="glass-panel rounded-[2rem] p-8 border border-gray-800/60 shadow-glass space-y-6 hover:border-emerald-500/30 transition-colors duration-500">
             <h2 className="text-xl font-bold text-white flex items-center gap-3 font-arabic">
               <span className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">📊</span> 
-              {i18n.language === 'ar' ? 'حالة الحضور والغياب' : 'Attendance Status'}
+              {tx('حالة الحضور والغياب', 'Attendance Status')}
             </h2>
             <div className="flex justify-around items-center py-4 bg-gray-950/40 rounded-xl border border-gray-800/30">
               <div className="text-center">
                 <div className="text-3xl font-extrabold text-emerald-400">{attendanceRate}%</div>
-                <div className="text-xs text-gray-400 mt-1">{i18n.language === 'ar' ? 'نسبة الحضور' : 'Attendance Rate'}</div>
+                <div className="text-xs text-gray-400 mt-1">{tx('نسبة الحضور', 'Attendance Rate')}</div>
               </div>
               <div className="h-10 w-[1px] bg-gray-800"></div>
               <div className="text-center">
                 <div className="text-3xl font-extrabold text-amber-500">{presentDays}</div>
-                <div className="text-xs text-gray-400 mt-1">{i18n.language === 'ar' ? 'أيام الحضور' : 'Present Days'}</div>
+                <div className="text-xs text-gray-400 mt-1">{tx('أيام الحضور', 'Present Days')}</div>
               </div>
               <div className="h-10 w-[1px] bg-gray-800"></div>
               <div className="text-center">
                 <div className="text-3xl font-extrabold text-red-400">{absentDays}</div>
-                <div className="text-xs text-gray-400 mt-1">{i18n.language === 'ar' ? 'أيام الغياب' : 'Absent Days'}</div>
+                <div className="text-xs text-gray-400 mt-1">{tx('أيام الغياب', 'Absent Days')}</div>
               </div>
             </div>
             
             {/* Detailed attendance table */}
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                {i18n.language === 'ar' ? 'السجل الأخير' : 'Recent Log'}
+                {tx('السجل الأخير', 'Recent Log')}
               </h3>
               {attendance.length === 0 ? (
                 <div className="text-center text-xs text-gray-500 py-6">
-                  {i18n.language === 'ar' ? 'لا يوجد سجل حضور حالي' : 'No recent attendance logged'}
+                  {tx('لا يوجد سجل حضور حالي', 'No recent attendance logged')}
                 </div>
               ) : (
                 <div className="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
@@ -259,23 +259,23 @@ const StudentDashboard = () => {
           {/* Academic & Results Column */}
           <div className="lg:col-span-2 bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic">
-              🎓 {i18n.language === 'ar' ? 'نتائج الامتحانات والتقييم' : 'Exam Results & Grades'}
+              🎓 {tx('نتائج الامتحانات والتقييم', 'Exam Results & Grades')}
             </h2>
             {results.length === 0 ? (
               <div className="text-center py-16 text-gray-500">
                 <span className="text-4xl block mb-2">📝</span>
-                {i18n.language === 'ar' ? 'لم تنشر أي نتائج امتحانات بعد' : 'No results published yet'}
+                {tx('لم تنشر أي نتائج امتحانات بعد', 'No results published yet')}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-800 text-sm">
                   <thead>
                     <tr className="text-gray-400 border-b border-gray-800">
-                      <th className="py-3 text-left font-semibold">{i18n.language === 'ar' ? 'الامتحان' : 'Exam Name'}</th>
-                      <th className="py-3 text-left font-semibold">{i18n.language === 'ar' ? 'المادة' : 'Subject'}</th>
-                      <th className="py-3 text-center font-semibold">{i18n.language === 'ar' ? 'الدرجة' : 'Marks'}</th>
-                      <th className="py-3 text-center font-semibold">{i18n.language === 'ar' ? 'التقدير' : 'Grade'}</th>
-                      <th className="py-3 text-left font-semibold">{i18n.language === 'ar' ? 'ملاحظات المعلم' : 'Remarks'}</th>
+                      <th className="py-3 text-left font-semibold">{tx('الامتحان', 'Exam Name')}</th>
+                      <th className="py-3 text-left font-semibold">{tx('المادة', 'Subject')}</th>
+                      <th className="py-3 text-center font-semibold">{tx('الدرجة', 'Marks')}</th>
+                      <th className="py-3 text-center font-semibold">{tx('التقدير', 'Grade')}</th>
+                      <th className="py-3 text-left font-semibold">{tx('ملاحظات المعلم', 'Remarks')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800/50 text-gray-300">
@@ -307,13 +307,13 @@ const StudentDashboard = () => {
           {/* Tuition Fee Tracker */}
           <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic">
-              💳 {i18n.language === 'ar' ? 'حالة الرسوم الدراسية' : 'Tuition Monthly Fee'}
+              💳 {tx('حالة الرسوم الدراسية', 'Tuition Monthly Fee')}
             </h2>
             {fees ? (
               <div className="space-y-6">
                 <div className="flex justify-between items-center p-4 bg-gray-950/40 border border-gray-800 rounded-xl">
                   <div>
-                    <div className="text-xs text-gray-400 uppercase tracking-wider">{i18n.language === 'ar' ? 'شهر الفاتورة' : 'Billing Month'}</div>
+                    <div className="text-xs text-gray-400 uppercase tracking-wider">{tx('شهر الفاتورة', 'Billing Month')}</div>
                     <div className="text-xl font-bold text-white">{fees.month}</div>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide ${
@@ -330,17 +330,17 @@ const StudentDashboard = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-gray-950/20 border border-gray-800/30 rounded-xl text-center">
                     <div className="text-2xl font-black text-amber-500 font-mono">LKR {fees.total_due}</div>
-                    <div className="text-xs text-gray-400 mt-1">{i18n.language === 'ar' ? 'المبلغ المستحق' : 'Amount Due'}</div>
+                    <div className="text-xs text-gray-400 mt-1">{tx('المبلغ المستحق', 'Amount Due')}</div>
                   </div>
                   <div className="p-4 bg-gray-950/20 border border-gray-800/30 rounded-xl text-center">
                     <div className="text-2xl font-black text-emerald-400 font-mono">LKR {fees.paid_amount}</div>
-                    <div className="text-xs text-gray-400 mt-1">{i18n.language === 'ar' ? 'المبلغ المدفوع' : 'Amount Paid'}</div>
+                    <div className="text-xs text-gray-400 mt-1">{tx('المبلغ المدفوع', 'Amount Paid')}</div>
                   </div>
                 </div>
 
                 {/* Arrears Indicator */}
                 <div className="flex justify-between items-center p-3 bg-gray-950/10 rounded-lg text-sm border border-gray-800/30">
-                  <span className="text-gray-400">{i18n.language === 'ar' ? 'المستحقات المتبقية' : 'Remaining Balance'}</span>
+                  <span className="text-gray-400">{tx('المستحقات المتبقية', 'Remaining Balance')}</span>
                   <span className="font-mono text-red-400 font-bold">LKR {fees.total_due - fees.paid_amount}</span>
                 </div>
 
@@ -348,7 +348,7 @@ const StudentDashboard = () => {
                 {fees.payments && fees.payments.length > 0 && (
                   <div className="space-y-2">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide">
-                      {i18n.language === 'ar' ? 'دفعات جزئية تاريخية' : 'Partial Payments Log'}
+                      {tx('دفعات جزئية تاريخية', 'Partial Payments Log')}
                     </h4>
                     <div className="space-y-2 max-h-32 overflow-y-auto">
                       {fees.payments.map((p, idx) => (
@@ -371,21 +371,23 @@ const StudentDashboard = () => {
                     )}
                     className="px-4 py-2 rounded-xl border border-emerald-500/40 text-emerald-300 text-sm font-semibold hover:bg-emerald-500/10"
                   >
-                    {i18n.language === 'ar' ? 'طباعة الإيصال' : 'Print receipt'}
+                    {tx('طباعة الإيصال', 'Print receipt')}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="text-center py-12 text-gray-500">
-                {i18n.language === 'ar' ? 'لا توجد بيانات رسوم لهذا الشهر' : 'No fee statements generated for this month'}
+                {tx('لا توجد بيانات رسوم لهذا الشهر', 'No fee statements generated for this month')}
               </div>
             )}
           </div>
 
+          <ReceiptsArrears studentId={user?.id} />
+
           {/* Contact Teacher & Queries */}
           <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic">
-              💬 {i18n.language === 'ar' ? 'تواصل مع المعلمين' : 'Contact Class Teacher'}
+              💬 {tx('تواصل مع المعلمين', 'Contact Class Teacher')}
             </h2>
             <div className="space-y-4">
               {tutorJobs.slice(0, 1).map((job) => (
@@ -403,24 +405,24 @@ const StudentDashboard = () => {
 
               <form onSubmit={handleQuerySubmit} className="space-y-3 pt-2">
                 <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                  {i18n.language === 'ar' ? 'اسأل المعلم أو الإدارة' : 'Ask a Question to Tutor'}
+                  {tx('اسأل المعلم أو الإدارة', 'Ask a Question to Tutor')}
                 </label>
                 <textarea
                   value={queryText}
                   onChange={(e) => setQueryText(e.target.value)}
                   className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 placeholder-gray-600 rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none h-24"
-                  placeholder={i18n.language === 'ar' ? 'اكتب استفسارك هنا...' : 'Ask about a homework, subject, or leave request...'}
+                  placeholder={tx('اكتب استفسارك هنا...', 'Ask about a homework, subject, or leave request...')}
                   required
                 />
                 <button
                   type="submit"
                   className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 font-bold rounded-lg text-white text-sm transition"
                 >
-                  {i18n.language === 'ar' ? 'إرسال الاستفسار' : 'Submit Query'}
+                  {tx('إرسال الاستفسار', 'Submit Query')}
                 </button>
                 {querySuccess && (
                   <p className="text-xs text-emerald-400 text-center animate-pulse">
-                    ✓ {i18n.language === 'ar' ? 'تم إرسال استفسارك بنجاح.' : 'Query sent successfully.'}
+                    ✓ {tx('تم إرسال استفسارك بنجاح.', 'Query sent successfully.')}
                   </p>
                 )}
               </form>

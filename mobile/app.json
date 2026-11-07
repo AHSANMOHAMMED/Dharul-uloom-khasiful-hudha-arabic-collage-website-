@@ -5,24 +5,38 @@
     "scheme": "kashifulhudha",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
-    "platforms": ["ios", "android"],
-    "plugins": ["expo-router", "expo-secure-store"],
-    "android": {
-      "intentFilters": [
+    "userInterfaceStyle": "light",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-asset",
+      "expo-font",
+      [
+        "expo-notifications",
         {
-          "action": "VIEW",
-          "data": [
-            { "scheme": "kashifulhudha", "pathPrefix": "/payment" }
-          ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "color": "#047857"
         }
       ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "android": {
+      "package": "lk.kashifulhudha.portal",
+      "softwareKeyboardLayoutMode": "pan"
     },
     "ios": {
-      "associatedDomains": ["applinks:kashifulhudha.lk"]
+      "bundleIdentifier": "lk.kashifulhudha.portal",
+      "supportsTablet": true
     },
     "extra": {
+      "router": {
+        "origin": false
+      },
       "eas": {
         "projectId": "replace-with-eas-project-id"
       }

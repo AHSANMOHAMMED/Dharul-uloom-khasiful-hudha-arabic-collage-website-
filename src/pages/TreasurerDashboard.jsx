@@ -3,13 +3,15 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import { generateInvoicesInBatches } from '../lib/erp/rpc';
 
 import { generateFeeReceipt, exportFeesCSV } from '../lib/exportUtils';
-import { notifyPaymentForStudent } from '../lib/notifyApi';
+import { toast } from 'react-toastify';
+import { tx } from '../lib/tx';
 
 const TreasurerDashboard = () => {
   const { user } = useAuth();
-  const { i18n } = useTranslation();
+  useTranslation(); // subscribe: re-render on language change
 
   const [students, setStudents] = useState([]);
   const [tutors, setTutors] = useState([]);
@@ -146,58 +148,51 @@ const TreasurerDashboard = () => {
     if (isNaN(paymentVal) || paymentVal <= 0) return;
 
     try {
-      let paid = paymentVal;
-      let currentPayments = [];
-      let feeId = selectedStudentFee?.id;
-
-      if (selectedStudentFee) {
-        paid = Number(selectedStudentFee.paid_amount) + paymentVal;
-        currentPayments = selectedStudentFee.payments || [];
+      // 1. Ensure the month's invoice exists / reflects the agreed total.
+      //    (Invoice totals post to the ledger via invoice lines automatically.)
+      let fee = selectedStudentFee;
+      if (!fee) {
+        const { data: created, error: createErr } = await supabase
+          .from('student_fees')
+          .insert({ student_id: selectedStudent.id, month: feeMonth, total_due: Number(feeTotalDue) })
+          .select('*')
+          .single();
+        if (createErr) throw createErr;
+        fee = created;
+      } else if (Number(fee.total_due) !== Number(feeTotalDue)) {
+        const { data: adjusted, error: adjErr } = await supabase
+          .from('student_fees')
+          .update({ total_due: Number(feeTotalDue) })
+          .eq('id', fee.id)
+          .select('*')
+          .single();
+        if (adjErr) throw adjErr;
+        fee = adjusted;
       }
 
-      const newPaymentLog = {
-        amount: paymentVal,
-        date: new Date().toISOString().split('T')[0],
-        notes: paymentNote || 'Monthly Fee Payment'
-      };
+      // 2. Record the receipt in the immutable ledger (numbered receipt,
+      //    journal posting, student + parent notifications happen server-side).
+      const { data: receipt, error: payErr } = await supabase.rpc('record_fee_payment', {
+        p_fee: fee.id,
+        p_amount: paymentVal,
+        p_method: 'cash',
+        p_reference: null,
+        p_notes: paymentNote || 'Monthly fee payment',
+      });
+      if (payErr) throw payErr;
 
-      currentPayments.push(newPaymentLog);
-
-      let status = 'partial';
-      if (paid >= feeTotalDue) {
-        status = 'completed';
-      }
-
-      const { data, error } = await supabase
-        .from('student_fees')
-        .upsert({
-          id: feeId || undefined,
-          student_id: selectedStudent.id,
-          month: feeMonth,
-          total_due: feeTotalDue,
-          paid_amount: paid,
-          payments: currentPayments,
-          status: status
-        }, { onConflict: 'student_id, month' })
-        .select('*')
-        .single();
-
-      if (error) throw error;
-
-      // Update local state
-      setSelectedStudentFee(data);
+      const { data: refreshed } = await supabase.from('student_fees').select('*').eq('id', fee.id).single();
+      setSelectedStudentFee(refreshed || fee);
       setPartialPayment('');
       setPaymentNote('');
       setFeeSuccess(true);
-
-      const receiptNo = `REC-${feeMonth.replace('-', '')}-${Date.now().toString().slice(-5)}`;
-      await notifyPaymentForStudent(selectedStudent.id, paymentVal, data?.id, receiptNo);
+      toast.success(`${tx('تم إصدار الإيصال', 'Receipt issued')}: ${receipt?.receipt_no || ''}`);
 
       fetchTreasurerData(); // Refresh metrics
-
       setTimeout(() => setFeeSuccess(false), 3000);
     } catch (err) {
       console.error('Error logging payment:', err);
+      toast.error(err?.message || 'Payment could not be recorded');
     }
   };
 
@@ -249,20 +244,8 @@ const TreasurerDashboard = () => {
     setGenResult(null);
     const currentMonth = new Date().toISOString().slice(0, 7);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-monthly-fees`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-          },
-          body: JSON.stringify({ month: currentMonth }),
-        }
-      );
-      const result = await res.json();
+      // bounded batches (~1 s each) with live progress
+      const result = await generateInvoicesInBatches({ month: currentMonth, onProgress: (p) => setGenResult(p) });
       setGenResult(result);
     } catch (err) {
       setGenResult({ error: err.message });
@@ -300,10 +283,10 @@ const TreasurerDashboard = () => {
             </div>
             <div>
               <span className="bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-glow-amber border border-amber-500/20">
-                {i18n.language === 'ar' ? 'أمين الصندوق' : 'Treasurer Portal'}
+                {tx('أمين الصندوق', 'Treasurer Portal')}
               </span>
               <h1 className="mt-3 text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">
-                {i18n.language === 'ar' ? 'إدارة الشؤون المالية والحسابات' : 'Financial Ledger & Payouts'}
+                {tx('إدارة الشؤون المالية والحسابات', 'Financial Ledger & Payouts')}
               </h1>
             </div>
           </div>
@@ -311,7 +294,7 @@ const TreasurerDashboard = () => {
             to="/dashboard?view=tutor"
             className="relative z-10 px-6 py-3 bg-gray-900/80 border border-gray-700 hover:bg-gray-800 text-gray-200 rounded-2xl text-sm font-bold transition-all shadow-lg hover:-translate-y-1 flex items-center gap-2"
           >
-            ← {i18n.language === 'ar' ? 'العودة لوحة المعلم' : 'Back to Tutor Portal'}
+            ← {tx('العودة لوحة المعلم', 'Back to Tutor Portal')}
           </Link>
         </div>
 
@@ -320,17 +303,17 @@ const TreasurerDashboard = () => {
           <div className="glass-card p-8 rounded-[2rem] text-center space-y-3 group hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1">
             <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-emerald-500/10 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-300">💰</div>
             <div className="text-3xl font-black text-emerald-400 mt-2 font-mono">LKR {totalCollected.toLocaleString()}</div>
-            <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{i18n.language === 'ar' ? 'إجمالي المحصلة' : 'Total Fees Collected'}</div>
+            <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{tx('إجمالي المحصلة', 'Total Fees Collected')}</div>
           </div>
           <div className="glass-card p-8 rounded-[2rem] text-center space-y-3 group hover:border-blue-500/30 transition-all duration-300 hover:-translate-y-1">
             <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-blue-500/10 border border-blue-500/20 group-hover:scale-110 transition-transform duration-300">📈</div>
             <div className="text-3xl font-black text-blue-400 mt-2 font-mono">LKR {totalExpected.toLocaleString()}</div>
-            <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{i18n.language === 'ar' ? 'المبلغ المتوقع الإجمالي' : 'Total Expected Billings'}</div>
+            <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{tx('المبلغ المتوقع الإجمالي', 'Total Expected Billings')}</div>
           </div>
           <div className="glass-card p-8 rounded-[2rem] text-center space-y-3 group hover:border-amber-500/30 transition-all duration-300 hover:-translate-y-1">
             <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-amber-500/10 border border-amber-500/20 group-hover:scale-110 transition-transform duration-300">📉</div>
             <div className="text-3xl font-black text-amber-500 mt-2 font-mono">LKR {(totalExpected - totalCollected).toLocaleString()}</div>
-            <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{i18n.language === 'ar' ? 'إجمالي المتأخرات والمتبقي' : 'Total Arrears (Pending)'}</div>
+            <div className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">{tx('إجمالي المتأخرات والمتبقي', 'Total Arrears (Pending)')}</div>
           </div>
         </div>
 
@@ -338,12 +321,10 @@ const TreasurerDashboard = () => {
         <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h3 className="font-bold text-white text-base">
-              ⚡ {i18n.language === 'ar' ? 'توليد رسوم الشهر الحالي تلقائياً' : 'Auto-Generate This Month\'s Fees'}
+              ⚡ {tx('توليد رسوم الشهر الحالي تلقائياً', 'Auto-Generate This Month\'s Fees')}
             </h3>
             <p className="text-xs text-gray-400 mt-1">
-              {i18n.language === 'ar'
-                ? 'يقوم بإنشاء سجل رسوم لكل طالب معتمد للشهر الحالي (متجاهلاً من تم إنشاؤه بالفعل).'
-                : 'Creates a fee record for every approved student for the current month. Safe to run multiple times (idempotent).'}
+              {tx('يقوم بإنشاء سجل رسوم لكل طالب معتمد للشهر الحالي (متجاهلاً من تم إنشاؤه بالفعل).', 'Creates a fee record for every approved student for the current month. Safe to run multiple times (idempotent).')}
             </p>
             {genResult && (
               <div className={`mt-2 text-xs px-3 py-2 rounded-lg border ${
@@ -367,7 +348,7 @@ const TreasurerDashboard = () => {
               disabled={generatingFees}
               className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 disabled:bg-gray-800 text-white font-bold rounded-xl text-xs transition"
             >
-              {generatingFees ? '⏳ Generating...' : `🚀 ${i18n.language === 'ar' ? 'توليد الرسوم' : 'Generate Fees'}`}
+              {generatingFees ? '⏳ Generating...' : `🚀 ${tx('توليد الرسوم', 'Generate Fees')}`}
             </button>
           </div>
         </div>
@@ -378,7 +359,7 @@ const TreasurerDashboard = () => {
           {/* Search roster */}
           <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 shadow-xl space-y-4">
             <h3 className="text-base font-bold text-white font-arabic">
-              🔍 {i18n.language === 'ar' ? 'البحث عن طالب' : 'Select Student'}
+              🔍 {tx('البحث عن طالب', 'Select Student')}
             </h3>
             <input
               type="text"
@@ -409,7 +390,7 @@ const TreasurerDashboard = () => {
           {/* Student Payment logger */}
           <div className="lg:col-span-2 bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic border-b border-gray-800 pb-4">
-              📝 {i18n.language === 'ar' ? 'تسجيل دفعة رسوم شهرية' : 'Student Tuition Logger'}
+              📝 {tx('تسجيل دفعة رسوم شهرية', 'Student Tuition Logger')}
             </h2>
 
             {selectedStudent ? (
@@ -429,7 +410,7 @@ const TreasurerDashboard = () => {
                 <form onSubmit={handleLogFeePayment} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'الشهر المستحق' : 'Billing Month'}</label>
+                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('الشهر المستحق', 'Billing Month')}</label>
                       <input
                         type="month"
                         value={feeMonth}
@@ -439,7 +420,7 @@ const TreasurerDashboard = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'إجمالي الرسوم المحددة للمقعد' : 'Total Tuition Due (LKR)'}</label>
+                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('إجمالي الرسوم المحددة للمقعد', 'Total Tuition Due (LKR)')}</label>
                       <input
                         type="number"
                         value={feeTotalDue}
@@ -452,7 +433,7 @@ const TreasurerDashboard = () => {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'المبلغ المستلم كدفعة جزئية' : 'Deposit Amount (LKR)'}</label>
+                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('المبلغ المستلم كدفعة جزئية', 'Deposit Amount (LKR)')}</label>
                       <input
                         type="number"
                         value={partialPayment}
@@ -463,7 +444,7 @@ const TreasurerDashboard = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'ملاحظة المعاملة' : 'Reference / Remarks'}</label>
+                      <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('ملاحظة المعاملة', 'Reference / Remarks')}</label>
                       <input
                         type="text"
                         value={paymentNote}
@@ -479,7 +460,7 @@ const TreasurerDashboard = () => {
                       type="submit"
                       className="flex-1 py-3 bg-emerald-700 hover:bg-emerald-600 font-bold rounded-xl text-white text-sm transition"
                     >
-                      {i18n.language === 'ar' ? 'تسجيل وتحديث الرصيد' : 'Log Payment Deposit'}
+                      {tx('تسجيل وتحديث الرصيد', 'Log Payment Deposit')}
                     </button>
                     {selectedStudentFee && (
                       <button
@@ -487,7 +468,7 @@ const TreasurerDashboard = () => {
                         onClick={() => generateFeeReceipt(selectedStudent, selectedStudentFee, user?.username)}
                         className="px-4 py-3 bg-blue-900/40 hover:bg-blue-800/60 text-blue-300 border border-blue-800/40 font-bold rounded-xl text-sm transition"
                       >
-                        🖨 {i18n.language === 'ar' ? 'طباعة وصل' : 'Print Receipt'}
+                        🖨 {tx('طباعة وصل', 'Print Receipt')}
                       </button>
                     )}
                     {feeSuccess && (
@@ -498,7 +479,7 @@ const TreasurerDashboard = () => {
               </div>
             ) : (
               <div className="text-center py-20 text-gray-500">
-                {i18n.language === 'ar' ? 'الرجاء اختيار طالب لتسجيل الحساب المالي' : 'Please select a student from the list to log a fee payment.'}
+                {tx('الرجاء اختيار طالب لتسجيل الحساب المالي', 'Please select a student from the list to log a fee payment.')}
               </div>
             )}
           </div>
@@ -511,7 +492,7 @@ const TreasurerDashboard = () => {
           {/* Select Tutor */}
           <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 shadow-xl space-y-4">
             <h3 className="text-base font-bold text-white font-arabic">
-              🔍 {i18n.language === 'ar' ? 'البحث عن معلم' : 'Select Tutor / Staff'}
+              🔍 {tx('البحث عن معلم', 'Select Tutor / Staff')}
             </h3>
             <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
               {tutors.map((t) => (
@@ -532,7 +513,7 @@ const TreasurerDashboard = () => {
           {/* Salary logger */}
           <div className="lg:col-span-2 bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic border-b border-gray-800 pb-4">
-              📝 {i18n.language === 'ar' ? 'صرف وتحديث رواتب المعلمين' : 'Tutor Payout Logger'}
+              📝 {tx('صرف وتحديث رواتب المعلمين', 'Tutor Payout Logger')}
             </h2>
 
             {selectedTutor ? (
@@ -546,7 +527,7 @@ const TreasurerDashboard = () => {
 
                 <form onSubmit={handleUpdateSalary} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                   <div>
-                    <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'شهر الراتب' : 'Month'}</label>
+                    <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('شهر الراتب', 'Month')}</label>
                     <input
                       type="month"
                       value={salaryMonth}
@@ -556,7 +537,7 @@ const TreasurerDashboard = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'مبلغ الراتب' : 'Salary Amount (LKR)'}</label>
+                    <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('مبلغ الراتب', 'Salary Amount (LKR)')}</label>
                     <input
                       type="number"
                       value={salaryAmount}
@@ -566,7 +547,7 @@ const TreasurerDashboard = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'الحالة' : 'Status'}</label>
+                    <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('الحالة', 'Status')}</label>
                     <select
                       value={salaryStatus}
                       onChange={(e) => setSalaryStatus(e.target.value)}
@@ -581,7 +562,7 @@ const TreasurerDashboard = () => {
                       type="submit"
                       className="w-full py-3 bg-emerald-700 hover:bg-emerald-600 font-bold rounded-xl text-white text-sm transition"
                     >
-                      {i18n.language === 'ar' ? 'تحديث وتأكيد الصرف' : 'Log Salary / Payout'}
+                      {tx('تحديث وتأكيد الصرف', 'Log Salary / Payout')}
                     </button>
                     {salarySuccess && (
                       <p className="text-sm text-emerald-400 text-center mt-3 animate-pulse">✓ Salary status updated and tutor notified!</p>
@@ -592,10 +573,10 @@ const TreasurerDashboard = () => {
                 {/* Salary histories table */}
                 <div className="space-y-3 pt-4 border-t border-gray-800">
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide">
-                    {i18n.language === 'ar' ? 'السجل المالي الأخير للمعلم' : 'Recent Payout History'}
+                    {tx('السجل المالي الأخير للمعلم', 'Recent Payout History')}
                   </h4>
                   {salaryHistories.length === 0 ? (
-                    <p className="text-xs text-gray-500 py-3">{i18n.language === 'ar' ? 'لا يوجد سجل رواتب' : 'No payout history logged for this tutor.'}</p>
+                    <p className="text-xs text-gray-500 py-3">{tx('لا يوجد سجل رواتب', 'No payout history logged for this tutor.')}</p>
                   ) : (
                     <div className="space-y-2">
                       {salaryHistories.map((sal) => (
@@ -615,7 +596,7 @@ const TreasurerDashboard = () => {
               </div>
             ) : (
               <div className="text-center py-20 text-gray-500">
-                {i18n.language === 'ar' ? 'الرجاء اختيار معلم لمراجعة السجل المالي' : 'Please select a tutor from the list to review salary reports.'}
+                {tx('الرجاء اختيار معلم لمراجعة السجل المالي', 'Please select a tutor from the list to review salary reports.')}
               </div>
             )}
           </div>

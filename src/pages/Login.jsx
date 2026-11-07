@@ -3,9 +3,10 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
+import { tx } from '../lib/tx';
 
 const Login = () => {
-  const { i18n } = useTranslation();
+  useTranslation(); // subscribe: re-render on language change
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,12 +53,12 @@ const Login = () => {
       >
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-islamic-green">
-            {i18n.language === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
+            {tx('تسجيل الدخول', 'Sign In')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {i18n.language === 'ar' ? 'أو ' : 'Or '}
+            {tx('أو ', 'Or ')}
             <Link to="/register" className="font-medium text-islamic-green hover:text-islamic-dark">
-              {i18n.language === 'ar' ? 'إنشاء حساب جديد' : 'create a new account'}
+              {tx('إنشاء حساب جديد', 'create a new account')}
             </Link>
           </p>
         </div>
@@ -77,7 +78,7 @@ const Login = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {i18n.language === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}
+                {tx('البريد الإلكتروني', 'Email Address')}
               </label>
               <input
                 name="email"
@@ -86,13 +87,13 @@ const Login = () => {
                 value={formData.email}
                 onChange={handleChange}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green focus:z-10 sm:text-sm"
-                placeholder={i18n.language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
+                placeholder={tx('أدخل بريدك الإلكتروني', 'Enter your email')}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {i18n.language === 'ar' ? 'كلمة المرور' : 'Password'}
+                {tx('كلمة المرور', 'Password')}
               </label>
               <input
                 name="password"
@@ -101,7 +102,7 @@ const Login = () => {
                 value={formData.password}
                 onChange={handleChange}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green focus:z-10 sm:text-sm"
-                placeholder={i18n.language === 'ar' ? 'أدخل كلمة المرور' : 'Enter your password'}
+                placeholder={tx('أدخل كلمة المرور', 'Enter your password')}
               />
             </div>
           </div>
@@ -111,7 +112,7 @@ const Login = () => {
               to="/forgot-password"
               className="text-sm font-medium text-islamic-green hover:text-islamic-dark"
             >
-              {i18n.language === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+              {tx('نسيت كلمة المرور؟', 'Forgot password?')}
             </Link>
           </div>
 
@@ -121,8 +122,8 @@ const Login = () => {
             className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-islamic-green hover:bg-islamic-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-islamic-green disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading 
-              ? (i18n.language === 'ar' ? 'جاري تسجيل الدخول...' : 'Signing in...')
-              : (i18n.language === 'ar' ? 'تسجيل الدخول' : 'Sign in')
+              ? (tx('جاري تسجيل الدخول...', 'Signing in...'))
+              : (tx('تسجيل الدخول', 'Sign in'))
             }
           </button>
 
@@ -131,7 +132,7 @@ const Login = () => {
               to="/"
               className="text-sm font-medium text-gray-600 hover:text-islamic-green"
             >
-              {i18n.language === 'ar' ? '← العودة إلى الصفحة الرئيسية' : '← Back to home'}
+              {tx('← العودة إلى الصفحة الرئيسية', '← Back to home')}
             </Link>
           </div>
         </form>

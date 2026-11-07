@@ -4,11 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { listMyNotifications, markNotificationRead, updateNotifyPrefs } from '../lib/notifyApi';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { subscribeToPush } from '../lib/registerSW';
+import { tx } from '../lib/tx';
 
 export default function NotificationBell() {
   const { isAuthenticated } = useAuth();
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation(); // subscribe: re-render on language change
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [prefsOpen, setPrefsOpen] = useState(false);
@@ -64,7 +64,7 @@ export default function NotificationBell() {
   const enablePush = async () => {
     const key = import.meta.env.VITE_VAPID_PUBLIC_KEY;
     if (!key) {
-      alert(ar ? 'مفتاح VAPID غير مضبوط' : 'VITE_VAPID_PUBLIC_KEY is not configured');
+      alert(tx('مفتاح VAPID غير مضبوط', 'VITE_VAPID_PUBLIC_KEY is not configured'));
       return;
     }
     const sub = await subscribeToPush(key);
@@ -78,7 +78,7 @@ export default function NotificationBell() {
     <div className="relative">
       <button
         type="button"
-        aria-label={ar ? 'الإشعارات' : 'Notifications'}
+        aria-label={tx('الإشعارات', 'Notifications')}
         onClick={() => setOpen((v) => !v)}
         className="relative p-2 rounded-xl text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
       >
@@ -95,9 +95,9 @@ export default function NotificationBell() {
       {open && (
         <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl z-50">
           <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
-            <span className="text-sm font-bold text-slate-800">{ar ? 'الإشعارات' : 'Notifications'}</span>
+            <span className="text-sm font-bold text-slate-800">{tx('الإشعارات', 'Notifications')}</span>
             <button type="button" className="text-xs text-emerald-700 font-semibold" onClick={() => setPrefsOpen((v) => !v)}>
-              {ar ? 'التفضيلات' : 'Prefs'}
+              {tx('التفضيلات', 'Prefs')}
             </button>
           </div>
 
@@ -132,7 +132,7 @@ export default function NotificationBell() {
           <ul className="max-h-72 overflow-y-auto divide-y divide-slate-100">
             {items.length === 0 && (
               <li className="px-3 py-6 text-center text-xs text-slate-400">
-                {ar ? 'لا إشعارات' : 'No notifications'}
+                {tx('لا إشعارات', 'No notifications')}
               </li>
             )}
             {items.map((n) => (

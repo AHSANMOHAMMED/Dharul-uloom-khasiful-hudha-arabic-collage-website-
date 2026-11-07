@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import { generateInvoicesInBatches } from '../lib/erp/rpc';
 import { adminStats, listAdmissionsByStatus, updateAdmissionStatus } from '../lib/admissionsApi';
 
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -15,6 +16,7 @@ import AdmissionsCrmBoard from '../components/AdmissionsCrmBoard';
 import StaffHrmPanel from '../components/StaffHrmPanel';
 import ImportJobsPanel from '../components/ImportJobsPanel';
 import OrgAdminPanel from '../components/OrgAdminPanel';
+import { tx } from '../lib/tx';
 
 const COLORS = ['#059669', '#d97706', '#2563eb', '#dc2626'];
 
@@ -290,41 +292,11 @@ const AdminDashboard = () => {
   // Send tuition fee reminder trigger
   const handleTriggerFeeReminder = async () => {
     try {
-      // Find all approved students
-      const { data: studentsList, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, parent_children(parent_id)')
-        .eq('account_type', 'student')
-        .eq('is_approved', true);
-      if (error) throw error;
-
-      if (studentsList && studentsList.length > 0) {
-        const monthString = new Date().toISOString().substring(0, 7); // e.g. '2026-06'
-        
-        for (const student of studentsList) {
-          // Initialize fee row if not exists
-          await supabase
-            .from('student_fees')
-            .insert({
-              student_id: student.id,
-              month: monthString,
-              total_due: 5000.00
-            })
-            .onConflict('student_id, month')
-            .ignore();
-
-          // Notify parents
-          const parentId = student.parent_children?.[0]?.parent_id;
-          if (parentId) {
-            const { error: notificationError } = await supabase.from('notifications').insert({
-              user_id: parentId,
-              title: 'Monthly Tuition Fee Reminder',
-              message: `Reminder: Tuition fee of LKR 5000 is generated for your child ${student.full_name} for ${monthString}.`
-            });
-            if (notificationError) throw notificationError;
-          }
-        }
-      }
+      // Generates this month's invoices (fee structures, hostel, concessions) and
+      // notifies students + linked parents — idempotent, safe to press twice.
+      const monthString = new Date().toISOString().substring(0, 7);
+      const result = await generateInvoicesInBatches({ month: monthString });
+      if (result?.message) toast.info(result.message);
       toast.success('Monthly fee reminders dispatched successfully!');
     } catch (err) {
       console.error('Error triggering fee reminders:', err);
@@ -333,9 +305,9 @@ const AdminDashboard = () => {
   };
 
   const admissionStatusData = stats ? [
-    { name: i18n.language === 'ar' ? 'قيد الانتظار' : 'Pending', value: stats.admissions?.pending || 0 },
-    { name: i18n.language === 'ar' ? 'تمت الموافقة' : 'Approved', value: stats.admissions?.approved || 0 },
-    { name: i18n.language === 'ar' ? 'مرفوض' : 'Rejected', value: stats.admissions?.rejected || 0 },
+    { name: tx('قيد الانتظار', 'Pending'), value: stats.admissions?.pending || 0 },
+    { name: tx('تمت الموافقة', 'Approved'), value: stats.admissions?.approved || 0 },
+    { name: tx('مرفوض', 'Rejected'), value: stats.admissions?.rejected || 0 },
   ] : [];
 
   if (loading) {
@@ -366,7 +338,7 @@ const AdminDashboard = () => {
             <div>
               <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-[10px] font-black font-mono tracking-widest uppercase shadow-glow-emerald">ADMIN SYSTEM</span>
               <h1 className="text-2xl font-extrabold mt-1.5 font-arabic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
-                {i18n.language === 'ar' ? 'الإدارة المركزية والتحكم' : 'Central Admin Console'}
+                {tx('الإدارة المركزية والتحكم', 'Central Admin Console')}
               </h1>
             </div>
           </div>
@@ -379,7 +351,7 @@ const AdminDashboard = () => {
               onClick={logout}
               className="px-5 py-2.5 bg-gray-900/80 hover:bg-red-900/40 text-gray-300 hover:text-red-400 border border-gray-700 hover:border-red-500/50 rounded-xl font-bold text-sm transition-all shadow-lg hover:-translate-y-0.5"
             >
-              {i18n.language === 'ar' ? 'تسجيل الخروج' : 'Logout'}
+              {tx('تسجيل الخروج', 'Logout')}
             </button>
           </div>
         </div>
@@ -395,7 +367,7 @@ const AdminDashboard = () => {
                 📊
               </div>
               <h2 className="text-lg font-bold text-white">
-                {i18n.language === 'ar' ? 'تحليلات طلبات القبول' : 'Admission Funnel'}
+                {tx('تحليلات طلبات القبول', 'Admission Funnel')}
               </h2>
             </div>
             <ResponsiveContainer width="100%" height={260}>
@@ -427,14 +399,14 @@ const AdminDashboard = () => {
                 📈
               </div>
               <h2 className="text-lg font-bold text-white">
-                {i18n.language === 'ar' ? 'المحتوى والإحصائيات العامة' : 'Database Analytics'}
+                {tx('المحتوى والإحصائيات العامة', 'Database Analytics')}
               </h2>
             </div>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={[
-                { name: i18n.language === 'ar' ? 'الأخبار' : 'News', count: stats?.content?.news || 0 },
-                { name: i18n.language === 'ar' ? 'الأساتذة' : 'Faculty', count: stats?.content?.faculty || 0 },
-                { name: i18n.language === 'ar' ? 'الطلبات' : 'Admissions', count: stats?.admissions?.total || 0 },
+                { name: tx('الأخبار', 'News'), count: stats?.content?.news || 0 },
+                { name: tx('الأساتذة', 'Faculty'), count: stats?.content?.faculty || 0 },
+                { name: tx('الطلبات', 'Admissions'), count: stats?.admissions?.total || 0 },
               ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
                 <XAxis dataKey="name" stroke="#9ca3af" tick={{fill: '#9ca3af', fontSize: 12}} axisLine={false} tickLine={false} />
@@ -516,7 +488,7 @@ const AdminDashboard = () => {
           {activeTab === 'admissions' && (
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-white font-arabic">
-                {i18n.language === 'ar' ? 'طلبات القبول المعلقة للتحقق' : 'Admissions Inquiries Queue'}
+                {tx('طلبات القبول المعلقة للتحقق', 'Admissions Inquiries Queue')}
               </h2>
               {admissions.length === 0 ? (
                 <p className="text-gray-500 text-sm py-4">No pending admissions inquiries.</p>
@@ -564,7 +536,7 @@ const AdminDashboard = () => {
           {activeTab === 'approvals' && (
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-white font-arabic">
-                {i18n.language === 'ar' ? 'الموافقات على تسجيل الطلاب والمعلمين' : 'User Signup Approvals Queue'}
+                {tx('الموافقات على تسجيل الطلاب والمعلمين', 'User Signup Approvals Queue')}
               </h2>
               {pendingApprovals.length === 0 ? (
                 <p className="text-gray-500 text-sm py-4">No users waiting in the approval queue.</p>

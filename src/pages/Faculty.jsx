@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { listFaculty } from '../lib/contentApi'
+import { tx } from '../lib/tx';
 
 const Faculty = () => {
   const { i18n } = useTranslation()
@@ -27,12 +28,10 @@ const Faculty = () => {
       <section className="bg-islamic-green text-white py-16 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {i18n.language === 'ar' ? 'أساتذتنا' : 'Our Faculty'}
+            {tx('أساتذتنا', 'Our Faculty')}
           </h1>
           <p className="text-xl text-gray-200">
-            {i18n.language === 'ar'
-              ? 'معلمون مخلصون ومؤهلون'
-              : 'Dedicated and qualified educators'}
+            {tx('معلمون مخلصون ومؤهلون', 'Dedicated and qualified educators')}
           </p>
         </div>
       </section>
@@ -42,11 +41,11 @@ const Faculty = () => {
         <div className="max-w-6xl mx-auto">
           {loading ? (
             <div className="text-center text-gray-600">
-              {i18n.language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+              {tx('جاري التحميل...', 'Loading...')}
             </div>
           ) : faculty.length === 0 ? (
             <div className="text-center text-gray-600">
-              {i18n.language === 'ar' ? 'لا يوجد بيانات' : 'No data available'}
+              {tx('لا يوجد بيانات', 'No data available')}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -76,7 +75,7 @@ const Faculty = () => {
                     {member.qualifications && member.qualifications.length > 0 && (
                       <div className="mt-4">
                         <p className="font-semibold text-sm text-gray-600 mb-2">
-                          {i18n.language === 'ar' ? 'المؤهلات:' : 'Qualifications:'}
+                          {tx('المؤهلات:', 'Qualifications:')}
                         </p>
                         <ul className="text-sm text-gray-600 space-y-1">
                           {member.qualifications.map((qual, idx) => (

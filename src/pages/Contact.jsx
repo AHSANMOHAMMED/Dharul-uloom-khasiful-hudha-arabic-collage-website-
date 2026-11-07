@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { sendContactMessage } from '../lib/contentApi'
+import { tx } from '../lib/tx';
 
 const Contact = () => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -48,9 +49,7 @@ const Contact = () => {
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">{t('contact.title')}</h1>
           <p className="text-xl text-gray-200">
-            {i18n.language === 'ar'
-              ? 'نحن هنا للإجابة على استفساراتك'
-              : 'We are here to answer your questions'}
+            {tx('نحن هنا للإجابة على استفساراتك', 'We are here to answer your questions')}
           </p>
         </div>
       </section>
@@ -67,7 +66,7 @@ const Contact = () => {
             >
               <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
                 <h2 className="text-2xl font-bold text-islamic-green mb-6">
-                  {i18n.language === 'ar' ? 'معلومات الاتصال' : 'Contact Information'}
+                  {tx('معلومات الاتصال', 'Contact Information')}
                 </h2>
                 
                 <div className="space-y-6">
@@ -100,7 +99,7 @@ const Contact = () => {
                     <div className="text-2xl text-islamic-green">🌐</div>
                     <div>
                       <h3 className="font-semibold text-gray-700 mb-1">
-                        {i18n.language === 'ar' ? 'وسائل التواصل' : 'Social Media'}
+                        {tx('وسائل التواصل', 'Social Media')}
                       </h3>
                       <a
                         href="https://www.facebook.com/100088419063008"
@@ -153,14 +152,12 @@ const Contact = () => {
             >
               <div className="bg-white rounded-lg shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-islamic-green mb-6">
-                  {i18n.language === 'ar' ? 'أرسل لنا رسالة' : 'Send us a Message'}
+                  {tx('أرسل لنا رسالة', 'Send us a Message')}
                 </h2>
 
                 {submitted && (
                   <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg">
-                    {i18n.language === 'ar'
-                      ? 'شكراً لك! تم إرسال رسالتك بنجاح. سنتواصل معك قريباً.'
-                      : 'Thank you! Your message has been sent successfully. We will contact you soon.'}
+                    {tx('شكراً لك! تم إرسال رسالتك بنجاح. سنتواصل معك قريباً.', 'Thank you! Your message has been sent successfully. We will contact you soon.')}
                   </div>
                 )}
 

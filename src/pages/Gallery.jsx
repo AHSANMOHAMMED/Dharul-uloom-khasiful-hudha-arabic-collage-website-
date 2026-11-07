@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { listGalleryItems } from '../lib/contentApi'
+import { tx } from '../lib/tx';
 
 const Gallery = () => {
-  const { i18n } = useTranslation()
-  const ar = i18n.language === 'ar'
+  useTranslation() // subscribe: re-render on language change
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [lightbox, setLightbox] = useState(null)
@@ -19,10 +19,10 @@ const Gallery = () => {
       <section className="bg-islamic-green text-white py-16 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {ar ? 'معرض الصور' : 'Gallery'}
+            {tx('معرض الصور', 'Gallery')}
           </h1>
           <p className="text-xl text-gray-200">
-            {ar ? 'لمحة عن حياتنا في الكلية' : 'A glimpse into our college life'}
+            {tx('لمحة عن حياتنا في الكلية', 'A glimpse into our college life')}
           </p>
         </div>
       </section>
@@ -30,9 +30,9 @@ const Gallery = () => {
       <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
           {loading ? (
-            <p className="text-center text-gray-600">{ar ? 'جاري التحميل...' : 'Loading...'}</p>
+            <p className="text-center text-gray-600">{tx('جاري التحميل...', 'Loading...')}</p>
           ) : items.length === 0 ? (
-            <p className="text-center text-gray-600">{ar ? 'لا توجد صور بعد' : 'No gallery photos yet'}</p>
+            <p className="text-center text-gray-600">{tx('لا توجد صور بعد', 'No gallery photos yet')}</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {items.map((item, index) => (
@@ -55,7 +55,7 @@ const Gallery = () => {
                   )}
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-end">
                     <div className="p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                      <h3 className="font-bold text-lg">{item.title[ar ? 'ar' : 'en'] || item.title.en}</h3>
+                      <h3 className="font-bold text-lg">{item.title[tx('ar', 'en')] || item.title.en}</h3>
                       <span className="text-sm opacity-90 capitalize">{item.category}</span>
                     </div>
                   </div>
@@ -72,7 +72,7 @@ const Gallery = () => {
             className="mt-12 bg-islamic-green text-white rounded-lg shadow-lg p-8 text-center"
           >
             <h3 className="text-2xl font-bold mb-4">
-              {ar ? 'تابعنا على Facebook' : 'Follow Us on Facebook'}
+              {tx('تابعنا على Facebook', 'Follow Us on Facebook')}
             </h3>
             <a
               href="https://www.facebook.com/100088419063008"
@@ -90,7 +90,7 @@ const Gallery = () => {
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setLightbox(null)} role="presentation">
           <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()} role="presentation">
             <img src={lightbox.imageUrl} alt={lightbox.title.en} className="w-full max-h-[80vh] object-contain rounded-lg" />
-            <p className="text-white text-center mt-4 text-lg">{lightbox.title[ar ? 'ar' : 'en'] || lightbox.title.en}</p>
+            <p className="text-white text-center mt-4 text-lg">{lightbox.title[tx('ar', 'en')] || lightbox.title.en}</p>
             <button type="button" onClick={() => setLightbox(null)} className="mt-4 mx-auto block text-gray-300 hover:text-white">Close</button>
           </div>
         </div>

@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { buildDrivePreviewUrl, getDriveFileIdFromUrl, searchBooks } from '../lib/booksApi';
 import { exportToCSV } from '../lib/exportUtils';
+import { tx } from '../lib/tx';
+import DictionaryAdmin from '../components/library/DictionaryAdmin';
 
 const emptyForm = {
   shamela_id: '',
@@ -35,6 +37,7 @@ const LibrarianDashboard = () => {
   const [coverFile, setCoverFile] = useState(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [tab, setTab] = useState('books');
 
   const canManage = isAdmin || isLibrarian;
 
@@ -62,7 +65,7 @@ const LibrarianDashboard = () => {
   if (!canManage) {
     return (
       <div className="min-h-screen bg-gray-50 py-20 text-center text-gray-600">
-        {ar ? 'ليس لديك صلاحية الوصول إلى هذه الصفحة.' : 'You do not have permission to access this page.'}
+        {tx('ليس لديك صلاحية الوصول إلى هذه الصفحة.', 'You do not have permission to access this page.')}
       </div>
     );
   }
@@ -99,7 +102,7 @@ const LibrarianDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.shamela_id.trim() || !form.title_ar.trim() || !form.author.trim() || !form.drive_file_id.trim()) {
-      toast.error(ar ? 'يرجى تعبئة الحقول المطلوبة.' : 'Please fill in the required fields.');
+      toast.error(tx('يرجى تعبئة الحقول المطلوبة.', 'Please fill in the required fields.'));
       return;
     }
 
@@ -131,7 +134,7 @@ const LibrarianDashboard = () => {
       const { error } = await supabase.from('books').upsert(payload, { onConflict: 'shamela_id' });
       if (error) throw error;
 
-      toast.success(ar ? 'تم حفظ الكتاب بنجاح.' : 'Book saved successfully.');
+      toast.success(tx('تم حفظ الكتاب بنجاح.', 'Book saved successfully.'));
       setForm(emptyForm);
       setCoverFile(null);
       loadBooks();
@@ -143,13 +146,13 @@ const LibrarianDashboard = () => {
   };
 
   const handleDelete = async (book) => {
-    if (!window.confirm(`${ar ? 'حذف الكتاب؟' : 'Delete this book?'} ${book.title_ar}`)) return;
+    if (!window.confirm(`${tx('حذف الكتاب؟', 'Delete this book?')} ${book.title_ar}`)) return;
     const { error } = await supabase.from('books').delete().eq('id', book.id);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.info(ar ? 'تم حذف الكتاب.' : 'Book deleted.');
+    toast.info(tx('تم حذف الكتاب.', 'Book deleted.'));
     loadBooks();
   };
 
@@ -161,52 +164,70 @@ const LibrarianDashboard = () => {
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
               <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em]">
-                {ar ? 'إدارة المكتبة' : 'Library Admin'}
+                {tx('إدارة المكتبة', 'Library Admin')}
               </span>
               <h1 className="mt-3 font-arabic text-3xl font-bold">
                 {ar ? `مرحباً، ${user?.username || ''}` : `Welcome, ${user?.username || ''}`}
               </h1>
               <p className="mt-2 max-w-2xl text-emerald-50/90">
-                {ar
-                  ? 'أضف الكتب أو حدّثها مباشرة في Supabase باستخدام رابط معاينة Google Drive.'
-                  : 'Add or update books directly in Supabase using Google Drive preview links.'}
+                {tx('أضف الكتب أو حدّثها مباشرة في Supabase باستخدام رابط معاينة Google Drive.', 'Add or update books directly in Supabase using Google Drive preview links.')}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link to="/library" className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-emerald-900">
-                {ar ? 'عرض المكتبة' : 'View Library'}
+                {tx('عرض المكتبة', 'View Library')}
               </Link>
               <button onClick={logout} className="rounded-xl border border-white/30 px-4 py-2 text-sm font-bold">
-                {ar ? 'خروج' : 'Logout'}
+                {tx('خروج', 'Logout')}
               </button>
             </div>
           </div>
         </div>
 
+        <div className="flex flex-wrap gap-2">
+          {[
+            ['books', tx('الكتب', 'Books')],
+            ['dictionary', tx('القاموس العربي–التاميلي', 'Arabic–Tamil dictionary')],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
+                tab === id ? 'bg-emerald-800 text-white' : 'border border-emerald-200 bg-white text-emerald-800'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'dictionary' && <DictionaryAdmin />}
+
+        {tab === 'books' && (
+        <>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-emerald-100 bg-white p-5">
-            <div className="text-sm text-gray-500">{ar ? 'إجمالي الكتب' : 'Total books'}</div>
+            <div className="text-sm text-gray-500">{tx('إجمالي الكتب', 'Total books')}</div>
             <div className="mt-2 text-3xl font-bold text-emerald-800">{stats.total}</div>
           </div>
           <div className="rounded-2xl border border-emerald-100 bg-white p-5">
-            <div className="text-sm text-gray-500">{ar ? 'كتب عربية' : 'Arabic books'}</div>
+            <div className="text-sm text-gray-500">{tx('كتب عربية', 'Arabic books')}</div>
             <div className="mt-2 text-3xl font-bold text-emerald-800">{stats.arabic}</div>
           </div>
           <div className="rounded-2xl border border-emerald-100 bg-white p-5">
-            <div className="text-sm text-gray-500">{ar ? 'مع أغلفة' : 'With covers'}</div>
+            <div className="text-sm text-gray-500">{tx('مع أغلفة', 'With covers')}</div>
             <div className="mt-2 text-3xl font-bold text-emerald-800">{stats.withCover}</div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.2fr_0.8fr]">
           <form onSubmit={handleSubmit} className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-gray-900">{ar ? 'إضافة / تعديل كتاب' : 'Add / Update Book'}</h2>
+            <h2 className="text-xl font-bold text-gray-900">{tx('إضافة / تعديل كتاب', 'Add / Update Book')}</h2>
             <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-900">
-              <div className="font-bold">{ar ? 'نصيحة سريعة' : 'Quick tip'}</div>
+              <div className="font-bold">{tx('نصيحة سريعة', 'Quick tip')}</div>
               <p className="mt-1 leading-relaxed">
-                {ar
-                  ? 'يمكنك تحضير البيانات في ملف JSON مطابق للنموذج الموجود في docs/books.sample.json ثم استخدامه مع سكربت الاستيراد.'
-                  : 'You can prepare a JSON file using the structure in docs/books.sample.json, then import it with the resumable script.'}
+                {tx('يمكنك تحضير البيانات في ملف JSON مطابق للنموذج الموجود في docs/books.sample.json ثم استخدامه مع سكربت الاستيراد.', 'You can prepare a JSON file using the structure in docs/books.sample.json, then import it with the resumable script.')}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
@@ -215,7 +236,7 @@ const LibrarianDashboard = () => {
                   rel="noreferrer"
                   className="rounded-lg bg-white px-3 py-2 text-xs font-bold text-amber-900"
                 >
-                  {ar ? 'دليل الإعداد' : 'Setup guide'}
+                  {tx('دليل الإعداد', 'Setup guide')}
                 </Link>
                 <span className="rounded-lg border border-amber-200 px-3 py-2 text-xs font-semibold">
                   node scripts/library/importBooks.mjs --input ./books.json
@@ -224,16 +245,16 @@ const LibrarianDashboard = () => {
             </div>
             <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
               {[
-                ['shamela_id', ar ? 'رقم الشاملة' : 'Shamela ID'],
-                ['title_ar', ar ? 'العنوان العربي' : 'Arabic title'],
-                ['title_en', ar ? 'العنوان الإنجليزي' : 'English title'],
-                ['author', ar ? 'المؤلف' : 'Author'],
-                ['categories', ar ? 'التصنيفات مفصولة بفواصل' : 'Categories, comma separated'],
-                ['year', ar ? 'السنة' : 'Year'],
-                ['pages', ar ? 'عدد الصفحات' : 'Pages'],
-                ['drive_file_id', ar ? 'Google Drive File ID' : 'Google Drive File ID'],
-                ['drive_preview_url', ar ? 'رابط المعاينة' : 'Preview URL'],
-                ['cover_url', ar ? 'رابط الغلاف (اختياري)' : 'Cover URL (optional)'],
+                ['shamela_id', tx('رقم الشاملة', 'Shamela ID')],
+                ['title_ar', tx('العنوان العربي', 'Arabic title')],
+                ['title_en', tx('العنوان الإنجليزي', 'English title')],
+                ['author', tx('المؤلف', 'Author')],
+                ['categories', tx('التصنيفات مفصولة بفواصل', 'Categories, comma separated')],
+                ['year', tx('السنة', 'Year')],
+                ['pages', tx('عدد الصفحات', 'Pages')],
+                ['drive_file_id', tx('Google Drive File ID', 'Google Drive File ID')],
+                ['drive_preview_url', tx('رابط المعاينة', 'Preview URL')],
+                ['cover_url', tx('رابط الغلاف (اختياري)', 'Cover URL (optional)')],
               ].map(([key, label]) => (
                 <label key={key} className="flex flex-col gap-1 text-sm font-medium text-gray-700 md:col-span-1">
                   {label}
@@ -242,23 +263,23 @@ const LibrarianDashboard = () => {
                     onChange={(e) => updateForm({ [key]: e.target.value })}
                     onBlur={key === 'drive_preview_url' ? handlePreviewAutofill : undefined}
                     className="rounded-xl border border-gray-200 px-4 py-3 focus:border-emerald-500 focus:outline-none"
-                    dir={ar ? 'rtl' : 'ltr'}
+                    dir={tx('rtl', 'ltr')}
                   />
                 </label>
               ))}
               <label className="flex flex-col gap-1 text-sm font-medium text-gray-700 md:col-span-2">
-                {ar ? 'الوصف' : 'Description'}
+                {tx('الوصف', 'Description')}
                 <textarea
                   value={form.description}
                   onChange={(e) => updateForm({ description: e.target.value })}
                   rows={4}
                   className="rounded-xl border border-gray-200 px-4 py-3 focus:border-emerald-500 focus:outline-none"
-                  dir={ar ? 'rtl' : 'ltr'}
+                  dir={tx('rtl', 'ltr')}
                 />
               </label>
 
               <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
-                {ar ? 'اللغة' : 'Language'}
+                {tx('اللغة', 'Language')}
                 <select
                   value={form.language}
                   onChange={(e) => updateForm({ language: e.target.value })}
@@ -272,7 +293,7 @@ const LibrarianDashboard = () => {
               </label>
 
               <label className="flex flex-col gap-1 text-sm font-medium text-gray-700 md:col-span-2">
-                {ar ? 'غلاف الكتاب (صورة)' : 'Book cover (image)'}
+                {tx('غلاف الكتاب (صورة)', 'Book cover (image)')}
                 <input
                   type="file"
                   accept="image/*"
@@ -280,9 +301,7 @@ const LibrarianDashboard = () => {
                   className="rounded-xl border border-gray-200 px-4 py-3 focus:border-emerald-500 focus:outline-none"
                 />
                 <span className="text-xs text-gray-500">
-                  {ar
-                    ? 'يمكنك رفع صورة الغلاف هنا، أو وضع رابط مباشر في خانة الغلاف.'
-                    : 'You can upload a cover image here, or paste a direct cover URL in the cover field.'}
+                  {tx('يمكنك رفع صورة الغلاف هنا، أو وضع رابط مباشر في خانة الغلاف.', 'You can upload a cover image here, or paste a direct cover URL in the cover field.')}
                 </span>
               </label>
             </div>
@@ -294,12 +313,8 @@ const LibrarianDashboard = () => {
                 className="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
               >
                 {saving || coverUploading
-                  ? ar
-                    ? 'جارٍ الحفظ...'
-                    : 'Saving...'
-                  : ar
-                    ? 'حفظ الكتاب'
-                    : 'Save Book'}
+                  ? tx('جارٍ الحفظ...', 'Saving...')
+                  : tx('حفظ الكتاب', 'Save Book')}
               </button>
               <button
                 type="button"
@@ -309,14 +324,14 @@ const LibrarianDashboard = () => {
                 }}
                 className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-bold text-gray-700"
               >
-                {ar ? 'مسح النموذج' : 'Reset'}
+                {tx('مسح النموذج', 'Reset')}
               </button>
             </div>
           </form>
 
           <div className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-xl font-bold text-gray-900">{ar ? 'آخر الكتب' : 'Latest books'}</h2>
+              <h2 className="text-xl font-bold text-gray-900">{tx('آخر الكتب', 'Latest books')}</h2>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -335,14 +350,14 @@ const LibrarianDashboard = () => {
                   }
                   className="rounded-lg border border-amber-200 px-3 py-2 text-sm font-semibold text-amber-800"
                 >
-                  {ar ? 'تصدير CSV' : 'Export CSV'}
+                  {tx('تصدير CSV', 'Export CSV')}
                 </button>
                 <button
                   type="button"
                   onClick={loadBooks}
                   className="rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-800"
                 >
-                  {ar ? 'تحديث' : 'Refresh'}
+                  {tx('تحديث', 'Refresh')}
                 </button>
               </div>
             </div>
@@ -356,16 +371,16 @@ const LibrarianDashboard = () => {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={ar ? 'ابحث بعنوان أو مؤلف' : 'Search by title or author'}
+                placeholder={tx('ابحث بعنوان أو مؤلف', 'Search by title or author')}
                 className="flex-1 rounded-xl border border-gray-200 px-4 py-2 text-sm focus:border-emerald-500 focus:outline-none"
               />
               <button type="submit" className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white">
-                {ar ? 'بحث' : 'Search'}
+                {tx('بحث', 'Search')}
               </button>
             </form>
             <div className="mt-4">
               {loading ? (
-                <div className="py-16 text-center text-gray-500">{ar ? 'جارٍ التحميل...' : 'Loading...'}</div>
+                <div className="py-16 text-center text-gray-500">{tx('جارٍ التحميل...', 'Loading...')}</div>
               ) : (
                 <div className="space-y-3">
                   {books.map((book) => (
@@ -402,14 +417,14 @@ const LibrarianDashboard = () => {
                             }}
                             className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white"
                           >
-                            {ar ? 'تعديل' : 'Edit'}
+                            {tx('تعديل', 'Edit')}
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(book)}
                             className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-bold text-red-700"
                           >
-                            {ar ? 'حذف' : 'Delete'}
+                            {tx('حذف', 'Delete')}
                           </button>
                         </div>
                       </div>
@@ -417,7 +432,7 @@ const LibrarianDashboard = () => {
                   ))}
                   {books.length === 0 && (
                     <div className="py-16 text-center text-gray-500">
-                      {ar ? 'لا توجد كتب بعد.' : 'No books yet.'}
+                      {tx('لا توجد كتب بعد.', 'No books yet.')}
                     </div>
                   )}
                 </div>
@@ -425,6 +440,8 @@ const LibrarianDashboard = () => {
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

@@ -8,11 +8,11 @@ import {
   getStudentSubmissions,
   listClassSchedules,
 } from '../lib/lmsApi';
+import { tx } from '../lib/tx';
 
 const StudentLmsPanel = () => {
   const { user } = useAuth();
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation(); // subscribe: re-render on language change
   const classNumber = user?.classNumber;
 
   const [materials, setMaterials] = useState([]);
@@ -38,16 +38,16 @@ const StudentLmsPanel = () => {
   };
 
   if (!classNumber) {
-    return <p className="text-gray-500 text-sm">{ar ? 'لم يُحدد فصلك بعد' : 'Your class is not assigned yet'}</p>;
+    return <p className="text-gray-500 text-sm">{tx('لم يُحدد فصلك بعد', 'Your class is not assigned yet')}</p>;
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-white">{ar ? 'التعلم والواجبات' : 'Learning & Assignments'}</h2>
+      <h2 className="text-xl font-bold text-white">{tx('التعلم والواجبات', 'Learning & Assignments')}</h2>
 
       {schedules.length > 0 && (
         <div className="bg-gray-900/40 p-4 rounded-xl border border-gray-800">
-          <h3 className="font-bold text-emerald-400 mb-2">{ar ? 'جدول الحصص' : 'Class schedule'}</h3>
+          <h3 className="font-bold text-emerald-400 mb-2">{tx('جدول الحصص', 'Class schedule')}</h3>
           <ul className="text-sm space-y-1">
             {schedules.map((s) => (
               <li key={s.id} className="text-gray-300">
@@ -59,7 +59,7 @@ const StudentLmsPanel = () => {
       )}
 
       <div>
-        <h3 className="font-bold text-gray-400 mb-2">{ar ? 'مواد' : 'Materials'}</h3>
+        <h3 className="font-bold text-gray-400 mb-2">{tx('مواد', 'Materials')}</h3>
         <ul className="space-y-2 text-sm">
           {materials.map((m) => (
             <li key={m.id} className="p-3 bg-gray-900/40 rounded border border-gray-800">
@@ -73,7 +73,7 @@ const StudentLmsPanel = () => {
       </div>
 
       <div>
-        <h3 className="font-bold text-gray-400 mb-2">{ar ? 'الواجبات' : 'Assignments'}</h3>
+        <h3 className="font-bold text-gray-400 mb-2">{tx('الواجبات', 'Assignments')}</h3>
         {assignments.map((a) => {
           const sub = submissions.find((s) => s.assignment_id === a.id);
           return (
@@ -81,18 +81,18 @@ const StudentLmsPanel = () => {
               <div className="font-semibold text-white">{a.title}</div>
               <div className="text-xs text-gray-500">{a.due_date ? `Due: ${a.due_date}` : ''}</div>
               {sub ? (
-                <p className="text-sm text-emerald-400">{ar ? 'تم التسليم' : 'Submitted'} {sub.grade ? `· Grade: ${sub.grade}` : ''}</p>
+                <p className="text-sm text-emerald-400">{tx('تم التسليم', 'Submitted')} {sub.grade ? `· Grade: ${sub.grade}` : ''}</p>
               ) : (
                 <>
                   <textarea
                     className="w-full bg-gray-950 border border-gray-800 rounded p-2 text-sm text-gray-200"
                     rows={2}
-                    placeholder={ar ? 'إجابتك...' : 'Your answer...'}
+                    placeholder={tx('إجابتك...', 'Your answer...')}
                     value={drafts[a.id] || ''}
                     onChange={(e) => setDrafts({ ...drafts, [a.id]: e.target.value })}
                   />
                   <button type="button" onClick={() => handleSubmit(a.id)} className="px-4 py-1 bg-emerald-700 rounded text-white text-xs font-bold">
-                    {ar ? 'تسليم' : 'Submit'}
+                    {tx('تسليم', 'Submit')}
                   </button>
                 </>
               )}

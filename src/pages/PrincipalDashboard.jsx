@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { tx } from '../lib/tx';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const CLASSES = [1, 2, 3, 4, 5, 6, 7];
@@ -179,10 +180,10 @@ const PrincipalDashboard = ({ vpMode = false }) => {
   const handleTutorApproval = async (tutorId, approve) => {
     setApproving(tutorId);
     try {
-      await supabase.from('profiles').update({ is_approved: approve }).eq('id', tutorId);
-      if (approve) {
-        await supabase.rpc('notify_profile_activated', { p_profile_id: tutorId });
-      } else {
+      // approve_account checks the principal's rights server-side and notifies the user.
+      const { error: approveErr } = await supabase.rpc('approve_account', { p_profile_id: tutorId, p_approve: approve });
+      if (approveErr) throw approveErr;
+      if (!approve) {
         await supabase.from('notifications').insert({
           user_id: tutorId,
           title: 'Account Rejected',
@@ -236,12 +237,12 @@ const PrincipalDashboard = ({ vpMode = false }) => {
 
   // ── Tabs config ────────────────────────────────────────────────────────────
   const tabs = [
-    { id: 'overview',       label: ar ? 'نظرة عامة' : 'Overview',       icon: '📊' },
-    { id: 'announcements',  label: ar ? 'الإعلانات' : 'Announcements',   icon: '📢' },
-    { id: 'leaves',         label: ar ? 'الإجازات' : 'Leave Requests',   icon: '📋' },
-    ...(!vpMode ? [{ id: 'approvals', label: ar ? 'الموافقات' : 'Approvals', icon: '✅' }] : []),
-    { id: 'timetable',      label: ar ? 'الجدول الدراسي' : 'Timetable',  icon: '🗓️' },
-    { id: 'results',        label: ar ? 'النتائج' : 'Results Overview',  icon: '📝' },
+    { id: 'overview',       label: tx('نظرة عامة', 'Overview'),       icon: '📊' },
+    { id: 'announcements',  label: tx('الإعلانات', 'Announcements'),   icon: '📢' },
+    { id: 'leaves',         label: tx('الإجازات', 'Leave Requests'),   icon: '📋' },
+    ...(!vpMode ? [{ id: 'approvals', label: tx('الموافقات', 'Approvals'), icon: '✅' }] : []),
+    { id: 'timetable',      label: tx('الجدول الدراسي', 'Timetable'),  icon: '🗓️' },
+    { id: 'results',        label: tx('النتائج', 'Results Overview'),  icon: '📝' },
   ];
 
   if (loading) {
@@ -252,7 +253,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
             <div className="absolute inset-0 border-t-2 border-r-2 border-emerald-500 rounded-full animate-spin"></div>
             <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">⚡</div>
           </div>
-          <p className="text-gray-400 text-sm font-light tracking-wide">{ar ? 'تحميل لوحة القيادة...' : 'Loading dashboard...'}</p>
+          <p className="text-gray-400 text-sm font-light tracking-wide">{tx('تحميل لوحة القيادة...', 'Loading dashboard...')}</p>
         </div>
       </div>
     );
@@ -278,22 +279,22 @@ const PrincipalDashboard = ({ vpMode = false }) => {
             </div>
             <div>
               <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border ${vpMode ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-glow-blue' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-glow-emerald'}`}>
-                {vpMode ? (ar ? 'نائب الناظر' : 'Vice Principal Portal') : (ar ? 'بوابة الناظر' : 'Principal Portal')}
+                {vpMode ? (tx('نائب الناظر', 'Vice Principal Portal')) : (tx('بوابة الناظر', 'Principal Portal'))}
               </span>
               <h1 className={`mt-3 text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r ${vpMode ? 'from-blue-200 to-blue-500' : 'from-emerald-200 to-emerald-500'}`}>
                 {ar ? `مرحباً، ${user?.username}` : `Welcome, ${user?.username}`}
               </h1>
               <p className="text-sm text-gray-400 mt-1 font-medium">
-                {ar ? 'إدارة شاملة للكلية والطلاب والكوادر التعليمية' : 'Comprehensive college, student & staff management'}
+                {tx('إدارة شاملة للكلية والطلاب والكوادر التعليمية', 'Comprehensive college, student & staff management')}
               </p>
             </div>
           </div>
           <div className="relative z-10 flex flex-wrap gap-4">
             <Link to="/library" className="px-6 py-3 bg-gray-900/80 border border-gray-700 hover:bg-gray-800 text-gray-200 rounded-2xl text-sm font-bold transition-all shadow-lg hover:-translate-y-1 flex items-center gap-2">
-              <span className="text-xl">📖</span> {ar ? 'المكتبة' : 'Library'}
+              <span className="text-xl">📖</span> {tx('المكتبة', 'Library')}
             </Link>
             <button onClick={logout} className="px-6 py-3 bg-red-900/40 hover:bg-red-900/60 text-red-300 border border-red-800/50 rounded-2xl text-sm font-bold transition-all shadow-lg hover:-translate-y-1">
-              {ar ? 'خروج' : 'Logout'}
+              {tx('خروج', 'Logout')}
             </button>
           </div>
         </div>
@@ -322,12 +323,12 @@ const PrincipalDashboard = ({ vpMode = false }) => {
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
               {[
-                { label: ar ? 'الطلاب' : 'Students', value: stats.totalStudents, icon: '🎓', color: 'emerald' },
-                { label: ar ? 'المعلمون' : 'Tutors', value: stats.totalTutors, icon: '👨‍🏫', color: 'blue' },
-                { label: ar ? 'إجازات معلقة' : 'Pending Leaves', value: stats.pendingLeaves, icon: '📋', color: 'amber' },
-                { label: ar ? 'موافقات معلقة' : 'Pending Approvals', value: stats.pendingApprovals, icon: '⏳', color: 'red' },
-                { label: ar ? 'رسوم محصلة' : 'Fees Collected', value: `LKR ${stats.monthlyFeeCollected.toLocaleString()}`, icon: '💰', color: 'emerald' },
-                { label: ar ? 'متأخرات' : 'Outstanding', value: `LKR ${stats.monthlyFeeOutstanding.toLocaleString()}`, icon: '⚠️', color: 'amber' },
+                { label: tx('الطلاب', 'Students'), value: stats.totalStudents, icon: '🎓', color: 'emerald' },
+                { label: tx('المعلمون', 'Tutors'), value: stats.totalTutors, icon: '👨‍🏫', color: 'blue' },
+                { label: tx('إجازات معلقة', 'Pending Leaves'), value: stats.pendingLeaves, icon: '📋', color: 'amber' },
+                { label: tx('موافقات معلقة', 'Pending Approvals'), value: stats.pendingApprovals, icon: '⏳', color: 'red' },
+                { label: tx('رسوم محصلة', 'Fees Collected'), value: `LKR ${stats.monthlyFeeCollected.toLocaleString()}`, icon: '💰', color: 'emerald' },
+                { label: tx('متأخرات', 'Outstanding'), value: `LKR ${stats.monthlyFeeOutstanding.toLocaleString()}`, icon: '⚠️', color: 'amber' },
               ].map((stat, i) => (
                 <div key={i} className="glass-card rounded-3xl p-6 text-center space-y-3 group hover:border-gray-600 transition-all duration-300 hover:-translate-y-1">
                   <div className={`w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-${stat.color}-500/10 text-${stat.color}-400 border border-${stat.color}-500/20 group-hover:scale-110 transition-transform duration-300`}>
@@ -343,7 +344,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
             <div className="glass-card rounded-[2rem] p-8 space-y-6 hover:border-emerald-500/30 transition-all duration-300">
               <h3 className="text-lg font-bold text-white flex items-center gap-3">
                 <span className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">📢</span>
-                {ar ? 'آخر الإعلانات' : 'Recent Announcements'}
+                {tx('آخر الإعلانات', 'Recent Announcements')}
               </h3>
               {announcements.slice(0, 3).map(ann => (
                 <div key={ann.id} className="p-5 bg-gray-950/40 border border-gray-800/50 rounded-2xl flex gap-4 items-start hover:bg-gray-900/60 transition-colors">
@@ -360,7 +361,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
               ))}
               {announcements.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-500 text-sm">{ar ? 'لا توجد إعلانات' : 'No announcements yet.'}</p>
+                  <p className="text-gray-500 text-sm">{tx('لا توجد إعلانات', 'No announcements yet.')}</p>
                 </div>
               )}
             </div>
@@ -372,34 +373,34 @@ const PrincipalDashboard = ({ vpMode = false }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Post new */}
             <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-5">
-              <h2 className="text-xl font-bold text-white">{ar ? 'إنشاء إعلان جديد' : 'Post New Announcement'}</h2>
+              <h2 className="text-xl font-bold text-white">{tx('إنشاء إعلان جديد', 'Post New Announcement')}</h2>
               <form onSubmit={handlePostAnnouncement} className="space-y-4">
                 <div>
-                  <label className="block text-xs text-gray-400 uppercase mb-1">{ar ? 'العنوان' : 'Title'}</label>
+                  <label className="block text-xs text-gray-400 uppercase mb-1">{tx('العنوان', 'Title')}</label>
                   <input value={newTitle} onChange={e => setNewTitle(e.target.value)}
                     className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    placeholder={ar ? 'عنوان الإعلان' : 'Announcement title...'} />
+                    placeholder={tx('عنوان الإعلان', 'Announcement title...')} />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 uppercase mb-1">{ar ? 'المحتوى' : 'Body'}</label>
+                  <label className="block text-xs text-gray-400 uppercase mb-1">{tx('المحتوى', 'Body')}</label>
                   <textarea value={newBody} onChange={e => setNewBody(e.target.value)} rows={4}
                     className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
-                    placeholder={ar ? 'محتوى الإعلان...' : 'Announcement body...'} />
+                    placeholder={tx('محتوى الإعلان...', 'Announcement body...')} />
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={newPinned} onChange={e => setNewPinned(e.target.checked)} className="rounded accent-amber-500" />
-                  <span className="text-sm text-gray-300">{ar ? 'تثبيت الإعلان' : 'Pin this announcement'}</span>
+                  <span className="text-sm text-gray-300">{tx('تثبيت الإعلان', 'Pin this announcement')}</span>
                 </label>
                 <button type="submit" disabled={announceSaving}
                   className="w-full py-3 bg-emerald-700 hover:bg-emerald-600 disabled:bg-gray-800 text-white font-bold rounded-xl text-sm transition">
-                  {announceSaving ? '...' : (ar ? 'نشر الإعلان' : 'Post Announcement')}
+                  {announceSaving ? '...' : (tx('نشر الإعلان', 'Post Announcement'))}
                 </button>
               </form>
             </div>
 
             {/* Existing announcements */}
             <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-4">
-              <h2 className="text-xl font-bold text-white">{ar ? 'الإعلانات المنشورة' : 'Published Announcements'}</h2>
+              <h2 className="text-xl font-bold text-white">{tx('الإعلانات المنشورة', 'Published Announcements')}</h2>
               <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
                 {announcements.map(ann => (
                   <div key={ann.id} className="p-4 bg-gray-950/50 border border-gray-800/60 rounded-xl space-y-2">
@@ -422,7 +423,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                     <p className="text-xs text-gray-400 line-clamp-2">{ann.body}</p>
                   </div>
                 ))}
-                {announcements.length === 0 && <p className="text-center text-gray-500 text-sm py-8">{ar ? 'لا توجد إعلانات بعد' : 'No announcements yet.'}</p>}
+                {announcements.length === 0 && <p className="text-center text-gray-500 text-sm py-8">{tx('لا توجد إعلانات بعد', 'No announcements yet.')}</p>}
               </div>
             </div>
           </div>
@@ -451,14 +452,14 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                 {leaves.length === 0 && (
                   <div className="text-center py-12 text-gray-500">
                     <div className="text-4xl mb-2">✅</div>
-                    <p className="text-sm">{ar ? 'لا توجد طلبات إجازة معلقة' : 'No pending leave requests.'}</p>
+                    <p className="text-sm">{tx('لا توجد طلبات إجازة معلقة', 'No pending leave requests.')}</p>
                   </div>
                 )}
               </div>
             </div>
 
             <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-4">
-              <h2 className="text-xl font-bold text-white">{ar ? 'مراجعة الطلب' : 'Review Selected Leave'}</h2>
+              <h2 className="text-xl font-bold text-white">{tx('مراجعة الطلب', 'Review Selected Leave')}</h2>
               {selectedLeave ? (
                 <div className="space-y-4">
                   <div className="p-4 bg-gray-950/50 border border-gray-800 rounded-xl space-y-2">
@@ -467,26 +468,26 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                     <p className="text-sm text-gray-300">{selectedLeave.reason}</p>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{ar ? 'ملاحظة الرد' : 'Response Note (Optional)'}</label>
+                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('ملاحظة الرد', 'Response Note (Optional)')}</label>
                     <textarea value={leaveNote} onChange={e => setLeaveNote(e.target.value)} rows={3}
                       className="w-full bg-gray-950 border border-gray-800 text-white text-sm rounded-xl px-4 py-2.5 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                      placeholder={ar ? 'ملاحظة اختيارية...' : 'Optional note to student...'} />
+                      placeholder={tx('ملاحظة اختيارية...', 'Optional note to student...')} />
                   </div>
                   <div className="flex gap-3">
                     <button onClick={() => handleReviewLeave('approved')} disabled={leaveProcessing}
                       className="flex-1 py-2.5 bg-emerald-700 hover:bg-emerald-600 disabled:bg-gray-800 text-white font-bold rounded-xl text-sm transition">
-                      ✅ {ar ? 'قبول' : 'Approve'}
+                      ✅ {tx('قبول', 'Approve')}
                     </button>
                     <button onClick={() => handleReviewLeave('rejected')} disabled={leaveProcessing}
                       className="flex-1 py-2.5 bg-red-700 hover:bg-red-600 disabled:bg-gray-800 text-white font-bold rounded-xl text-sm transition">
-                      ❌ {ar ? 'رفض' : 'Reject'}
+                      ❌ {tx('رفض', 'Reject')}
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="text-center py-16 text-gray-500">
                   <div className="text-4xl mb-2">👈</div>
-                  <p className="text-sm">{ar ? 'اختر طلباً للمراجعة' : 'Select a leave request to review'}</p>
+                  <p className="text-sm">{tx('اختر طلباً للمراجعة', 'Select a leave request to review')}</p>
                 </div>
               )}
             </div>
@@ -502,7 +503,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
             {pendingTutors.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <div className="text-4xl mb-2">✅</div>
-                <p className="text-sm">{ar ? 'لا توجد موافقات معلقة' : 'No pending tutor approvals.'}</p>
+                <p className="text-sm">{tx('لا توجد موافقات معلقة', 'No pending tutor approvals.')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -518,15 +519,15 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                       </div>
                     </div>
                     {tutor.phone && <p className="text-xs text-gray-400">📞 {tutor.phone}</p>}
-                    <p className="text-xs text-gray-500">{ar ? 'تسجيل' : 'Registered'}: {new Date(tutor.created_at).toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-500">{tx('تسجيل', 'Registered')}: {new Date(tutor.created_at).toLocaleDateString()}</p>
                     <div className="flex gap-2">
                       <button onClick={() => handleTutorApproval(tutor.id, true)} disabled={approving === tutor.id}
                         className="flex-1 py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition disabled:bg-gray-800">
-                        {ar ? 'قبول' : 'Approve'}
+                        {tx('قبول', 'Approve')}
                       </button>
                       <button onClick={() => handleTutorApproval(tutor.id, false)} disabled={approving === tutor.id}
                         className="flex-1 py-2 bg-red-800/60 hover:bg-red-700 text-red-200 font-bold rounded-xl text-xs transition disabled:bg-gray-800">
-                        {ar ? 'رفض' : 'Reject'}
+                        {tx('رفض', 'Reject')}
                       </button>
                     </div>
                   </div>
@@ -542,50 +543,50 @@ const PrincipalDashboard = ({ vpMode = false }) => {
             {/* Add schedule form (principal only) */}
             {!vpMode && (
               <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
-                <h2 className="text-xl font-bold text-white mb-4">{ar ? 'إضافة حصة دراسية' : 'Add Schedule Entry'}</h2>
+                <h2 className="text-xl font-bold text-white mb-4">{tx('إضافة حصة دراسية', 'Add Schedule Entry')}</h2>
                 <form onSubmit={handleAddSchedule} className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{ar ? 'المعلم' : 'Tutor'}</label>
+                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('المعلم', 'Tutor')}</label>
                     <select value={schedForm.tutor_id} onChange={e => setSchedForm(f => ({ ...f, tutor_id: e.target.value }))}
                       className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                      <option value="">{ar ? 'اختر معلماً' : 'Select tutor...'}</option>
+                      <option value="">{tx('اختر معلماً', 'Select tutor...')}</option>
                       {tutorsList.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{ar ? 'الصف' : 'Class'}</label>
+                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('الصف', 'Class')}</label>
                     <select value={schedForm.class_number} onChange={e => setSchedForm(f => ({ ...f, class_number: +e.target.value }))}
                       className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none">
                       {CLASSES.map(c => <option key={c} value={c}>Class {c}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{ar ? 'اليوم' : 'Day'}</label>
+                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('اليوم', 'Day')}</label>
                     <select value={schedForm.day_of_week} onChange={e => setSchedForm(f => ({ ...f, day_of_week: e.target.value }))}
                       className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none">
                       {DAYS.map(d => <option key={d}>{d}</option>)}
                     </select>
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{ar ? 'المادة' : 'Subject'}</label>
+                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('المادة', 'Subject')}</label>
                     <input value={schedForm.subject} onChange={e => setSchedForm(f => ({ ...f, subject: e.target.value }))}
-                      placeholder={ar ? 'مثال: نحو' : 'e.g. Arabic Grammar'}
+                      placeholder={tx('مثال: نحو', 'e.g. Arabic Grammar')}
                       className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500" />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{ar ? 'من' : 'From'}</label>
+                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('من', 'From')}</label>
                     <input type="time" value={schedForm.start_time} onChange={e => setSchedForm(f => ({ ...f, start_time: e.target.value }))}
                       className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none" />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 uppercase mb-1">{ar ? 'إلى' : 'To'}</label>
+                    <label className="block text-xs text-gray-400 uppercase mb-1">{tx('إلى', 'To')}</label>
                     <input type="time" value={schedForm.end_time} onChange={e => setSchedForm(f => ({ ...f, end_time: e.target.value }))}
                       className="w-full bg-gray-950 border border-gray-800 text-white rounded-xl px-3 py-2 text-sm focus:outline-none" />
                   </div>
                   <div className="col-span-4">
                     <button type="submit" disabled={schedSaving || !schedForm.tutor_id || !schedForm.subject}
                       className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-600 disabled:bg-gray-800 text-white font-bold rounded-xl text-sm transition">
-                      {schedSaving ? '...' : (ar ? 'إضافة الحصة' : 'Add Entry')}
+                      {schedSaving ? '...' : (tx('إضافة الحصة', 'Add Entry'))}
                     </button>
                   </div>
                 </form>
@@ -594,12 +595,12 @@ const PrincipalDashboard = ({ vpMode = false }) => {
 
             {/* Timetable grid */}
             <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4">{ar ? 'الجدول الأسبوعي' : 'Weekly Timetable Grid'}</h2>
+              <h2 className="text-xl font-bold text-white mb-4">{tx('الجدول الأسبوعي', 'Weekly Timetable Grid')}</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs border-collapse">
                   <thead>
                     <tr>
-                      <th className="py-2 px-3 bg-gray-950 border border-gray-800 text-gray-400 font-bold text-left w-24">{ar ? 'اليوم' : 'Day'}</th>
+                      <th className="py-2 px-3 bg-gray-950 border border-gray-800 text-gray-400 font-bold text-left w-24">{tx('اليوم', 'Day')}</th>
                       {CLASSES.map(c => (
                         <th key={c} className="py-2 px-2 bg-gray-950 border border-gray-800 text-emerald-400 font-bold text-center">
                           {ar ? `صف ${c}` : `Class ${c}`}
@@ -638,17 +639,17 @@ const PrincipalDashboard = ({ vpMode = false }) => {
         {/* ── RESULTS OVERVIEW TAB ──────────────────────────────────── */}
         {activeTab === 'results' && (
           <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-4">
-            <h2 className="text-xl font-bold text-white">{ar ? 'ملخص نتائج الامتحانات' : 'Exam Results Overview'}</h2>
+            <h2 className="text-xl font-bold text-white">{tx('ملخص نتائج الامتحانات', 'Exam Results Overview')}</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-gray-400 uppercase border-b border-gray-800">
-                    <th className="py-2 pr-4">{ar ? 'الطالب' : 'Student'}</th>
-                    <th className="py-2 pr-4">{ar ? 'الصف' : 'Class'}</th>
-                    <th className="py-2 pr-4">{ar ? 'الامتحان' : 'Exam'}</th>
-                    <th className="py-2 pr-4">{ar ? 'المادة' : 'Subject'}</th>
-                    <th className="py-2 pr-4">{ar ? 'الدرجة' : 'Marks'}</th>
-                    <th className="py-2">{ar ? 'التقدير' : 'Grade'}</th>
+                    <th className="py-2 pr-4">{tx('الطالب', 'Student')}</th>
+                    <th className="py-2 pr-4">{tx('الصف', 'Class')}</th>
+                    <th className="py-2 pr-4">{tx('الامتحان', 'Exam')}</th>
+                    <th className="py-2 pr-4">{tx('المادة', 'Subject')}</th>
+                    <th className="py-2 pr-4">{tx('الدرجة', 'Marks')}</th>
+                    <th className="py-2">{tx('التقدير', 'Grade')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800/50">
@@ -670,7 +671,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                     </tr>
                   ))}
                   {results.length === 0 && (
-                    <tr><td colSpan={6} className="py-12 text-center text-gray-500">{ar ? 'لا توجد نتائج بعد' : 'No results recorded yet.'}</td></tr>
+                    <tr><td colSpan={6} className="py-12 text-center text-gray-500">{tx('لا توجد نتائج بعد', 'No results recorded yet.')}</td></tr>
                   )}
                 </tbody>
               </table>

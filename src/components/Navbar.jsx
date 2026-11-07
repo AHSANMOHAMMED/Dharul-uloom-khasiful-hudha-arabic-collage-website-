@@ -3,19 +3,18 @@ import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import NotificationBell from './NotificationBell'
+import LanguageSelect from './LanguageSelect'
+import { tx } from '../lib/tx';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [mobileAcademicsOpen, setMobileAcademicsOpen] = useState(false)
   const [mobileExploreOpen, setMobileExploreOpen] = useState(false)
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const location = useLocation()
-  const { isAuthenticated, isAdmin, isStaff, logout } = useAuth()
+  const { isAuthenticated, isAdmin, isLibrarian, isEmployee, logout } = useAuth()
+  const canManageLibrary = isAdmin || isLibrarian
 
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'en' ? 'ar' : 'en'
-    i18n.changeLanguage(newLang)
-  }
 
   const academicsActive = ['/courses', '/curriculum', '/faculty'].includes(location.pathname)
   const exploreActive = ['/library', '/gallery', '/news'].includes(location.pathname)
@@ -32,7 +31,7 @@ const Navbar = () => {
                 className="w-12 h-12 object-contain rounded-xl shadow-sm border border-slate-100 group-hover:scale-105 transition-transform duration-300"
               />
               <span className="text-xl sm:text-2xl font-arabic font-extrabold text-emerald-950 tracking-wide">
-                {i18n.language === 'ar' ? 'كاشف الهدى' : 'Kashiful Hudha'}
+                {tx('كاشف الهدى', 'Kashiful Hudha')}
               </span>
             </Link>
           </div>
@@ -179,29 +178,37 @@ const Navbar = () => {
                     to="/admin"
                     className="px-4 py-2 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm"
                   >
-                    {i18n.language === 'ar' ? 'لوحة الإدارة' : 'Admin Portal'}
+                    {tx('لوحة الإدارة', 'Admin Portal')}
                   </Link>
                 ) : (
                   <Link
                     to="/dashboard"
                     className="px-4 py-2 rounded-xl text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100 transition-all shadow-sm"
                   >
-                    {i18n.language === 'ar' ? 'البوابة' : 'My Portal'}
+                    {tx('البوابة', 'My Portal')}
                   </Link>
                 )}
-                {isStaff && (
+                {isEmployee && (
+                  <Link
+                    to="/erp"
+                    className="px-4 py-2 rounded-xl text-sm font-bold bg-sky-50 text-sky-700 border border-sky-100 hover:bg-sky-100 transition-all shadow-sm"
+                  >
+                    ERP
+                  </Link>
+                )}
+                {canManageLibrary && (
                   <Link
                     to="/library-admin"
                     className="px-4 py-2 rounded-xl text-sm font-bold bg-amber-50 text-amber-700 border border-amber-100 hover:bg-amber-100 transition-all shadow-sm"
                   >
-                    {i18n.language === 'ar' ? 'إدارة المكتبة' : 'Library Admin'}
+                    {tx('إدارة المكتبة', 'Library Admin')}
                   </Link>
                 )}
                 <button
                   onClick={logout}
                   className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all"
                 >
-                  {i18n.language === 'ar' ? 'خروج' : 'Logout'}
+                  {tx('خروج', 'Logout')}
                 </button>
               </div>
             ) : (
@@ -210,33 +217,23 @@ const Navbar = () => {
                   to="/login"
                   className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:text-slate-900 transition-all"
                 >
-                  {i18n.language === 'ar' ? 'دخول' : 'Sign In'}
+                  {tx('دخول', 'Sign In')}
                 </Link>
                 <Link
                   to="/register"
                   className="px-5 py-2.5 rounded-xl bg-emerald-700 text-white font-bold hover:bg-emerald-600 transition-all shadow-sm border border-emerald-800/20"
                 >
-                  {i18n.language === 'ar' ? 'تسجيل' : 'Register'}
+                  {tx('تسجيل', 'Register')}
                 </Link>
               </div>
             )}
 
-            <button
-              onClick={toggleLanguage}
-              className="ml-4 px-3 py-1.5 rounded-lg bg-slate-100 text-emerald-800 font-bold text-xs border border-slate-200 hover:bg-slate-200 transition-all"
-            >
-              {i18n.language === 'en' ? 'عربي' : 'EN'}
-            </button>
+            <LanguageSelect className="ms-4" />
           </div>
 
           {/* Mobile menu button */}
           <div className="lg:hidden flex items-center gap-4">
-            <button
-              onClick={toggleLanguage}
-              className="px-3 py-1.5 rounded-lg bg-slate-100 text-emerald-800 font-bold text-xs border border-slate-200"
-            >
-              {i18n.language === 'en' ? 'عربي' : 'EN'}
-            </button>
+            <LanguageSelect />
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="text-slate-600 hover:text-emerald-700 focus:outline-none p-2 rounded-lg bg-slate-50 border border-slate-200"
@@ -382,22 +379,31 @@ const Navbar = () => {
                   onClick={() => setIsOpen(false)}
                   className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-emerald-50 text-emerald-700 border border-emerald-100"
                 >
-                  {i18n.language === 'ar' ? 'الذهاب للوحة التحكم' : 'Go to Portal'}
+                  {tx('الذهاب للوحة التحكم', 'Go to Portal')}
                 </Link>
-                {isStaff && (
+                {isEmployee && (
+                  <Link
+                    to="/erp"
+                    onClick={() => setIsOpen(false)}
+                    className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-sky-50 text-sky-700 border border-sky-100"
+                  >
+                    {tx('نظام الإدارة (ERP)', 'College ERP')}
+                  </Link>
+                )}
+                {canManageLibrary && (
                   <Link
                     to="/library-admin"
                     onClick={() => setIsOpen(false)}
                     className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-amber-50 text-amber-700 border border-amber-100"
                   >
-                    {i18n.language === 'ar' ? 'إدارة المكتبة' : 'Library Admin'}
+                    {tx('إدارة المكتبة', 'Library Admin')}
                   </Link>
                 )}
                 <button
                   onClick={() => { logout(); setIsOpen(false); }}
                   className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-slate-100 border border-slate-200 text-red-600"
                 >
-                  {i18n.language === 'ar' ? 'تسجيل الخروج' : 'Logout'}
+                  {tx('تسجيل الخروج', 'Logout')}
                 </button>
               </div>
             ) : (
@@ -407,14 +413,14 @@ const Navbar = () => {
                   onClick={() => setIsOpen(false)}
                   className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold text-slate-700 border border-slate-200 bg-slate-50"
                 >
-                  {i18n.language === 'ar' ? 'دخول' : 'Sign In'}
+                  {tx('دخول', 'Sign In')}
                 </Link>
                 <Link
                   to="/register"
                   onClick={() => setIsOpen(false)}
                   className="block w-full text-center px-4 py-3 rounded-xl text-base font-bold bg-emerald-700 text-white"
                 >
-                  {i18n.language === 'ar' ? 'تسجيل جديد' : 'Register Account'}
+                  {tx('تسجيل جديد', 'Register Account')}
                 </Link>
               </div>
             )}

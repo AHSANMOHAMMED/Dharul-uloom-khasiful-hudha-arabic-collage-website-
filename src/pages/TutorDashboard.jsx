@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import TutorLmsPanel from '../components/TutorLmsPanel';
+import { tx } from '../lib/tx';
 
 
 const TutorDashboard = () => {
@@ -202,7 +203,7 @@ const TutorDashboard = () => {
               </div>
             <div>
               <span className="bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-glow-amber border border-amber-500/20">
-                {i18n.language === 'ar' ? 'بوابة المعلمين' : 'Tutor Portal'}
+                {tx('بوابة المعلمين', 'Tutor Portal')}
               </span>
               <h1 className="mt-3 text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">
                 {i18n.language === 'ar' ? `مرحباً بك، فضيلة الشيخ ${user?.username}` : `Welcome back, Sheikh ${user?.username}`}
@@ -216,14 +217,14 @@ const TutorDashboard = () => {
                 to="/dashboard?treasurer=true"
                 className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-gray-950 font-black rounded-2xl transition-all shadow-glow-amber hover:-translate-y-1 flex items-center gap-2"
               >
-                <span className="text-xl">💰</span> {i18n.language === 'ar' ? 'لوحة أمين الصندوق' : 'Treasurer Panel'}
+                <span className="text-xl">💰</span> {tx('لوحة أمين الصندوق', 'Treasurer Panel')}
               </Link>
             )}
             <Link
               to="/library"
               className="px-6 py-3 bg-gray-900/80 border border-gray-700 text-gray-200 rounded-2xl hover:bg-gray-800 transition-all shadow-lg hover:-translate-y-1 flex items-center gap-2"
             >
-              <span className="text-xl">📖</span> {i18n.language === 'ar' ? 'المكتبة الرقمية' : 'Digital Library'}
+              <span className="text-xl">📖</span> {tx('المكتبة الرقمية', 'Digital Library')}
             </Link>
           </div>
         </div>
@@ -235,11 +236,11 @@ const TutorDashboard = () => {
           <div className="glass-card rounded-[2rem] p-8 space-y-6 hover:border-emerald-500/30 transition-all duration-300">
             <h3 className="text-lg font-bold text-white flex items-center gap-3">
               <span className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">💼</span>
-              {i18n.language === 'ar' ? 'المسؤوليات المعينة للعام' : 'Academic Job / Role'}
+              {tx('المسؤوليات المعينة للعام', 'Academic Job / Role')}
             </h3>
             {jobs.length === 0 ? (
               <p className="text-xs text-gray-500">
-                {i18n.language === 'ar' ? 'لا توجد وظائف معينة حالياً للعام الدراسي' : 'No jobs or responsibilities assigned for this year.'}
+                {tx('لا توجد وظائف معينة حالياً للعام الدراسي', 'No jobs or responsibilities assigned for this year.')}
               </p>
             ) : (
               <div className="space-y-3">
@@ -260,11 +261,11 @@ const TutorDashboard = () => {
           <div className="glass-card rounded-[2rem] p-8 space-y-6 hover:border-amber-500/30 transition-all duration-300">
             <h3 className="text-lg font-bold text-white flex items-center gap-3">
               <span className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20">💵</span>
-              {i18n.language === 'ar' ? 'حالة الراتب الشهري' : 'Salary Statement'}
+              {tx('حالة الراتب الشهري', 'Salary Statement')}
             </h3>
             {salaries.length === 0 ? (
               <p className="text-xs text-gray-500">
-                {i18n.language === 'ar' ? 'لا توجد بيانات مرتبات مدخلة' : 'No salary histories recorded.'}
+                {tx('لا توجد بيانات مرتبات مدخلة', 'No salary histories recorded.')}
               </p>
             ) : (
               <div className="space-y-3">
@@ -291,11 +292,11 @@ const TutorDashboard = () => {
           {/* Attendance controller header */}
           <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              ⚙️ {i18n.language === 'ar' ? 'الفصل الدراسي النشط' : 'Attendance Configuration'}
+              ⚙️ {tx('الفصل الدراسي النشط', 'Attendance Configuration')}
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'اختر الصف' : 'Select Class'}</label>
+                <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('اختر الصف', 'Select Class')}</label>
                 <select
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(parseInt(e.target.value))}
@@ -307,7 +308,7 @@ const TutorDashboard = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{i18n.language === 'ar' ? 'التاريخ' : 'Date'}</label>
+                <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('التاريخ', 'Date')}</label>
                 <input
                   type="date"
                   value={attendanceDate}
@@ -334,7 +335,7 @@ const TutorDashboard = () => {
 
             {students.length === 0 ? (
               <div className="text-center py-16 text-gray-500">
-                {i18n.language === 'ar' ? 'لا يوجد طلاب مسجلين في هذا الصف' : 'No approved students found for this class.'}
+                {tx('لا يوجد طلاب مسجلين في هذا الصف', 'No approved students found for this class.')}
               </div>
             ) : (
               <form onSubmit={handleSaveAttendance} className="space-y-6">
@@ -372,7 +373,7 @@ const TutorDashboard = () => {
                   type="submit"
                   className="w-full py-3 bg-emerald-700 hover:bg-emerald-600 font-bold rounded-xl text-white text-sm transition"
                 >
-                  {i18n.language === 'ar' ? 'حفظ سجل حضور اليوم' : 'Save Attendance Records'}
+                  {tx('حفظ سجل حضور اليوم', 'Save Attendance Records')}
                 </button>
                 {attendanceSuccess && (
                   <p className="text-sm text-emerald-400 text-center animate-pulse">✓ Attendance saved successfully!</p>
@@ -384,11 +385,11 @@ const TutorDashboard = () => {
           {/* Manage Leave Requests */}
           <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic border-b border-gray-800 pb-4">
-              📝 {i18n.language === 'ar' ? 'طلبات الإجازات الواردة' : 'Leave Requests Queue'}
+              📝 {tx('طلبات الإجازات الواردة', 'Leave Requests Queue')}
             </h2>
             {leaves.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
-                {i18n.language === 'ar' ? 'لا توجد طلبات إجازة معلقة' : 'No pending leave requests.'}
+                {tx('لا توجد طلبات إجازة معلقة', 'No pending leave requests.')}
               </div>
             ) : (
               <div className="space-y-4 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
@@ -420,7 +421,7 @@ const TutorDashboard = () => {
             {selectedLeave && (
               <div className="bg-gray-950/60 p-4 rounded-xl border border-gray-800 space-y-3 mt-4">
                 <h4 className="font-bold text-xs text-white uppercase tracking-wider">
-                  {i18n.language === 'ar' ? 'تفاصيل المراجعة والقرار' : 'Review & Respond'}
+                  {tx('تفاصيل المراجعة والقرار', 'Review & Respond')}
                 </h4>
                 <div>
                   <textarea
@@ -435,13 +436,13 @@ const TutorDashboard = () => {
                     onClick={() => handleReviewLeave('approved')}
                     className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs transition"
                   >
-                    {i18n.language === 'ar' ? 'قبول الإجازة' : 'Approve'}
+                    {tx('قبول الإجازة', 'Approve')}
                   </button>
                   <button
                     onClick={() => handleReviewLeave('rejected')}
                     className="flex-1 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-xs transition"
                   >
-                    {i18n.language === 'ar' ? 'رفض الإجازة' : 'Reject'}
+                    {tx('رفض الإجازة', 'Reject')}
                   </button>
                 </div>
               </div>

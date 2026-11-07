@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { tx } from '../lib/tx';
 
 const Footer = () => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const currentYear = new Date().getFullYear()
 
   return (
@@ -22,7 +23,7 @@ const Footer = () => {
               />
               <div className="flex flex-col">
                 <span className="text-2xl font-arabic font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">
-                  {i18n.language === 'ar' ? 'دار العلوم كاشف الهدى' : 'Kashiful Hudha'}
+                  {tx('دار العلوم كاشف الهدى', 'Kashiful Hudha')}
                 </span>
                 <span className="text-[10px] text-emerald-400 font-bold tracking-widest uppercase">
                   Arabic College
@@ -30,9 +31,7 @@ const Footer = () => {
               </div>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
-              {i18n.language === 'ar' 
-                ? 'مؤسسة تعليمية عربية إسلامية رائدة تهدف إلى تخريج علماء ودعاة متقنين للعلوم الشرعية والعربية بمعايير أكاديمية حديثة.'
-                : 'A premier preliminary Arabic educational institution bridging classical Islamic scholarship with modern academic excellence.'}
+              {tx('مؤسسة تعليمية عربية إسلامية رائدة تهدف إلى تخريج علماء ودعاة متقنين للعلوم الشرعية والعربية بمعايير أكاديمية حديثة.', 'A premier preliminary Arabic educational institution bridging classical Islamic scholarship with modern academic excellence.')}
             </p>
           </div>
 
@@ -66,7 +65,7 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
               <span className="w-8 h-px bg-amber-500"></span>
-              {i18n.language === 'ar' ? 'روابط سريعة' : 'Quick Links'}
+              {tx('روابط سريعة', 'Quick Links')}
             </h3>
             <ul className="space-y-3">
               {[

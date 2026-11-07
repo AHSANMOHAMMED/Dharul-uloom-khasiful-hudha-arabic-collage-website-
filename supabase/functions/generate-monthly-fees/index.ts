@@ -1,181 +1,112 @@
 // supabase/functions/generate-monthly-fees/index.ts
-// ─────────────────────────────────────────────────────────────────────────────
-// Edge Function: Monthly Fee Generator
+// Monthly invoice generator.
 //
-// Trigger options:
-//   1. HTTP POST (admin clicks "Generate Fees" button)
-//   2. pg_cron / Supabase scheduled trigger on the 1st of every month
+// All billing logic (fee structures per class, hostel charges, concessions,
+// ledger posting, student + parent notifications, idempotency) lives in the
+// SQL function public.generate_monthly_invoices() — see
+// supabase/migrations/0018_student_finance.sql. This function is a thin
+// trigger for it:
 //
-// Behaviour:
-//   - Reads all approved students from profiles
-//   - For each student, checks if a fee row already exists for the current month
-//   - Inserts a new student_fees row only if none exists (idempotent)
-//   - Returns a summary: { generated, skipped, errors }
+//   * Scheduled run (cron) → Authorization: Bearer <service_role key>
+//       generates for EVERY active organization.
+//   * Staff click (treasurer / accountant / admin) → user JWT
+//       the RPC runs as that user, so the database enforces the role and
+//       restricts generation to the caller's organization.
 //
-// Auth: Requires service_role key — called from admin backend only.
-// ─────────────────────────────────────────────────────────────────────────────
+// Body (optional): { "month": "YYYY-MM", "default_fee": 2000 }
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { notifyMonthlyFeeCreated, triggerOutboundWorker } from '../_shared/notify.ts';
+import { triggerOutboundWorker } from '../_shared/notify.ts';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+const BATCH = 300;
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
-  // Supabase admin client (service_role — bypasses RLS)
-  const supabaseUrl  = Deno.env.get('SUPABASE_URL')!;
-  const serviceKey   = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const supabase     = createClient(supabaseUrl, serviceKey);
+  const authHeader = req.headers.get('Authorization') || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '');
+  if (!token) return json({ error: 'Unauthorized' }, 401);
 
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data: { user }, error: userErr } = await userClient.auth.getUser();
-  if (userErr || !user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, account_type, assigned_tutor_role')
-    .eq('id', user.id)
-    .single();
-
-  const isStaff = profile?.role === 'admin' || profile?.role === 'librarian';
-  const isTreasurer = profile?.account_type === 'tutor' && profile?.assigned_tutor_role === 'treasurer';
-  if (!isStaff && !isTreasurer) {
-    return new Response(JSON.stringify({ error: 'Forbidden' }), {
-      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-
-  // Parse optional body params
   let body: { month?: string; default_fee?: number } = {};
-  try { body = await req.json(); } catch { /* use defaults */ }
-
-  // Current month in "YYYY-MM" format
-  const now   = new Date();
-  const month = body.month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const defaultFee = body.default_fee ?? 2000; // LKR 2,000 default monthly tuition
-
-  console.log(`[generate-monthly-fees] Running for month: ${month}, default_fee: ${defaultFee}`);
+  try { body = await req.json(); } catch { /* defaults */ }
+  const now = new Date();
+  const month = body.month ?? `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return json({ error: 'month must be YYYY-MM' }, 400);
+  const defaultFee = typeof body.default_fee === 'number' ? body.default_fee : null;
 
   try {
-    // 1. Fetch all approved students
-    const { data: students, error: stuErr } = await supabase
-      .from('profiles')
-      .select('id, full_name, class_number')
-      .eq('account_type', 'student')
-      .eq('is_approved', true);
+    if (token === serviceKey) {
+      // Scheduled: every active tenant.
+      const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const { data: orgs, error: orgErr } = await admin
+        .from('organizations').select('id, slug').in('status', ['trial', 'active']);
+      if (orgErr) throw orgErr;
 
-    if (stuErr) throw stuErr;
-    if (!students || students.length === 0) {
-      return new Response(JSON.stringify({ message: 'No approved students found.', generated: 0, skipped: 0 }), {
-        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // 2. Fetch existing fee rows for this month (to avoid duplicates)
-    const { data: existingFees, error: feeErr } = await supabase
-      .from('student_fees')
-      .select('student_id')
-      .eq('month', month);
-
-    if (feeErr) throw feeErr;
-    const alreadyHasFee = new Set((existingFees || []).map((f: { student_id: string }) => f.student_id));
-
-    // 3. Build insert payload for students without a fee this month
-    const toInsert = students
-      .filter((s: { id: string }) => !alreadyHasFee.has(s.id))
-      .map((s: { id: string; class_number?: number }) => ({
-        student_id:  s.id,
-        month,
-        total_due:   defaultFee,
-        paid_amount: 0,
-        status:      'unpaid',
-        payments:    [],
-      }));
-
-    if (toInsert.length === 0) {
-      return new Response(JSON.stringify({
-        message:   `All students already have fee records for ${month}.`,
-        generated: 0,
-        skipped:   students.length,
-      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
-    // 4. Insert in batches of 50, then notify student + parents
-    let generated = 0;
-    const errors: string[] = [];
-    const BATCH_SIZE = 50;
-    const notifiedStudentIds: string[] = [];
-
-    for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
-      const batch = toInsert.slice(i, i + BATCH_SIZE);
-      const { error: insertErr } = await supabase.from('student_fees').insert(batch);
-      if (insertErr) {
-        console.error(`Batch insert error (offset ${i}):`, insertErr.message);
-        errors.push(insertErr.message);
-      } else {
-        generated += batch.length;
-        for (const row of batch) notifiedStudentIds.push(row.student_id);
+      const results: Record<string, unknown> = {};
+      let generated = 0;
+      for (const org of orgs || []) {
+        // bounded batches: each RPC stays ~1 s regardless of college size
+        let orgGenerated = 0;
+        let last: Record<string, unknown> | null = null;
+        for (let round = 0; round < 500; round++) {
+          const { data, error } = await admin.rpc('generate_monthly_invoices', {
+            p_month: month, p_org: org.id, p_default_tuition: defaultFee, p_limit: BATCH,
+          });
+          if (error) { last = { error: error.message }; break; }
+          last = data;
+          orgGenerated += Number(data?.generated || 0);
+          if (!Number(data?.remaining) || !Number(data?.generated)) break;
+        }
+        results[org.slug] = { ...(last || {}), generated: orgGenerated };
+        generated += orgGenerated;
       }
+      if (generated > 0) await triggerOutboundWorker(supabaseUrl, serviceKey);
+      return json({ month, generated, organizations: results });
     }
 
-    for (const studentId of notifiedStudentIds) {
-      try {
-        await notifyMonthlyFeeCreated(supabase, studentId, month, defaultFee);
-      } catch (notifyErr) {
-        console.error('[generate-monthly-fees] notify failed', studentId, notifyErr);
-      }
-    }
-
-    if (notifiedStudentIds.length > 0) {
-      await triggerOutboundWorker(supabaseUrl, serviceKey);
-    }
-
-    const result = {
-      month,
-      generated,
-      skipped:  alreadyHasFee.size,
-      notified: notifiedStudentIds.length,
-      errors:   errors.length > 0 ? errors : undefined,
-      message:  `Generated ${generated} fee record(s) for ${month}. Skipped ${alreadyHasFee.size} (already existed).`,
-    };
-
-    console.log('[generate-monthly-fees] Result:', result);
-
-    return new Response(JSON.stringify(result), {
-      status:  errors.length > 0 ? 207 : 200, // 207 Multi-Status if partial failures
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Interactive: run as the caller (DB checks is_finance_staff + tenant).
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
     });
+    const { data: { user } } = await userClient.auth.getUser();
+    if (!user) return json({ error: 'Unauthorized' }, 401);
 
+    // Interactive: batches until done or the 7 s response budget is used;
+    // the caller repeats while `remaining` > 0 (UI shows progress).
+    const started = Date.now();
+    let generated = 0;
+    // deno-lint-ignore no-explicit-any
+    let data: any = null;
+    while (Date.now() - started < 7000) {
+      const res = await userClient.rpc('generate_monthly_invoices', {
+        p_month: month, p_org: null, p_default_tuition: defaultFee, p_limit: BATCH,
+      });
+      if (res.error) {
+        const forbidden = res.error.code === '42501' || /forbidden/i.test(res.error.message);
+        return json({ error: forbidden ? 'Forbidden' : res.error.message }, forbidden ? 403 : 400);
+      }
+      data = res.data;
+      generated += Number(data?.generated || 0);
+      if (!Number(data?.remaining) || !Number(data?.generated)) break;
+    }
+    if (generated > 0) await triggerOutboundWorker(supabaseUrl, serviceKey);
+    return json({ ...data, generated,
+                  message: `Generated ${generated} invoice(s) for ${month}.${Number(data?.remaining) ? ` ${data.remaining} remaining — run again.` : ''}` });
   } catch (err) {
     console.error('[generate-monthly-fees] Fatal error:', err);
-    return new Response(JSON.stringify({ error: err.message || 'Internal error' }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ error: (err as Error).message || 'Internal error' }, 500);
   }
 });

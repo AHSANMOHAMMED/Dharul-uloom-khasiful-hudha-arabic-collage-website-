@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { toast } from 'react-toastify';
+import { tx } from '../lib/tx';
 
 export default function ImportJobsPanel() {
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation(); // subscribe: re-render on language change
   const [jobs, setJobs] = useState([]);
 
   const load = async () => {
@@ -37,7 +37,7 @@ export default function ImportJobsPanel() {
     });
     if (error) toast.error(error.message);
     else {
-      toast.success(ar ? 'تم وضع مهمة الاستيراد في الطابور' : 'Import job queued — run worker on DO/local');
+      toast.success(tx('تم وضع مهمة الاستيراد في الطابور', 'Import job queued — run worker on DO/local'));
       load();
     }
   };
@@ -47,12 +47,10 @@ export default function ImportJobsPanel() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-white">
-            {ar ? 'استيراد مكتبة الشاملة' : 'Maktabah Shamela import'}
+            {tx('استيراد مكتبة الشاملة', 'Maktabah Shamela import')}
           </h2>
           <p className="text-sm text-gray-400 mt-1">
-            {ar
-              ? 'شغّل العامل على DigitalOcean أو الجهاز المحلي باستخدام npm run import:shamela'
-              : 'Run the worker on DigitalOcean or a local machine with npm run import:shamela'}
+            {tx('شغّل العامل على DigitalOcean أو الجهاز المحلي باستخدام npm run import:shamela', 'Run the worker on DigitalOcean or a local machine with npm run import:shamela')}
           </p>
         </div>
         <button

@@ -6,6 +6,7 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { tx } from '../lib/tx';
 
 // ── Colour Palette ─────────────────────────────────────────────────────────────
 const GREEN   = '#1a8a52';
@@ -56,8 +57,7 @@ const KPICard = ({ icon, label, value, sub, color = 'emerald' }) => {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 const AnalyticsDashboard = () => {
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation(); // subscribe: re-render on language change
   const [loading, setLoading] = useState(true);
 
   // Raw data
@@ -169,7 +169,7 @@ const AnalyticsDashboard = () => {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-white">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-emerald-500"></div>
-        <p className="text-gray-400 text-sm">{ar ? 'تحميل بيانات التحليلات...' : 'Loading analytics data...'}</p>
+        <p className="text-gray-400 text-sm">{tx('تحميل بيانات التحليلات...', 'Loading analytics data...')}</p>
       </div>
     );
   }
@@ -180,10 +180,10 @@ const AnalyticsDashboard = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">
-            📊 {ar ? 'لوحة التحليلات والإحصاءات' : 'Analytics & Reporting Dashboard'}
+            📊 {tx('لوحة التحليلات والإحصاءات', 'Analytics & Reporting Dashboard')}
           </h2>
           <p className="text-sm text-gray-400 mt-1">
-            {ar ? 'نظرة شاملة على الأداء الأكاديمي والمالي للكلية' : 'College-wide academic and financial performance overview'}
+            {tx('نظرة شاملة على الأداء الأكاديمي والمالي للكلية', 'College-wide academic and financial performance overview')}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -191,25 +191,25 @@ const AnalyticsDashboard = () => {
             onClick={() => exportFeesCSV(allFees)}
             className="px-4 py-2 bg-emerald-900/50 hover:bg-emerald-800/60 text-emerald-300 border border-emerald-700/40 rounded-xl text-xs font-bold transition"
           >
-            💾 {ar ? 'تصدير الرسوم CSV' : 'Export Fees CSV'}
+            💾 {tx('تصدير الرسوم CSV', 'Export Fees CSV')}
           </button>
           <button
             onClick={() => exportResultsCSV(allResults)}
             className="px-4 py-2 bg-blue-900/50 hover:bg-blue-800/60 text-blue-300 border border-blue-700/40 rounded-xl text-xs font-bold transition"
           >
-            💾 {ar ? 'تصدير النتائج CSV' : 'Export Results CSV'}
+            💾 {tx('تصدير النتائج CSV', 'Export Results CSV')}
           </button>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <KPICard icon="🎓" label={ar ? 'إجمالي الطلاب' : 'Total Students'} value={kpi.totalStudents} color="emerald" />
-        <KPICard icon="👨‍🏫" label={ar ? 'المعلمون' : 'Total Tutors'} value={kpi.totalTutors} color="blue" />
-        <KPICard icon="💰" label={ar ? 'رسوم محصلة' : 'Fees Collected'} value={`LKR ${kpi.totalCollected.toLocaleString()}`} color="emerald" />
-        <KPICard icon="⚠️" label={ar ? 'متأخرات' : 'Outstanding'} value={`LKR ${kpi.totalOutstanding.toLocaleString()}`} color="red" />
-        <KPICard icon="📅" label={ar ? 'معدل الحضور' : 'Avg Attendance'} value={`${kpi.avgAttendance}%`} sub={ar ? 'متوسط الكلية' : 'College average'} color="amber" />
-        <KPICard icon="✅" label={ar ? 'نسبة النجاح' : 'Pass Rate'} value={`${kpi.passRate}%`} sub={ar ? 'كل الامتحانات' : 'All exams'} color="purple" />
+        <KPICard icon="🎓" label={tx('إجمالي الطلاب', 'Total Students')} value={kpi.totalStudents} color="emerald" />
+        <KPICard icon="👨‍🏫" label={tx('المعلمون', 'Total Tutors')} value={kpi.totalTutors} color="blue" />
+        <KPICard icon="💰" label={tx('رسوم محصلة', 'Fees Collected')} value={`LKR ${kpi.totalCollected.toLocaleString()}`} color="emerald" />
+        <KPICard icon="⚠️" label={tx('متأخرات', 'Outstanding')} value={`LKR ${kpi.totalOutstanding.toLocaleString()}`} color="red" />
+        <KPICard icon="📅" label={tx('معدل الحضور', 'Avg Attendance')} value={`${kpi.avgAttendance}%`} sub={tx('متوسط الكلية', 'College average')} color="amber" />
+        <KPICard icon="✅" label={tx('نسبة النجاح', 'Pass Rate')} value={`${kpi.passRate}%`} sub={tx('كل الامتحانات', 'All exams')} color="purple" />
       </div>
 
       {/* Charts Row 1: Fee Chart + Attendance Chart */}
@@ -217,10 +217,10 @@ const AnalyticsDashboard = () => {
         {/* Monthly Fee Chart */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
           <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            💳 {ar ? 'الرسوم الشهرية (آخر 6 أشهر)' : 'Monthly Fee Collection (Last 6 Months)'}
+            💳 {tx('الرسوم الشهرية (آخر 6 أشهر)', 'Monthly Fee Collection (Last 6 Months)')}
           </h3>
           {feeChartData.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 text-sm">{ar ? 'لا توجد بيانات رسوم' : 'No fee data available'}</div>
+            <div className="text-center py-10 text-gray-500 text-sm">{tx('لا توجد بيانات رسوم', 'No fee data available')}</div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={feeChartData} barGap={4}>
@@ -239,10 +239,10 @@ const AnalyticsDashboard = () => {
         {/* Attendance Rate per Class */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
           <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            📅 {ar ? 'نسبة الحضور لكل صف' : 'Attendance Rate per Class'}
+            📅 {tx('نسبة الحضور لكل صف', 'Attendance Rate per Class')}
           </h3>
           {attendanceChart.every(d => d.rate === 0) ? (
-            <div className="text-center py-10 text-gray-500 text-sm">{ar ? 'لا توجد بيانات حضور' : 'No attendance data yet'}</div>
+            <div className="text-center py-10 text-gray-500 text-sm">{tx('لا توجد بيانات حضور', 'No attendance data yet')}</div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={attendanceChart}>
@@ -271,10 +271,10 @@ const AnalyticsDashboard = () => {
         {/* Grade Distribution Pie */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
           <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            🎓 {ar ? 'توزيع التقديرات' : 'Grade Distribution'}
+            🎓 {tx('توزيع التقديرات', 'Grade Distribution')}
           </h3>
           {gradeChart.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 text-sm">{ar ? 'لا توجد بيانات نتائج' : 'No results data yet'}</div>
+            <div className="text-center py-10 text-gray-500 text-sm">{tx('لا توجد بيانات نتائج', 'No results data yet')}</div>
           ) : (
             <div className="flex items-center gap-4">
               <ResponsiveContainer width="60%" height={220}>
@@ -315,10 +315,10 @@ const AnalyticsDashboard = () => {
         {/* Student Enrollment Trend */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
           <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-            📈 {ar ? 'اتجاه التسجيل الشهري' : 'Monthly Student Enrollment Trend'}
+            📈 {tx('اتجاه التسجيل الشهري', 'Monthly Student Enrollment Trend')}
           </h3>
           {enrollmentChart.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 text-sm">{ar ? 'لا توجد بيانات تسجيل' : 'No enrollment data yet'}</div>
+            <div className="text-center py-10 text-gray-500 text-sm">{tx('لا توجد بيانات تسجيل', 'No enrollment data yet')}</div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={enrollmentChart}>
@@ -345,26 +345,26 @@ const AnalyticsDashboard = () => {
       <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-sm font-bold text-white">
-            ⚠️ {ar ? 'الطلاب ذوو المتأخرات المالية' : 'Students with Outstanding Fee Balances'}
+            ⚠️ {tx('الطلاب ذوو المتأخرات المالية', 'Students with Outstanding Fee Balances')}
           </h3>
           <button
             onClick={() => exportFeesCSV(allFees.filter(f => f.status !== 'completed'), 'arrears_report')}
             className="px-3 py-1.5 bg-red-900/40 hover:bg-red-900/60 text-red-300 border border-red-800/40 rounded-xl text-xs font-bold transition"
           >
-            💾 {ar ? 'تصدير المتأخرات' : 'Export Arrears CSV'}
+            💾 {tx('تصدير المتأخرات', 'Export Arrears CSV')}
           </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-gray-400 uppercase border-b border-gray-800">
-                <th className="py-2 px-3 text-left">{ar ? 'الطالب' : 'Student'}</th>
-                <th className="py-2 px-3 text-left">{ar ? 'الصف' : 'Class'}</th>
-                <th className="py-2 px-3 text-left">{ar ? 'الشهر' : 'Month'}</th>
-                <th className="py-2 px-3 text-right">{ar ? 'المستحق' : 'Due'}</th>
-                <th className="py-2 px-3 text-right">{ar ? 'المدفوع' : 'Paid'}</th>
-                <th className="py-2 px-3 text-right">{ar ? 'المتبقي' : 'Balance'}</th>
-                <th className="py-2 px-3 text-center">{ar ? 'الحالة' : 'Status'}</th>
+                <th className="py-2 px-3 text-left">{tx('الطالب', 'Student')}</th>
+                <th className="py-2 px-3 text-left">{tx('الصف', 'Class')}</th>
+                <th className="py-2 px-3 text-left">{tx('الشهر', 'Month')}</th>
+                <th className="py-2 px-3 text-right">{tx('المستحق', 'Due')}</th>
+                <th className="py-2 px-3 text-right">{tx('المدفوع', 'Paid')}</th>
+                <th className="py-2 px-3 text-right">{tx('المتبقي', 'Balance')}</th>
+                <th className="py-2 px-3 text-center">{tx('الحالة', 'Status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800/50">
@@ -390,7 +390,7 @@ const AnalyticsDashboard = () => {
                 ))}
               {allFees.filter(f => f.status !== 'completed').length === 0 && (
                 <tr><td colSpan={7} className="py-10 text-center text-gray-500 text-sm">
-                  ✅ {ar ? 'لا توجد متأخرات' : 'No outstanding fees — all students are up to date!'}
+                  ✅ {tx('لا توجد متأخرات', 'No outstanding fees — all students are up to date!')}
                 </td></tr>
               )}
             </tbody>

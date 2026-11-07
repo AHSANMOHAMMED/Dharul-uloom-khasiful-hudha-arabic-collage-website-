@@ -1,7 +1,17 @@
 {
   "root": true,
-  "ignorePatterns": ["dist", "build", "node_modules", "**/node_modules", "coverage"],
-  "extends": ["eslint:recommended", "plugin:react/recommended", "plugin:react/jsx-runtime"],
+  "ignorePatterns": [
+    "dist",
+    "build",
+    "node_modules",
+    "**/node_modules",
+    "coverage"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react/jsx-runtime"
+  ],
   "env": {
     "browser": true,
     "es2021": true,
@@ -19,12 +29,37 @@
       "version": "detect"
     }
   },
-  "plugins": ["react", "react-hooks", "react-refresh"],
+  "plugins": [
+    "react",
+    "react-hooks",
+    "react-refresh"
+  ],
   "rules": {
     "react/prop-types": "off",
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
-    "react-refresh/only-export-components": ["warn", { "allowConstantExport": true }],
-    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
-  }
+    "react-refresh/only-export-components": [
+      "warn",
+      {
+        "allowConstantExport": true
+      }
+    ],
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "mobile/**/*.js",
+        "mobile/**/*.jsx"
+      ],
+      "rules": {
+        "react-refresh/only-export-components": "off"
+      }
+    }
+  ]
 }

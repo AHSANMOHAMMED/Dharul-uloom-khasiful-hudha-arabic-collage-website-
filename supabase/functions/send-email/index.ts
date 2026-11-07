@@ -29,9 +29,31 @@ Deno.serve(async (req) => {
     });
   }
 
-  const subject = body.subject || 'College notification';
-  const text = body.text || '';
-  const to = body.to || notifyTo;
+  // This endpoint is public (contact form). Anonymous callers may ONLY notify
+  // the college inbox, as plain text — otherwise it would be an open relay.
+  // Custom recipients / HTML require the service role or an admin JWT.
+  let trusted = false;
+  const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+  if (token) {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    if (token === serviceKey) {
+      trusted = true;
+    } else {
+      const admin = createClient(supabaseUrl, serviceKey);
+      const { data: { user } } = await admin.auth.getUser(token);
+      if (user) {
+        const { data: profile } = await admin.from('profiles').select('role').eq('id', user.id).maybeSingle();
+        trusted = profile?.role === 'admin' || profile?.role === 'super_admin';
+      }
+    }
+  }
+
+  const clip = (v: string, n: number) => (v.length > n ? `${v.slice(0, n)}…` : v);
+  const subject = clip(trusted ? body.subject || 'College notification' : `[Website] ${body.subject || 'Message'}`, 200);
+  const text = clip(body.text || '', trusted ? 50000 : 5000);
+  const to = trusted && body.to ? body.to : notifyTo;
+  if (!trusted) body.html = undefined;
 
   // Always record in outbox for audit when Supabase is available
   try {
