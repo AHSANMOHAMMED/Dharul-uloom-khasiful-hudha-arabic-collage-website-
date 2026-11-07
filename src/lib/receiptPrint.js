@@ -198,7 +198,6 @@ function slipHtml(r, copyLabel) {
 
 const STYLES = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  @page { size: A4; margin: 10mm; }
   body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; font-size: 11.5px; background: #fff; }
   .wrap { max-width: 190mm; margin: 0 auto; padding: 8px; }
   .slip { position: relative; border: 1.5px solid #1a5c38; border-radius: 8px; padding: 12px 14px; overflow: hidden; page-break-inside: avoid; }
@@ -239,15 +238,34 @@ const STYLES = `
   @media print { .no-print { display: none; } .wrap { padding: 0; } }
 `;
 
-/** Full HTML document for the slip (exported for tests / previews). */
-export function receiptHtml(receipt, { copies = 1 } = {}) {
+// A5 portrait (148 × 210 mm) is the standard slip; two copies go on one A4.
+const PAPER_CSS = {
+  A5: `@page { size: 148mm 210mm; margin: 6mm; }
+       body { font-size: 10.5px; }
+       .wrap { max-width: 134mm; padding: 0; margin: 0 auto; }
+       .slip { padding: 9px 10px; }
+       .grid { grid-template-columns: 1fr; }
+       .org-en, .org-ar { font-size: 13.5px; }
+       .sigs { margin-top: 16px; }
+       .sig { width: 120px; }`,
+  A4: `@page { size: A4; margin: 10mm; }`,
+};
+
+/**
+ * Full HTML document for the slip (exported for tests / previews).
+ * @param {object} receipt
+ * @param {{ copies?: 1|2, paper?: 'A5'|'A4' }} [opts] default: one slip on A5;
+ *   copies: 2 → office + parent copy on one A4 sheet.
+ */
+export function receiptHtml(receipt, { copies = 1, paper } = {}) {
   const two = copies >= 2;
+  const size = paper || (two ? 'A4' : 'A5');
   const body = two
     ? `${slipHtml(receipt, 'Office copy')}<div class="cut"><span>✂ cut here</span></div>${slipHtml(receipt, 'Parent copy')}`
     : slipHtml(receipt, '');
   return `<!DOCTYPE html>
 <html lang="en" dir="ltr">
-<head><meta charset="UTF-8" /><title>Receipt ${esc(receipt?.receipt_no || '')}</title><style>${STYLES}</style></head>
+<head><meta charset="UTF-8" /><title>Receipt ${esc(receipt?.receipt_no || '')}</title><style>${STYLES}${PAPER_CSS[size] || PAPER_CSS.A5}</style></head>
 <body>
   <div class="wrap${two ? ' two' : ''}">${body}</div>
   <div class="bar no-print"><button onclick="window.print()">Print</button></div>
@@ -258,7 +276,7 @@ export function receiptHtml(receipt, { copies = 1 } = {}) {
 /**
  * Open a print window with the official payment slip.
  * @param {object} receipt receipt JSON
- * @param {{ copies?: 1|2 }} [opts] copies: 2 prints office + parent copy on one A4
+ * @param {{ copies?: 1|2, paper?: 'A5'|'A4' }} [opts] default A5; copies: 2 → office + parent copy on one A4
  */
 export function printReceipt(receipt, opts = {}) {
   if (!receipt) return;

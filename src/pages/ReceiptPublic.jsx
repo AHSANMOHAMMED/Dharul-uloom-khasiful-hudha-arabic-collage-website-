@@ -5,6 +5,7 @@ import { rpc, query } from '../lib/erp/rpc';
 import { useAuth } from '../context/AuthContext';
 import { tx } from '../lib/tx';
 import { printReceipt, receiptPdfUrl } from '../lib/receiptPrint';
+import { printReceiptDotMatrix } from '../lib/receiptText';
 import ReceiptSlip from '../components/ReceiptSlip';
 
 /**
@@ -71,6 +72,13 @@ export default function ReceiptPublic() {
                 className="rounded-xl border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
               >
                 {tx('طباعة', 'Print')}
+              </button>
+              <button
+                type="button"
+                onClick={() => printReceiptDotMatrix(r)}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                {tx('طباعة نقطية (LQ-310)', 'Dot-matrix (LQ-310)')}
               </button>
             </div>
           )}

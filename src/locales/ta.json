@@ -1589,5 +1589,12 @@
  "Word": "சொல்",
  "Word meaning": "சொற்பொருள்",
  "Word meaning (Arabic → Tamil)": "சொற்பொருள் (அரபு → தமிழ்)",
- "e.g. Mother": "எ.கா. தாய்"
+ "e.g. Mother": "எ.கா. தாய்",
+ "Dot-matrix (LQ-310)": "டொட்-மெட்ரிக்ஸ் அச்சு (LQ-310)",
+ "Download .prn (ESC/P)": ".prn கோப்பைப் பதிவிறக்கு (ESC/P)",
+ "Printer": "அச்சுப்பொறி",
+ "Raw ESC/P file: copy /b receipt.prn to the printer share": "மூல ESC/P கோப்பு: copy /b receipt.prn கட்டளையால் அச்சுப்பொறிக்கு அனுப்பவும்",
+ "A5 slip (laser / inkjet)": "A5 பற்றுச்சீட்டு (லேசர் / இங்க்ஜெட்)",
+ "2 copies on A4 (office + parent)": "A4 இல் 2 பிரதிகள் (அலுவலகம் + பெற்றோர்)",
+ "Epson LQ-310 dot-matrix (A5)": "Epson LQ-310 டொட்-மெட்ரிக்ஸ் (A5)"
 }

@@ -4,8 +4,11 @@ import { AsyncView, Badge, Button, Card, EmptyState, Field, Input, Modal, Select
 import { useAuth } from '../../../context/AuthContext';
 import { currentMonth, formatDate, formatMoney, query, rpc, today } from '../../../lib/erp/rpc';
 import { PAYMENT_METHODS, labelOf, num, profilesMap, runAction } from '../../../lib/erp/financeApi';
-import { monthLabel, printReceipt } from '../../../lib/receiptPrint';
-import { allocateOldestFirst, copyReceiptLink, openReceiptPdf, printReceiptById } from './receiptActions';
+import { monthLabel } from '../../../lib/receiptPrint';
+import {
+  PRINTERS, allocateOldestFirst, copyReceiptLink, downloadPrn, getPrinterPref, openReceiptPdf, printReceiptById,
+  printWithPrinter, setPrinterPref,
+} from './receiptActions';
 import { ConfirmModal, Num, StudentPicker } from './shared';
 
 const MANUAL_METHODS = ['cash', 'bank_transfer', 'cheque', 'online', 'other'];
@@ -46,9 +49,13 @@ function ReceiptSuccess({ receipt, onAnother }) {
         ]}
       />
       <div className="flex flex-wrap gap-2 mt-4">
-        <Button onClick={() => printReceipt(receipt)}>{t('Print slip', 'طباعة الإيصال')}</Button>
-        <Button variant="secondary" onClick={() => printReceipt(receipt, { copies: 2 })}>
-          {t('Print 2 copies (office + parent)', 'طباعة نسختين (المكتب + ولي الأمر)')}
+        <PrinterSelect />
+        <Button onClick={() => printWithPrinter(receipt)}>{t('Print slip', 'طباعة الإيصال')}</Button>
+        <Button variant="secondary" onClick={() => printWithPrinter(receipt, 'lq310')}>
+          {t('Dot-matrix (LQ-310)', 'طباعة نقطية (LQ-310)')}
+        </Button>
+        <Button variant="secondary" onClick={() => downloadPrn(receipt)} title={t('Raw ESC/P file: copy /b receipt.prn to the printer share', 'ملف ESC/P خام')}>
+          {t('Download .prn (ESC/P)', 'تنزيل ملف ‎.prn')}
         </Button>
         <Button variant="secondary" onClick={() => openReceiptPdf(receipt.public_token)}>
           {t('Download PDF', 'تنزيل PDF')}
@@ -438,5 +445,28 @@ export default function FeeReceive() {
       )}
       <RecentReceipts refreshKey={refreshKey} />
     </div>
+  );
+}
+
+/** Remembered printer choice for this counter (A5 / A4 two copies / Epson LQ-310). */
+function PrinterSelect() {
+  const { t } = useLang();
+  const [value, setValue] = useState(getPrinterPref());
+  return (
+    <select
+      aria-label={t('Printer', 'الطابعة')}
+      value={value}
+      onChange={(e) => {
+        setValue(e.target.value);
+        setPrinterPref(e.target.value);
+      }}
+      className="rounded-xl bg-gray-900 border border-gray-700 px-3 py-2 text-sm text-gray-100"
+    >
+      {PRINTERS.map((p) => (
+        <option key={p.value} value={p.value}>
+          {t(p.en, p.ar)}
+        </option>
+      ))}
+    </select>
   );
 }
