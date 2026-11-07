@@ -2,6 +2,40 @@
 
 Code for the complete platform plan is in this repo. These steps apply it to **your** Supabase + Vercel + PayHere accounts.
 
+> **Credential boundary:** repository validation is complete, but Supabase, Vercel,
+> PayHere, notification-provider, and Expo/EAS account operations require credentials
+> owned by the deployment operator. Never commit those values or place service-role
+> keys in the frontend or mobile bundle.
+
+## Required account-bound release steps
+
+Run these steps from an authenticated deployment machine. Replace every placeholder
+with a value from the relevant provider; do not add the resulting secrets to git.
+
+```bash
+# Supabase migrations and Edge Functions
+supabase login
+supabase link --project-ref YOUR_SUPABASE_PROJECT_REF
+supabase db push
+cp .env.example .env
+# Fill .env with production values, then:
+npm run deploy:functions
+
+# EAS project registration and mobile credentials
+cd mobile
+npx eas-cli@latest login
+npx eas-cli@latest init
+# Copy the generated projectId into mobile/app.json.
+npx eas-cli@latest secret:create --scope project --name SUPABASE_URL --value "$VITE_SUPABASE_URL"
+npx eas-cli@latest secret:create --scope project --name SUPABASE_ANON_KEY --value "$VITE_SUPABASE_ANON_KEY"
+npx eas-cli@latest build --profile preview --platform android
+npx eas-cli@latest build --profile production --platform android
+```
+
+`mobile/app.json` intentionally retains a visible EAS project-ID placeholder until
+`eas init` is run by the owner of the EAS account. A generated or guessed ID would
+make builds point at the wrong project.
+
 ## 1. Supabase
 
 ```bash
@@ -14,7 +48,7 @@ supabase link --project-ref YOUR_PROJECT_REF
 # 0. Back up production first (Dashboard → Database → Backups) and run the
 #    full suite locally: npm run test:db   (must print "DB TESTS PASSED")
 
-# Apply all migrations (0001–0020). 0015–0020 must be applied in one go and the
+# Apply all migrations (0001–0022). 0015–0022 must be appliedied in one go and the
 # edge functions below deployed IMMEDIATELY after: 0018 makes student_fees
 # paid_amount ledger-controlled, so the OLD payhere-notify would fail.
 # NOTE: the stray 20240730000000 file is now a no-op; if the CLI complains that

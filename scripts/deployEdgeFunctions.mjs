@@ -21,13 +21,32 @@ const PROJECT_REF = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL |
   .replace('https://', '')
   .replace('.supabase.co', '');
 
-const FUNCTIONS = ['create-payment', 'payhere-notify', 'generate-monthly-fees'];
+const FUNCTIONS = [
+  'create-payment',
+  'payhere-notify',
+  'generate-monthly-fees',
+  'receipt-pdf',
+  'send-outbound',
+];
 
 const SECRET_KEYS = [
   'PAYHERE_MERCHANT_ID',
   'PAYHERE_MERCHANT_SECRET',
   'PAYHERE_SANDBOX',
   'SITE_URL',
+  'EXPO_ACCESS_TOKEN',
+  'SMS_PROVIDER',
+  'SMS_SENDER_ID',
+  'NOTIFYLK_USER_ID',
+  'NOTIFYLK_API_KEY',
+  'TEXTLK_API_TOKEN',
+  'TWILIO_ACCOUNT_SID',
+  'TWILIO_AUTH_TOKEN',
+  'TWILIO_FROM_NUMBER',
+  'WHATSAPP_FROM',
+  'TWILIO_WHATSAPP_FROM',
+  'RESEND_API_KEY',
+  'MAIL_FROM',
 ];
 
 function getAccessToken() {

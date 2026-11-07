@@ -57,6 +57,31 @@ jobs:
         env:
           CI: true
 
+  mobile:
+    name: Mobile — Expo diagnostics and Android export
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        run: npm ci
+        working-directory: mobile
+
+      - name: Run Expo diagnostics
+        run: npx expo-doctor
+        working-directory: mobile
+
+      - name: Export Android bundle
+        run: npx expo export --platform android --output-dir /tmp/dukh-mobile-export
+        working-directory: mobile
+
   database:
     name: Database — migrations + RLS/ERP tests
     runs-on: ubuntu-latest
