@@ -180,13 +180,15 @@ const PrincipalDashboard = ({ vpMode = false }) => {
     setApproving(tutorId);
     try {
       await supabase.from('profiles').update({ is_approved: approve }).eq('id', tutorId);
-      await supabase.from('notifications').insert({
-        user_id: tutorId,
-        title: approve ? 'Account Approved ✅' : 'Account Rejected ❌',
-        message: approve
-          ? 'Your tutor account has been approved. You can now log in to the portal.'
-          : 'Your tutor account registration has not been approved at this time.'
-      });
+      if (approve) {
+        await supabase.rpc('notify_profile_activated', { p_profile_id: tutorId });
+      } else {
+        await supabase.from('notifications').insert({
+          user_id: tutorId,
+          title: 'Account Rejected',
+          message: 'Your tutor account registration has not been approved at this time.',
+        });
+      }
       toast.success(approve ? 'Tutor approved!' : 'Tutor rejected');
       fetchAll();
     } catch (err) {

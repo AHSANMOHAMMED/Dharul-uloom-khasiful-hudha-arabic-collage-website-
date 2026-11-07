@@ -4,7 +4,7 @@ Complete these steps after merging the website completion work.
 
 ## 1. Supabase database
 
-Apply migrations in order (`0001` through `0010`):
+Apply migrations in order (`0001` through `0013`):
 
 ```bash
 supabase link --project-ref YOUR_PROJECT_REF
@@ -33,6 +33,13 @@ Set in **Project Settings → Edge Functions → Secrets**:
 | `PAYHERE_MERCHANT_SECRET` | PayHere secret |
 | `PAYHERE_SANDBOX` | `true` for testing, `false` for production |
 | `SITE_URL` | Production site URL (e.g. `https://your-domain.vercel.app`) |
+| `TWILIO_ACCOUNT_SID` | SMS / WhatsApp (optional until go-live) |
+| `TWILIO_AUTH_TOKEN` | Twilio auth token |
+| `TWILIO_FROM_NUMBER` | SMS from number |
+| `WHATSAPP_FROM` | e.g. `whatsapp:+14155238886` |
+| `RESEND_API_KEY` | Transactional email |
+| `MAIL_FROM` | From address for Resend |
+| `MAIL_NOTIFY_TO` | Inbox for contact form alerts |
 
 ## 3. Deploy Edge Functions
 
@@ -40,6 +47,8 @@ Set in **Project Settings → Edge Functions → Secrets**:
 supabase functions deploy generate-monthly-fees
 supabase functions deploy create-payment
 supabase functions deploy payhere-notify
+supabase functions deploy send-outbound
+supabase functions deploy send-email
 ```
 
 Configure PayHere **notify URL** to:

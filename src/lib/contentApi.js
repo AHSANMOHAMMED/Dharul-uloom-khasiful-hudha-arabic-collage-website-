@@ -108,6 +108,27 @@ export async function sendContactMessage(form) {
     message: form.message,
   });
   if (error) throw error;
+
+  // Fire-and-forget email notify via Edge Function (Resend)
+  try {
+    const base = import.meta.env.VITE_SUPABASE_URL;
+    if (base) {
+      await fetch(`${base}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({
+          type: 'contact',
+          subject: `Contact: ${form.subject || 'Website message'}`,
+          text: `From: ${form.name} <${form.email}>\nPhone: ${form.phone || '—'}\n\n${form.message}`,
+        }),
+      });
+    }
+  } catch (e) {
+    console.warn('[contentApi] send-email notify failed', e);
+  }
 }
 
 // ── Gallery ─────────────────────────────────────────────────────────────────

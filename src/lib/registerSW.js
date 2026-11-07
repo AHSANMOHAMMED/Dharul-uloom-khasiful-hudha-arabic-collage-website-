@@ -64,6 +64,26 @@ export async function subscribeToPush(vapidPublicKey) {
     });
 
     console.info('[Push] Subscribed:', subscription.endpoint);
+
+    // Persist for server-side push (requires VITE_VAPID_PUBLIC_KEY + logged-in user)
+    try {
+      const { supabase, isSupabaseConfigured } = await import('./supabaseClient.js');
+      if (isSupabaseConfigured && supabase) {
+        const { data: { user } } = await supabase.auth.getUser();
+        const json = subscription.toJSON();
+        if (user && json?.keys?.p256dh && json?.keys?.auth) {
+          await supabase.from('push_subscriptions').upsert({
+            user_id: user.id,
+            endpoint: json.endpoint,
+            p256dh: json.keys.p256dh,
+            auth: json.keys.auth,
+          }, { onConflict: 'user_id,endpoint' });
+        }
+      }
+    } catch (persistErr) {
+      console.warn('[Push] Could not persist subscription', persistErr);
+    }
+
     return subscription;
   } catch (err) {
     console.error('[Push] Subscription failed:', err);

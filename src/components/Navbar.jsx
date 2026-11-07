@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import NotificationBell from './NotificationBell'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -167,6 +168,8 @@ const Navbar = () => {
             </Link>
 
             <div className="h-6 w-px bg-slate-200 mx-4"></div>
+
+            <NotificationBell />
 
             {/* Auth Buttons */}
             {isAuthenticated ? (

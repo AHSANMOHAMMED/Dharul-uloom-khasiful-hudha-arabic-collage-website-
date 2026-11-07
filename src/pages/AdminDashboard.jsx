@@ -10,6 +10,10 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import AdminContentCMS from '../components/AdminContentCMS';
+import { approveProfile } from '../lib/notifyApi';
+import AdmissionsCrmBoard from '../components/AdmissionsCrmBoard';
+import StaffHrmPanel from '../components/StaffHrmPanel';
+import ImportJobsPanel from '../components/ImportJobsPanel';
 
 const COLORS = ['#059669', '#d97706', '#2563eb', '#dc2626'];
 
@@ -111,16 +115,25 @@ const AdminDashboard = () => {
     }
   };
 
-  // User approval handlers
+  // User approval handlers — notifies student + linked parents (in-app + SMS/WhatsApp queue)
   const handleApproveUser = async (profileId) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_approved: true })
-        .eq('id', profileId);
+      const profile = pendingApprovals.find((p) => p.id === profileId);
+      await approveProfile(profileId);
 
-      if (error) throw error;
-      toast.success('User account approved successfully!');
+      if (profile?.account_type === 'student') {
+        const { data: links } = await supabase
+          .from('parent_children')
+          .select('parent_id')
+          .eq('child_id', profileId);
+        if (!links?.length) {
+          toast.info('Approved. No parent linked yet — attach a parent so they receive activation alerts.');
+        } else {
+          toast.success('Approved and parents notified.');
+        }
+      } else {
+        toast.success('User account approved successfully!');
+      }
       fetchData();
     } catch (err) {
       console.error('Error approving user:', err);
@@ -443,6 +456,9 @@ const AdminDashboard = () => {
         <div className="glass-panel p-2 rounded-2xl flex overflow-x-auto gap-2 relative z-10 hide-scrollbar border border-gray-800/60 shadow-lg">
           {[
             { id: 'admissions', label_en: 'Admissions', label_ar: 'طلبات القبول', icon: '📝' },
+            { id: 'crm', label_en: 'CRM Pipeline', label_ar: 'مسار القبول', icon: '📋' },
+            { id: 'hrm', label_en: 'Staff HRM', label_ar: 'الموارد البشرية', icon: '👔' },
+            { id: 'imports', label_en: 'Shamela Import', label_ar: 'استيراد الشاملة', icon: '📚' },
             { id: 'approvals', label_en: 'Signups', label_ar: 'الموافقات', icon: '🔐' },
             { id: 'tutors', label_en: 'Tutors & Roles', label_ar: 'المعلمون والوظائف', icon: '👨‍🏫' },
             { id: 'broadcast', label_en: 'Broadcast', label_ar: 'البث', icon: '📢' },
@@ -471,6 +487,24 @@ const AdminDashboard = () => {
         <div className="glass-card rounded-[2rem] p-8 shadow-2xl relative z-10 min-h-[500px]">
           
           {/* Tab 1: Admissions Review */}
+          {activeTab === 'crm' && (
+            <div className="glass-panel p-6 rounded-2xl border border-gray-800">
+              <AdmissionsCrmBoard />
+            </div>
+          )}
+
+          {activeTab === 'hrm' && (
+            <div className="glass-panel p-6 rounded-2xl border border-gray-800">
+              <StaffHrmPanel />
+            </div>
+          )}
+
+          {activeTab === 'imports' && (
+            <div className="glass-panel p-6 rounded-2xl border border-gray-800">
+              <ImportJobsPanel />
+            </div>
+          )}
+
           {activeTab === 'admissions' && (
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-white font-arabic">

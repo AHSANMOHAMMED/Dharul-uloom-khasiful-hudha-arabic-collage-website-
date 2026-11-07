@@ -3,6 +3,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import md5 from 'npm:blueimp-md5';
+import { makeReceiptNo, notifyPaymentReceived, triggerOutboundWorker } from '../_shared/notify.ts';
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') {
@@ -49,6 +50,7 @@ Deno.serve(async (req) => {
   }
 
   const paidAmount = parseFloat(payhereAmount);
+  const receiptNo = txn.receipt_no || makeReceiptNo();
   const { data: fee } = await admin.from('student_fees').select('*').eq('id', txn.fee_id).single();
 
   if (fee) {
@@ -60,6 +62,7 @@ Deno.serve(async (req) => {
       date: new Date().toISOString(),
       note: `PayHere ${paymentId}`,
       gateway: 'payhere',
+      receipt_no: receiptNo,
     }];
 
     await admin.from('student_fees').update({
@@ -72,13 +75,11 @@ Deno.serve(async (req) => {
   await admin.from('payment_transactions').update({
     status: 'paid',
     gateway_payment_id: paymentId,
+    receipt_no: receiptNo,
   }).eq('id', txn.id);
 
-  await admin.from('notifications').insert({
-    user_id: txn.student_id,
-    title: 'Payment received',
-    message: `Your tuition payment of LKR ${paidAmount} was received successfully.`,
-  });
+  await notifyPaymentReceived(admin, txn.student_id, paidAmount, txn.fee_id, receiptNo);
+  await triggerOutboundWorker(supabaseUrl, serviceKey);
 
   return new Response('OK');
 });

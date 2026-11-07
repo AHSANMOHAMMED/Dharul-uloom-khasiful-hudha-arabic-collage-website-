@@ -1,5 +1,13 @@
+# Local AI / agent tooling
+.agents/
+.aider-desk/
+.claude/
+.cursor/
+
 # Dependencies
 node_modules/
+mobile/node_modules/
+
 /.pnp
 .pnp.js
 

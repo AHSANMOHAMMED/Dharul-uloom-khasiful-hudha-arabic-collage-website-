@@ -1,0 +1,2 @@
+[functions.send-outbound]
+verify_jwt = false

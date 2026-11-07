@@ -16,6 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { notifyMonthlyFeeCreated, triggerOutboundWorker } from '../_shared/notify.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin':  '*',
@@ -125,10 +126,11 @@ Deno.serve(async (req) => {
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // 4. Insert in batches of 50
+    // 4. Insert in batches of 50, then notify student + parents
     let generated = 0;
     const errors: string[] = [];
     const BATCH_SIZE = 50;
+    const notifiedStudentIds: string[] = [];
 
     for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
       const batch = toInsert.slice(i, i + BATCH_SIZE);
@@ -138,13 +140,27 @@ Deno.serve(async (req) => {
         errors.push(insertErr.message);
       } else {
         generated += batch.length;
+        for (const row of batch) notifiedStudentIds.push(row.student_id);
       }
+    }
+
+    for (const studentId of notifiedStudentIds) {
+      try {
+        await notifyMonthlyFeeCreated(supabase, studentId, month, defaultFee);
+      } catch (notifyErr) {
+        console.error('[generate-monthly-fees] notify failed', studentId, notifyErr);
+      }
+    }
+
+    if (notifiedStudentIds.length > 0) {
+      await triggerOutboundWorker(supabaseUrl, serviceKey);
     }
 
     const result = {
       month,
       generated,
       skipped:  alreadyHasFee.size,
+      notified: notifiedStudentIds.length,
       errors:   errors.length > 0 ? errors : undefined,
       message:  `Generated ${generated} fee record(s) for ${month}. Skipped ${alreadyHasFee.size} (already existed).`,
     };

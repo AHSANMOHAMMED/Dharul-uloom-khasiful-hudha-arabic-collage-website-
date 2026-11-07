@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 import { motion } from 'framer-motion';
 import PayFeeButton from '../components/PayFeeButton';
 import StudentLmsPanel from '../components/StudentLmsPanel';
+import { generateFeeReceipt } from '../lib/exportUtils';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
@@ -359,7 +360,20 @@ const StudentDashboard = () => {
                     </div>
                   </div>
                 )}
-                <PayFeeButton fee={fees} />
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <PayFeeButton fee={fees} />
+                  <button
+                    type="button"
+                    onClick={() => generateFeeReceipt(
+                      { full_name: user?.username, index_number: user?.indexNumber, class_number: user?.classNumber },
+                      fees,
+                      'Online Portal'
+                    )}
+                    className="px-4 py-2 rounded-xl border border-emerald-500/40 text-emerald-300 text-sm font-semibold hover:bg-emerald-500/10"
+                  >
+                    {i18n.language === 'ar' ? 'طباعة الإيصال' : 'Print receipt'}
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="text-center py-12 text-gray-500">

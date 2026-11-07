@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 
 import { generateFeeReceipt, exportFeesCSV } from '../lib/exportUtils';
+import { notifyPaymentForStudent } from '../lib/notifyApi';
 
 const TreasurerDashboard = () => {
   const { user } = useAuth();
@@ -188,21 +189,9 @@ const TreasurerDashboard = () => {
       setPartialPayment('');
       setPaymentNote('');
       setFeeSuccess(true);
-      
-      // Auto Notify Parent
-      const { data: parentLink } = await supabase
-        .from('parent_children')
-        .select('parent_id')
-        .eq('child_id', selectedStudent.id)
-        .limit(1);
 
-      if (parentLink && parentLink.length > 0) {
-        await supabase.from('notifications').insert({
-          user_id: parentLink[0].parent_id,
-          title: 'Fee Payment Logged',
-          message: `A payment of LKR ${paymentVal} has been credited for your child ${selectedStudent.full_name}. Paid total: LKR ${paid}/${feeTotalDue}.`
-        });
-      }
+      const receiptNo = `REC-${feeMonth.replace('-', '')}-${Date.now().toString().slice(-5)}`;
+      await notifyPaymentForStudent(selectedStudent.id, paymentVal, data?.id, receiptNo);
 
       fetchTreasurerData(); // Refresh metrics
 

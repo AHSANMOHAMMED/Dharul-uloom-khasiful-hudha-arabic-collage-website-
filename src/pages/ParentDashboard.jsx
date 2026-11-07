@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import PayFeeButton from '../components/PayFeeButton';
 import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
+import { generateFeeReceipt } from '../lib/exportUtils';
+import { listActivationEventsForChildren } from '../lib/notifyApi';
 
 
 const ParentDashboard = () => {
@@ -38,6 +40,7 @@ const ParentDashboard = () => {
   });
   const [leaveSuccess, setLeaveSuccess] = useState(false);
   const [leaveError, setLeaveError] = useState('');
+  const [activationEvents, setActivationEvents] = useState([]);
 
   useEffect(() => {
     fetchLinkedChildren();
@@ -63,8 +66,9 @@ const ParentDashboard = () => {
 
       if (error) throw error;
       
-      const mappedChildren = data.map(row => row.profiles);
+      const mappedChildren = data.map(row => row.profiles).filter(Boolean);
       setChildren(mappedChildren);
+      setActivationEvents(await listActivationEventsForChildren(mappedChildren.map((c) => c.id)));
       
       if (mappedChildren.length > 0) {
         setSelectedChild(mappedChildren[0]);
@@ -254,6 +258,27 @@ const ParentDashboard = () => {
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
         
+        {activationEvents.length > 0 && (
+          <div className="glass-panel p-5 rounded-2xl border border-amber-500/30 bg-amber-950/20 space-y-3">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-amber-300">
+              {i18n.language === 'ar' ? 'تفعيل الطلاب' : 'Student activation updates'}
+            </h2>
+            <ul className="space-y-2">
+              {activationEvents.slice(0, 5).map((ev) => (
+                <li key={ev.id} className="text-sm text-gray-200 border-b border-gray-800/60 pb-2">
+                  <div className="font-medium">{ev.summary}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {ev.details?.index_number ? `Index: ${ev.details.index_number}` : ''}
+                    {ev.details?.class_number != null ? ` · Class ${ev.details.class_number}` : ''}
+                    {' · '}
+                    {new Date(ev.created_at).toLocaleString()}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Welcome Header */}
         <div className="glass-panel p-8 rounded-[2rem] border border-emerald-500/20 shadow-glass flex flex-col md:flex-row md:justify-between items-start md:items-center gap-6 group hover:border-emerald-500/40 transition-all duration-500 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -473,7 +498,16 @@ const ParentDashboard = () => {
                             ))}
                           </div>
                         )}
-                        <PayFeeButton fee={fees} />
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <PayFeeButton fee={fees} />
+                          <button
+                            type="button"
+                            onClick={() => generateFeeReceipt(selectedChild, fees, 'Parent Portal')}
+                            className="px-4 py-2 rounded-xl border border-emerald-500/40 text-emerald-300 text-sm font-semibold hover:bg-emerald-500/10"
+                          >
+                            {i18n.language === 'ar' ? 'طباعة الإيصال' : 'Print receipt'}
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div className="text-center py-6 text-xs text-gray-500">
