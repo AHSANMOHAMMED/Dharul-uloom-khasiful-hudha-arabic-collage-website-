@@ -59,3 +59,8 @@ scripts/shamela/books/
 scripts/shamela/*.db
 scripts/shamela/*.json
 !scripts/shamela/sample_books.json
+.vercel
+.env
+.env.*
+!.env.example
+!backend/.env.example

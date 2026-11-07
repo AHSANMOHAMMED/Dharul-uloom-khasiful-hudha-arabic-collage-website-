@@ -101,6 +101,16 @@ JWT_SECRET=your-secret
 FRONTEND_URL=http://localhost:5173
 ```
 
+## Documentation
+
+| Doc | Purpose |
+|-----|---------|
+| [docs/MASTER_PRD.md](docs/MASTER_PRD.md) | Master product requirements (full ERP vision, phases, AI prompt) |
+| [docs/PLATFORM_GUIDE.md](docs/PLATFORM_GUIDE.md) | Current architecture, features, data flows |
+| [docs/UI_ENHANCEMENT_SPEC.md](docs/UI_ENHANCEMENT_SPEC.md) | Web + mobile UI enhancement brief |
+| [docs/GO_LIVE.md](docs/GO_LIVE.md) | Deploy / secrets / smoke checklist |
+| [docs/ROLE_RLS_MATRIX.md](docs/ROLE_RLS_MATRIX.md) | Role × capability matrix |
+
 ## Features
 
 ### Implemented
@@ -120,6 +130,8 @@ FRONTEND_URL=http://localhost:5173
 - PayHere merchant account (sandbox available)
 - Shamela bulk import (`npm run import:shamela`)
 - Legacy Express/Mongo backend for reference only
+
+Target ERP scope (fees, payroll, accounting, hostel, certificates, etc.) is defined in **docs/MASTER_PRD.md** — extend existing modules; do not rebuild blindly.
 
 ## Development Phases
 
