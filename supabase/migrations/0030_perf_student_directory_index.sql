@@ -1,5 +1,5 @@
 -- =============================================================================
--- 0027_perf_student_directory_index.sql
+-- 0030_perf_student_directory_index.sql
 -- Performance optimization for student directory queries and RLS policy evaluation.
 --
 -- Bottleneck addressed:

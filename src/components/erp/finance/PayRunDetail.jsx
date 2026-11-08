@@ -12,7 +12,7 @@ function AdjustModal({ payslip, onClose, onDone }) {
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
-  const [comps] = useAsync(() => query('salary_components', (q) => q.select('code, name, kind').eq('is_system', false).eq('is_active', true).order('kind').order('name')), []);
+  const [comps] = useAsync(() => query('salary_components', (q) => q.select('code, name, kind, pay_category, epf_eligible, etf_eligible').eq('is_system', false).eq('is_active', true).order('kind').order('name')), []);
   const comp = (comps.data || []).find((c) => c.code === code);
   const amt = num(amount);
   const tooBig = comp?.kind === 'deduction' && amt > num(payslip.net);
@@ -49,7 +49,7 @@ function AdjustModal({ payslip, onClose, onDone }) {
           value={code}
           onChange={(e) => setCode(e.target.value)}
           placeholder={t('Select…', 'اختر…')}
-          options={(comps.data || []).map((c) => ({ value: c.code, label: `${c.kind === 'earning' ? '+' : '−'} ${c.name} (${c.code})` }))}
+          options={(comps.data || []).map((c) => ({ value: c.code, label: `${c.kind === 'earning' ? '+' : '−'} ${c.name} (${c.code})${c.kind === 'earning' ? ` · EPF ${c.epf_eligible ? '✓' : '—'} / ETF ${c.etf_eligible ? '✓' : '—'}` : ''}` }))}
         />
       </Field>
       <div className="grid grid-cols-2 gap-3">
@@ -61,7 +61,7 @@ function AdjustModal({ payslip, onClose, onDone }) {
         </Field>
       </div>
       <p className="text-xs text-gray-500">
-        {t('Adjustments do not recompute EPF/ETF. Regenerating the draft run discards adjustments.', 'التعديلات لا تعيد حساب صندوق الادخار/الثقة، وإعادة إنشاء المسودة تلغي التعديلات.')}
+        {t('Monthly approved amount. Add the shift, lecture, or Ramadan work reference in the note. EPF/ETF follow this component’s eligibility. Regenerating the draft run discards adjustments.', 'المبلغ الشهري المعتمد. أضف مرجع الوردية أو المحاضرة أو عمل رمضان في الملاحظة. تخضع مساهمات EPF/ETF لأهلية هذا البند. إعادة إنشاء المسودة تلغي التعديلات.')}
       </p>
     </Modal>
   );

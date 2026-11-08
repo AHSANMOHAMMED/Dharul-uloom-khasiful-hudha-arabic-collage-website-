@@ -16,6 +16,7 @@ export default function StudentMore() {
         { href: `/leave-requests?student=${s}`, icon: 'airplane-outline', label: t('leave.title') },
         { href: '/dictionary', icon: 'language-outline', label: t('dict.title') },
         { href: '/announcements', icon: 'megaphone-outline', label: t('home.announcements') },
+        { href: '/messages', icon: 'chatbubbles-outline', label: t('chat.title') },
         { href: '/notifications', icon: 'notifications-outline', label: t('notif.title') },
       ]}
     />

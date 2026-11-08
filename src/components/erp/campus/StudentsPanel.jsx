@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { AsyncView, Badge, Button, Card, Input, PageHeader, Select, StatusBadge, Table, Tabs, useAsync, useLang } from '../ui';
-import { downloadCsv, query } from '../../../lib/erp/rpc';
+import { downloadCsv, queryAll } from '../../../lib/erp/rpc';
 import { ClassSelect } from './common';
 import StudentDetail from './StudentDetail';
 import StudentEnrolment from './StudentEnrolment';
@@ -15,9 +15,10 @@ function Directory() {
   const [selected, setSelected] = useState(null);
   const [state, reload] = useAsync(
     () =>
-      query('profiles', (b) =>
+      queryAll('profiles', (b) =>
         b.select('id, full_name, email, phone, index_number, class_number, is_approved, created_at, student_details(status, admission_no, guardian_phone)')
-          .eq('account_type', 'student').order('full_name').limit(5000)
+          .eq('account_type', 'student').order('full_name').order('id'),
+        { pageSize: 400, maxRows: 50000 },
       ),
     []
   );

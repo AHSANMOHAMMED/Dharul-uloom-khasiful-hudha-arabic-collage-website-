@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { tx } from '../tx';
-import { query, formatMoney, formatDate } from './rpc';
+import { query, queryAll, formatMoney, formatDate } from './rpc';
 
 /**
  * Finance-module helpers (lookups, labels, printable documents). All data
@@ -123,14 +123,16 @@ export async function profilesMap(ids) {
 }
 
 export function listStudents() {
-  return query('profiles', (q) =>
-    q.select(PROFILE_COLS).eq('account_type', 'student').order('full_name').limit(5000),
+  return queryAll('profiles', (q) =>
+    q.select(PROFILE_COLS).eq('account_type', 'student').order('full_name').order('id'),
+    { pageSize: 400, maxRows: 50000 },
   );
 }
 
 export function listEmployees() {
-  return query('profiles', (q) =>
-    q.select(PROFILE_COLS).in('account_type', ['tutor', 'staff']).eq('is_approved', true).order('full_name').limit(2000),
+  return queryAll('profiles', (q) =>
+    q.select(PROFILE_COLS).in('account_type', ['tutor', 'staff']).eq('is_approved', true).order('full_name').order('id'),
+    { pageSize: 400, maxRows: 20000 },
   );
 }
 

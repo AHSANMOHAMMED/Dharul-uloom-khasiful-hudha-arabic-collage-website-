@@ -7,8 +7,8 @@ const router = express.Router();
 router.get('/books', async (req, res) => {
   try {
     const { category, language, search, classNumber } = req.query;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
     const skip = (page - 1) * limit;
 
     let query = {};
@@ -32,9 +32,11 @@ router.get('/books', async (req, res) => {
     const books = await Book.find(query)
       .sort({ title: 1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .maxTimeMS(7000)
+      .lean();
 
-    const total = await Book.countDocuments(query);
+    const total = await Book.countDocuments(query).maxTimeMS(7000);
 
     res.json({
       books,

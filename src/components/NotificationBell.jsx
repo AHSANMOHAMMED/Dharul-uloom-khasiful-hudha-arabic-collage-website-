@@ -44,6 +44,32 @@ export default function NotificationBell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
+  // Deliver app notifications as they happen; the minute poll remains a
+  // lightweight recovery path for reconnects and missed realtime events.
+  useEffect(() => {
+    if (!isAuthenticated || !isSupabaseConfigured) return undefined;
+    let channel;
+    let active = true;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!active || !user) return;
+      channel = supabase.channel(`notifications:${user.id}`)
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}`,
+        }, (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setItems((current) => [payload.new, ...current.filter((n) => n.id !== payload.new.id)].slice(0, 25));
+          } else if (payload.eventType === 'UPDATE') {
+            setItems((current) => current.map((n) => n.id === payload.new.id ? { ...n, ...payload.new } : n));
+          }
+        })
+        .subscribe();
+    });
+    return () => {
+      active = false;
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated]);
+
   // Close on outside click / Escape.
   useEffect(() => {
     if (!open) return undefined;

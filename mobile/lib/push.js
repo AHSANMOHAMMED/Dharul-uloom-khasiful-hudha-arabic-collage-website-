@@ -57,7 +57,7 @@ const APP_ROUTES = new Set([
   'receipt', 'notifications', 'announcements', 'fees', 'results', 'report-card', 'attendance-history',
   'timetable', 'certificates', 'hostel', 'leave-requests', 'discipline', 'child', 'assignment', 'payslips',
   'payslip', 'my-attendance', 'staff-leave', 'settings', 'student', 'parent', 'staff', 'admin',
-  'receive-payment', 'dictionary', 'tasks', 'task', 'duties', 'mashoora', 'petty-cash-spend',
+  'receive-payment', 'dictionary', 'tasks', 'task', 'duties', 'mashoora', 'petty-cash-spend', 'messages',
   'finance', 'responsibilities', 'activity', 'analytics',
 ]);
 

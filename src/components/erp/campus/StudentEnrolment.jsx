@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AsyncView, Button, Card, Field, Input, Select, StatusBadge, Table, useAsync, useLang } from '../ui';
-import { query, rpc } from '../../../lib/erp/rpc';
+import { query, queryAll, rpc } from '../../../lib/erp/rpc';
 import { ClassSelect } from './common';
 import { useAction } from './hooks';
 
@@ -30,8 +30,9 @@ export default function StudentEnrolment({ canEnroll, canPromote }) {
   const [enrolled, reloadEnrolled] = useAsync(
     () =>
       yearId
-        ? query('student_enrollments', (q) =>
-            q.select('*, profiles!student_id(full_name, index_number)').eq('academic_year_id', yearId).order('class_number').limit(2000)
+        ? queryAll('student_enrollments', (q) =>
+            q.select('*, profiles!student_id(full_name, index_number)').eq('academic_year_id', yearId).order('class_number').order('student_id'),
+            { pageSize: 400, maxRows: 50000 },
           )
         : Promise.resolve([]),
     [yearId]
@@ -39,12 +40,12 @@ export default function StudentEnrolment({ canEnroll, canPromote }) {
   const [candidates, reloadCandidates] = useAsync(
     () =>
       fromYear
-        ? query('student_enrollments', (q) => {
+        ? queryAll('student_enrollments', (q) => {
             let b = q.select('id, student_id, class_number, status, profiles!student_id(full_name, index_number)')
               .eq('academic_year_id', fromYear).eq('status', 'active');
             if (cls) b = b.eq('class_number', Number(cls));
-            return b.order('class_number').limit(2000);
-          })
+            return b.order('class_number').order('id');
+          }, { pageSize: 400, maxRows: 50000 })
         : Promise.resolve([]),
     [fromYear, cls]
   );

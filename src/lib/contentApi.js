@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { supabase, isSupabaseConfigured, fetchWithTimeout } from './supabaseClient';
 import { getSiteOrgId } from './siteOrg';
 
 /**
@@ -131,7 +131,7 @@ export async function sendContactMessage(form) {
   try {
     const base = import.meta.env.VITE_SUPABASE_URL;
     if (base) {
-      await fetch(`${base}/functions/v1/send-email`, {
+      await fetchWithTimeout(`${base}/functions/v1/send-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

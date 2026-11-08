@@ -22,12 +22,45 @@ if (!isSupabaseConfigured && import.meta.env.DEV) {
 // Every API call is bounded: a request that has not answered within 10 s is
 // aborted so the UI can show an error instead of hanging. Realtime (websocket)
 // and storage uploads are not affected.
-export const REQUEST_TIMEOUT_MS = 10_000;
-export function fetchWithTimeout(input, init = {}) {
-  if (init.signal || typeof AbortSignal === 'undefined' || !AbortSignal.timeout) return fetch(input, init);
-  const url = typeof input === 'string' ? input : input?.url || '';
-  if (url.includes('/storage/v1/object')) return fetch(input, init);
-  return fetch(input, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+export const REQUEST_TIMEOUT_MS = 9_000;
+export function fetchWithTimeout(input, init = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+  if (typeof AbortController === 'undefined') return fetch(input, init);
+
+  // Preserve explicit caller cancellation while still enforcing the platform
+  // API budget. A supplied signal must not disable the timeout.
+  const controller = new AbortController();
+  const callerSignal = init.signal;
+  const abortFromCaller = () => controller.abort(callerSignal?.reason);
+  if (callerSignal?.aborted) abortFromCaller();
+  else callerSignal?.addEventListener('abort', abortFromCaller, { once: true });
+
+  const cleanup = () => {
+    clearTimeout(timer);
+    callerSignal?.removeEventListener('abort', abortFromCaller);
+  };
+  const timer = setTimeout(() => {
+    const timeout = new Error('Request exceeded the 9 second API response budget');
+    timeout.name = 'TimeoutError';
+    controller.abort(timeout);
+  }, timeoutMs);
+  controller.signal.addEventListener('abort', cleanup, { once: true });
+  return fetch(input, { ...init, signal: controller.signal }).then((response) => {
+    // Keep the deadline active until the response body has been consumed too;
+    // fetch() itself resolves as soon as headers arrive.
+    if (!response.body) {
+      cleanup();
+      return response;
+    }
+    for (const method of ['json', 'text', 'arrayBuffer', 'blob', 'formData']) {
+      const original = response[method]?.bind(response);
+      if (!original) continue;
+      response[method] = (...args) => original(...args).finally(cleanup);
+    }
+    return response;
+  }).catch((error) => {
+    cleanup();
+    throw error;
+  });
 }
 
 export const supabase = isSupabaseConfigured

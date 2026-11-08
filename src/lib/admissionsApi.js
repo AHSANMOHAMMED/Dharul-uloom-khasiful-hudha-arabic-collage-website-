@@ -2,7 +2,7 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { getSiteOrgId, getSiteOrgSlug } from './siteOrg';
 
 /** Fallback admission age limits (match public.admission_age_limits defaults). */
-export const DEFAULT_AGE_LIMITS = { minAge: 5, maxAge: 25 };
+export const DEFAULT_AGE_LIMITS = { minAge: 3, maxAge: 80 };
 
 /** Today's date (YYYY-MM-DD) in the institution's time zone (Sri Lanka by default). */
 export function todayIso(timeZone = 'Asia/Colombo', now = new Date()) {

@@ -1,5 +1,16 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
+/** Ask the authenticated staff worker to drain its own organization's queue. */
+export async function flushOutbound(limit = 20) {
+  if (!isSupabaseConfigured) return;
+  try {
+    const { error } = await supabase.functions.invoke('send-outbound', { body: { limit } });
+    if (error) console.warn('[notifyApi] outbound queue remains pending', error);
+  } catch (error) {
+    console.warn('[notifyApi] outbound queue remains pending', error);
+  }
+}
+
 /** Mark profile approved and notify student + linked parents (in-app + outbox). */
 export async function approveProfile(profileId) {
   if (!isSupabaseConfigured) throw new Error('Not configured');
@@ -7,23 +18,7 @@ export async function approveProfile(profileId) {
   const { error } = await supabase.rpc('approve_account', { p_profile_id: profileId, p_approve: true });
   if (error) throw error;
 
-  // Best-effort flush SMS/WhatsApp/email queue
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session && import.meta.env.VITE_SUPABASE_URL) {
-      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-outbound`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ limit: 30 }),
-      });
-    }
-  } catch (e) {
-    console.warn('[notifyApi] send-outbound trigger failed', e);
-  }
+  await flushOutbound(30);
 }
 
 /** After manual treasurer payment — notify student + parents. */
@@ -36,6 +31,7 @@ export async function notifyPaymentForStudent(studentId, amount, feeId = null, r
     p_receipt_no: receiptNo,
   });
   if (error) console.error('[notifyApi] notify_payment_received', error);
+  else await flushOutbound(20);
 }
 
 export async function listActivationEventsForChildren(childIds) {
@@ -90,16 +86,12 @@ export async function markAllNotificationsRead() {
 
 export async function updateNotifyPrefs(prefs) {
   if (!isSupabaseConfigured) throw new Error('Not configured');
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
-  const { error } = await supabase
-    .from('profiles')
-    .update({
-      notify_sms: prefs.notify_sms,
-      notify_whatsapp: prefs.notify_whatsapp,
-      notify_push: prefs.notify_push,
-      notify_email: prefs.notify_email,
-    })
-    .eq('id', user.id);
+  const { error } = await supabase.rpc('update_my_notification_preferences', {
+    p_sms: Boolean(prefs.notify_sms),
+    p_whatsapp: Boolean(prefs.notify_whatsapp),
+    p_push: Boolean(prefs.notify_push),
+    p_email: Boolean(prefs.notify_email),
+    p_broadcast_channels: Boolean(prefs.notify_broadcast_channels),
+  });
   if (error) throw error;
 }

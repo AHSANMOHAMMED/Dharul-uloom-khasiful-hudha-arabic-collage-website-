@@ -1,7 +1,7 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY, fetchWithTimeout } from './supabase';
 
 export const RETURN_URL = 'kashifulhudha://';
 
@@ -17,7 +17,7 @@ async function createCheckout(feeId) {
   const token = data.session?.access_token;
   if (!token) throw new Error('Not signed in');
 
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/create-payment`, {
+  const res = await fetchWithTimeout(`${SUPABASE_URL}/functions/v1/create-payment`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,

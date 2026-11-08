@@ -1,4 +1,4 @@
-import { query } from './rpc';
+import { query, queryAll } from './rpc';
 import { tx } from '../tx';
 
 /**
@@ -100,24 +100,24 @@ export function classOptions(t) {
 
 /** Approved (or all) students of the caller's organization. */
 export function fetchStudents({ includeUnapproved = false } = {}) {
-  return query('profiles', (q) => {
+  return queryAll('profiles', (q) => {
     let b = q
       .select('id, full_name, email, phone, index_number, class_number, is_approved, created_at')
       .eq('account_type', 'student');
     if (!includeUnapproved) b = b.eq('is_approved', true);
-    return b.order('full_name');
-  });
+    return b.order('full_name').order('id');
+  }, { pageSize: 400, maxRows: 50000 });
 }
 
 /** Employees (tutors + non-teaching staff). */
 export function fetchEmployees({ includeUnapproved = false } = {}) {
-  return query('profiles', (q) => {
+  return queryAll('profiles', (q) => {
     let b = q
       .select('id, full_name, email, phone, account_type, role, is_approved, assigned_tutor_role, created_at')
       .in('account_type', ['tutor', 'staff']);
     if (!includeUnapproved) b = b.eq('is_approved', true);
-    return b.order('full_name');
-  });
+    return b.order('full_name').order('id');
+  }, { pageSize: 400, maxRows: 20000 });
 }
 
 export function studentLabel(s) {

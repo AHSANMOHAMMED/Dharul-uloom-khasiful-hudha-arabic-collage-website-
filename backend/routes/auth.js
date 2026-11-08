@@ -24,6 +24,9 @@ const createTransporter = () => {
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT),
     secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
+    connectionTimeout: 2000,
+    greetingTimeout: 2000,
+    socketTimeout: 3000,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -34,7 +37,7 @@ const createTransporter = () => {
 // Register new user
 router.post('/register', validateRegister, async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password } = req.body;
 
     // Validate required fields
     if (!username || !email || !password) {
@@ -73,7 +76,8 @@ router.post('/register', validateRegister, async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      role: role || 'guest',
+      // Public registration can never choose a privileged role.
+      role: 'guest',
       isVerified: false,
       verificationToken
     });

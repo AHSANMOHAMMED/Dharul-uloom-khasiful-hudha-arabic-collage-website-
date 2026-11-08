@@ -102,7 +102,7 @@ export default function DashboardTopBar() {
 
         {/* Center: Internal Workspace Navigation (NO public marketing links) */}
         {shortcuts.length > 0 && (
-          <nav className="hidden md:flex items-center gap-1 bg-[#FBF8F0] p-1 rounded-xl border border-[#E8E1D0]" aria-label={tx('روابط مساحة العمل', 'Workspace Links')}>
+          <nav className="hidden 2xl:flex items-center gap-1 bg-[#FBF8F0] p-1 rounded-xl border border-[#E8E1D0]" aria-label={tx('روابط مساحة العمل', 'Workspace Links')}>
             {shortcuts.map((s) => {
               const active = isActive(s.to);
               return (
@@ -135,6 +135,9 @@ export default function DashboardTopBar() {
         {/* Right: Trilingual Switcher, Notifications, User Badge & Logout */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <LanguageSelect className="text-xs bg-white border border-[#E8E1D0] text-[#0B3B2E] py-1 px-2 rounded-lg" />
+          <Link to="/messages" aria-label={tx('الرسائل', 'Messages')} title={tx('الرسائل', 'Messages')} className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]">
+            <span className="material-symbols-outlined text-[18px]">forum</span>
+          </Link>
           
           <NotificationBell />
 
@@ -180,7 +183,7 @@ export default function DashboardTopBar() {
             aria-expanded={menuOpen}
             aria-controls="workspace-mobile-menu"
             aria-label={tx('قائمة مساحة العمل', 'Workspace menu')}
-            className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-[10px] border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]"
+            className="2xl:hidden inline-flex items-center justify-center w-9 h-9 rounded-[10px] border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]"
           >
             <span className="material-symbols-outlined text-[22px]">{menuOpen ? 'close' : 'menu'}</span>
           </button>
@@ -191,7 +194,7 @@ export default function DashboardTopBar() {
       {menuOpen && (
         <nav
           id="workspace-mobile-menu"
-          className="md:hidden border-t border-[#E8E1D0] bg-white px-4 py-3 space-y-1 shadow-[0_6px_16px_rgba(11,59,46,0.06)]"
+          className="2xl:hidden border-t border-[#E8E1D0] bg-white px-4 py-3 space-y-1 shadow-[0_6px_16px_rgba(11,59,46,0.06)]"
           aria-label={tx('روابط مساحة العمل', 'Workspace Links')}
         >
           <div className="px-3 pb-2 mb-1 border-b border-[#E8E1D0]/70">

@@ -7,7 +7,7 @@ import { tx } from './tx';
  * 2. lookup_arabic_word RPC (dictionary only) when the function is unavailable
  */
 
-export const LOOKUP_TIMEOUT_MS = 10_000;
+export const LOOKUP_TIMEOUT_MS = 9_000;
 
 const ARABIC_RUN = /[؀-ۿݐ-ݿࢠ-ࣿ]+/g;
 const ARABIC_PUNCT = /[،؛؟٪-٭۔۝۞۩]/g;

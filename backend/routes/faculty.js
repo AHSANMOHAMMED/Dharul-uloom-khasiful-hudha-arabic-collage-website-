@@ -1,5 +1,6 @@
 import express from 'express';
 import Faculty from '../models/Faculty.js';
+import { verifyToken, isAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -27,7 +28,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create faculty (admin only - simplified for now)
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, isAdmin, async (req, res) => {
   try {
     const faculty = await Faculty.create(req.body);
     res.status(201).json({ success: true, data: faculty });

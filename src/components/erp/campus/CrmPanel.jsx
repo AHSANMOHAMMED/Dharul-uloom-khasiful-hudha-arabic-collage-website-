@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
-import { downloadCsv, formatDate, insertRow, query, rpc, updateRow } from '../../../lib/erp/rpc';
+import { downloadCsv, formatDate, insertRow, query, queryAll, rpc, updateRow } from '../../../lib/erp/rpc';
 import { COURSES, CRM_STAGES, LEAD_SOURCES, STAGE_STATUS, labelOf, toOptions } from '../../../lib/erp/campusApi';
 import { useAction, useEmployees } from './hooks';
 import CrmLeadDetail, { FollowupsTable } from './CrmLeadDetail';
@@ -42,7 +42,7 @@ function Pipeline({ onChangedStats }) {
   const [newLead, setNewLead] = useState(null);
   const [emps] = useEmployees();
   const employees = emps.data || [];
-  const [state, reload] = useAsync(() => query('admissions', (b) => b.select('*').order('created_at', { ascending: false }).limit(2000)), []);
+  const [state, reload] = useAsync(() => queryAll('admissions', (b) => b.select('*').order('created_at', { ascending: false }).order('id'), { pageSize: 300, maxRows: 50000 }), []);
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase();

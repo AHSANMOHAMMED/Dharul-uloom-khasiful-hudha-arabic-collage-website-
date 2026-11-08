@@ -97,7 +97,10 @@ function ProfileForm({ initial, components, existingIds, onClose, onSaved }) {
                 value={c.code}
                 onChange={(e) => setComp(i, { code: e.target.value })}
                 placeholder={t('Component…', 'البند…')}
-                options={components.map((x) => ({ value: x.code, label: `${x.kind === 'earning' ? '+' : '−'} ${x.name} (${x.code})` }))}
+                options={components.map((x) => ({
+                  value: x.code,
+                  label: `${x.kind === 'earning' ? '+' : '−'} ${x.name} (${x.code})${x.kind === 'earning' ? ` · EPF ${x.epf_eligible ? '✓' : '—'} / ETF ${x.etf_eligible ? '✓' : '—'}` : ''}`,
+                }))}
               />
             </div>
             <div className="w-32">
@@ -114,7 +117,7 @@ function ProfileForm({ initial, components, existingIds, onClose, onSaved }) {
         <div className="text-xs text-gray-400">
           {t('Gross (before unpaid leave)', 'الإجمالي (قبل الإجازات غير المدفوعة)')}: <b className="text-white">{formatMoney(num(form.basic_salary) + earnings)}</b> ·{' '}
           {t('Fixed deductions', 'الاستقطاعات الثابتة')}: <b className="text-white">{formatMoney(deductions)}</b>
-          {form.epf_applicable && ` · ${t('EPF 8% is computed on basic at payroll time', 'يُحسب صندوق الادخار 8% على الأساسي عند إعداد الرواتب')}`}
+          {form.epf_applicable && ` · ${t('EPF/ETF use the component eligibility flags and statutory minimum rates', 'تُحسب مساهمات صندوقي الادخار والثقة وفق أهلية البنود والحدود القانونية الدنيا')}`}
         </div>
       </div>
       <Field label={t('Notes', 'ملاحظات')}>
@@ -133,7 +136,7 @@ export default function PaySalaryProfiles() {
   const [state, reload] = useAsync(async () => {
     const [profiles, components] = await Promise.all([
       query('staff_salary_profiles', (q) => q.select('*').order('created_at')),
-      query('salary_components', (q) => q.select('id, code, name, kind, is_system, is_active').eq('is_system', false).eq('is_active', true).order('kind').order('name')),
+      query('salary_components', (q) => q.select('id, code, name, kind, pay_category, is_system, is_active, epf_eligible, etf_eligible').eq('is_system', false).eq('is_active', true).order('kind').order('name')),
     ]);
     const people = await profilesMap(profiles.map((p) => p.profile_id));
     return {

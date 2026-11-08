@@ -16,6 +16,7 @@ import curriculumRoutes from './routes/curriculum.js';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet());
@@ -90,10 +91,15 @@ const PORT = process.env.PORT || 5000;
 // Connect to the database and start the server only when run directly
 // (skipped during tests, which import `app` without a live database).
 if (process.env.NODE_ENV !== 'test') {
-  connectDB();
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV}`);
+  if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required to start the legacy API');
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
+    });
+  }).catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
   });
 }
 

@@ -205,6 +205,15 @@ export default function Navbar() {
           {/* Authenticated State vs Public CTA */}
           {isAuthenticated ? (
             <div className="flex items-center gap-2 sm:gap-3">
+              <Link
+                to="/messages"
+                aria-label={tx('الرسائل', 'Messages')}
+                title={tx('الرسائل', 'Messages')}
+                className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-sand-border px-2.5 text-xs font-semibold text-ink-green-900 hover:bg-mint-wash-100"
+              >
+                <span className="material-symbols-outlined text-[18px]">forum</span>
+                <span className="hidden sm:inline">{tx('الرسائل', 'Messages')}</span>
+              </Link>
               <NotificationBell />
 
               {isAdmin ? (

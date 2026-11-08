@@ -8,6 +8,8 @@ import { useI18n } from '../../lib/i18n';
 import { accountLabelKey, staffRoles } from '../../lib/roles';
 import { WEB_URL } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
+import { supabase } from '../../lib/supabase';
+import { registerForPush } from '../../lib/push';
 import { useAppLock, biometricSupport } from '../../lib/appLock';
 import { Screen, Card, Txt, Button, Chips, KeyValue, SectionHeader, ListItem, PromptModal } from '..';
 
@@ -17,9 +19,20 @@ export default function SettingsView({ links = [] }) {
   const lock = useAppLock();
   const [bio, setBio] = useState({ available: false, enrolled: false });
   const [pinPrompt, setPinPrompt] = useState(false);
+  const [notify, setNotify] = useState({ notify_sms: true, notify_whatsapp: true, notify_email: true, notify_push: true, notify_broadcast_channels: false });
   useEffect(() => {
     biometricSupport().then(setBio).catch(() => {});
   }, []);
+  useEffect(() => {
+    if (!profile) return;
+    setNotify({
+      notify_sms: Boolean(profile.notify_sms),
+      notify_whatsapp: Boolean(profile.notify_whatsapp),
+      notify_email: Boolean(profile.notify_email),
+      notify_push: Boolean(profile.notify_push),
+      notify_broadcast_channels: Boolean(profile.notify_broadcast_channels),
+    });
+  }, [profile]);
   const bioUsable = bio.available && bio.enrolled;
 
   const toggleLock = async (on) => {
@@ -50,6 +63,26 @@ export default function SettingsView({ links = [] }) {
     router.replace('/login');
   };
 
+  const toggleNotify = async (key, value) => {
+    const before = notify[key];
+    setNotify((current) => ({ ...current, [key]: value }));
+    try {
+      if (key === 'notify_push' && value && !(await registerForPush())) {
+        throw new Error(t('settings.pushUnavailable'));
+      }
+      const next = { ...notify, [key]: value };
+      const { error } = await supabase.rpc('update_my_notification_preferences', {
+        p_sms: Boolean(next.notify_sms), p_whatsapp: Boolean(next.notify_whatsapp),
+        p_email: Boolean(next.notify_email), p_push: Boolean(next.notify_push),
+        p_broadcast_channels: Boolean(next.notify_broadcast_channels),
+      });
+      if (error) throw error;
+    } catch (error) {
+      setNotify((current) => ({ ...current, [key]: before }));
+      Alert.alert(t('common.error'), error.message || t('settings.notifySaveError'));
+    }
+  };
+
   return (
     <Screen>
       {links.length ? (
@@ -60,6 +93,23 @@ export default function SettingsView({ links = [] }) {
           ))}
         </>
       ) : null}
+
+      <SectionHeader title={t('settings.notifications')} />
+      <Card>
+        {[
+          ['notify_sms', 'settings.notifySms'],
+          ['notify_whatsapp', 'settings.notifyWhatsApp'],
+          ['notify_email', 'settings.notifyEmail'],
+          ['notify_push', 'settings.notifyPush'],
+          ['notify_broadcast_channels', 'settings.notifyBroadcastChannels'],
+        ].map(([key, label]) => (
+          <View key={key} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 44 }}>
+            <Txt style={{ flex: 1 }}>{t(label)}</Txt>
+            <Switch value={Boolean(notify[key])} onValueChange={(value) => toggleNotify(key, value)} trackColor={{ true: colors.primary }} accessibilityLabel={t(label)} />
+          </View>
+        ))}
+        <Txt variant="small">{t('settings.notificationsHint')}</Txt>
+      </Card>
 
       <SectionHeader title={t('settings.myInfo')} />
       <Card accent={colors.primary}>

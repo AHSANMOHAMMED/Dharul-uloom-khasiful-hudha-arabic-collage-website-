@@ -54,9 +54,9 @@ test.describe('Authentication & Role-Based Dashboard Isolation', () => {
     await page.getByRole('button', { name: /Signups|الموافقات/i }).click();
 
     // 6. Test Logout
-    const logoutBtn = header.getByRole('button', { name: /logout|خروج/i });
+    const logoutBtn = page.locator('header button[title="Sign out"]');
     await expect(logoutBtn).toBeVisible();
-    await logoutBtn.click();
+    await logoutBtn.click({ force: true });
   });
 
   test('Librarian Login directs to Maktabah Admin and hides public Navbar', async ({ page }) => {

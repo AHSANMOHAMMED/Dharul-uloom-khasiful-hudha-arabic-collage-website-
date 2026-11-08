@@ -6,7 +6,8 @@
 //   textlk    – Text.lk   (Sri Lanka, masked sender ID):  TEXTLK_API_TOKEN
 //   twilio    – Twilio (default):  TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
 // Sender mask: organizations.settings.sms_sender_id (per college) → SMS_SENDER_ID.
-// WhatsApp: Twilio (WHATSAPP_FROM). E-mail: Resend (RESEND_API_KEY, MAIL_FROM) —
+// WhatsApp: Twilio (WHATSAPP_FROM, approved WHATSAPP_CONTENT_SID template).
+// E-mail: Resend (RESEND_API_KEY, MAIL_FROM) —
 // receipt messages carry the exact receipt PDF as an attachment.
 // Push: Expo push service (EXPO_ACCESS_TOKEN optional).
 // SITE_URL is used to append the receipt link to SMS / WhatsApp.
@@ -16,7 +17,7 @@
 // Every provider call has an 8 s timeout to stay inside the 10 s API budget.
 
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { callerIsAdmin } from '../_shared/authz.ts';
+import { callerIsEmployee } from '../_shared/authz.ts';
 import { base64, buildReceiptPdf } from '../_shared/receiptPdf.ts';
 import { normalizeLkPhone } from '../_shared/phone.ts';
 
@@ -93,18 +94,24 @@ function sendSms(to: string, body: string, sender: string): Promise<Result> {
   return smsTwilio(to, body, sender);
 }
 
-async function sendWhatsApp(to: string, body: string): Promise<Result> {
+async function sendWhatsApp(to: string, label: string, appLink: string): Promise<Result> {
   const sid = Deno.env.get('TWILIO_ACCOUNT_SID');
   const token = Deno.env.get('TWILIO_AUTH_TOKEN');
   const from = Deno.env.get('WHATSAPP_FROM') || Deno.env.get('TWILIO_WHATSAPP_FROM');
-  if (!sid || !token || !from) return { ok: false, blocked: true, error: 'WhatsApp/Twilio not configured' };
+  const contentSid = Deno.env.get('WHATSAPP_CONTENT_SID');
+  if (!sid || !token || !from || !contentSid || !appLink) {
+    return { ok: false, blocked: true, error: 'WhatsApp needs Twilio credentials, sender, SITE_URL, and an approved content template' };
+  }
+  const templateLabel = label.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'college update';
+  const safeLink = appLink.replace(/[\r\n]+/g, '').slice(0, 500);
   const res = await timedFetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: 'POST',
     headers: { Authorization: `Basic ${btoa(`${sid}:${token}`)}`, 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       To: to.startsWith('whatsapp:') ? to : `whatsapp:+${normalizeLkPhone(to)}`,
       From: from.startsWith('whatsapp:') ? from : `whatsapp:${from}`,
-      Body: body,
+      ContentSid: contentSid,
+      ContentVariables: JSON.stringify({ '1': templateLabel, '2': safeLink }),
     }),
   });
   const j = await res.json().catch(() => ({}));
@@ -200,26 +207,38 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  if (!supabaseUrl || !serviceKey) return json({ error: 'Outbound worker is not configured' }, 503);
   const siteUrl = (Deno.env.get('SITE_URL') || '').replace(/\/$/, '');
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
+  let body: Record<string, unknown> = {};
+  try { body = await req.json(); } catch { /* default batch request */ }
+
   const authHeader = req.headers.get('Authorization') || '';
   const bearer = authHeader.replace(/^Bearer\s+/i, '');
+  let serviceCaller = bearer === serviceKey;
+  let employeeCaller = serviceCaller;
+  let requesterId: string | null = null;
   if (bearer !== serviceKey) {
     const { data: { user } } = await admin.auth.getUser(bearer);
     if (!user) return json({ error: 'Unauthorized' }, 401);
-    if (!(await callerIsAdmin(bearer))) return json({ error: 'Forbidden' }, 403);
+    requesterId = user.id;
+    employeeCaller = await callerIsEmployee(bearer);
+    if (!employeeCaller && typeof body.chat_message_id !== 'string') return json({ error: 'Forbidden' }, 403);
   }
 
-  let limit = 50;
-  try {
-    const body = await req.json();
-    if (body?.limit) limit = Math.min(Number(body.limit) || 50, 200);
-  } catch { /* default */ }
+  let limit = Math.min(Math.max(Number(body.limit) || 50, 1), 100);
 
-  const started = Date.now();
-  const { data: rows, error } = await admin.rpc('claim_outbox_batch', { p_limit: limit });
+  const claim = serviceCaller
+    ? admin.rpc('claim_outbox_batch', { p_limit: limit })
+    : typeof body.chat_message_id === 'string'
+      ? admin.rpc('claim_chat_outbox', { p_message_id: body.chat_message_id, p_sender_id: requesterId })
+      : employeeCaller
+        ? admin.rpc('claim_org_outbox_batch', { p_requester: requesterId, p_limit: limit })
+        : Promise.resolve({ data: [], error: null });
+  const { data: rows, error } = await claim;
   if (error) return json({ error: error.message }, 500);
+  if (!rows?.length) return json({ accepted: 0, status: 'no eligible messages' });
 
   // per-org SMS sender mask
   const orgIds = [...new Set(((rows || []) as OutboxRow[]).map((r) => r.org_id))];
@@ -242,18 +261,17 @@ Deno.serve(async (req) => {
     return pdfCache.get(token) || undefined;
   }
 
-  let sent = 0, failed = 0, skipped = 0;
-  for (const row of (rows || []) as OutboxRow[]) {
-    // Stop early rather than exceed the request budget; remaining rows stay claimed and
-    // are retried by the next run after the 5-minute claim window.
-    if (Date.now() - started > 45_000) break;
+  const processRow = async (row: OutboxRow) => {
     const meta = row.metadata || {};
     const receiptToken: string | undefined = meta.token || meta.receipt_token || meta.data?.token;
     const link = meta.type === 'fee_receipt' && receiptToken && siteUrl ? ` ${siteUrl}/r/${receiptToken}` : '';
+    const chatLink = meta.type === 'chat_message' && meta.conversation_id && siteUrl
+      ? ` ${siteUrl}/messages?conversation=${meta.conversation_id}` : '';
+    const appLink = chatLink.trim() || link.trim() || (siteUrl && meta.link ? `${siteUrl}${String(meta.link).startsWith('/') ? '' : '/'}${meta.link}` : siteUrl);
     let result: Result;
     try {
       if (row.channel === 'sms') result = await sendSms(row.to_address, row.body + link, senders[row.org_id] || '');
-      else if (row.channel === 'whatsapp') result = await sendWhatsApp(row.to_address, row.body + link);
+      else if (row.channel === 'whatsapp') result = await sendWhatsApp(row.to_address, row.subject || 'College update', appLink || '');
       else if (row.channel === 'email') {
         const att = meta.attach_receipt && receiptToken ? await receiptAttachment(receiptToken) : undefined;
         result = await sendEmail(row.to_address, row.subject, row.body + (link ? `\n\nReceipt:${link}` : ''), att);
@@ -266,32 +284,35 @@ Deno.serve(async (req) => {
 
     const now = new Date().toISOString();
     if (result.blocked) {
-      skipped++;
       await admin.from('message_outbox').update({ status: 'blocked', error: result.error, sent_at: null }).eq('id', row.id);
     } else if (result.staleToken) {
-      skipped++;
       await admin.from('device_push_tokens').delete().eq('token', row.to_address);
       await admin.from('message_outbox').update({ status: 'skipped', error: result.error, sent_at: now }).eq('id', row.id);
     } else if (result.skipped) {
-      skipped++;
       await admin.from('message_outbox').update({ status: 'skipped', error: result.error, sent_at: now }).eq('id', row.id);
     } else if (result.ok) {
-      sent++;
       await admin.from('message_outbox').update({ status: 'sent', provider_id: result.id || null, sent_at: now, error: null }).eq('id', row.id);
     } else {
-      failed++;
       // retry later; give up after 5 attempts
       await admin.from('message_outbox')
         .update({ status: (row.attempts ?? 1) >= 5 ? 'failed' : 'pending', error: result.error || 'send failed' })
         .eq('id', row.id);
     }
-  }
+  };
 
-  try {
-    await reconcileExpoReceipts(admin);
-  } catch (error) {
-    console.error('Expo receipt reconciliation failed', error);
-  }
+  // Claim quickly and continue in the background. Parallel provider calls keep
+  // a large queue from turning one HTTP invocation into a long serial request.
+  const background = (async () => {
+    const claimed = rows as OutboxRow[];
+    for (let i = 0; i < claimed.length; i += 8) {
+      await Promise.all(claimed.slice(i, i + 8).map(processRow));
+    }
+    try { await reconcileExpoReceipts(admin); }
+    catch (error) { console.error('Expo receipt reconciliation failed', error); }
+  })();
+  const runtime = (globalThis as typeof globalThis & { EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void } }).EdgeRuntime;
+  if (runtime?.waitUntil) runtime.waitUntil(background);
+  else void background.catch((error) => console.error('Outbound worker failed', error));
 
-  return json({ processed: rows?.length || 0, sent, failed, skipped, ms: Date.now() - started });
+  return json({ accepted: rows.length, status: 'queued for delivery' }, 202);
 });

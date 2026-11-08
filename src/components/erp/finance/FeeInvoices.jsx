@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AsyncView, Badge, Button, Card, Field, Input, Modal, Select, StatusBadge, Table, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
-import { query, formatMoney, formatDate, currentMonth, today, downloadCsv } from '../../../lib/erp/rpc';
+import { query, queryAll, formatMoney, formatDate, currentMonth, today, downloadCsv } from '../../../lib/erp/rpc';
 import { CLASS_OPTIONS, FEE_STATUSES, num, profilesMap, toOptions } from '../../../lib/erp/financeApi';
 import { FilterBar, Num } from './shared';
 import FeeInvoiceDetail from './FeeInvoiceDetail';
@@ -14,17 +14,17 @@ async function loadInvoices({ month, cls, status }) {
     studentIds = (students || []).map((s) => s.id);
     if (!studentIds.length) return [];
   }
-  const rows = await query('student_fees', (q) => {
+  const rows = await queryAll('student_fees', (q) => {
     let b = q
       .select('id, invoice_no, student_id, month, due_date, total_due, paid_amount, status, cancel_reason')
       .order('month', { ascending: false })
       .order('invoice_no', { ascending: true })
-      .limit(1000);
+      .order('id');
     if (month) b = b.eq('month', month);
     if (status) b = b.eq('status', status);
     if (studentIds) b = b.in('student_id', studentIds);
     return b;
-  });
+  }, { pageSize: 400, maxRows: 50000 });
   const people = await profilesMap((rows || []).map((r) => r.student_id));
   return (rows || []).map((r) => ({ ...r, student: people[r.student_id] }));
 }

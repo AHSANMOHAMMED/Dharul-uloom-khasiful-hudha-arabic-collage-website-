@@ -16,6 +16,7 @@ export default function AdminSettings() {
         { href: '/mashoora', icon: 'people-outline', label: t('mashoora.title') },
         { href: '/dictionary', icon: 'language-outline', label: t('dict.title') },
         { href: '/announcements', icon: 'megaphone-outline', label: t('home.announcements') },
+        { href: '/messages', icon: 'chatbubbles-outline', label: t('chat.title') },
       ]}
     />
   );

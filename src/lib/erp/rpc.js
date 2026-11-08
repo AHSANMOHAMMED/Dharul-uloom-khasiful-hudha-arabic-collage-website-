@@ -47,6 +47,27 @@ export async function query(table, build = (q) => q.select('*')) {
   return data;
 }
 
+/**
+ * Read a large tenant-scoped list in bounded PostgREST pages. Supabase's row
+ * cap can silently truncate unpaged lists, so complete-list callers should
+ * use this helper instead of requesting thousands of rows at once.
+ */
+export async function queryAll(table, build, { pageSize = 400, maxRows = 50000 } = {}) {
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000) {
+    throw new ErpError('Page size must be between 1 and 1000.');
+  }
+  if (!Number.isInteger(maxRows) || maxRows < pageSize) {
+    throw new ErpError('Maximum row count must be at least the page size.');
+  }
+  const rows = [];
+  for (let offset = 0; offset < maxRows; offset += pageSize) {
+    const page = await query(table, (q) => build(q).range(offset, offset + pageSize - 1));
+    rows.push(...(page || []));
+    if (!page || page.length < pageSize) return rows;
+  }
+  throw new ErpError(`The ${table} result exceeds the ${maxRows} row safety limit. Add filters before loading it.`);
+}
+
 export async function insertRow(table, row, select = '*') {
   return query(table, (q) => q.insert(row).select(select).single());
 }

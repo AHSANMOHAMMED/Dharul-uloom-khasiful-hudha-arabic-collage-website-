@@ -9,9 +9,9 @@ import { adminStats, listAdmissionsByStatus, updateAdmissionStatus } from '../li
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import AnalyticsDashboard from './AnalyticsDashboard';
+import AnalyticsPanel from '../components/erp/ops/AnalyticsPanel';
 import AdminContentCMS from '../components/AdminContentCMS';
-import { approveProfile } from '../lib/notifyApi';
+import { approveProfile, flushOutbound } from '../lib/notifyApi';
 import AdmissionsCrmBoard from '../components/AdmissionsCrmBoard';
 import StaffHrmPanel from '../components/StaffHrmPanel';
 import ImportJobsPanel from '../components/ImportJobsPanel';
@@ -52,6 +52,8 @@ const AdminDashboard = () => {
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [broadcastTarget, setBroadcastTarget] = useState('all');
   const [broadcastSuccess, setBroadcastSuccess] = useState(false);
+  const [broadcastSending, setBroadcastSending] = useState(false);
+  const [broadcastSentCount, setBroadcastSentCount] = useState(0);
 
   // Index pre-seeding
   const [newIndexNumber, setNewIndexNumber] = useState('');
@@ -251,36 +253,42 @@ const AdminDashboard = () => {
 
   const handleSendBroadcast = async (e) => {
     e.preventDefault();
-    if (!broadcastTitle.trim() || !broadcastMsg.trim()) return;
+    if (!broadcastTitle.trim() || !broadcastMsg.trim() || broadcastSending) return;
 
+    setBroadcastSending(true);
     try {
-      let query = supabase.from('profiles').select('id');
-      if (broadcastTarget === 'students') query = query.eq('account_type', 'student');
-      else if (broadcastTarget === 'parents') query = query.eq('account_type', 'parent');
-      else if (broadcastTarget === 'tutors') query = query.eq('account_type', 'tutor');
-
-      const { data: targets, error } = await query;
-      if (error) throw error;
-
-      if (targets && targets.length > 0) {
-        const notificationsPayload = targets.map((t) => ({
-          user_id: t.id,
-          title: broadcastTitle,
-          message: broadcastMsg
-        }));
-        
-        const { error: notificationError } = await supabase.from('notifications').insert(notificationsPayload);
-        if (notificationError) throw notificationError;
+      let cursor = null;
+      let sent = 0;
+      const broadcastId = crypto.randomUUID();
+      for (let page = 0; page < 200; page += 1) {
+        const { data, error } = await supabase.rpc('send_notification_broadcast', {
+          p_broadcast_id: broadcastId,
+          p_title: broadcastTitle.trim(),
+          p_message: broadcastMsg.trim(),
+          p_target: broadcastTarget,
+          p_after: cursor,
+          p_limit: 150,
+        });
+        if (error) throw error;
+        const count = Number(data?.sent || 0);
+        sent += count;
+        setBroadcastSentCount(sent);
+        if (!data?.has_more || !data?.next_after || data.next_after === cursor) break;
+        cursor = data.next_after;
       }
+
+      if (sent > 0) await flushOutbound(100);
 
       setBroadcastTitle('');
       setBroadcastMsg('');
       setBroadcastSuccess(true);
-      toast.success(tx('تم إرسال الإشعار لجميع الفئات المستهدفة', 'Bilingual broadcast dispatched!'));
+      toast.success(tx(`تم إدراج الإشعار لـ ${sent} مستخدم`, `Broadcast queued for ${sent} users`));
       setTimeout(() => setBroadcastSuccess(false), 3500);
     } catch (err) {
       console.error('Error sending broadcast:', err);
       toast.error(tx('فشل إرسال البث', 'Failed to dispatch broadcast'));
+    } finally {
+      setBroadcastSending(false);
     }
   };
 
@@ -792,16 +800,12 @@ const AdminDashboard = () => {
                   </div>
                   <button
                     type="submit"
-                    className="w-full py-2.5 bg-[#11694A] hover:bg-[#0B3B2E] font-bold rounded-xl text-white text-xs transition"
+                    disabled={broadcastSending}
+                    className="w-full py-2.5 bg-[#11694A] hover:bg-[#0B3B2E] font-bold rounded-xl text-white text-xs transition disabled:opacity-50"
                   >
-                    {tx('إرسال رسالة البث', 'Dispatch Broadcast Message')}
+                    {broadcastSending ? tx(`جارٍ الإرسال... ${broadcastSentCount}`, `Sending... ${broadcastSentCount}`) : tx('إرسال رسالة البث', 'Dispatch Broadcast Message')}
                   </button>
-                  {broadcastSuccess && (
-                    <p className="text-xs text-[#11694A] text-center font-bold animate-pulse flex items-center justify-center gap-1">
-                      <span className="material-symbols-outlined text-[15px]">check_circle</span>
-                      <span>{tx('تم إرسال إشعار البث!', 'Broadcast notification sent!')}</span>
-                    </p>
-                  )}
+                  {broadcastSuccess && <p className="text-xs text-[#11694A] text-center font-bold animate-pulse">✓ {tx(`تم إدراج الإشعار لـ ${broadcastSentCount} مستخدم`, `Broadcast queued for ${broadcastSentCount} users`)}</p>}
                 </form>
 
                 {/* Tuition monthly reminders */}
@@ -943,7 +947,7 @@ const AdminDashboard = () => {
           )}
 
           {/* Tab: Analytics */}
-          {activeTab === 'analytics' && <AnalyticsDashboard />}
+          {activeTab === 'analytics' && <AnalyticsPanel />}
 
         </div>
     </DashboardSidebarLayout>

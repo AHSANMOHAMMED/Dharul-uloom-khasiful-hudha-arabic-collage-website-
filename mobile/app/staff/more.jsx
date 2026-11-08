@@ -21,6 +21,7 @@ export default function StaffMore() {
         { href: '/payslips', icon: 'cash-outline', label: t('staff.payslips') },
         { href: '/dictionary', icon: 'language-outline', label: t('dict.title') },
         { href: '/announcements', icon: 'megaphone-outline', label: t('home.announcements') },
+        { href: '/messages', icon: 'chatbubbles-outline', label: t('chat.title') },
         { href: '/notifications', icon: 'notifications-outline', label: t('notif.title') },
       ]}
     />

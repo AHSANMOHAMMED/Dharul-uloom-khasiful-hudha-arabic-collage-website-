@@ -1,6 +1,7 @@
 import { query, rpc, insertRow, updateRow } from './rpc';
 import { profilesMap } from './financeApi';
 import { subscribeTable } from './governanceApi';
+import { flushOutbound } from '../notifyApi';
 
 /**
  * Operations helpers: activities with several responsible staff, today's
@@ -219,9 +220,21 @@ export const myResponsibilities = async () => (await rpc('my_responsibilities'))
 // Finance desk
 // ---------------------------------------------------------------------------
 export const financeToday = async () => (await rpc('finance_today')) || {};
-export const sendFeeReminder = (student, note) => rpc('send_fee_reminder', { p_student: student, p_note: note || null });
-export const sendOverdueReminders = (minDays, limit = 200) => rpc('send_overdue_reminders', { p_min_days: minDays, p_limit: limit });
-export const resendReceipt = (receipt) => rpc('resend_receipt', { p_receipt: receipt });
+export async function sendFeeReminder(student, note) {
+  const result = await rpc('send_fee_reminder', { p_student: student, p_note: note || null });
+  await flushOutbound(20);
+  return result;
+}
+export async function sendOverdueReminders(minDays, limit = 200) {
+  const result = await rpc('send_overdue_reminders', { p_min_days: minDays, p_limit: limit });
+  await flushOutbound(50);
+  return result;
+}
+export async function resendReceipt(receipt) {
+  const result = await rpc('resend_receipt', { p_receipt: receipt });
+  await flushOutbound(20);
+  return result;
+}
 export const studentMessageLog = async (student, limit = 50) => (await rpc('student_message_log', { p_student: student, p_limit: limit })) || [];
 export const studentArrears = (student) => rpc('student_arrears', { p_student: student });
 

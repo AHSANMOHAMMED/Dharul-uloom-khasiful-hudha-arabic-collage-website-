@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const admissionSchema = new mongoose.Schema({
     studentName: { type: String, required: true },
-    age: { type: Number, required: true, min: 5, max: 15 },
+    age: { type: Number, required: true, min: 3, max: 80 },
     parentName: { type: String, required: true },
     phone: { type: String, required: true },
     email: { type: String },

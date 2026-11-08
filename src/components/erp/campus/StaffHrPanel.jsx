@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, StatusBadge, Table, Tabs, useAsync, useLang } from '../ui';
-import { deleteRow, downloadCsv, formatDate, insertRow, query, rpc, today, updateRow } from '../../../lib/erp/rpc';
+import { deleteRow, downloadCsv, formatDate, insertRow, query, queryAll, rpc, today, updateRow } from '../../../lib/erp/rpc';
 import { useAction } from './hooks';
 import StaffRecord from './StaffRecord';
 
@@ -14,9 +14,10 @@ function Directory() {
   const [type, setType] = useState('');
   const [selectedId, setSelectedId] = useState(null);
   const [state, reload] = useAsync(
-    () => query('profiles', (b) =>
+    () => queryAll('profiles', (b) =>
       b.select('id, full_name, email, phone, account_type, role, is_approved, assigned_tutor_role, created_at, staff_hr(employee_no, department, job_title, status, employment_type)')
-        .in('account_type', ['tutor', 'staff']).order('full_name')),
+        .in('account_type', ['tutor', 'staff']).order('full_name').order('id'),
+      { pageSize: 400, maxRows: 20000 }),
     []
   );
   const rows = useMemo(() => {

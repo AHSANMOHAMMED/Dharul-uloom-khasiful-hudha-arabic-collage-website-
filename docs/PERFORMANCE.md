@@ -1,13 +1,16 @@
 # Performance, latency budget & load balancing
 
-**Budget: every API request answers in under 10 seconds.** It is enforced at
-four layers and measured by an automated load test (CI job `api-latency`).
+**Service objective: every API request should answer in under 10 seconds.** The
+web and mobile clients now cancel requests at 9 seconds, leaving time to show an
+error before the limit. A client timeout is not proof that the server completed
+the operation within the objective; use the staging load test to verify the
+actual backend and database path.
 
 ## 1. How the 10 s budget is enforced
 
 | Layer | Limit | Where |
 |---|---|---|
-| Browser / mobile API calls | aborted after **10 s** (UI shows an error/retry) | `src/lib/supabaseClient.js`, `mobile/lib/supabase.js` (`global.fetch` with timeout) |
+| Browser / mobile API calls | aborted after **9 s**, including response body parsing | `src/lib/supabaseClient.js`, `mobile/lib/supabase.js` (`global.fetch` with timeout) |
 | Database statements | **8 s** for signed-in users, **5 s** anonymous | `alter role … set statement_timeout` (0021) |
 | Edge functions → providers (SMS, e-mail, push, PayHere, Claude) | **8 s** per external call | `AbortSignal.timeout` / SDK `timeout: 8000` |
 | Load balancer (self-hosted) | 3 s connect, 10 s read, retry another replica | `docker/nginx-lb.conf` |
@@ -23,6 +26,9 @@ Heavy jobs never run unbounded inside one request:
 `npm run test:perf` — scratch Postgres + all migrations + a college with **2,000 students, 1,500 parents,
 60 staff, 120,000 attendance rows, 6,000 invoices, 20,000 notifications**, served by PostgREST (the
 API server Supabase uses) with real signed JWTs for parents, students, tutors and accountants.
+These are repository-documented benchmark results; this remediation pass did not rerun them against
+the current migration or a production-like Supabase deployment. Run the staging scenario after
+applying all migrations before treating the values below as current evidence.
 
 3,000 requests, 50 concurrent users:
 

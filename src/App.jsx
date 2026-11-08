@@ -21,6 +21,7 @@ const DASHBOARD_ROUTES = [
   '/dashboard',
   '/library-admin',
   '/erp',
+  '/messages',
   '/payment/success',
   '/payment/cancel',
   '/verify',
@@ -30,7 +31,7 @@ const DASHBOARD_ROUTES = [
 ];
 
 /** Routes that require a signed-in user (public receipt/verify links excluded). */
-const PROTECTED_ROUTES = ['/admin', '/dashboard', '/library-admin', '/erp', '/account'];
+const PROTECTED_ROUTES = ['/admin', '/dashboard', '/library-admin', '/erp', '/messages', '/account'];
 
 function isDashboardPath(pathname) {
   return DASHBOARD_ROUTES.some((r) => pathname === r || pathname.startsWith(r));
@@ -64,6 +65,7 @@ const ErpWorkspace = lazy(() => import('./pages/erp/ErpWorkspace'))
 const VerifyCertificate = lazy(() => import('./pages/erp/VerifyCertificate'))
 const ReceiptPublic = lazy(() => import('./pages/ReceiptPublic'))
 const AccountSecurity = lazy(() => import('./pages/AccountSecurity'))
+const Messages = lazy(() => import('./pages/Messages'))
 
 /**
  * AppShell — conditionally renders the public Navbar + Footer only when
@@ -173,6 +175,7 @@ function App() {
               {/* Fee-reminder notifications (0025) link to /fees; fees live in the portal. */}
               <Route path="/fees"       element={<Navigate to="/dashboard" replace />} />
               <Route path="/erp"        element={<ErpWorkspace />} />
+              <Route path="/messages"   element={<Messages />} />
               <Route path="/account/security" element={<AccountSecurity />} />
               <Route path="/verify"     element={<VerifyCertificate />} />
               <Route path="/verify/:code" element={<VerifyCertificate />} />

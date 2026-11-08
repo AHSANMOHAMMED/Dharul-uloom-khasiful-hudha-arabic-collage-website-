@@ -8,6 +8,7 @@ export default function ParentSettings() {
       links={[
         { href: '/link-child', icon: 'link-outline', label: t('parent.link') },
         { href: '/announcements', icon: 'megaphone-outline', label: t('home.announcements') },
+        { href: '/messages', icon: 'chatbubbles-outline', label: t('chat.title') },
       ]}
     />
   );

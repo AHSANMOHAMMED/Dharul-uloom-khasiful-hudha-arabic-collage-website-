@@ -73,6 +73,7 @@ function RootStack() {
         <Stack.Screen name="payment-success" options={{ title: t('payment.successTitle') }} />
         <Stack.Screen name="payment-cancel" options={{ title: t('payment.cancelTitle') }} />
         <Stack.Screen name="notifications" options={{ title: t('notif.title') }} />
+        <Stack.Screen name="messages" options={{ title: t('chat.title') }} />
         <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
         <Stack.Screen name="fees" options={{ title: t('fees.title') }} />
         <Stack.Screen name="results" options={{ title: t('results.title') }} />

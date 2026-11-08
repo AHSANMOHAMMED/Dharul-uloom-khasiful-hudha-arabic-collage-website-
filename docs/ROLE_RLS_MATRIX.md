@@ -62,5 +62,6 @@ Public (anon): website content, `verify_student_index`, `verify_certificate(code
 - Gateway settlement (`apply_gateway_payment`) is idempotent and rejects amount/currency tampering.
 - Segregation of duties: expense approver ≠ submitter; payroll approver ≠ preparer (admins excepted).
 - Sensitive tables are captured in `audit_logs` (profiles, fees, payments, payroll, journals, HR, certificates…).
+- Direct messages are restricted to the two conversation participants; students/parents can contact approved staff, and staff can contact approved users in their own institution. WhatsApp alerts are independently controlled by each recipient's notification preference.
 
 Tests: `npm run test:db` (135 assertions in `supabase/tests/rls_erp_test.sql`).

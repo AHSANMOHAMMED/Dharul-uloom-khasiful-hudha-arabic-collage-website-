@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { supabase, isSupabaseConfigured, fetchWithTimeout } from './supabaseClient';
 
 /**
  * Initiate PayHere checkout for a student fee row.
@@ -15,7 +15,7 @@ export async function createPaymentCheckout(feeId) {
   if (!functionBaseUrl) throw new Error('Supabase function URL is not configured');
 
   const url = `${functionBaseUrl}/functions/v1/create-payment`;
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
