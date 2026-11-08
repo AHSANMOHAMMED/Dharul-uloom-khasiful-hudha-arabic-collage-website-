@@ -29,7 +29,6 @@ const emptyForm = {
 const LibrarianDashboard = () => {
   const { user, isAdmin, isLibrarian, loading: authLoading } = useAuth();
   const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
   const dir = { ar: 'rtl' }[i18n.language] || 'ltr';
   const [activeTab, setActiveTab] = useTabParam(['catalog', 'add', 'dictionary'], 'catalog');
   const [books, setBooks] = useState([]);

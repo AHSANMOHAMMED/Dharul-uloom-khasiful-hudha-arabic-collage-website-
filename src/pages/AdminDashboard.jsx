@@ -26,8 +26,7 @@ const COLORS = ['#11694A', '#C29A3A', '#0F7C86', '#B91C1C'];
 
 const AdminDashboard = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
-  const { i18n } = useTranslation();
-  const ar = i18n.language === 'ar';
+  useTranslation();
   const navigate = useNavigate();
   
   // Existing state

@@ -33,9 +33,8 @@ export default function DashboardSidebarLayout({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout, isAdmin, isEmployee, isLibrarian } = useAuth();
-  const { i18n } = useTranslation();
+  useTranslation();
   const location = useLocation();
-  const ar = i18n.language === 'ar';
 
   // Standard institutional quick links across workspaces
   const defaultQuickLinks = [];
