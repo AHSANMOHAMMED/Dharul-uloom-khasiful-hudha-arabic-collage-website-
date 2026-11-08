@@ -118,9 +118,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
+      - name: Setup Deno
+        run: |
+          curl -fsSL https://deno.land/install.sh | sh
+          echo "$HOME/.deno/bin" >> $GITHUB_PATH
       - name: Type-check functions
         run: deno check supabase/functions/*/index.ts
       - name: PayHere crypto unit tests
