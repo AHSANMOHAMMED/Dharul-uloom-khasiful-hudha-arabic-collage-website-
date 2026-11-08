@@ -1,6 +1,6 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, useRef, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -27,6 +27,9 @@ const DASHBOARD_ROUTES = [
   '/r/',
   '/receipt/',
 ];
+
+/** Routes that require a signed-in user (public receipt/verify links excluded). */
+const PROTECTED_ROUTES = ['/admin', '/dashboard', '/library-admin', '/erp'];
 
 function isDashboardPath(pathname) {
   return DASHBOARD_ROUTES.some((r) => pathname === r || pathname.startsWith(r));
@@ -66,8 +69,26 @@ const ReceiptPublic = lazy(() => import('./pages/ReceiptPublic'))
  */
 function AppShell({ children }) {
   const location = useLocation();
-  const { isAdmin, isLibrarian, isTutor, isStudent, isParent, isNonTeachingStaff, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { isAdmin, isLibrarian, isTutor, isStudent, isParent, isNonTeachingStaff, isAuthenticated, loading } = useAuth();
   const onDashboardRoute = isDashboardPath(location.pathname);
+
+  // Signing out from any workspace (top bar, dashboard header, pending screen…)
+  // lands on the login page instead of leaving a blank/forbidden dashboard.
+  const wasAuthenticated = useRef(isAuthenticated);
+  useEffect(() => {
+    if (loading) return;
+    const signedOut = wasAuthenticated.current && !isAuthenticated;
+    wasAuthenticated.current = isAuthenticated;
+    if (signedOut && PROTECTED_ROUTES.some((r) => location.pathname.startsWith(r))) {
+      navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, loading, location.pathname, navigate]);
+
+  // Start each page at the top (SPA navigation keeps the old scroll offset otherwise).
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   // Hide public chrome when any logged-in staff/admin is on their workspace.
   const isStaffUser = isAdmin || isLibrarian || isTutor || isStudent || isParent || isNonTeachingStaff;
@@ -152,6 +173,8 @@ function App() {
               <Route path="/library/:id" element={<BookReaderPage />} />
               <Route path="/payment/success" element={<PaymentSuccess />} />
               <Route path="/payment/cancel"  element={<PaymentCancel />} />
+              {/* Fee-reminder notifications (0025) link to /fees; fees live in the portal. */}
+              <Route path="/fees"       element={<Navigate to="/dashboard" replace />} />
               <Route path="/erp"        element={<ErpWorkspace />} />
               <Route path="/verify"     element={<VerifyCertificate />} />
               <Route path="/verify/:code" element={<VerifyCertificate />} />

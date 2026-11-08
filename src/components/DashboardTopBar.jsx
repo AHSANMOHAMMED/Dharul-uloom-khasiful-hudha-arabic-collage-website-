@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +10,12 @@ export default function DashboardTopBar() {
   const { user, isAdmin, isSuperAdmin, isLibrarian, isTutor, isStudent, isParent, isTreasurer, isPrincipal, isVP, isEmployee, logout } = useAuth();
   useTranslation(); // re-render on language change
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close the mobile menu whenever the route changes.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname, location.search]);
 
   // Determine primary role label & color
   let roleLabel = tx('مستخدم البوابة', 'Portal User');
@@ -59,6 +66,8 @@ export default function DashboardTopBar() {
     shortcuts.push({ to: '/dashboard', label: tx('لوحتي', 'My Desk'), icon: 'dashboard' });
   }
 
+  const isActive = (to) => location.pathname === to || location.pathname.startsWith(`${to}/`);
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#E8E1D0] shadow-[0_1px_6px_rgba(11,59,46,0.03)]">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -92,14 +101,15 @@ export default function DashboardTopBar() {
         </div>
 
         {/* Center: Internal Workspace Navigation (NO public marketing links) */}
-        {shortcuts.length > 1 && (
+        {shortcuts.length > 0 && (
           <nav className="hidden md:flex items-center gap-1 bg-[#FBF8F0] p-1 rounded-xl border border-[#E8E1D0]" aria-label={tx('روابط مساحة العمل', 'Workspace Links')}>
             {shortcuts.map((s) => {
-              const active = location.pathname === s.to || (s.to !== '/dashboard' && location.pathname.startsWith(s.to));
+              const active = isActive(s.to);
               return (
                 <Link
                   key={s.to}
                   to={s.to}
+                  aria-current={active ? 'page' : undefined}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     active
                       ? 'bg-[#0B3B2E] text-white shadow-xs'
@@ -111,6 +121,14 @@ export default function DashboardTopBar() {
                 </Link>
               );
             })}
+            <Link
+              to="/"
+              title={tx('الموقع العام', 'Public website')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-white transition-all"
+            >
+              <span className="material-symbols-outlined text-[16px]">{'public'}</span>
+              <span className="hidden lg:inline">{tx('الموقع', 'Website')}</span>
+            </Link>
           </nav>
         )}
 
@@ -145,9 +163,58 @@ export default function DashboardTopBar() {
             <span className="material-symbols-outlined text-[16px]">{'logout'}</span>
             <span className="hidden sm:inline">{tx('خروج', 'Logout')}</span>
           </button>
+
+          {/* Mobile workspace menu toggle */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-expanded={menuOpen}
+            aria-controls="workspace-mobile-menu"
+            aria-label={tx('قائمة مساحة العمل', 'Workspace menu')}
+            className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-[10px] border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]"
+          >
+            <span className="material-symbols-outlined text-[22px]">{menuOpen ? 'close' : 'menu'}</span>
+          </button>
         </div>
 
       </div>
+
+      {menuOpen && (
+        <nav
+          id="workspace-mobile-menu"
+          className="md:hidden border-t border-[#E8E1D0] bg-white px-4 py-3 space-y-1 shadow-[0_6px_16px_rgba(11,59,46,0.06)]"
+          aria-label={tx('روابط مساحة العمل', 'Workspace Links')}
+        >
+          <div className="px-3 pb-2 mb-1 border-b border-[#E8E1D0]/70">
+            <div className="text-sm font-semibold text-[#0B3B2E] truncate">{user?.username || user?.email}</div>
+            <div className="text-[11px] text-[#4A5E56] font-mono">{user?.indexNumber || user?.email}</div>
+          </div>
+          {shortcuts.map((s) => {
+            const active = isActive(s.to);
+            return (
+              <Link
+                key={s.to}
+                to={s.to}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium ${
+                  active ? 'bg-[#E3F1EA] text-[#11694A] font-semibold' : 'text-[#14201B] hover:bg-[#FBF8F0]'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">{s.icon}</span>
+                <span>{s.label}</span>
+              </Link>
+            );
+          })}
+          <Link to="/" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-[#14201B] hover:bg-[#FBF8F0]">
+            <span className="material-symbols-outlined text-[18px]">{'public'}</span>
+            <span>{tx('الموقع العام', 'Public website')}</span>
+          </Link>
+          <Link to="/library" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-[#14201B] hover:bg-[#FBF8F0]">
+            <span className="material-symbols-outlined text-[18px]">{'menu_book'}</span>
+            <span>{tx('المكتبة الرقمية', 'Digital Library')}</span>
+          </Link>
+        </nav>
+      )}
     </header>
   );
 }

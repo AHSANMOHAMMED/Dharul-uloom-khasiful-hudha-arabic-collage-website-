@@ -72,7 +72,20 @@ export async function listMyNotifications(limit = 30) {
 
 export async function markNotificationRead(id) {
   if (!isSupabaseConfigured || !id) return;
-  await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+  const { error } = await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+  if (error) console.error('[notifyApi] markNotificationRead', error);
+}
+
+export async function markAllNotificationsRead() {
+  if (!isSupabaseConfigured) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('user_id', user.id)
+    .eq('is_read', false);
+  if (error) throw error;
 }
 
 export async function updateNotifyPrefs(prefs) {

@@ -147,10 +147,12 @@ export default function ErpWorkspace() {
 
   useEffect(() => {
     if (auth.loading) return;
-    if (!auth.isAuthenticated) navigate('/login');
+    if (!auth.isAuthenticated) {
+      navigate('/login', { replace: true, state: { from: `/erp${window.location.search}` } });
+    }
   }, [auth.loading, auth.isAuthenticated, navigate]);
 
-  if (auth.loading) {
+  if (auth.loading || !auth.isAuthenticated) {
     return (
       <div className="min-h-screen bg-parchment-50 flex items-center justify-center">
         <Loading />
@@ -179,12 +181,12 @@ export default function ErpWorkspace() {
     .filter((x) => x.items.length);
 
   return (
-    <div className="min-h-screen bg-parchment-50 text-ink-text-primary pt-20 relative overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-parchment-50 text-ink-text-primary pt-6 relative overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <KhatamPattern className="opacity-[0.03]" strokeColor="#0B3B2E" id="erp-bg-khatam" />
 
       <div className="max-w-[1600px] mx-auto px-4 lg:px-6 flex flex-col lg:flex-row gap-6 pb-12 relative z-10">
         <aside className="lg:w-64 shrink-0">
-          <div className="rounded-[14px] bg-paper-white border border-sand-border p-3.5 shadow-manuscript-sm lg:sticky lg:top-24 space-y-2">
+          <div className="rounded-[14px] bg-paper-white border border-sand-border p-3.5 shadow-manuscript-sm lg:sticky lg:top-20 space-y-2">
             <div className="px-3 py-2 border-b border-sand-border/60">
               <div className="text-[11px] uppercase tracking-wider text-emerald-700 font-bold font-serif">
                 {t('College ERP', 'نظام إدارة الكلية')}
@@ -203,7 +205,11 @@ export default function ErpWorkspace() {
                       <button
                         key={m.id}
                         type="button"
-                        onClick={() => setParams({ module: m.id })}
+                        aria-current={isSelected ? 'page' : undefined}
+                        onClick={() => {
+                          setParams({ module: m.id });
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
                         className={`flex items-center gap-2.5 whitespace-nowrap rounded-[10px] px-3 py-2 text-xs text-start transition font-medium ${
                           isSelected
                             ? 'bg-mint-wash-100 text-emerald-700 font-semibold border border-emerald-700/20'
@@ -218,7 +224,7 @@ export default function ErpWorkspace() {
                 </div>
               ))}
             </nav>
-            <div className="hidden lg:block border-t border-sand-border/60 mt-2 pt-3 px-3">
+            <div className="border-t border-sand-border/60 mt-2 pt-3 px-3">
               <Link
                 to={auth.isAdmin ? '/admin' : '/dashboard'}
                 className="text-xs text-ink-text-muted hover:text-emerald-700 font-medium flex items-center gap-1.5"

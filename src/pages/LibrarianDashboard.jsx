@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { buildDrivePreviewUrl, getDriveFileIdFromUrl, searchBooks } from '../lib/booksApi';
@@ -10,6 +9,7 @@ import { exportToCSV } from '../lib/exportUtils';
 import KhatamPattern from '../components/KhatamPattern';
 import DictionaryAdmin from '../components/library/DictionaryAdmin';
 import { tx } from '../lib/tx';
+import { useTabParam } from '../lib/useTabParam';
 
 const emptyForm = {
   shamela_id: '',
@@ -27,10 +27,10 @@ const emptyForm = {
 };
 
 const LibrarianDashboard = () => {
-  const { user, isAdmin, isLibrarian, logout } = useAuth();
+  const { user, isAdmin, isLibrarian, logout, loading: authLoading } = useAuth();
   const { i18n } = useTranslation();
   const dir = { ar: 'rtl' }[i18n.language] || 'ltr';
-  const [tab, setTab] = useState('books');
+  const [tab, setTab] = useTabParam(['books', 'dictionary'], 'books');
 
   const [books, setBooks] = useState([]);
   const [query, setQuery] = useState('');
@@ -62,6 +62,18 @@ const LibrarianDashboard = () => {
       withCover: books.filter((book) => Boolean(book.cover_url)).length,
     };
   }, [books]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#FBF8F0] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#11694A] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: '/library-admin' }} />;
+  }
 
   if (!canManage) {
     return (
@@ -164,7 +176,6 @@ const LibrarianDashboard = () => {
         <KhatamPattern className="opacity-[0.04]" strokeColor="#0B3B2E" id="librarian-khatam" />
       </div>
 
-      <ToastContainer position="top-right" theme="light" autoClose={3000} />
 
       <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8 relative z-10">
         

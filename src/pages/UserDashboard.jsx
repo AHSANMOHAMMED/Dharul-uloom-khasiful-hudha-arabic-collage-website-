@@ -26,11 +26,11 @@ export default function UserDashboard() {
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/login', { replace: true, state: { from: `/dashboard${window.location.search}` } });
       return;
     }
     if (isAdmin) {
-      navigate('/admin');
+      navigate('/admin', { replace: true });
     }
   }, [authLoading, isAuthenticated, isAdmin, navigate]);
 

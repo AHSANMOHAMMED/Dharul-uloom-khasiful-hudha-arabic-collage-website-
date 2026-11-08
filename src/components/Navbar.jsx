@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
@@ -15,8 +15,25 @@ export default function Navbar() {
   const { isAuthenticated, isAdmin, isLibrarian, isEmployee, logout } = useAuth()
   const canManageLibrary = isAdmin || isLibrarian
 
-  const academicsActive = ['/courses', '/curriculum', '/faculty'].includes(location.pathname)
-  const exploreActive = ['/library', '/gallery', '/news'].includes(location.pathname)
+  // A section is active on its own page and on any detail page beneath it (/news/:id, /library/:id).
+  const isActive = (path) =>
+    path === '/' ? location.pathname === '/' : location.pathname === path || location.pathname.startsWith(`${path}/`)
+  const academicsActive = ['/courses', '/curriculum', '/faculty'].some(isActive)
+  const exploreActive = ['/library', '/gallery', '/news'].some(isActive)
+
+  // Close the mobile drawer on navigation (incl. browser back/forward) and on Escape.
+  useEffect(() => {
+    setIsOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!isOpen) return undefined
+    const onKey = (e) => {
+      if (e.key === 'Escape') setIsOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isOpen])
 
   return (
     <header className="sticky top-0 z-50 bg-paper-white/95 backdrop-blur-sm border-b border-sand-border shadow-[0_1px_8px_rgba(11,59,46,0.04)]">
@@ -55,7 +72,7 @@ export default function Navbar() {
           <Link
             to="/about"
             className={`text-sm transition-colors ${
-              location.pathname === '/about' 
+              isActive('/about') 
                 ? 'text-emerald-700 font-semibold' 
                 : 'text-ink-text-secondary hover:text-ink-green-900 font-medium'
             }`}
@@ -67,6 +84,7 @@ export default function Navbar() {
           <div className="relative group py-2">
             <button
               type="button"
+              aria-haspopup="true"
               className={`flex items-center gap-1 text-sm font-medium transition-colors ${
                 academicsActive ? 'text-emerald-700 font-semibold' : 'text-ink-text-secondary hover:text-ink-green-900'
               }`}
@@ -74,11 +92,11 @@ export default function Navbar() {
               <span>{t('nav.academics')}</span>
               <span className="material-symbols-outlined text-[18px] transition-transform group-hover:rotate-180">{'expand_more'}</span>
             </button>
-            <div className="absolute left-0 top-full mt-1 w-48 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all">
+            <div className="absolute start-0 top-full mt-1 w-48 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-all">
               <Link
                 to="/courses"
                 className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
-                  location.pathname === '/courses' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                  isActive('/courses') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
                 {t('nav.courses')}
@@ -86,7 +104,7 @@ export default function Navbar() {
               <Link
                 to="/curriculum"
                 className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
-                  location.pathname === '/curriculum' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                  isActive('/curriculum') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
                 {t('nav.curriculum')}
@@ -94,7 +112,7 @@ export default function Navbar() {
               <Link
                 to="/faculty"
                 className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
-                  location.pathname === '/faculty' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                  isActive('/faculty') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
                 {t('nav.faculty')}
@@ -106,6 +124,7 @@ export default function Navbar() {
           <div className="relative group py-2">
             <button
               type="button"
+              aria-haspopup="true"
               className={`flex items-center gap-1 text-sm font-medium transition-colors ${
                 exploreActive ? 'text-emerald-700 font-semibold' : 'text-ink-text-secondary hover:text-ink-green-900'
               }`}
@@ -113,11 +132,11 @@ export default function Navbar() {
               <span>{t('nav.explore')}</span>
               <span className="material-symbols-outlined text-[18px] transition-transform group-hover:rotate-180">{'expand_more'}</span>
             </button>
-            <div className="absolute left-0 top-full mt-1 w-48 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all">
+            <div className="absolute start-0 top-full mt-1 w-48 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-all">
               <Link
                 to="/library"
                 className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
-                  location.pathname === '/library' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                  isActive('/library') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
                 {t('nav.library')}
@@ -125,7 +144,7 @@ export default function Navbar() {
               <Link
                 to="/gallery"
                 className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
-                  location.pathname === '/gallery' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                  isActive('/gallery') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
                 {t('nav.gallery')}
@@ -133,7 +152,7 @@ export default function Navbar() {
               <Link
                 to="/news"
                 className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
-                  location.pathname === '/news' ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                  isActive('/news') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
                 {t('nav.news')}
@@ -144,7 +163,7 @@ export default function Navbar() {
           <Link
             to="/admissions"
             className={`text-sm transition-colors ${
-              location.pathname === '/admissions' 
+              isActive('/admissions') 
                 ? 'text-emerald-700 font-semibold' 
                 : 'text-ink-text-secondary hover:text-ink-green-900 font-medium'
             }`}
@@ -155,7 +174,7 @@ export default function Navbar() {
           <Link
             to="/contact"
             className={`text-sm transition-colors ${
-              location.pathname === '/contact' 
+              isActive('/contact') 
                 ? 'text-emerald-700 font-semibold' 
                 : 'text-ink-text-secondary hover:text-ink-green-900 font-medium'
             }`}
@@ -167,7 +186,7 @@ export default function Navbar() {
             <Link
               to="/erp"
               className={`text-sm transition-colors font-semibold ${
-                location.pathname.startsWith('/erp')
+                isActive('/erp')
                   ? 'text-brass-gold-500 font-bold'
                   : 'text-emerald-700 hover:text-ink-green-900'
               }`}
@@ -255,6 +274,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
+            aria-expanded={isOpen}
             className="xl:hidden inline-flex items-center justify-center w-9 h-9 rounded-[10px] border border-sand-border text-ink-text-primary hover:bg-sand-border/30 focus:outline-none"
             aria-label={tx('فتح/إغلاق القائمة', 'Toggle navigation menu')}
           >
@@ -282,7 +302,7 @@ export default function Navbar() {
             to="/about"
             onClick={() => setIsOpen(false)}
             className={`block px-3 py-2 rounded-lg text-sm font-medium ${
-              location.pathname === '/about' ? 'bg-mint-wash-100 text-emerald-700 font-semibold' : 'text-ink-text-primary'
+              isActive('/about') ? 'bg-mint-wash-100 text-emerald-700 font-semibold' : 'text-ink-text-primary'
             }`}
           >
             {t('nav.about')}
@@ -301,7 +321,7 @@ export default function Navbar() {
               </span>
             </button>
             {mobileAcademicsOpen && (
-              <div className="pl-4 space-y-1 mt-1 border-l-2 border-sand-border ml-3">
+              <div className="ps-4 space-y-1 mt-1 border-s-2 border-sand-border ms-3">
                 <Link
                   to="/courses"
                   onClick={() => setIsOpen(false)}
@@ -340,7 +360,7 @@ export default function Navbar() {
               </span>
             </button>
             {mobileExploreOpen && (
-              <div className="pl-4 space-y-1 mt-1 border-l-2 border-sand-border ml-3">
+              <div className="ps-4 space-y-1 mt-1 border-s-2 border-sand-border ms-3">
                 <Link
                   to="/library"
                   onClick={() => setIsOpen(false)}
@@ -370,7 +390,7 @@ export default function Navbar() {
             to="/admissions"
             onClick={() => setIsOpen(false)}
             className={`block px-3 py-2 rounded-lg text-sm font-medium ${
-              location.pathname === '/admissions' ? 'bg-mint-wash-100 text-emerald-700 font-semibold' : 'text-ink-text-primary'
+              isActive('/admissions') ? 'bg-mint-wash-100 text-emerald-700 font-semibold' : 'text-ink-text-primary'
             }`}
           >
             {t('nav.admissions')}
@@ -380,7 +400,7 @@ export default function Navbar() {
             to="/contact"
             onClick={() => setIsOpen(false)}
             className={`block px-3 py-2 rounded-lg text-sm font-medium ${
-              location.pathname === '/contact' ? 'bg-mint-wash-100 text-emerald-700 font-semibold' : 'text-ink-text-primary'
+              isActive('/contact') ? 'bg-mint-wash-100 text-emerald-700 font-semibold' : 'text-ink-text-primary'
             }`}
           >
             {t('nav.contact')}

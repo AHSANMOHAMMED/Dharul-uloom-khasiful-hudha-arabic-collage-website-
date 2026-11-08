@@ -7,7 +7,7 @@ import { generateInvoicesInBatches } from '../lib/erp/rpc';
 import { adminStats, listAdmissionsByStatus, updateAdmissionStatus } from '../lib/admissionsApi';
 
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import AdminContentCMS from '../components/AdminContentCMS';
@@ -18,6 +18,9 @@ import ImportJobsPanel from '../components/ImportJobsPanel';
 import OrgAdminPanel from '../components/OrgAdminPanel';
 import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
+import { useTabParam } from '../lib/useTabParam';
+
+const ADMIN_TABS = ['admissions', 'crm', 'hrm', 'imports', 'org', 'approvals', 'tutors', 'broadcast', 'content', 'indexes', 'analytics'];
 
 const COLORS = ['#11694A', '#C29A3A', '#0F7C86', '#B91C1C'];
 
@@ -30,7 +33,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [admissions, setAdmissions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('admissions');
+  const [activeTab, setActiveTab] = useTabParam(ADMIN_TABS, 'admissions');
   const [contentSection, setContentSection] = useState('news');
 
   // Approval queue
@@ -58,12 +61,16 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (authLoading) return;
+    if (!user) {
+      navigate('/login', { replace: true, state: { from: '/admin' } });
+      return;
+    }
     if (!isAdmin) {
-      navigate('/');
+      navigate('/dashboard', { replace: true });
       return;
     }
     fetchData();
-  }, [authLoading, isAdmin, navigate]);
+  }, [authLoading, isAdmin, user, navigate]);
 
   const fetchData = async () => {
     try {
@@ -339,7 +346,6 @@ const AdminDashboard = () => {
         <KhatamPattern className="opacity-[0.04]" strokeColor="#0B3B2E" id="admin-khatam" />
       </div>
 
-      <ToastContainer position="top-right" theme="light" autoClose={3000} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
         

@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { listMyNotifications, markNotificationRead, updateNotifyPrefs } from '../lib/notifyApi';
+import { listMyNotifications, markAllNotificationsRead, markNotificationRead, updateNotifyPrefs } from '../lib/notifyApi';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { subscribeToPush } from '../lib/registerSW';
 import { tx } from '../lib/tx';
@@ -9,7 +11,10 @@ import { tx } from '../lib/tx';
 export default function NotificationBell() {
   const { isAuthenticated } = useAuth();
   useTranslation(); // re-render on language change
+  const navigate = useNavigate();
+  const rootRef = useRef(null);
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [items, setItems] = useState([]);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [prefs, setPrefs] = useState({
@@ -27,9 +32,34 @@ export default function NotificationBell() {
   useEffect(() => {
     load();
     const t = setInterval(load, 60000);
-    return () => clearInterval(t);
+    // Refresh when the user returns to the tab so the badge isn't a minute stale.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') load();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
+
+  // Close on outside click / Escape.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDown = (e) => {
+      if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!isAuthenticated || !isSupabaseConfigured) return;
@@ -51,34 +81,66 @@ export default function NotificationBell() {
 
   const onOpenItem = async (n) => {
     if (!n.is_read) {
-      await markNotificationRead(n.id);
       setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x)));
+      await markNotificationRead(n.id);
+    }
+    // Backend notifications carry an in-app deep link (e.g. /erp?module=tasks).
+    if (typeof n.link === 'string' && n.link.startsWith('/') && !n.link.startsWith('//')) {
+      setOpen(false);
+      navigate(n.link);
+    }
+  };
+
+  const markAll = async () => {
+    const before = items;
+    setItems((prev) => prev.map((x) => ({ ...x, is_read: true })));
+    try {
+      await markAllNotificationsRead();
+    } catch (e) {
+      setItems(before);
+      toast.error(e.message || tx('تعذر تحديث الإشعارات', 'Could not update notifications'));
     }
   };
 
   const savePrefs = async () => {
-    await updateNotifyPrefs(prefs);
-    setPrefsOpen(false);
+    setSaving(true);
+    try {
+      await updateNotifyPrefs(prefs);
+      toast.success(tx('تم حفظ التفضيلات', 'Preferences saved'));
+      setPrefsOpen(false);
+    } catch (e) {
+      toast.error(e.message || tx('تعذر حفظ التفضيلات', 'Could not save preferences'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const enablePush = async () => {
     const key = import.meta.env.VITE_VAPID_PUBLIC_KEY;
     if (!key) {
-      alert(tx('مفتاح VAPID غير مضبوط', 'VITE_VAPID_PUBLIC_KEY is not configured'));
+      toast.warn(tx('إشعارات الدفع غير مهيأة على هذا الخادم', 'Push notifications are not configured on this server'));
       return;
     }
-    const sub = await subscribeToPush(key);
-    if (sub) {
+    try {
+      const sub = await subscribeToPush(key);
+      if (!sub) {
+        toast.warn(tx('لم يتم منح إذن الإشعارات', 'Notification permission was not granted'));
+        return;
+      }
       setPrefs({ ...prefs, notify_push: true });
       await updateNotifyPrefs({ ...prefs, notify_push: true });
+      toast.success(tx('تم تفعيل إشعارات الدفع', 'Push notifications enabled'));
+    } catch (e) {
+      toast.error(e.message || String(e));
     }
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={rootRef}>
       <button
         type="button"
         aria-label={tx('الإشعارات', 'Notifications')}
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className="relative p-2 rounded-xl text-[#0B3B2E] hover:bg-[#FBF8F0] border border-transparent hover:border-[#E8E1D0] transition"
       >
@@ -93,16 +155,23 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-hidden rounded-2xl border border-[#E8E1D0] bg-white shadow-lg z-50">
+        <div className="absolute end-0 mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[28rem] overflow-hidden rounded-2xl border border-[#E8E1D0] bg-white shadow-lg z-50">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#E8E1D0] bg-[#FBF8F0]">
             <span className="text-xs font-serif font-bold text-[#0B3B2E]">{tx('الإشعارات الواردة', 'Notifications')}</span>
-            <button
-              type="button"
-              className="text-xs text-[#11694A] font-bold hover:underline"
-              onClick={() => setPrefsOpen((v) => !v)}
-            >
-              {tx('التفضيلات', 'Preferences')}
-            </button>
+            <div className="flex items-center gap-3">
+              {unread > 0 && (
+                <button type="button" className="text-xs text-[#4A5E56] font-semibold hover:underline" onClick={markAll}>
+                  {tx('تعليم الكل كمقروء', 'Mark all read')}
+                </button>
+              )}
+              <button
+                type="button"
+                className="text-xs text-[#11694A] font-bold hover:underline"
+                onClick={() => setPrefsOpen((v) => !v)}
+              >
+                {tx('التفضيلات', 'Preferences')}
+              </button>
+            </div>
           </div>
 
           {prefsOpen && (
@@ -129,7 +198,8 @@ export default function NotificationBell() {
                 <button
                   type="button"
                   onClick={savePrefs}
-                  className="text-xs font-bold text-white bg-[#11694A] px-3 py-1 rounded-lg"
+                  disabled={saving}
+                  className="text-xs font-bold text-white bg-[#11694A] px-3 py-1 rounded-lg disabled:opacity-50"
                 >
                   {tx('حفظ', 'Save')}
                 </button>
@@ -155,7 +225,7 @@ export default function NotificationBell() {
                 <button
                   type="button"
                   onClick={() => onOpenItem(n)}
-                  className={`w-full text-left px-4 py-3 hover:bg-[#FBF8F0] transition ${n.is_read ? 'opacity-60' : 'bg-white'}`}
+                  className={`w-full text-start px-4 py-3 hover:bg-[#FBF8F0] transition ${n.is_read ? 'opacity-60' : 'bg-white'}`}
                 >
                   <div className="text-xs font-bold text-[#0B3B2E]">{n.title}</div>
                   <div className="text-[11px] text-[#4A5E56] mt-0.5 line-clamp-2 leading-relaxed">{n.message}</div>

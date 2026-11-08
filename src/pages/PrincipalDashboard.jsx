@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
+import { useTabParam } from '../lib/useTabParam';
+
+const PRINCIPAL_TABS = ['overview', 'announcements', 'leaves', 'approvals', 'timetable', 'results'];
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const CLASSES = [1, 2, 3, 4, 5, 6, 7];
@@ -15,7 +17,10 @@ const PrincipalDashboard = ({ vpMode = false }) => {
   const { user, logout } = useAuth();
   useTranslation(); // re-render on language change
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useTabParam(
+    vpMode ? PRINCIPAL_TABS.filter((id) => id !== 'approvals') : PRINCIPAL_TABS,
+    'overview'
+  );
   const [loading, setLoading] = useState(true);
 
   // Overview stats
@@ -63,19 +68,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
     if (!user) return;
     setLoading(true);
     try {
-      const [
-        { count: stuCount },
-        { count: tutCount },
-        { count: leaveCount },
-        { count: approvalCount },
-        { data: feesData },
-        { data: annData },
-        { data: leaveData },
-        { data: tutorApprovals },
-        { data: schedData },
-        { data: tutorsList },
-        { data: resultsData },
-      ] = await Promise.all([
+      const responses = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('account_type', 'student').eq('is_approved', true),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('account_type', 'tutor').eq('is_approved', true),
         supabase.from('leave_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -89,6 +82,26 @@ const PrincipalDashboard = ({ vpMode = false }) => {
         supabase.from('profiles').select('id, full_name').eq('account_type', 'tutor').eq('is_approved', true).order('full_name'),
         supabase.from('student_results').select('*, profiles!student_results_student_id_fkey(full_name, class_number)').order('created_at', { ascending: false }).limit(50),
       ]);
+      // supabase-js reports failures in `error` instead of throwing — surface them
+      // but keep whatever panels did load.
+      const failures = responses.filter((r) => r?.error);
+      if (failures.length) {
+        failures.forEach((r) => console.error('Principal dashboard query failed:', r.error));
+        toast.warn(tx('تعذر تحميل بعض بيانات اللوحة', 'Some dashboard data could not be loaded'));
+      }
+      const [
+        { count: stuCount },
+        { count: tutCount },
+        { count: leaveCount },
+        { count: approvalCount },
+        { data: feesData },
+        { data: annData },
+        { data: leaveData },
+        { data: tutorApprovals },
+        { data: schedData },
+        { data: tutorsList },
+        { data: resultsData },
+      ] = responses;
 
       const collected = feesData?.reduce((s, r) => s + (r.paid_amount || 0), 0) ?? 0;
       const outstanding = feesData?.reduce((s, r) => s + Math.max(0, (r.total_due || 0) - (r.paid_amount || 0)), 0) ?? 0;
@@ -319,7 +332,6 @@ const PrincipalDashboard = ({ vpMode = false }) => {
         <KhatamPattern className="opacity-[0.04]" strokeColor="#0B3B2E" id="principal-khatam" />
       </div>
 
-      <ToastContainer position="top-right" theme="light" autoClose={3000} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
 

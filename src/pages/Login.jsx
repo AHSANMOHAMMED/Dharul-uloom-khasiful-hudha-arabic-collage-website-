@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
+import { safeRedirectPath } from '../lib/useTabParam';
 
 export default function Login() {
   useTranslation();
@@ -74,8 +75,11 @@ export default function Login() {
     
     if (result.success) {
       const u = result.user;
-      // Route each role to its own workspace immediately after login
-      if (u.role === 'admin' || u.role === 'super_admin') {
+      // Return to the page that sent the user here (e.g. a deep link into the ERP).
+      const back = safeRedirectPath(location.state?.from);
+      if (back) {
+        navigate(back, { replace: true });
+      } else if (u.role === 'admin' || u.role === 'super_admin') {
         navigate('/admin');
       } else if (u.role === 'librarian') {
         navigate('/library-admin');
