@@ -77,7 +77,10 @@ function RolesForm({ employee, onSaved }) {
   const canApprove = auth.isAdmin || auth.isPrincipal || auth.isVP;
 
   const save = async () => {
-    const patch = { assigned_tutor_role: primary, extra_roles: extra.filter((x) => x !== primary) };
+    const patch = { assigned_tutor_role: primary };
+    if (employee.extra_roles !== undefined) {
+      patch.extra_roles = extra.filter((x) => x !== primary);
+    }
     if (!self && role !== employee.role) patch.role = role;
     const res = await run(() => updateRow('profiles', employee.id, patch), t('Roles updated', 'تم تحديث الأدوار'));
     if (res.ok) onSaved?.();

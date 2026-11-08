@@ -15,7 +15,7 @@ function Directory() {
   const [selectedId, setSelectedId] = useState(null);
   const [state, reload] = useAsync(
     () => query('profiles', (b) =>
-      b.select('id, full_name, email, phone, account_type, role, is_approved, assigned_tutor_role, extra_roles, created_at, staff_hr(employee_no, department, job_title, status, employment_type)')
+      b.select('id, full_name, email, phone, account_type, role, is_approved, assigned_tutor_role, created_at, staff_hr(employee_no, department, job_title, status, employment_type)')
         .in('account_type', ['tutor', 'staff']).order('full_name')),
     []
   );

@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 import { generateInvoicesInBatches } from '../lib/erp/rpc';
 import { adminStats, listAdmissionsByStatus, updateAdmissionStatus } from '../lib/admissionsApi';
 
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AnalyticsDashboard from './AnalyticsDashboard';
@@ -300,9 +300,9 @@ const AdminDashboard = () => {
   const contentSummaryData = stats ? [
     { name: tx('الأخبار', 'News'), count: stats.content?.news || 0 },
     { name: tx('الأساتذة', 'Faculty'), count: stats.content?.faculty || 0 },
-    { name: tx('المنهج', 'Curriculum'), count: stats.content?.curriculum || 0 },
-    { name: tx('المعرض', 'Gallery'), count: stats.content?.gallery || 0 },
-    { name: tx('الدورات', 'Courses'), count: stats.content?.courses || 0 },
+    { name: tx('الطلاب', 'Students'), count: stats.users?.students || 0 },
+    { name: tx('المعلمون', 'Tutors'), count: stats.users?.tutors || 0 },
+    { name: tx('الكتب', 'Books'), count: stats.library?.books || 0 },
   ] : [];
 
   if (loading) {
@@ -335,8 +335,8 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-[#FBF8F0] text-[#14201B] relative overflow-hidden py-8 sm:py-12">
       {/* Background Watermark */}
-      <div className="absolute -top-32 -right-32 w-[600px] h-[600px] pointer-events-none opacity-[0.03]">
-        <KhatamPattern className="w-full h-full text-[#0B3B2E]" />
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <KhatamPattern className="opacity-[0.04]" strokeColor="#0B3B2E" id="admin-khatam" />
       </div>
 
       <ToastContainer position="top-right" theme="light" autoClose={3000} />
@@ -380,6 +380,64 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* KPI Stats Strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[
+            {
+              label_en: 'Total Students',
+              label_ar: 'إجمالي الطلاب',
+              value: stats?.users?.students ?? '—',
+              icon: 'school',
+              color: '#11694A',
+              bg: '#E3F1EA',
+            },
+            {
+              label_en: 'Total Tutors',
+              label_ar: 'إجمالي المعلمين',
+              value: stats?.users?.tutors ?? '—',
+              icon: 'person_book',
+              color: '#0F7C86',
+              bg: '#E0F2F1',
+            },
+            {
+              label_en: 'Pending Approvals',
+              label_ar: 'بانتظار الموافقة',
+              value: pendingApprovals.length,
+              icon: 'pending_actions',
+              color: pendingApprovals.length > 0 ? '#B91C1C' : '#11694A',
+              bg: pendingApprovals.length > 0 ? '#FEE2E2' : '#E3F1EA',
+            },
+            {
+              label_en: 'Library Books',
+              label_ar: 'الكتب المتاحة',
+              value: stats?.library?.books ?? '—',
+              icon: 'menu_book',
+              color: '#C29A3A',
+              bg: '#FEF9EE',
+            },
+          ].map((kpi) => (
+            <div
+              key={kpi.label_en}
+              className="bg-white rounded-2xl border border-[#E8E1D0] p-5 flex items-center gap-4 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]"
+            >
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                style={{ backgroundColor: kpi.bg, color: kpi.color }}
+              >
+                <span className="material-symbols-outlined text-xl">{kpi.icon}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xl font-serif font-bold" style={{ color: kpi.color }}>
+                  {kpi.value}
+                </p>
+                <p className="text-[11px] text-[#4A5E56] font-sans truncate">
+                  {tx(kpi.label_ar, kpi.label_en)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Charts & Analytics Summary */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-2xl border border-[#E8E1D0] shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
@@ -389,27 +447,34 @@ const AdminDashboard = () => {
               </h2>
               <span className="text-xs text-[#4A5E56]">{tx('مباشر', 'Real-time')}</span>
             </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={admissionStatusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  innerRadius={50}
-                  fill="#11694A"
-                  dataKey="value"
-                  paddingAngle={4}
-                >
-                  {admissionStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E8E1D0', color: '#0B3B2E' }} />
-              </PieChart>
-            </ResponsiveContainer>
+            {admissionStatusData.every((d) => d.value === 0) ? (
+              <div className="flex flex-col items-center justify-center h-[220px] gap-3 text-center">
+                <span className="material-symbols-outlined text-4xl text-[#E8E1D0]">{'donut_large'}</span>
+                <p className="text-xs text-[#4A5E56]">{tx('لا توجد طلبات قبول بعد', 'No admissions recorded yet')}</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie
+                    data={admissionStatusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    innerRadius={50}
+                    fill="#11694A"
+                    dataKey="value"
+                    paddingAngle={4}
+                  >
+                    {admissionStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E8E1D0', color: '#0B3B2E' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
 
           <div className="bg-white p-6 rounded-2xl border border-[#E8E1D0] shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
@@ -421,8 +486,9 @@ const AdminDashboard = () => {
             </div>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={contentSummaryData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E8E1D0" vertical={false} />
                 <XAxis dataKey="name" stroke="#4A5E56" tick={{ fill: '#4A5E56', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="#4A5E56" tick={{ fill: '#4A5E56', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis stroke="#4A5E56" tick={{ fill: '#4A5E56', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
                 <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E8E1D0' }} />
                 <Bar dataKey="count" fill="#11694A" radius={[6, 6, 0, 0]} maxBarSize={40} />
               </BarChart>

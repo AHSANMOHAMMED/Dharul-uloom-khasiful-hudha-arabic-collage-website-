@@ -10,73 +10,73 @@ import { fetchActingOrg, setActingOrg } from '../../lib/erp/governanceApi';
  * Visibility here is UX only — the database enforces every permission (RLS + RPC checks).
  */
 const MODULES = [
-  { id: 'dashboard', label: (t) => t('Overview', 'نظرة عامة'), icon: '📊', group: 'core',
+  { id: 'dashboard', label: (t) => t('Overview', 'نظرة عامة'), icon: 'analytics', group: 'core',
     show: (a) => a.isAdmin || a.isFinanceViewer || a.isAcademicAdmin || a.isHrStaff,
     load: () => import('../../components/erp/campus/ErpDashboard') },
-  { id: 'analytics', label: (t) => t('Analytics', 'التحليلات'), icon: '📈', group: 'core',
+  { id: 'analytics', label: (t) => t('Analytics', 'التحليلات'), icon: 'insights', group: 'core',
     show: (a) => a.isAdmin || a.isFinanceViewer || a.isAcademicAdmin,
     load: () => import('../../components/erp/ops/AnalyticsPanel') },
-  { id: 'tasks', label: (t) => t('Task board', 'لوحة المهام'), icon: '🗂️', group: 'core',
+  { id: 'tasks', label: (t) => t('Task board', 'لوحة المهام'), icon: 'view_kanban', group: 'core',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/governance/TaskBoard') },
-  { id: 'self', label: (t) => t('My workspace', 'مساحتي'), icon: '🙋', group: 'core',
+  { id: 'self', label: (t) => t('My workspace', 'مساحتي'), icon: 'badge', group: 'core',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/MySelfServicePanel') },
-  { id: 'students', label: (t) => t('Students', 'الطلاب'), icon: '🎓', group: 'academic',
+  { id: 'students', label: (t) => t('Students', 'الطلاب'), icon: 'school', group: 'academic',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/StudentsPanel') },
-  { id: 'academics', label: (t) => t('Academics & Exams', 'الشؤون الأكاديمية'), icon: '📚', group: 'academic',
+  { id: 'academics', label: (t) => t('Academics & Exams', 'الشؤون الأكاديمية'), icon: 'menu_book', group: 'academic',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/AcademicsPanel') },
-  { id: 'crm', label: (t) => t('Admissions CRM', 'إدارة القبول'), icon: '🧭', group: 'academic',
+  { id: 'crm', label: (t) => t('Admissions CRM', 'إدارة القبول'), icon: 'explore', group: 'academic',
     show: (a) => a.isAdmissionsStaff,
     load: () => import('../../components/erp/campus/CrmPanel') },
-  { id: 'financetoday', label: (t) => t('Finance today', 'المالية اليوم'), icon: '💵', group: 'finance',
+  { id: 'financetoday', label: (t) => t('Finance today', 'المالية اليوم'), icon: 'point_of_sale', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/ops/FinanceTodayPanel') },
-  { id: 'fees', label: (t) => t('Student Fees', 'رسوم الطلاب'), icon: '💳', group: 'finance',
+  { id: 'fees', label: (t) => t('Student Fees', 'رسوم الطلاب'), icon: 'credit_card', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/FeeManagement') },
-  { id: 'accounting', label: (t) => t('Accounting', 'المحاسبة'), icon: '📒', group: 'finance',
+  { id: 'accounting', label: (t) => t('Accounting', 'المحاسبة'), icon: 'account_balance', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/AccountingPanel') },
-  { id: 'expenses', label: (t) => t('Expenses', 'المصروفات'), icon: '🧾', group: 'finance',
+  { id: 'expenses', label: (t) => t('Expenses', 'المصروفات'), icon: 'receipt_long', group: 'finance',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/finance/ExpensesPanel') },
-  { id: 'donations', label: (t) => t('Donations', 'التبرعات'), icon: '🤲', group: 'finance',
+  { id: 'donations', label: (t) => t('Donations', 'التبرعات'), icon: 'volunteer_activism', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/DonationsPanel') },
-  { id: 'payroll', label: (t) => t('Payroll', 'الرواتب'), icon: '💼', group: 'people',
+  { id: 'payroll', label: (t) => t('Payroll', 'الرواتب'), icon: 'payments', group: 'people',
     show: (a) => a.isHrStaff || a.isFinanceViewer,
     load: () => import('../../components/erp/finance/PayrollPanel') },
-  { id: 'hr', label: (t) => t('HR & Staff', 'الموارد البشرية'), icon: '👥', group: 'people',
+  { id: 'hr', label: (t) => t('HR & Staff', 'الموارد البشرية'), icon: 'groups', group: 'people',
     show: (a) => a.isHrStaff || a.isPrincipal || a.isVP,
     load: () => import('../../components/erp/campus/StaffHrPanel') },
-  { id: 'hostel', label: (t) => t('Hostel', 'السكن'), icon: '🏠', group: 'campus',
+  { id: 'hostel', label: (t) => t('Hostel', 'السكن'), icon: 'apartment', group: 'campus',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/HostelPanel') },
-  { id: 'welfare', label: (t) => t('Discipline & Welfare', 'الانضباط والرعاية'), icon: '🛡️', group: 'campus',
+  { id: 'welfare', label: (t) => t('Discipline & Welfare', 'الانضباط والرعاية'), icon: 'health_and_safety', group: 'campus',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/WelfarePanel') },
-  { id: 'certificates', label: (t) => t('Certificates', 'الشهادات'), icon: '📜', group: 'campus',
+  { id: 'certificates', label: (t) => t('Certificates', 'الشهادات'), icon: 'workspace_premium', group: 'campus',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/CertificatesPanel') },
-  { id: 'duties', label: (t) => t('Duties', 'المسؤوليات'), icon: '🧩', group: 'governance',
+  { id: 'duties', label: (t) => t('Duties', 'المسؤوليات'), icon: 'assignment_ind', group: 'governance',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/governance/DutiesPanel') },
-  { id: 'activities', label: (t) => t('Activities', 'الأنشطة'), icon: '📅', group: 'governance',
+  { id: 'activities', label: (t) => t('Activities', 'الأنشطة'), icon: 'event', group: 'governance',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/ops/ActivitiesPanel') },
-  { id: 'mashoora', label: (t) => t('Mashoora', 'الشورى'), icon: '🤝', group: 'governance',
+  { id: 'mashoora', label: (t) => t('Mashoora', 'الشورى'), icon: 'diversity_3', group: 'governance',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/governance/MashooraPanel') },
-  { id: 'pettycash', label: (t) => t('Petty cash', 'النثرية'), icon: '👛', group: 'governance',
+  { id: 'pettycash', label: (t) => t('Petty cash', 'النثرية'), icon: 'account_balance_wallet', group: 'governance',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/governance/PettyCashPanel') },
-  { id: 'audit', label: (t) => t('Audit Log', 'سجل التدقيق'), icon: '🔍', group: 'admin',
+  { id: 'audit', label: (t) => t('Audit Log', 'سجل التدقيق'), icon: 'history_edu', group: 'admin',
     show: (a) => a.isAdmin || a.isAccountant,
     load: () => import('../../components/erp/finance/AuditLogPanel') },
-  { id: 'platform', label: (t) => t('SaaS Platform', 'المنصة'), icon: '🌐', group: 'admin',
+  { id: 'platform', label: (t) => t('SaaS Platform', 'المنصة'), icon: 'public', group: 'admin',
     show: (a) => a.isSuperAdmin,
     load: () => import('../../components/erp/campus/PlatformPanel') },
 ];
@@ -210,7 +210,7 @@ export default function ErpWorkspace() {
                             : 'text-ink-text-secondary hover:bg-parchment-50 hover:text-ink-green-900'
                         }`}
                       >
-                        <span aria-hidden className="text-sm">{m.icon}</span>
+                        <span aria-hidden className="material-symbols-outlined text-[18px]">{m.icon}</span>
                         <span>{m.label(t)}</span>
                       </button>
                     );
@@ -221,9 +221,9 @@ export default function ErpWorkspace() {
             <div className="hidden lg:block border-t border-sand-border/60 mt-2 pt-3 px-3">
               <Link
                 to={auth.isAdmin ? '/admin' : '/dashboard'}
-                className="text-xs text-ink-text-muted hover:text-emerald-700 font-medium flex items-center gap-1"
+                className="text-xs text-ink-text-muted hover:text-emerald-700 font-medium flex items-center gap-1.5"
               >
-                <span>←</span>
+                <span className="material-symbols-outlined text-[16px]">{'arrow_back'}</span>
                 <span>{t('Back to portal', 'العودة إلى البوابة')}</span>
               </Link>
             </div>
