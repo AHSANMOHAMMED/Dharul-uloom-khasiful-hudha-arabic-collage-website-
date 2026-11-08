@@ -2,18 +2,20 @@ import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Loading, useLang } from '../../components/erp/ui';
-import { tx } from '../../lib/tx';
+import KhatamPattern from '../../components/KhatamPattern';
 import { fetchActingOrg, setActingOrg } from '../../lib/erp/governanceApi';
 
 /**
- * ERP workspace shell: one place for every institution-management module.
- * Each module is a self-contained component (lazy loaded). Visibility here is
- * UX only — the database enforces every permission (RLS + RPC checks).
+ * ERP workspace shell: Modern Manuscript design system.
+ * Visibility here is UX only — the database enforces every permission (RLS + RPC checks).
  */
 const MODULES = [
   { id: 'dashboard', label: (t) => t('Overview', 'نظرة عامة'), icon: '📊', group: 'core',
     show: (a) => a.isAdmin || a.isFinanceViewer || a.isAcademicAdmin || a.isHrStaff,
     load: () => import('../../components/erp/campus/ErpDashboard') },
+  { id: 'analytics', label: (t) => t('Analytics', 'التحليلات'), icon: '📈', group: 'core',
+    show: (a) => a.isAdmin || a.isFinanceViewer || a.isAcademicAdmin,
+    load: () => import('../../components/erp/ops/AnalyticsPanel') },
   { id: 'tasks', label: (t) => t('Task board', 'لوحة المهام'), icon: '🗂️', group: 'core',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/governance/TaskBoard') },
@@ -29,6 +31,9 @@ const MODULES = [
   { id: 'crm', label: (t) => t('Admissions CRM', 'إدارة القبول'), icon: '🧭', group: 'academic',
     show: (a) => a.isAdmissionsStaff,
     load: () => import('../../components/erp/campus/CrmPanel') },
+  { id: 'financetoday', label: (t) => t('Finance today', 'المالية اليوم'), icon: '💵', group: 'finance',
+    show: (a) => a.isFinanceViewer,
+    load: () => import('../../components/erp/ops/FinanceTodayPanel') },
   { id: 'fees', label: (t) => t('Student Fees', 'رسوم الطلاب'), icon: '💳', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/FeeManagement') },
@@ -59,6 +64,9 @@ const MODULES = [
   { id: 'duties', label: (t) => t('Duties', 'المسؤوليات'), icon: '🧩', group: 'governance',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/governance/DutiesPanel') },
+  { id: 'activities', label: (t) => t('Activities', 'الأنشطة'), icon: '📅', group: 'governance',
+    show: (a) => a.isEmployee,
+    load: () => import('../../components/erp/ops/ActivitiesPanel') },
   { id: 'mashoora', label: (t) => t('Mashoora', 'الشورى'), icon: '🤝', group: 'governance',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/governance/MashooraPanel') },
@@ -116,11 +124,11 @@ function ActingOrgBanner({ userId }) {
   };
   const name = (lang === 'ar' && org.name_ar) || org.name_en || org.slug;
   return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-700 bg-amber-950/50 px-4 py-3 text-sm text-amber-100">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-manuscript-sm">
       <span>
-        {t('You are managing this institution as super admin:', 'أنت تدير هذه المؤسسة بصفتك مشرفًا عامًا:')} <b>{name}</b>
+        {t('You are managing this institution as super admin:', 'أنت تدير هذه المؤسسة بصفتك مشرفًا عامًا:')} <b className="font-serif">{name}</b>
       </span>
-      <button type="button" disabled={busy} onClick={exit} className="rounded-xl bg-amber-600 hover:bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
+      <button type="button" disabled={busy} onClick={exit} className="rounded-[10px] bg-amber-700 hover:bg-amber-800 px-3 py-1.5 text-xs font-semibold text-white transition disabled:opacity-50">
         {t('Exit', 'خروج')}
       </button>
     </div>
@@ -129,7 +137,7 @@ function ActingOrgBanner({ userId }) {
 
 export default function ErpWorkspace() {
   const auth = useAuth();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
 
@@ -144,7 +152,7 @@ export default function ErpWorkspace() {
 
   if (auth.loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen bg-parchment-50 flex items-center justify-center">
         <Loading />
       </div>
     );
@@ -152,12 +160,12 @@ export default function ErpWorkspace() {
 
   if (!visible.length) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-        <div className="glass-card rounded-2xl p-8 text-center max-w-md space-y-4">
-          <p className="text-gray-300">
+      <div className="min-h-screen bg-parchment-50 flex items-center justify-center px-4">
+        <div className="rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript-md p-8 text-center max-w-md space-y-4">
+          <p className="text-ink-text-secondary text-sm">
             {t('The ERP workspace is available to approved staff accounts.', 'مساحة الإدارة متاحة لحسابات الموظفين المعتمدة.')}
           </p>
-          <Link to="/dashboard" className="text-emerald-400 underline">
+          <Link to="/dashboard" className="text-emerald-700 font-semibold underline text-sm">
             {t('Go to my portal', 'الذهاب إلى بوابتي')}
           </Link>
         </div>
@@ -171,43 +179,57 @@ export default function ErpWorkspace() {
     .filter((x) => x.items.length);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 pt-20" dir={tx('rtl', 'ltr')}>
-      <div className="max-w-[1600px] mx-auto px-4 lg:px-6 flex flex-col lg:flex-row gap-6 pb-12">
+    <div className="min-h-screen bg-parchment-50 text-ink-text-primary pt-20 relative overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      <KhatamPattern className="opacity-[0.03]" strokeColor="#0B3B2E" id="erp-bg-khatam" />
+
+      <div className="max-w-[1600px] mx-auto px-4 lg:px-6 flex flex-col lg:flex-row gap-6 pb-12 relative z-10">
         <aside className="lg:w-64 shrink-0">
-          <div className="glass-card rounded-2xl p-3 border border-gray-800 lg:sticky lg:top-24">
-            <div className="px-3 py-2 mb-2">
-              <div className="text-xs uppercase tracking-wider text-emerald-400 font-bold">{t('College ERP', 'نظام الإدارة')}</div>
-              <div className="text-sm text-gray-400 truncate">{auth.user?.username}</div>
+          <div className="rounded-[14px] bg-paper-white border border-sand-border p-3.5 shadow-manuscript-sm lg:sticky lg:top-24 space-y-2">
+            <div className="px-3 py-2 border-b border-sand-border/60">
+              <div className="text-[11px] uppercase tracking-wider text-emerald-700 font-bold font-serif">
+                {t('College ERP', 'نظام إدارة الكلية')}
+              </div>
+              <div className="text-xs text-ink-text-muted truncate mt-0.5">{auth.user?.username}</div>
             </div>
             <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible">
               {grouped.map(({ g, items }) => (
-                <div key={g} className="flex lg:flex-col gap-1 lg:mb-3">
-                  <div className="hidden lg:block px-3 pt-2 pb-1 text-[11px] uppercase tracking-wider text-gray-500">
+                <div key={g} className="flex lg:flex-col gap-1 lg:mb-2">
+                  <div className="hidden lg:block px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-text-muted">
                     {GROUPS[g](t)}
                   </div>
-                  {items.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setParams({ module: m.id })}
-                      className={`flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm text-start transition ${
-                        active.id === m.id ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:bg-gray-800'
-                      }`}
-                    >
-                      <span aria-hidden>{m.icon}</span>
-                      <span>{m.label(t)}</span>
-                    </button>
-                  ))}
+                  {items.map((m) => {
+                    const isSelected = active.id === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setParams({ module: m.id })}
+                        className={`flex items-center gap-2.5 whitespace-nowrap rounded-[10px] px-3 py-2 text-xs text-start transition font-medium ${
+                          isSelected
+                            ? 'bg-mint-wash-100 text-emerald-700 font-semibold border border-emerald-700/20'
+                            : 'text-ink-text-secondary hover:bg-parchment-50 hover:text-ink-green-900'
+                        }`}
+                      >
+                        <span aria-hidden className="text-sm">{m.icon}</span>
+                        <span>{m.label(t)}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               ))}
             </nav>
-            <div className="hidden lg:block border-t border-gray-800 mt-2 pt-3 px-3">
-              <Link to={auth.isAdmin ? '/admin' : '/dashboard'} className="text-xs text-gray-400 hover:text-emerald-400">
-                ← {t('Back to portal', 'العودة إلى البوابة')}
+            <div className="hidden lg:block border-t border-sand-border/60 mt-2 pt-3 px-3">
+              <Link
+                to={auth.isAdmin ? '/admin' : '/dashboard'}
+                className="text-xs text-ink-text-muted hover:text-emerald-700 font-medium flex items-center gap-1"
+              >
+                <span>←</span>
+                <span>{t('Back to portal', 'العودة إلى البوابة')}</span>
               </Link>
             </div>
           </div>
         </aside>
+
         <main className="flex-1 min-w-0">
           {auth.isSuperAdmin && <ActingOrgBanner userId={auth.user?.id} />}
           <Suspense fallback={<Loading />}>

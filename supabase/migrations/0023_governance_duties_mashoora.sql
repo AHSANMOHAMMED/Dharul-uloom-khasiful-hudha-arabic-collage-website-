@@ -1,5 +1,5 @@
 -- =============================================================================
--- 0022_governance_duties_mashoora.sql
+-- 0023_governance_duties_mashoora.sql
 --
 -- 1. Super admin central control: "act as" any institution (acting_org_id).
 -- 2. Duties (responsibilities) assigned to lecturers/staff per academic year,

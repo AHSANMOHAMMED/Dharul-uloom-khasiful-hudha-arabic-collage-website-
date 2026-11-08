@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { I18nProvider, useI18n } from '../lib/i18n';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { colors } from '../lib/theme';
-import { handleInitialPush, listenForPushTaps, registerForPush } from '../lib/push';
+import { handleInitialPush, listenForPushTaps, registerForPush, setPushCaps } from '../lib/push';
 import { LiveProvider } from '../lib/live';
 import LiveToast from '../components/LiveToast';
 
@@ -13,8 +13,13 @@ import LiveToast from '../components/LiveToast';
 const PUBLIC = new Set(['login', 'payment-success', 'payment-cancel']);
 
 function AuthGate() {
-  const { session, loading } = useAuth();
+  const { session, loading, caps } = useAuth();
   const segments = useSegments();
+  // Push routing depends on the role (activity → team screen for governance).
+  const isGovernance = caps.isGovernance;
+  useEffect(() => {
+    setPushCaps({ isGovernance });
+  }, [isGovernance]);
   useEffect(() => {
     if (loading) return;
     const first = segments[0];
@@ -90,6 +95,12 @@ function RootStack() {
         <Stack.Screen name="duties" options={{ title: t('duty.title') }} />
         <Stack.Screen name="petty-cash-spend" options={{ title: t('petty.recordSpend') }} />
         <Stack.Screen name="mashoora" options={{ title: t('mashoora.title') }} />
+        <Stack.Screen name="finance/index" options={{ title: t('fin.title') }} />
+        <Stack.Screen name="finance/outstanding" options={{ title: t('admin.outstandingList') }} />
+        <Stack.Screen name="finance/student/[id]" options={{ title: t('fin.studentTitle') }} />
+        <Stack.Screen name="responsibilities" options={{ title: t('resp.title') }} />
+        <Stack.Screen name="activity/[id]" options={{ title: t('activity.title') }} />
+        <Stack.Screen name="analytics" options={{ title: t('analytics.title') }} />
       </Stack>
       <LiveToast />
     </>

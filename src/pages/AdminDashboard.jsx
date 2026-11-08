@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 import { generateInvoicesInBatches } from '../lib/erp/rpc';
 import { adminStats, listAdmissionsByStatus, updateAdmissionStatus } from '../lib/admissionsApi';
 
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AnalyticsDashboard from './AnalyticsDashboard';
@@ -16,9 +16,10 @@ import AdmissionsCrmBoard from '../components/AdmissionsCrmBoard';
 import StaffHrmPanel from '../components/StaffHrmPanel';
 import ImportJobsPanel from '../components/ImportJobsPanel';
 import OrgAdminPanel from '../components/OrgAdminPanel';
+import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
 
-const COLORS = ['#059669', '#d97706', '#2563eb', '#dc2626'];
+const COLORS = ['#11694A', '#C29A3A', '#0F7C86', '#B91C1C'];
 
 const AdminDashboard = () => {
   const { user, isAdmin, logout, loading: authLoading } = useAuth();
@@ -32,10 +33,10 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('admissions');
   const [contentSection, setContentSection] = useState('news');
 
-  // New state for approvals queue
+  // Approval queue
   const [pendingApprovals, setPendingApprovals] = useState([]);
   
-  // New state for tutors role manager
+  // Tutors role manager
   const [tutors, setTutors] = useState([]);
   const [selectedTutorId, setSelectedTutorId] = useState('');
   const [assignedRole, setAssignedRole] = useState('none');
@@ -43,13 +44,13 @@ const AdminDashboard = () => {
   const [jobDesc, setJobDesc] = useState('');
   const [jobSuccess, setJobSuccess] = useState(false);
 
-  // New state for Broadcast tool
+  // Broadcast tool
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [broadcastTarget, setBroadcastTarget] = useState('all');
   const [broadcastSuccess, setBroadcastSuccess] = useState(false);
 
-  // Index pre-seeding helper state
+  // Index pre-seeding
   const [newIndexNumber, setNewIndexNumber] = useState('');
   const [newStudentName, setNewStudentName] = useState('');
   const [newIndexClass, setNewIndexClass] = useState(5);
@@ -74,7 +75,6 @@ const AdminDashboard = () => {
       setStats(statsData);
       setAdmissions(admissionsData);
 
-      // Fetch pending approvals (students & tutors with is_approved = false)
       const { data: approvalsData } = await supabase
         .from('profiles')
         .select('*')
@@ -83,7 +83,6 @@ const AdminDashboard = () => {
         .order('created_at', { ascending: false });
       setPendingApprovals(approvalsData || []);
 
-      // Fetch approved tutors for role manager
       const { data: tutorsData } = await supabase
         .from('profiles')
         .select('*')
@@ -92,7 +91,6 @@ const AdminDashboard = () => {
         .order('full_name');
       setTutors(tutorsData || []);
 
-      // Fetch valid index list
       const { data: indexes } = await supabase
         .from('valid_index_numbers')
         .select('*')
@@ -113,14 +111,13 @@ const AdminDashboard = () => {
       toast.success(status === 'approved'
         ? tx('تمت الموافقة على طلب القبول بنجاح', 'Admission approved successfully')
         : tx('تم رفض طلب القبول بنجاح', 'Admission rejected successfully'));
-      fetchData(); // Refresh data
+      fetchData();
     } catch (error) {
       console.error('Error updating admission:', error);
       toast.error(tx('فشل تحديث حالة طلب القبول', 'Failed to update admission status'));
     }
   };
 
-  // User approval handlers — notifies student + linked parents (in-app + SMS/WhatsApp queue)
   const handleApproveUser = async (profileId) => {
     try {
       const profile = pendingApprovals.find((p) => p.id === profileId);
@@ -162,7 +159,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Role Assignment
   const handleAssignTutorRole = async (e) => {
     e.preventDefault();
     if (!selectedTutorId) return;
@@ -180,16 +176,13 @@ const AdminDashboard = () => {
         return;
       }
       
-      // Auto Assign standard jobs if Principal/Treasurer
       const { error: jobError } = await supabase.from('tutor_jobs').insert({
         tutor_id: selectedTutorId,
         title: assignedRole.toUpperCase(),
         description: `Responsible for college administrative and financial oversight as ${assignedRole}.`
       });
 
-      if (jobError) {
-        throw jobError;
-      }
+      if (jobError) throw jobError;
 
       toast.success(tx('تم تحديث دور المعلم بنجاح!', 'Tutor role updated successfully!'));
       fetchData();
@@ -199,7 +192,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Add annual tutor job responsibility
   const handleAddTutorJob = async (e) => {
     e.preventDefault();
     if (!selectedTutorId || !jobTitle.trim()) return;
@@ -218,7 +210,7 @@ const AdminDashboard = () => {
       setJobDesc('');
       setJobSuccess(true);
       toast.success(tx('تم تعيين مسؤولية المعلم بنجاح!', 'Tutor responsibility assigned successfully!'));
-      setTimeout(() => setJobSuccess(false), 3000);
+      setTimeout(() => setJobSuccess(false), 3500);
       fetchData();
     } catch (err) {
       console.error('Error adding tutor job:', err);
@@ -226,7 +218,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Seed valid student index numbers
   const handleAddIndexNumber = async (e) => {
     e.preventDefault();
     if (!newIndexNumber.trim() || !newStudentName.trim()) return;
@@ -246,31 +237,26 @@ const AdminDashboard = () => {
       toast.success(tx('تم التسجيل المسبق لرقم قيد الطالب!', 'Student index number pre-registered!'));
       fetchData();
     } catch (err) {
-      console.error('Error adding index:', err);
+      console.error('Error adding index number:', err);
       toast.error(tx('فشل إضافة رقم القيد', 'Failed to add index number'));
     }
   };
 
-  // Broadcast tool
   const handleSendBroadcast = async (e) => {
     e.preventDefault();
     if (!broadcastTitle.trim() || !broadcastMsg.trim()) return;
 
     try {
-      // Fetch target profiles
       let query = supabase.from('profiles').select('id');
-      if (broadcastTarget === 'students') {
-        query = query.eq('account_type', 'student');
-      } else if (broadcastTarget === 'parents') {
-        query = query.eq('account_type', 'parent');
-      } else if (broadcastTarget === 'tutors') {
-        query = query.eq('account_type', 'tutor');
-      }
-      
+      if (broadcastTarget === 'students') query = query.eq('account_type', 'student');
+      else if (broadcastTarget === 'parents') query = query.eq('account_type', 'parent');
+      else if (broadcastTarget === 'tutors') query = query.eq('account_type', 'tutor');
+
       const { data: targets, error } = await query;
       if (error) throw error;
+
       if (targets && targets.length > 0) {
-        const notificationsPayload = targets.map(t => ({
+        const notificationsPayload = targets.map((t) => ({
           user_id: t.id,
           title: broadcastTitle,
           message: broadcastMsg
@@ -283,15 +269,14 @@ const AdminDashboard = () => {
       setBroadcastTitle('');
       setBroadcastMsg('');
       setBroadcastSuccess(true);
-      toast.success(tx('تم إرسال إشعار البث ثنائي اللغة بنجاح!', 'Bilingual Broadcast notification sent successfully!'));
-      setTimeout(() => setBroadcastSuccess(false), 3000);
+      toast.success(tx('تم إرسال الإشعار لجميع الفئات المستهدفة', 'Bilingual broadcast dispatched!'));
+      setTimeout(() => setBroadcastSuccess(false), 3500);
     } catch (err) {
       console.error('Error sending broadcast:', err);
       toast.error(tx('فشل إرسال البث', 'Failed to dispatch broadcast'));
     }
   };
 
-  // Send tuition fee reminder trigger
   const handleTriggerFeeReminder = async () => {
     try {
       // Generates this month's invoices (fee structures, hostel, concessions) and
@@ -312,67 +297,99 @@ const AdminDashboard = () => {
     { name: tx('مرفوض', 'Rejected'), value: stats.admissions?.rejected || 0 },
   ] : [];
 
+  const contentSummaryData = stats ? [
+    { name: tx('الأخبار', 'News'), count: stats.content?.news || 0 },
+    { name: tx('الأساتذة', 'Faculty'), count: stats.content?.faculty || 0 },
+    { name: tx('المنهج', 'Curriculum'), count: stats.content?.curriculum || 0 },
+    { name: tx('المعرض', 'Gallery'), count: stats.content?.gallery || 0 },
+    { name: tx('الدورات', 'Courses'), count: stats.content?.courses || 0 },
+  ] : [];
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
-        <div className="relative w-16 h-16 flex items-center justify-center">
-          <div className="absolute inset-0 border-t-2 border-r-2 border-emerald-500 rounded-full animate-spin"></div>
-          <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">⚡</div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FBF8F0]">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full border-2 border-[#11694A] border-t-transparent animate-spin"></div>
+          <p className="text-sm font-sans text-[#4A5E56]">
+            {tx('جاري تحميل لوحة الإدارة العامة...', 'Loading central admin console...')}
+          </p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 relative overflow-hidden">
-      
-      {/* Decorative background gradients */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-900/10 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-amber-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+  const tabs = [
+    { id: 'admissions', label_en: 'Inquiries', label_ar: 'الطلبات', badge: admissions.length },
+    { id: 'crm', label_en: 'CRM Pipeline', label_ar: 'مسار القبول' },
+    { id: 'hrm', label_en: 'Staff HRM', label_ar: 'الموارد البشرية' },
+    { id: 'imports', label_en: 'Shamela Import', label_ar: 'استيراد الشاملة' },
+    { id: 'org', label_en: 'Organization', label_ar: 'المؤسسة' },
+    { id: 'approvals', label_en: 'Signups', label_ar: 'الموافقات', badge: pendingApprovals.length },
+    { id: 'tutors', label_en: 'Tutors & Roles', label_ar: 'المعلمون والوظائف' },
+    { id: 'broadcast', label_en: 'Broadcast', label_ar: 'البث' },
+    { id: 'content', label_en: 'Content CMS', label_ar: 'إدارة المحتوى' },
+    { id: 'indexes', label_en: 'Index Pre-seed', label_ar: 'أرقام القيد' },
+    { id: 'analytics', label_en: 'Analytics', label_ar: 'التحليلات' },
+  ];
 
-      {/* Header */}
-      <div className="glass-panel border-b border-gray-800/60 text-white py-5 px-6 shadow-glass relative z-20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 flex items-center justify-center shadow-glow-emerald">
-              <span className="text-white text-xl">🛡️</span>
-            </div>
-            <div>
-              <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-[10px] font-black font-mono tracking-widest uppercase shadow-glow-emerald">{tx('نظام الإدارة', 'ADMIN SYSTEM')}</span>
-              <h1 className="text-2xl font-extrabold mt-1.5 font-arabic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
-                {tx('الإدارة المركزية والتحكم', 'Central Admin Console')}
-              </h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-5">
-            <div className="text-right hidden sm:block">
-              <div className="text-sm font-bold text-white">{user?.username}</div>
-              <div className="text-[10px] text-emerald-400 uppercase tracking-widest">{tx('المدير العام', 'Super Administrator')}</div>
-            </div>
-            <button
-              onClick={logout}
-              className="px-5 py-2.5 bg-gray-900/80 hover:bg-red-900/40 text-gray-300 hover:text-red-400 border border-gray-700 hover:border-red-500/50 rounded-xl font-bold text-sm transition-all shadow-lg hover:-translate-y-0.5"
-            >
-              {tx('تسجيل الخروج', 'Logout')}
-            </button>
-          </div>
-        </div>
+  return (
+    <div className="min-h-screen bg-[#FBF8F0] text-[#14201B] relative overflow-hidden py-8 sm:py-12">
+      {/* Background Watermark */}
+      <div className="absolute -top-32 -right-32 w-[600px] h-[600px] pointer-events-none opacity-[0.03]">
+        <KhatamPattern className="w-full h-full text-[#0B3B2E]" />
       </div>
 
-      <div className="max-w-7xl mx-auto py-8 px-4 space-y-8">
+      <ToastContainer position="top-right" theme="light" autoClose={3000} />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
         
-        {/* Charts & Analytics */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
-          <div className="glass-card p-6 rounded-[2rem] group hover:border-emerald-500/30 transition-all duration-300">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
-                📊
+        {/* Header Banner */}
+        <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#11694A]"></div>
+
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center font-arabic text-2xl sm:text-3xl font-bold shrink-0 shadow-sm border border-[#11694A]/20">
+                إ
               </div>
-              <h2 className="text-lg font-bold text-white">
-                {tx('تحليلات طلبات القبول', 'Admission Funnel')}
-              </h2>
+              <div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#E3F1EA] text-[#11694A] border border-[#11694A]/20 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#11694A]"></span>
+                  {tx('لوحة التحكم الإدارية المركزية', 'Super Administrator Console')}
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#0B3B2E]">
+                  {tx('مرحباً، {name}', 'Welcome, {name}').replace('{name}', user?.username || tx('المدير', 'Administrator'))}
+                </h1>
+                <p className="text-xs sm:text-sm text-[#4A5E56] font-sans mt-0.5">
+                  {tx('إدارة القبول، الموارد البشرية، المحتوى، والموافقات العامة', 'College operations, CRM pipeline, HRM records, content CMS & system security')}
+                </p>
+              </div>
             </div>
-            <ResponsiveContainer width="100%" height={260}>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={logout}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FEE2E2] hover:bg-[#FCA5A5] text-[#991B1B] font-sans font-semibold text-xs sm:text-sm rounded-xl transition"
+              >
+                <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                {tx('تسجيل الخروج', 'Logout')}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts & Analytics Summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-2xl border border-[#E8E1D0] shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E8E1D0]">
+              <h2 className="text-base font-serif font-bold text-[#0B3B2E]">
+                {tx('تحليلات طلبات القبول', 'Admissions Pipeline Funnel')}
+              </h2>
+              <span className="text-xs text-[#4A5E56]">{tx('مباشر', 'Real-time')}</span>
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie
                   data={admissionStatusData}
@@ -380,155 +397,123 @@ const AdminDashboard = () => {
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={90}
-                  innerRadius={60}
-                  fill="#8884d8"
+                  outerRadius={80}
+                  innerRadius={50}
+                  fill="#11694A"
                   dataKey="value"
-                  paddingAngle={5}
+                  paddingAngle={4}
                 >
                   {admissionStatusData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: 'rgba(17, 24, 39, 0.9)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E8E1D0', color: '#0B3B2E' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="glass-card p-6 rounded-[2rem] group hover:border-emerald-500/30 transition-all duration-300">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
-                📈
-              </div>
-              <h2 className="text-lg font-bold text-white">
-                {tx('المحتوى والإحصائيات العامة', 'Database Analytics')}
+          <div className="bg-white p-6 rounded-2xl border border-[#E8E1D0] shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E8E1D0]">
+              <h2 className="text-base font-serif font-bold text-[#0B3B2E]">
+                {tx('المحتوى والإحصائيات العامة', 'CMS Content Breakdown')}
               </h2>
+              <span className="text-xs text-[#4A5E56]">{tx('إجمالي العناصر', 'Total items')}</span>
             </div>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={[
-                { name: tx('الأخبار', 'News'), count: stats?.content?.news || 0 },
-                { name: tx('الأساتذة', 'Faculty'), count: stats?.content?.faculty || 0 },
-                { name: tx('الطلبات', 'Admissions'), count: stats?.admissions?.total || 0 },
-              ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-                <XAxis dataKey="name" stroke="#9ca3af" tick={{fill: '#9ca3af', fontSize: 12}} axisLine={false} tickLine={false} />
-                <YAxis stroke="#9ca3af" tick={{fill: '#9ca3af', fontSize: 12}} axisLine={false} tickLine={false} />
-                <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{ backgroundColor: 'rgba(17, 24, 39, 0.9)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }} />
-                <Legend iconType="circle" />
-                <Bar dataKey="count" fill="url(#colorEmerald)" radius={[6, 6, 0, 0]} maxBarSize={50} />
-                <defs>
-                  <linearGradient id="colorEmerald" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#047857" stopOpacity={0.8}/>
-                  </linearGradient>
-                </defs>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={contentSummaryData}>
+                <XAxis dataKey="name" stroke="#4A5E56" tick={{ fill: '#4A5E56', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis stroke="#4A5E56" tick={{ fill: '#4A5E56', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E8E1D0' }} />
+                <Bar dataKey="count" fill="#11694A" radius={[6, 6, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Tab Selection */}
-        <div className="glass-panel p-2 rounded-2xl flex overflow-x-auto gap-2 relative z-10 hide-scrollbar border border-gray-800/60 shadow-lg">
-          {[
-            { id: 'admissions', label_en: 'Admissions', label_ar: 'طلبات القبول', icon: '📝' },
-            { id: 'crm', label_en: 'CRM Pipeline', label_ar: 'مسار القبول', icon: '📋' },
-            { id: 'hrm', label_en: 'Staff HRM', label_ar: 'الموارد البشرية', icon: '👔' },
-            { id: 'imports', label_en: 'Shamela Import', label_ar: 'استيراد الشاملة', icon: '📚' },
-            { id: 'org', label_en: 'Organization', label_ar: 'المؤسسة', icon: '🏛️' },
-            { id: 'approvals', label_en: 'Signups', label_ar: 'الموافقات', icon: '🔐' },
-            { id: 'tutors', label_en: 'Tutors & Roles', label_ar: 'المعلمون والوظائف', icon: '👨‍🏫' },
-            { id: 'broadcast', label_en: 'Broadcast', label_ar: 'البث', icon: '📢' },
-            { id: 'content', label_en: 'Content CMS', label_ar: 'إدارة المحتوى', icon: '📰' },
-            { id: 'indexes', label_en: 'Index Pre-seed', label_ar: 'أرقام القيد', icon: '🪪' },
-            { id: 'analytics', label_en: 'Analytics', label_ar: 'التحليلات', icon: '📊' },
-          ].map(tab => (
+        {/* Tab Navigation Segmented Bar */}
+        <div className="bg-white p-1.5 rounded-2xl border border-[#E8E1D0] shadow-sm flex overflow-x-auto gap-1 hide-scrollbar">
+          {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all duration-300 ${
+              className={`flex-1 min-w-[125px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl font-sans font-semibold text-xs whitespace-nowrap transition-all ${
                 activeTab === tab.id
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-glow-emerald border border-emerald-400/20'
-                  : 'bg-transparent text-gray-400 hover:bg-gray-800/50 hover:text-white'
+                  ? 'bg-[#0B3B2E] text-white shadow-sm'
+                  : 'text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-[#FBF8F0]'
               }`}
             >
-              <span>{tab.icon}</span>
-              {tx(tab.label_ar, tab.label_en)}
+              <span>{tx(tab.label_ar, tab.label_en)}</span>
+              {typeof tab.badge === 'number' && tab.badge > 0 && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  activeTab === tab.id ? 'bg-[#C29A3A] text-[#0B3B2E]' : 'bg-[#FEE2E2] text-[#B91C1C]'
+                }`}>
+                  {tab.badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
 
-        <ToastContainer position="top-right" theme="dark" autoClose={3000} />
-
         {/* Dynamic Panels */}
-        <div className="glass-card rounded-[2rem] p-8 shadow-2xl relative z-10 min-h-[500px]">
+        <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] min-h-[480px]">
           
+          {/* CRM Panel */}
+          {activeTab === 'crm' && <AdmissionsCrmBoard />}
+
+          {/* HRM Panel */}
+          {activeTab === 'hrm' && <StaffHrmPanel />}
+
+          {/* Shamela Imports */}
+          {activeTab === 'imports' && <ImportJobsPanel />}
+
+          {/* Org Panel */}
+          {activeTab === 'org' && <OrgAdminPanel />}
+
           {/* Tab 1: Admissions Review */}
-          {activeTab === 'crm' && (
-            <div className="glass-panel p-6 rounded-2xl border border-gray-800">
-              <AdmissionsCrmBoard />
-            </div>
-          )}
-
-          {activeTab === 'hrm' && (
-            <div className="glass-panel p-6 rounded-2xl border border-gray-800">
-              <StaffHrmPanel />
-            </div>
-          )}
-
-          {activeTab === 'imports' && (
-            <div className="glass-panel p-6 rounded-2xl border border-gray-800">
-              <ImportJobsPanel />
-            </div>
-          )}
-
-          {activeTab === 'org' && (
-            <div className="glass-panel p-6 rounded-2xl border border-gray-800">
-              <OrgAdminPanel />
-            </div>
-          )}
-
           {activeTab === 'admissions' && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold text-white font-arabic">
+            <div className="space-y-4">
+              <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
                 {tx('طلبات القبول المعلقة للتحقق', 'Admissions Inquiries Queue')}
               </h2>
               {admissions.length === 0 ? (
-                <p className="text-gray-500 text-sm py-4">{tx('لا توجد طلبات قبول معلقة.', 'No pending admissions inquiries.')}</p>
+                <p className="text-xs text-[#4A5E56] py-12 text-center">
+                  ✓ {tx('لا توجد طلبات قبول معلقة حالياً.', 'No pending admissions inquiries.')}
+                </p>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-800 text-sm">
+                  <table className="w-full text-xs">
                     <thead>
-                      <tr className="text-gray-400">
-                        <th className="px-6 py-3 text-left font-semibold">{tx('الطالب', 'Student')}</th>
-                        <th className="px-6 py-3 text-left font-semibold">{tx('ولي الأمر', 'Parent')}</th>
-                        <th className="px-6 py-3 text-left font-semibold">{tx('الدورة', 'Course')}</th>
-                        <th className="px-6 py-3 text-left font-semibold">{tx('الإجراء', 'Action')}</th>
+                      <tr className="text-left text-[#4A5E56] font-bold uppercase tracking-wider border-b border-[#E8E1D0]">
+                        <th className="py-2.5 px-4">{tx('اسم الطالب', 'Student')}</th>
+                        <th className="py-2.5 px-4">{tx('ولي الأمر', 'Parent')}</th>
+                        <th className="py-2.5 px-4">{tx('الدورة', 'Course')}</th>
+                        <th className="py-2.5 px-4 text-center">{tx('الإجراء', 'Actions')}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-800/40 text-gray-300">
+                    <tbody className="divide-y divide-[#E8E1D0]">
                       {admissions.map((admission) => (
-                        <tr key={admission._id} className="hover:bg-gray-850/10">
-                          <td className="px-6 py-4 font-semibold text-white">
+                        <tr key={admission._id} className="hover:bg-[#FBF8F0] transition">
+                          <td className="py-3 px-4 font-bold text-[#0B3B2E]">
                             {admission.studentName}
                             {(admission.dateOfBirth || admission.age != null) && (
-                              <div className="text-xs font-normal text-gray-500">
+                              <div className="text-[11px] font-normal text-[#4A5E56] mt-0.5">
                                 {[admission.dateOfBirth, admission.age != null ? `${tx('العمر', 'Age')}: ${admission.age}` : null].filter(Boolean).join(' · ')}
                                 {admission.source ? ` · ${tx('المصدر', 'Source')}: ${admission.source}` : ''}
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-4">{admission.parentName}</td>
-                          <td className="px-6 py-4 uppercase font-bold text-xs text-amber-500">{admission.course}</td>
-                          <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                          <td className="py-3 px-4 text-[#4A5E56]">{admission.parentName}</td>
+                          <td className="py-3 px-4 font-mono font-bold text-[#11694A] uppercase">{admission.course}</td>
+                          <td className="py-3 px-4 text-center space-x-2">
                             <button
                               onClick={() => handleStatusUpdate(admission._id, 'approved')}
-                              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 font-bold rounded text-xs text-white"
+                              className="px-3 py-1 bg-[#11694A] hover:bg-[#0B3B2E] text-white font-bold rounded-lg text-[11px] transition"
                             >
                               {tx('موافقة', 'Approve')}
                             </button>
                             <button
                               onClick={() => handleStatusUpdate(admission._id, 'rejected')}
-                              className="px-3 py-1.5 bg-red-700 hover:bg-red-650 font-bold rounded text-xs text-white"
+                              className="px-3 py-1 bg-[#FEE2E2] hover:bg-[#FCA5A5] text-[#991B1B] font-bold rounded-lg text-[11px] transition"
                             >
                               {tx('رفض', 'Reject')}
                             </button>
@@ -544,47 +529,49 @@ const AdminDashboard = () => {
 
           {/* Tab 2: Signup Approval Queue */}
           {activeTab === 'approvals' && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold text-white font-arabic">
+            <div className="space-y-4">
+              <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
                 {tx('الموافقات على تسجيل الطلاب والمعلمين', 'User Signup Approvals Queue')}
               </h2>
               {pendingApprovals.length === 0 ? (
-                <p className="text-gray-500 text-sm py-4">{tx('لا يوجد مستخدمون في قائمة انتظار الموافقة.', 'No users waiting in the approval queue.')}</p>
+                <p className="text-xs text-[#4A5E56] py-12 text-center">
+                  ✓ {tx('لا يوجد مستخدمون في قائمة الانتظار.', 'No users waiting in the approval queue.')}
+                </p>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-800 text-sm">
+                  <table className="w-full text-xs">
                     <thead>
-                      <tr className="text-gray-400">
-                        <th className="px-6 py-3 text-left font-semibold">{tx('الاسم', 'Name')}</th>
-                        <th className="px-6 py-3 text-left font-semibold">{tx('البريد الإلكتروني', 'Email')}</th>
-                        <th className="px-6 py-3 text-left font-semibold">{tx('نوع الدور', 'Role Type')}</th>
-                        <th className="px-6 py-3 text-left font-semibold">{tx('تفاصيل القيد', 'Index Details')}</th>
-                        <th className="px-6 py-3 text-left font-semibold">{tx('الإجراء', 'Action')}</th>
+                      <tr className="text-left text-[#4A5E56] font-bold uppercase tracking-wider border-b border-[#E8E1D0]">
+                        <th className="py-2.5 px-4">{tx('الاسم', 'Name')}</th>
+                        <th className="py-2.5 px-4">{tx('البريد الإلكتروني', 'Email')}</th>
+                        <th className="py-2.5 px-4">{tx('نوع الدور', 'Role Type')}</th>
+                        <th className="py-2.5 px-4">{tx('تفاصيل القيد', 'Index Details')}</th>
+                        <th className="py-2.5 px-4 text-center">{tx('الإجراء', 'Actions')}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-800/40 text-gray-300">
+                    <tbody className="divide-y divide-[#E8E1D0]">
                       {pendingApprovals.map((profile) => (
-                        <tr key={profile.id} className="hover:bg-gray-850/10">
-                          <td className="px-6 py-4 font-semibold text-white">{profile.full_name}</td>
-                          <td className="px-6 py-4 font-mono">{profile.email}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                              profile.account_type === 'tutor' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        <tr key={profile.id} className="hover:bg-[#FBF8F0] transition">
+                          <td className="py-3 px-4 font-bold text-[#0B3B2E]">{profile.full_name}</td>
+                          <td className="py-3 px-4 font-mono text-[#4A5E56]">{profile.email}</td>
+                          <td className="py-3 px-4">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              profile.account_type === 'tutor' ? 'bg-[#E0F2F1] text-[#0F7C86]' : 'bg-[#E3F1EA] text-[#11694A]'
                             }`}>
-                              {profile.account_type}
+                              {profile.account_type === 'tutor' ? tx('معلم', 'Tutor') : tx('طالب', 'Student')}
                             </span>
                           </td>
-                          <td className="px-6 py-4 font-mono text-gray-400">{profile.index_number || tx('غير متوفر', 'N/A')}</td>
-                          <td className="px-6 py-4 whitespace-nowrap space-x-2">
+                          <td className="py-3 px-4 font-mono text-[#4A5E56]">{profile.index_number || tx('غير متوفر', 'N/A')}</td>
+                          <td className="py-3 px-4 text-center space-x-2">
                             <button
                               onClick={() => handleApproveUser(profile.id)}
-                              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-650 font-bold rounded text-xs text-white"
+                              className="px-3 py-1 bg-[#11694A] hover:bg-[#0B3B2E] text-white font-bold rounded-lg text-[11px] transition"
                             >
                               {tx('موافقة', 'Approve')}
                             </button>
                             <button
                               onClick={() => handleRejectUser(profile.id)}
-                              className="px-3 py-1.5 bg-red-700 hover:bg-red-650 font-bold rounded text-xs text-white"
+                              className="px-3 py-1 bg-[#FEE2E2] hover:bg-[#FCA5A5] text-[#991B1B] font-bold rounded-lg text-[11px] transition"
                             >
                               {tx('رفض', 'Reject')}
                             </button>
@@ -600,18 +587,18 @@ const AdminDashboard = () => {
 
           {/* Tab 3: Tutor roles and job assignments */}
           {activeTab === 'tutors' && (
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
-                {/* Assign Special Role (Treasurer, Principal) */}
-                <form onSubmit={handleAssignTutorRole} className="bg-gray-950/40 p-6 rounded-xl border border-gray-800 space-y-4">
-                  <h3 className="text-lg font-bold text-white">{tx('تعيين دور خاص للمعلم', 'Assign Tutor Special Role')}</h3>
+                {/* Assign Special Role */}
+                <form onSubmit={handleAssignTutorRole} className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3">
+                  <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('تعيين دور إداري خاص', 'Assign Special Administrative Role')}</h3>
                   <div>
-                    <label className="block text-xs text-gray-400 font-bold uppercase mb-1">{tx('اختر المعلم', 'Select Teacher')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('اختر عضو هيئة التدريس', 'Select Faculty Member')}</label>
                     <select
                       value={selectedTutorId}
                       onChange={(e) => setSelectedTutorId(e.target.value)}
-                      className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 rounded p-2.5 focus:outline-none"
+                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none"
                       required
                     >
                       <option value="">{tx('-- اختر المعلم --', '-- Choose Tutor --')}</option>
@@ -621,11 +608,11 @@ const AdminDashboard = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 font-bold uppercase mb-1">{tx('اختر التكليف الخاص', 'Select Special Assignment')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('الدور المعين', 'Designated Role')}</label>
                     <select
                       value={assignedRole}
                       onChange={(e) => setAssignedRole(e.target.value)}
-                      className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 rounded p-2.5 focus:outline-none"
+                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none"
                     >
                       <option value="none">{tx('لا شيء (معلم عادي)', 'NONE (Regular Tutor)')}</option>
                       <option value="principal">{tx('المدير', 'PRINCIPAL')}</option>
@@ -635,21 +622,21 @@ const AdminDashboard = () => {
                   </div>
                   <button
                     type="submit"
-                    className="w-full py-2 bg-emerald-700 hover:bg-emerald-650 font-bold rounded text-sm text-white"
+                    className="w-full py-2 bg-[#11694A] hover:bg-[#0B3B2E] font-bold rounded-xl text-xs text-white transition"
                   >
                     {tx('تحديث تكليف المعلم', 'Update Tutor Assignment')}
                   </button>
                 </form>
 
-                {/* Create Tutor annual responsibility job */}
-                <form onSubmit={handleAddTutorJob} className="bg-gray-950/40 p-6 rounded-xl border border-gray-800 space-y-4">
-                  <h3 className="text-lg font-bold text-white">{tx('إنشاء مهمة مسؤولية سنوية', 'Create Annual Responsibility Job')}</h3>
+                {/* Annual Responsibility Job */}
+                <form onSubmit={handleAddTutorJob} className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3">
+                  <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('تعيين مسؤولية وظيفية سنوية', 'Assign Annual Job Responsibility')}</h3>
                   <div>
-                    <label className="block text-xs text-gray-400 font-bold uppercase mb-1">{tx('اختر المعلم', 'Select Tutor')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('اختر المعلم', 'Select Tutor')}</label>
                     <select
                       value={selectedTutorId}
                       onChange={(e) => setSelectedTutorId(e.target.value)}
-                      className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 rounded p-2.5 focus:outline-none"
+                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none"
                       required
                     >
                       <option value="">{tx('-- اختر المعلم --', '-- Choose Tutor --')}</option>
@@ -659,52 +646,52 @@ const AdminDashboard = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 font-bold uppercase mb-1">{tx('المسمى الوظيفي / التكليف', 'Job Title / Assignment')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('المسمى الوظيفي', 'Job Title')}</label>
                     <input
                       type="text"
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
-                      placeholder={tx('مثال: مربي الصف الخامس، رئيس قسم القرآن', 'e.g. Class 5 Class-Teacher, Head of Quran Dept')}
-                      className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 p-2.5 rounded focus:outline-none"
+                      placeholder={tx('مثال: مربي الصف الخامس، عميد الدراسات القرآنية', 'e.g. Class 5 Master, Dean of Quranic Studies')}
+                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 font-bold uppercase mb-1">{tx('وصف المهمة', 'Job Description')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('نطاق المهمة', 'Job Scope')}</label>
                     <textarea
                       value={jobDesc}
                       onChange={(e) => setJobDesc(e.target.value)}
                       placeholder={tx('المهام السنوية...', 'Annual duties...')}
-                      className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 rounded p-2.5 focus:outline-none resize-none h-16"
+                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none resize-none h-14"
                     />
                   </div>
                   <button
                     type="submit"
-                    className="w-full py-2 bg-emerald-700 hover:bg-emerald-650 font-bold rounded text-sm text-white"
+                    className="w-full py-2 bg-[#11694A] hover:bg-[#0B3B2E] font-bold rounded-xl text-xs text-white transition"
                   >
                     {tx('تعيين المهمة السنوية', 'Assign Annual Job')}
                   </button>
-                  {jobSuccess && <p className="text-xs text-emerald-400 text-center animate-pulse">✓ {tx('تم تحديث المسؤولية بنجاح!', 'Responsibility updated successfully!')}</p>}
+                  {jobSuccess && <p className="text-xs text-[#11694A] text-center font-bold animate-pulse">✓ {tx('تم تحديث المسؤولية بنجاح!', 'Responsibility updated successfully!')}</p>}
                 </form>
 
               </div>
             </div>
           )}
 
-          {/* Tab 4: Broadcast alerts & reminders */}
+          {/* Tab 4: Broadcast */}
           {activeTab === 'broadcast' && (
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 {/* Compose Broadcast Notification */}
-                <form onSubmit={handleSendBroadcast} className="bg-gray-950/40 p-6 rounded-xl border border-gray-800 space-y-4">
-                  <h3 className="text-lg font-bold text-white">{tx('إنشاء إشعار بث', 'Compose Broadcast Notification')}</h3>
+                <form onSubmit={handleSendBroadcast} className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3">
+                  <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('إنشاء إشعار بث', 'Compose Broadcast Notification')}</h3>
                   <div>
-                    <label className="block text-xs text-gray-400 font-bold uppercase mb-1">{tx('الجمهور المستهدف', 'Target Audience')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('الجمهور المستهدف', 'Target Audience')}</label>
                     <select
                       value={broadcastTarget}
                       onChange={(e) => setBroadcastTarget(e.target.value)}
-                      className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 p-2.5 rounded focus:outline-none"
+                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                     >
                       <option value="all">{tx('جميع المستخدمين', 'ALL USERS')}</option>
                       <option value="students">{tx('الطلاب فقط', 'STUDENTS ONLY')}</option>
@@ -713,52 +700,52 @@ const AdminDashboard = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 font-bold uppercase mb-1">{tx('عنوان البث', 'Broadcast Title')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('عنوان البث', 'Broadcast Title')}</label>
                     <input
                       type="text"
                       value={broadcastTitle}
                       onChange={(e) => setBroadcastTitle(e.target.value)}
                       placeholder={tx('عنوان الإشعار...', 'Notification title...')}
-                      className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 p-2.5 rounded focus:outline-none"
+                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 font-bold uppercase mb-1">{tx('رسالة ثنائية اللغة', 'Bilingual Message')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('الرسالة', 'Message')}</label>
                     <textarea
                       value={broadcastMsg}
                       onChange={(e) => setBroadcastMsg(e.target.value)}
-                      placeholder={tx('محتوى الرسالة بالإنجليزية والعربية...', 'Message content in English and Arabic...')}
-                      className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 rounded p-2.5 focus:outline-none resize-none h-24"
+                      placeholder={tx('محتوى الرسالة...', 'Message content...')}
+                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none resize-none h-20"
                       required
                     />
                   </div>
                   <button
                     type="submit"
-                    className="w-full py-3 bg-emerald-700 hover:bg-emerald-650 font-bold rounded-xl text-white text-sm transition"
+                    className="w-full py-2.5 bg-[#11694A] hover:bg-[#0B3B2E] font-bold rounded-xl text-white text-xs transition"
                   >
                     {tx('إرسال رسالة البث', 'Dispatch Broadcast Message')}
                   </button>
-                  {broadcastSuccess && <p className="text-xs text-emerald-400 text-center animate-pulse">✓ {tx('تم إرسال إشعار البث!', 'Broadcast notification sent!')}</p>}
+                  {broadcastSuccess && <p className="text-xs text-[#11694A] text-center font-bold animate-pulse">✓ {tx('تم إرسال إشعار البث!', 'Broadcast notification sent!')}</p>}
                 </form>
 
                 {/* Tuition monthly reminders */}
-                <div className="bg-gray-950/40 p-6 rounded-xl border border-gray-800 flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white">{tx('إدارة تذكيرات الرسوم الشهرية', 'Monthly Fee Reminders Manager')}</h3>
-                    <p className="text-xs text-gray-400">
-                      {tx('إنشاء سجلات فواتير الرسوم الدراسية الشهرية وإشعار جميع أولياء الأمور بالتزامات الدفع.', 'Generate monthly tuition billing rows and notify all parents about payment obligations.')}{' '}
-                      {tx('يُنشئ هذا فواتير قياسية (LKR 5000) لجميع الطلاب المعتمدين.', 'This generates standard invoices (LKR 5000) for all approved students.')}
+                <div className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('إدارة تذكيرات الرسوم الشهرية', 'Monthly Fee Reminders Manager')}</h3>
+                    <p className="text-xs text-[#4A5E56] leading-relaxed">
+                      {tx('إنشاء فواتير الشهر الحالي (هياكل الرسوم، السكن، الإعفاءات) وإشعار الطلاب وأولياء الأمور المرتبطين بالتزامات الدفع.', 'Generate this month\'s invoices (fee structures, hostel, concessions) and notify students and linked parents about payment obligations.')}{' '}
+                      {tx('العملية آمنة للتكرار — لا تُنشأ فواتير مكررة.', 'Safe to run twice — no duplicate invoices are created.')}
                     </p>
-                    <div className="p-4 bg-amber-500/10 text-amber-300 text-xs rounded-lg border border-amber-500/20 italic">
+                    <div className="p-3 bg-white text-[#C29A3A] text-xs rounded-xl border border-[#E8E1D0] font-medium">
                       &quot;{tx('سيتم تحديث ملفات أمين الصندوق وأولياء الأمور فوراً لعرض المستحقات وحالة الفواتير.', 'Treasurer and parent profiles will be updated instantly showing outstanding dues and invoice status.')}&quot;
                     </div>
                   </div>
                   <button
                     onClick={handleTriggerFeeReminder}
-                    className="w-full mt-6 py-3 bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold rounded-xl text-sm transition"
+                    className="w-full py-2.5 bg-[#C29A3A] hover:bg-[#A8822B] text-[#0B3B2E] font-bold rounded-xl text-xs transition"
                   >
-                    🔔 {tx('إرسال تذكيرات الرسوم الشهرية', 'Dispatch Monthly Fee Reminders')}
+                    {tx('إرسال تذكيرات الرسوم الشهرية', 'Dispatch Monthly Fee Reminders')}
                   </button>
                 </div>
 
@@ -768,8 +755,8 @@ const AdminDashboard = () => {
 
           {/* Tab: Content CMS */}
           {activeTab === 'content' && (
-            <div className="space-y-6">
-              <div className="flex flex-wrap gap-2">
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2 pb-2 border-b border-[#E8E1D0]">
                 {[
                   { id: 'news', en: 'News', ar: 'الأخبار' },
                   { id: 'faculty', en: 'Faculty', ar: 'الأساتذة' },
@@ -781,8 +768,8 @@ const AdminDashboard = () => {
                     key={s.id}
                     type="button"
                     onClick={() => setContentSection(s.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
-                      contentSection === s.id ? 'bg-emerald-700 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                      contentSection === s.id ? 'bg-[#0B3B2E] text-white' : 'bg-[#FBF8F0] text-[#4A5E56] hover:text-[#0B3B2E] border border-[#E8E1D0]'
                     }`}
                   >
                     {tx(s.ar, s.en)}
@@ -795,40 +782,40 @@ const AdminDashboard = () => {
 
           {/* Tab 5: Pre-seed student indices */}
           {activeTab === 'indexes' && (
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Preseed form */}
-                <form onSubmit={handleAddIndexNumber} className="bg-gray-950/40 p-6 rounded-xl border border-gray-800 space-y-4 md:col-span-1">
-                  <h3 className="text-lg font-bold text-white">{tx('إضافة قيد طالب', 'Add Student Index')}</h3>
+                <form onSubmit={handleAddIndexNumber} className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3 md:col-span-1">
+                  <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('إضافة قيد طالب', 'Add Student Index')}</h3>
                   <div>
-                    <label className="block text-xs text-gray-400 font-bold uppercase mb-1">{tx('رقم القيد', 'Index Number')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('رقم القيد', 'Index Number')}</label>
                     <input
                       type="text"
                       value={newIndexNumber}
                       onChange={(e) => setNewIndexNumber(e.target.value)}
                       placeholder={tx('مثال: KASHIF-2026-101', 'e.g., KASHIF-2026-101')}
-                      className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 p-2.5 rounded focus:outline-none"
+                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 font-bold uppercase mb-1">{tx('الاسم الكامل للطالب', 'Student Full Name')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('الاسم الكامل للطالب', 'Student Full Name')}</label>
                     <input
                       type="text"
                       value={newStudentName}
                       onChange={(e) => setNewStudentName(e.target.value)}
                       placeholder={tx('الاسم الكامل...', 'Full name...')}
-                      className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 p-2.5 rounded focus:outline-none"
+                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 font-bold uppercase mb-1">{tx('رقم الصف', 'Class Number')}</label>
+                    <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('رقم الصف', 'Class Number')}</label>
                     <select
                       value={newIndexClass}
                       onChange={(e) => setNewIndexClass(parseInt(e.target.value))}
-                      className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 p-2.5 rounded focus:outline-none"
+                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                     >
                       {[1, 2, 3, 4, 5, 6, 7].map(num => (
                         <option key={num} value={num}>{tx('الصف {n}', 'Class {n}').replace('{n}', num)}</option>
@@ -837,34 +824,34 @@ const AdminDashboard = () => {
                   </div>
                   <button
                     type="submit"
-                    className="w-full py-2 bg-emerald-700 hover:bg-emerald-650 font-bold rounded text-sm text-white"
+                    className="w-full py-2 bg-[#11694A] hover:bg-[#0B3B2E] font-bold rounded-xl text-xs text-white transition"
                   >
                     {tx('إضافة رقم القيد', 'Seed Index Number')}
                   </button>
                 </form>
 
                 {/* Preseeded Index numbers list */}
-                <div className="bg-gray-950/40 p-6 rounded-xl border border-gray-800 md:col-span-2 space-y-4">
-                  <h3 className="text-lg font-bold text-white">{tx('أرقام القيد المسجلة مسبقاً', 'Pre-registered Index Numbers')}</h3>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-800 text-xs text-gray-300">
+                <div className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] md:col-span-2 space-y-3">
+                  <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('أرقام القيد المسجلة مسبقاً', 'Pre-registered Index Numbers')}</h3>
+                  <div className="overflow-x-auto max-h-80">
+                    <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-gray-400">
+                        <tr className="text-[#4A5E56] border-b border-[#E8E1D0]">
                           <th className="py-2 text-left">{tx('القيد', 'Index')}</th>
                           <th className="py-2 text-left">{tx('اسم الطالب', 'Student Name')}</th>
                           <th className="py-2 text-center">{tx('الصف', 'Class')}</th>
                           <th className="py-2 text-center">{tx('مسجل', 'Registered')}</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-800/40 font-mono">
+                      <tbody className="divide-y divide-[#E8E1D0] font-mono">
                         {indexList.map(idx => (
                           <tr key={idx.index_number}>
-                            <td className="py-3 font-semibold text-white">{idx.index_number}</td>
-                            <td className="py-3 font-sans">{idx.student_name}</td>
-                            <td className="py-3 text-center">{idx.class_number}</td>
-                            <td className="py-3 text-center">
+                            <td className="py-2 font-bold text-[#0B3B2E]">{idx.index_number}</td>
+                            <td className="py-2 font-sans text-[#14201B]">{idx.student_name}</td>
+                            <td className="py-2 text-center text-[#4A5E56]">{idx.class_number}</td>
+                            <td className="py-2 text-center">
                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                idx.is_registered ? 'bg-emerald-500/20 text-emerald-400' : 'bg-gray-850 text-gray-500'
+                                idx.is_registered ? 'bg-[#E3F1EA] text-[#11694A]' : 'bg-gray-100 text-[#4A5E56]'
                               }`}>
                                 {idx.is_registered ? tx('نعم', 'YES') : tx('لا', 'NO')}
                               </span>
@@ -881,9 +868,7 @@ const AdminDashboard = () => {
           )}
 
           {/* Tab: Analytics */}
-          {activeTab === 'analytics' && (
-            <AnalyticsDashboard />
-          )}
+          {activeTab === 'analytics' && <AnalyticsDashboard />}
 
         </div>
 

@@ -1869,5 +1869,10 @@
  "Title TA": "தலைப்பு (தமிழ்)",
  "Content TA": "உள்ளடக்கம் (தமிழ்)",
  "Name TA": "பெயர் (தமிழ்)",
- "Role TA": "பதவி (தமிழ்)"
+ "Role TA": "பதவி (தமிழ்)",
+ "Active Role View:": "செயலில் உள்ள பணிப் பார்வை:",
+ "Class Tutor": "வகுப்பு ஆசிரியர்",
+ "Install App": "செயலியை நிறுவுக",
+ "Install Kashiful Hudha PWA": "காஷிஃபுல் ஹுதா செயலியை நிறுவுக",
+ "Instant offline access to library & student portal": "நூலகம் மற்றும் மாணவர் வாயிலுக்கு உடனடி இணைப்பில்லா அணுகல்"
 }

@@ -20,7 +20,9 @@ export function loadTamil() {
   if (TA) return Promise.resolve(TA);
   if (!loading) {
     // several dictionaries (keyed by English) merged into one
-    loading = Promise.all([import('../locales/ta.json'), import('../locales/ta.governance.json')]).then((mods) => {
+    // every src/locales/ta*.json is a Tamil dictionary keyed by English
+    const files = import.meta.glob('../locales/ta*.json');
+    loading = Promise.all(Object.values(files).map((load) => load())).then((mods) => {
       TA = Object.assign({}, ...mods.map((m) => m.default || m));
       return TA;
     });

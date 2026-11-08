@@ -14,3 +14,5 @@ export { default as Chips } from './Chips';
 export { default as StatTile, TileGrid } from './StatTile';
 export { Row, KeyValue } from './Row';
 export { default as LiveIndicator } from './LiveIndicator';
+export { default as PromptModal } from './PromptModal';
+export { HBar, Legend, ColumnChart } from './Bars';

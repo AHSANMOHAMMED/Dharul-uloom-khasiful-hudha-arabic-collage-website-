@@ -3,11 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { tx } from '../lib/tx';
 
 /**
- * OfflineIndicator — shows a sticky banner when the user loses network connectivity.
- * Listens to the native online/offline browser events.
+ * OfflineIndicator — shows a sticky notification when network connectivity is lost/restored.
  */
 const OfflineIndicator = () => {
-  useTranslation(); // subscribe: re-render on language change
+  useTranslation(); // re-render on language change
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [wasOffline, setWasOffline] = useState(false);
   const [showRestored, setShowRestored] = useState(false);
@@ -17,8 +16,7 @@ const OfflineIndicator = () => {
       setIsOnline(true);
       if (wasOffline) {
         setShowRestored(true);
-        // Hide the "Back Online" toast after 3 seconds
-        setTimeout(() => setShowRestored(false), 3000);
+        setTimeout(() => setShowRestored(false), 3500);
       }
     };
     const handleOffline = () => {
@@ -40,24 +38,32 @@ const OfflineIndicator = () => {
     <div
       role="alert"
       aria-live="assertive"
-      className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-semibold border transition-all duration-300 ${
+      className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-lg text-xs font-semibold border transition-all duration-300 ${
         isOnline
-          ? 'bg-emerald-900/90 border-emerald-500/40 text-emerald-200'
-          : 'bg-red-950/90 border-red-500/40 text-red-200'
-      } backdrop-blur-md`}
+          ? 'bg-white border-[#11694A] text-[#11694A]'
+          : 'bg-white border-[#B91C1C] text-[#B91C1C]'
+      }`}
     >
       {isOnline ? (
         <>
-          <span className="text-lg animate-bounce">📶</span>
-          <span>{tx('عاد الاتصال! ستتم مزامنة التغييرات تلقائياً.', 'Back online! Changes will sync automatically.')}</span>
+          <div className="w-6 h-6 rounded-full bg-[#E3F1EA] flex items-center justify-center shrink-0">
+            <svg className="w-3.5 h-3.5 stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <span className="font-sans">{tx('عاد الاتصال! ستتم مزامنة التغييرات تلقائياً.', 'Connection restored. Changes will sync automatically.')}</span>
         </>
       ) : (
         <>
-          <span className="text-lg">📵</span>
+          <div className="w-6 h-6 rounded-full bg-[#FEE2E2] flex items-center justify-center shrink-0">
+            <svg className="w-3.5 h-3.5 stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
           <div>
-            <span className="block">{tx('أنت غير متصل بالإنترنت.', 'You are offline.')}</span>
-            <span className="block text-xs font-normal text-red-300 mt-0.5">
-              {tx('قد تكون بعض الميزات غير متاحة. لا يزال المحتوى المخزّن متاحاً.', 'Some features may be unavailable. Cached content is still accessible.')}
+            <span className="block font-bold">{tx('أنت غير متصل بالإنترنت حالياً.', 'You are currently offline.')}</span>
+            <span className="block text-[11px] font-normal text-[#4A5E56] mt-0.5">
+              {tx('تبقى الصفحات والكتب المخزّنة متاحة من التخزين دون اتصال.', 'Cached pages and books remain accessible from offline storage.')}
             </span>
           </div>
         </>

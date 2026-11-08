@@ -10,8 +10,8 @@ describe('NotFound page', () => {
         <NotFound />
       </MemoryRouter>
     )
-    expect(screen.getByText('404')).toBeInTheDocument()
-    const homeLink = screen.getByRole('link')
+    expect(screen.getByText(/404/)).toBeInTheDocument()
+    const homeLink = screen.getByRole('link', { name: /home/i })
     expect(homeLink).toHaveAttribute('href', '/')
   })
 })

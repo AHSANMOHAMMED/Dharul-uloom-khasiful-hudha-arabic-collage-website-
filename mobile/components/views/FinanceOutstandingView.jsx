@@ -48,7 +48,7 @@ export default function FinanceOutstandingView() {
           subtitle={`${r.index_number || '—'} · ${t('common.classN', { n: r.class_number ?? '—' })} · ${t('admin.openInvoices', { n: r.open_invoices })}`}
           meta={r.days_overdue > 0 ? t('admin.daysOverdue', { n: r.days_overdue }) : undefined}
           right={<Money amount={r.balance} tone="danger" />}
-          onPress={caps.isFinanceStaff ? () => router.push({ pathname: '/receive-payment', params: { student: r.student_id } }) : undefined}
+          onPress={() => router.push(`/finance/student/${r.student_id}`)}
         />
       ))}
     </Screen>

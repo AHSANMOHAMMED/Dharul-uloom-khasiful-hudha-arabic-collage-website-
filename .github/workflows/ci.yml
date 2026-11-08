@@ -2,9 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ '**' ]        # every branch, so feature work is proven green before merge
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   frontend:

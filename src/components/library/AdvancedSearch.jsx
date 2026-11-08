@@ -10,10 +10,11 @@ const LANGUAGES = [
   { value: 'mixed', ar: 'متعدد اللغات', en: 'Multilingual' },
 ];
 
-const AdvancedSearch = ({ categories = [], value, onChange }) => {
+export default function AdvancedSearch({ categories = [], value, onChange }) {
   const { i18n } = useTranslation();
-  const dir = { ar: 'rtl' }[i18n.language] || 'ltr';
+  const dir = i18n.dir();
   const [draftQuery, setDraftQuery] = useState(value.query ?? '');
+  const [showFilters, setShowFilters] = useState(false);
 
   const submit = (e) => {
     e.preventDefault();
@@ -23,70 +24,103 @@ const AdvancedSearch = ({ categories = [], value, onChange }) => {
   const update = (patch) => onChange({ ...value, ...patch, page: 1 });
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <div className="flex flex-col gap-3 md:flex-row">
+    <form onSubmit={submit} className="space-y-3">
+      {/* Search Input Bar */}
+      <div className="flex items-center bg-paper-white p-2 rounded-[14px] border border-sand-border shadow-manuscript">
+        <span className="material-symbols-outlined text-ink-text-muted mx-3 text-[20px]">{'search'}</span>
         <input
           type="text"
           value={draftQuery}
           onChange={(e) => setDraftQuery(e.target.value)}
-          placeholder={tx('ابحث بالعنوان أو المؤلف...', 'Search by title or author...')}
+          placeholder={tx('ابحث بالعنوان، المؤلف، أو الكلمات المفتاحية...', 'Search by title, author, or keyword (e.g. Sahih al-Bukhari)...')}
           dir={dir}
-          className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-islamic-gold"
+          className="w-full bg-transparent text-xs sm:text-sm text-ink-text-primary focus:outline-none placeholder:text-ink-text-muted"
         />
-        <button
-          type="submit"
-          className="rounded-xl bg-islamic-green px-6 py-3 font-semibold text-white transition-colors hover:bg-islamic-dark"
-        >
-          {tx('بحث', 'Search')}
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            aria-expanded={showFilters}
+            className="px-3 py-1.5 rounded-lg border border-sand-border hover:bg-parchment-50 text-xs text-ink-text-secondary flex items-center gap-1 font-medium"
+          >
+            <span className="material-symbols-outlined text-[16px]">{'tune'}</span>
+            <span className="hidden sm:inline">{tx('عوامل التصفية', 'Filters')}</span>
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-emerald-700 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+          >
+            {tx('بحث', 'Search')}
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <label className="flex flex-col gap-1 text-sm text-gray-600">
-          {tx('اللغة', 'Language')}
-          <select
-            value={value.language ?? ''}
-            onChange={(e) => update({ language: e.target.value || null })}
-            className="rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-islamic-gold"
-          >
-            {LANGUAGES.map((l) => (
-              <option key={l.value} value={l.value}>
-                {tx(l.ar, l.en)}
-              </option>
-            ))}
-          </select>
-        </label>
+      {/* Collapsible Filter Row */}
+      {showFilters && (
+        <div className="p-4 rounded-[12px] bg-paper-white border border-sand-border shadow-xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label className="block text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider mb-1">
+              {tx('اللغة', 'Language')}
+            </label>
+            <select
+              value={value.language ?? ''}
+              onChange={(e) => update({ language: e.target.value || null })}
+              className="w-full h-9 px-2.5 rounded-[8px] bg-parchment-50 border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {tx(l.ar, l.en)}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <label className="flex flex-col gap-1 text-sm text-gray-600">
-          {tx('التصنيف', 'Category')}
-          <select
-            value={value.category ?? ''}
-            onChange={(e) => update({ category: e.target.value || null })}
-            className="rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-islamic-gold"
-          >
-            <option value="">{tx('كل التصنيفات', 'All categories')}</option>
-            {categories.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </label>
+          <div>
+            <label className="block text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider mb-1">
+              {tx('التصنيف', 'Category')}
+            </label>
+            <select
+              value={value.category ?? ''}
+              onChange={(e) => update({ category: e.target.value || null })}
+              className="w-full h-9 px-2.5 rounded-[8px] bg-parchment-50 border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+            >
+              <option value="">{tx('كل التصنيفات', 'All categories')}</option>
+              {categories.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <label className="flex flex-col gap-1 text-sm text-gray-600">
-          {tx('المؤلف', 'Author')}
-          <input
-            type="text"
-            value={value.author ?? ''}
-            onChange={(e) => update({ author: e.target.value || null })}
-            placeholder={tx('اسم المؤلف', 'Author name')}
-            dir={dir}
-            className="rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-islamic-gold"
-          />
-        </label>
-      </div>
+          <div>
+            <label className="block text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider mb-1">
+              {tx('المؤلف', 'Author')}
+            </label>
+            <input
+              type="text"
+              value={value.author ?? ''}
+              onChange={(e) => update({ author: e.target.value || null })}
+              placeholder={tx('اسم المؤلف', 'Author name')}
+              dir={dir}
+              className="w-full h-9 px-2.5 rounded-[8px] bg-parchment-50 border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary placeholder:text-ink-text-muted"
+            />
+          </div>
+
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={() => {
+                setDraftQuery('');
+                onChange({ query: '', language: null, category: null, author: null, page: 1 });
+              }}
+              className="w-full h-9 rounded-[8px] border border-sand-border hover:bg-parchment-50 text-xs font-medium text-ink-text-secondary"
+            >
+              {tx('إعادة ضبط عوامل التصفية', 'Reset all filters')}
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
-};
-
-export default AdvancedSearch;
+}

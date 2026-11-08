@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
 
-const ResetPassword = () => {
-  useTranslation(); // subscribe: re-render on language change
+export default function ResetPassword() {
+  useTranslation();
   const navigate = useNavigate();
+
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingLink, setCheckingLink] = useState(true);
   const [linkReady, setLinkReady] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -55,103 +57,169 @@ const ResetPassword = () => {
     };
   }, []);
 
+  // Compute password strength
+  const getStrength = (pass) => {
+    let score = 0;
+    if (pass.length >= 8) score++;
+    if (/[A-Z]/.test(pass)) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[^A-Za-z0-9]/.test(pass)) score++;
+    return score;
+  };
+
+  const strength = getStrength(password);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (password.length < 8) {
-      setError(tx('كلمة المرور يجب أن تكون 8 أحرف على الأقل', 'Password must be at least 8 characters'));
-      return;
-    }
+
     if (password !== confirm) {
-      setError(tx('كلمتا المرور غير متطابقتين', 'Passwords do not match'));
+      setError(tx('كلمات المرور غير متطابقة', 'Passwords do not match'));
       return;
     }
+
+    if (password.length < 8) {
+      setError(tx('يجب أن تكون كلمة المرور 8 أحرف على الأقل', 'Password must be at least 8 characters'));
+      return;
+    }
+
     if (!isSupabaseConfigured) {
-      setError(tx('خدمة المصادقة غير مهيأة', 'Authentication is not configured'));
+      setError(tx('خدمة المصادقة غير مهيأة حالياً', 'Authentication service is not configured'));
       return;
     }
-    if (!linkReady) {
-      setError(tx('رابط غير صالح أو منتهي. اطلب رابطاً جديداً.', 'Invalid or expired link. Request a new reset link.'));
-      return;
-    }
+
     setLoading(true);
     const { error: updateError } = await supabase.auth.updateUser({ password });
     setLoading(false);
+
     if (updateError) {
       setError(updateError.message);
       return;
     }
-    navigate('/login', { state: { message: tx('تم تحديث كلمة المرور. يمكنك تسجيل الدخول الآن.', 'Password updated. You can sign in now.') } });
+
+    setSuccess(true);
+    setTimeout(() => {
+      navigate('/login', {
+        state: { message: tx('تم تحديث كلمة المرور بنجاح. يمكنك تسجيل الدخول.', 'Password updated. You may now sign in.') }
+      });
+    }, 2000);
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full space-y-8">
-        <h2 className="text-center text-3xl font-extrabold text-islamic-green">
-          {tx('كلمة مرور جديدة', 'Set New Password')}
-        </h2>
+  if (checkingLink) {
+    return (
+      <div className="min-h-screen bg-parchment-50 flex items-center justify-center p-6">
+        <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
-        {checkingLink ? (
-          <div className="bg-white p-8 rounded-lg shadow-md text-center text-gray-600">
-            {tx('جاري التحقق من الرابط...', 'Verifying reset link...')}
+  return (
+    <div className="min-h-screen bg-parchment-50 flex items-center justify-center p-6 relative overflow-hidden">
+      <KhatamPattern className="opacity-[0.05]" strokeColor="#0B3B2E" id="reset-khatam" />
+
+      <div className="relative z-10 max-w-md w-full rounded-[14px] bg-paper-white border border-sand-border p-8 sm:p-10 shadow-manuscript-md space-y-6">
+        
+        <div className="text-center space-y-2">
+          <div className="w-12 h-12 rounded-full bg-mint-wash-100 text-emerald-700 mx-auto flex items-center justify-center border border-emerald-700/20">
+            <span className="material-symbols-outlined text-2xl">{'key'}</span>
+          </div>
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 block">
+            {tx('بيانات الأمان', 'Security Credential')}
+          </span>
+          <h1 className="font-serif text-2xl font-semibold text-ink-green-900">
+            {tx('تعيين كلمة المرور الجديدة', 'Set New Password')}
+          </h1>
+          <p className="text-xs text-ink-text-secondary">
+            {tx('احرص على أن تحتوي كلمة المرور الجديدة على مزيج من الحروف والأرقام والرموز.', 'Ensure your new password contains a combination of letters, numbers, and symbols.')}
+          </p>
+        </div>
+
+        {success ? (
+          <div className="p-4 rounded-xl bg-mint-wash-100 border border-emerald-700/20 text-center space-y-2">
+            <span className="material-symbols-outlined text-3xl text-emerald-700">{'check_circle'}</span>
+            <p className="text-xs text-emerald-900 font-semibold">
+              {tx('تم تحديث كلمة المرور بنجاح. جارٍ التحويل إلى صفحة الدخول...', 'Password updated successfully. Redirecting to login...')}
+            </p>
           </div>
         ) : !linkReady ? (
-          <div className="bg-white p-8 rounded-lg shadow-md text-center space-y-4">
-            <p className="text-red-700">
-              {tx('رابط إعادة التعيين غير صالح أو منتهي الصلاحية.', 'This password reset link is invalid or has expired.')}
+          <div className="p-4 rounded-xl bg-gold-wash-100/50 border border-brass-gold-500/30 text-center space-y-3">
+            <p className="text-xs text-ink-text-secondary leading-relaxed">
+              {tx('رابط الاستعادة هذا غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.', 'This recovery link is invalid or has expired. Please request a fresh reset link.')}
             </p>
-            <Link to="/forgot-password" className="text-islamic-green font-medium hover:underline">
-              {tx('طلب رابط جديد', 'Request a new link')}
+            <Link to="/forgot-password" className="text-xs font-semibold text-emerald-700 hover:underline block">
+              {tx('طلب رابط جديد', 'Request new link')}
             </Link>
           </div>
         ) : (
-        <form className="bg-white p-8 rounded-lg shadow-md space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">{error}</div>
-          )}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {tx('كلمة المرور الجديدة', 'New password')}
-            </label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-islamic-green focus:border-islamic-green"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {tx('تأكيد كلمة المرور', 'Confirm password')}
-            </label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-islamic-green focus:border-islamic-green"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-islamic-green text-white rounded-lg font-medium hover:bg-islamic-dark disabled:opacity-50"
-          >
-            {loading ? (tx('جاري الحفظ...', 'Saving...')) : (tx('حفظ كلمة المرور', 'Save password'))}
-          </button>
-          <div className="text-center">
-            <Link to="/login" className="text-sm text-gray-600 hover:text-islamic-green">
-              {tx('← العودة لتسجيل الدخول', '← Back to sign in')}
-            </Link>
-          </div>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-3 rounded-lg bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger text-xs font-medium">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                {tx('كلمة المرور الجديدة (8 أحرف على الأقل) *', 'New Password (min 8 chars) *')}
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full h-11 px-3.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+              />
+
+              {/* Strength Meter */}
+              {password && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex gap-1 h-1.5 w-full">
+                    {[1, 2, 3, 4].map((step) => (
+                      <div
+                        key={step}
+                        className={`h-full flex-1 rounded-full transition-colors ${
+                          strength >= step
+                            ? strength <= 2
+                              ? 'bg-feedback-warning'
+                              : 'bg-emerald-700'
+                            : 'bg-sand-border/40'
+                        }`}
+                      ></div>
+                    ))}
+                  </div>
+                  <span className="text-[10px] text-ink-text-muted block">
+                    {tx('القوة:', 'Strength:')} {strength <= 1 ? tx('ضعيفة', 'Weak') : strength <= 3 ? tx('متوسطة', 'Medium') : tx('قوية', 'Strong')}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                {tx('تأكيد كلمة المرور الجديدة *', 'Confirm New Password *')}
+              </label>
+              <input
+                type="password"
+                required
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full h-11 px-3.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-semibold shadow-manuscript transition-colors disabled:opacity-50"
+            >
+              {loading ? tx('جارٍ حفظ كلمة المرور الجديدة...', 'Saving New Password...') : tx('حفظ كلمة المرور', 'Save Password')}
+            </button>
+          </form>
         )}
-      </motion.div>
+
+      </div>
     </div>
   );
-};
-
-export default ResetPassword;
+}

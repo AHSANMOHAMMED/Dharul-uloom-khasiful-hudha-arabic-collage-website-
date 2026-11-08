@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import TutorLmsPanel from '../components/TutorLmsPanel';
+import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
-
 
 const TutorDashboard = () => {
   const { user, isTreasurer } = useAuth();
-  useTranslation(); // subscribe: re-render on language change
+  useTranslation(); // re-render on language change
   
   const [jobs, setJobs] = useState([]);
   const [salaries, setSalaries] = useState([]);
@@ -20,12 +20,14 @@ const TutorDashboard = () => {
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceRecords, setAttendanceRecords] = useState({}); // studentId -> status
   const [attendanceSuccess, setAttendanceSuccess] = useState(false);
+  const [attendanceSaving, setAttendanceSaving] = useState(false);
   
   // Leave requests state
   const [leaves, setLeaves] = useState([]);
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [leaveReply, setLeaveReply] = useState('');
   const [leaveSuccess, setLeaveSuccess] = useState(false);
+  const [leaveProcessing, setLeaveProcessing] = useState(false);
   
   const [loading, setLoading] = useState(true);
 
@@ -108,6 +110,7 @@ const TutorDashboard = () => {
   const handleSaveAttendance = async (e) => {
     e.preventDefault();
     setAttendanceSuccess(false);
+    setAttendanceSaving(true);
     
     try {
       const rows = Object.entries(attendanceRecords).map(([studentId, status]) => ({
@@ -125,9 +128,11 @@ const TutorDashboard = () => {
       }
 
       setAttendanceSuccess(true);
-      setTimeout(() => setAttendanceSuccess(false), 3000);
+      setTimeout(() => setAttendanceSuccess(false), 3500);
     } catch (err) {
       console.error('Error saving attendance records:', err);
+    } finally {
+      setAttendanceSaving(false);
     }
   };
 
@@ -135,6 +140,7 @@ const TutorDashboard = () => {
   const handleReviewLeave = async (status) => {
     if (!selectedLeave) return;
     setLeaveSuccess(false);
+    setLeaveProcessing(true);
 
     try {
       const { error } = await supabase
@@ -148,7 +154,6 @@ const TutorDashboard = () => {
 
       if (error) throw error;
 
-      // Send notification to student / parent
       await supabase.from('notifications').insert([
         {
           user_id: selectedLeave.student_id,
@@ -169,87 +174,112 @@ const TutorDashboard = () => {
         .order('created_at', { ascending: false });
       setLeaves(leavesData || []);
 
-      setTimeout(() => setLeaveSuccess(false), 3000);
+      setTimeout(() => setLeaveSuccess(false), 3500);
     } catch (err) {
       console.error('Error reviewing leave:', err);
+    } finally {
+      setLeaveProcessing(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
-        <div className="relative w-16 h-16 flex items-center justify-center">
-          <div className="absolute inset-0 border-t-2 border-r-2 border-amber-500 rounded-full animate-spin"></div>
-          <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center text-amber-400">⚡</div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FBF8F0]">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-full border-2 border-[#11694A] border-t-transparent animate-spin"></div>
+          <p className="text-sm font-sans text-[#4A5E56]">
+            {tx('جاري تحميل لوحة المعلم...', 'Loading tutor dashboard...')}
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Decorative Background */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-amber-900/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[#FBF8F0] text-[#14201B] relative overflow-hidden py-8 sm:py-12">
+      {/* Background Watermark */}
+      <div className="absolute -top-32 -right-32 w-[600px] h-[600px] pointer-events-none opacity-[0.03]">
+        <KhatamPattern className="w-full h-full text-[#0B3B2E]" />
+      </div>
 
-      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
         
-        {/* Dashboard Header */}
-        <div className="glass-panel p-8 rounded-[2rem] border border-amber-500/20 shadow-glass flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:border-amber-500/40 transition-all duration-500 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        {/* Header Banner */}
+        <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#0F7C86]"></div>
           
-          <div className="relative z-10 flex items-center gap-6">
-             <div className="hidden sm:flex w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-600 to-amber-900 items-center justify-center shadow-glow-amber">
-                <span className="text-4xl text-white font-arabic">م</span>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="flex items-center gap-5">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#E0F2F1] text-[#0F7C86] flex items-center justify-center font-arabic text-2xl sm:text-3xl font-bold shrink-0 shadow-sm border border-[#0F7C86]/20">
+                م
               </div>
-            <div>
-              <span className="bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-glow-amber border border-amber-500/20">
-                {tx('بوابة المعلمين', 'Tutor Portal')}
-              </span>
-              <h1 className="mt-3 text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">
-                {tx('مرحباً بك، فضيلة الشيخ {name}', 'Welcome back, Sheikh {name}').replace('{name}', user?.username)}
-              </h1>
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#E0F2F1] text-[#0F7C86] border border-[#0F7C86]/20 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0F7C86]"></span>
+                  {tx('بوابة المعلمين والأساتذة', 'Faculty & Tutor Portal')}
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#0B3B2E]">
+                  {tx('مرحباً بك، فضيلة الشيخ {name}', 'Welcome, Sheikh {name}').replace('{name}', user?.username || tx('المعلم', 'Tutor'))}
+                </h1>
+                <p className="text-xs sm:text-sm text-[#4A5E56] font-sans mt-0.5">
+                  {tx('إدارة الحلقات الدراسية، الحضور، الإجازات، والواجبات اليومية', 'Class halaqah management, attendance logging, leave approvals & assignments')}
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="relative z-10 flex flex-wrap gap-4">
-            {isTreasurer && (
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              {isTreasurer && (
+                <Link
+                  to="/dashboard?treasurer=true"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#C29A3A] hover:bg-[#A8822B] text-[#0B3B2E] font-sans font-bold text-xs sm:text-sm rounded-xl transition shadow-sm"
+                >
+                  <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {tx('لوحة أمين الصندوق', 'Treasurer Portal')}
+                </Link>
+              )}
               <Link
-                to="/dashboard?treasurer=true"
-                className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-gray-950 font-black rounded-2xl transition-all shadow-glow-amber hover:-translate-y-1 flex items-center gap-2"
+                to="/library"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
               >
-                <span className="text-xl">💰</span> {tx('لوحة أمين الصندوق', 'Treasurer Panel')}
+                <svg className="w-4 h-4 text-[#11694A] stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                {tx('المكتبة الرقمية', 'Digital Library')}
               </Link>
-            )}
-            <Link
-              to="/library"
-              className="px-6 py-3 bg-gray-900/80 border border-gray-700 text-gray-200 rounded-2xl hover:bg-gray-800 transition-all shadow-lg hover:-translate-y-1 flex items-center gap-2"
-            >
-              <span className="text-xl">📖</span> {tx('المكتبة الرقمية', 'Digital Library')}
-            </Link>
+            </div>
           </div>
         </div>
 
         {/* Info & Jobs Panel */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* Annual Jobs Card */}
-          <div className="glass-card rounded-[2rem] p-8 space-y-6 hover:border-emerald-500/30 transition-all duration-300">
-            <h3 className="text-lg font-bold text-white flex items-center gap-3">
-              <span className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">💼</span>
-              {tx('المسؤوليات المعينة للعام', 'Academic Job / Role')}
-            </h3>
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#E8E1D0]">
+              <div className="w-9 h-9 rounded-xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
+                <svg className="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <h3 className="text-base font-serif font-bold text-[#0B3B2E]">
+                {tx('المسؤوليات المعينة للعام', 'Academic Role & Jobs')}
+              </h3>
+            </div>
+
             {jobs.length === 0 ? (
-              <p className="text-xs text-gray-500">
-                {tx('لا توجد وظائف معينة حالياً للعام الدراسي', 'No jobs or responsibilities assigned for this year.')}
+              <p className="text-xs text-[#4A5E56] py-3">
+                {tx('لا توجد وظائف معينة حالياً للعام الدراسي.', 'No additional responsibilities assigned for this academic year.')}
               </p>
             ) : (
               <div className="space-y-3">
                 {jobs.map((job) => (
-                  <div key={job.id} className="p-3 bg-emerald-950/20 border border-emerald-500/20 rounded-xl">
-                    <h4 className="font-bold text-white text-sm">{job.title}</h4>
-                    <p className="text-xs text-gray-400 mt-1">{job.description}</p>
-                    <span className="inline-block mt-2 text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded uppercase">
-                      {tx('السنة', 'Year')}: {job.academic_year}
+                  <div key={job.id} className="p-3 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl">
+                    <h4 className="font-sans font-bold text-[#0B3B2E] text-sm">{job.title}</h4>
+                    <p className="text-xs text-[#4A5E56] mt-1">{job.description}</p>
+                    <span className="inline-block mt-2 text-[10px] bg-[#E3F1EA] text-[#11694A] font-bold px-2 py-0.5 rounded">
+                      {tx('السنة', 'Year')}: {job.academic_year || 2026}
                     </span>
                   </div>
                 ))}
@@ -258,27 +288,34 @@ const TutorDashboard = () => {
           </div>
 
           {/* Salary card */}
-          <div className="glass-card rounded-[2rem] p-8 space-y-6 hover:border-amber-500/30 transition-all duration-300">
-            <h3 className="text-lg font-bold text-white flex items-center gap-3">
-              <span className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20">💵</span>
-              {tx('حالة الراتب الشهري', 'Salary Statement')}
-            </h3>
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#E8E1D0]">
+              <div className="w-9 h-9 rounded-xl bg-[#F7EDD2] text-[#C29A3A] flex items-center justify-center">
+                <svg className="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-serif font-bold text-[#0B3B2E]">
+                {tx('حالة الراتب الشهري', 'Salary Statement')}
+              </h3>
+            </div>
+
             {salaries.length === 0 ? (
-              <p className="text-xs text-gray-500">
-                {tx('لا توجد بيانات مرتبات مدخلة', 'No salary histories recorded.')}
+              <p className="text-xs text-[#4A5E56] py-3">
+                {tx('لا توجد بيانات مرتبات مدخلة بعد.', 'No salary records logged yet.')}
               </p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {salaries.slice(0, 3).map((sal) => (
-                  <div key={sal.id} className="flex justify-between items-center p-3 bg-gray-950/40 rounded-xl border border-gray-800/30 text-xs">
+                  <div key={sal.id} className="flex justify-between items-center p-3 bg-[#FBF8F0] rounded-xl border border-[#E8E1D0] text-xs">
                     <div>
-                      <span className="text-[10px] text-gray-500 uppercase">{tx('الشهر', 'Month')}</span>
-                      <div className="font-bold text-white">{sal.month}</div>
+                      <span className="text-[10px] text-[#4A5E56] uppercase font-bold tracking-wider">{tx('الشهر', 'Month')}</span>
+                      <div className="font-bold text-[#0B3B2E]">{sal.month}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-amber-400 font-mono">{tx('روبية', 'LKR')} {sal.amount}</div>
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                        sal.status === 'paid' ? 'bg-emerald-500/25 text-emerald-400' : 'bg-red-500/25 text-red-400'
+                      <div className="font-mono font-bold text-[#11694A] tabular-nums">{tx('روبية', 'LKR')} {Number(sal.amount).toLocaleString()}</div>
+                      <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold mt-0.5 ${
+                        sal.status === 'paid' ? 'bg-[#E3F1EA] text-[#11694A]' : 'bg-[#FEE2E2] text-[#B91C1C]'
                       }`}>
                         {sal.status.toUpperCase()}
                       </span>
@@ -290,30 +327,43 @@ const TutorDashboard = () => {
           </div>
 
           {/* Attendance controller header */}
-          <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              ⚙️ {tx('الفصل الدراسي النشط', 'Attendance Configuration')}
-            </h3>
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-[#E8E1D0]">
+              <div className="w-9 h-9 rounded-xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
+                <svg className="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-serif font-bold text-[#0B3B2E]">
+                {tx('تحديد الصف والتاريخ', 'Attendance Session')}
+              </h3>
+            </div>
+
             <div className="space-y-3">
               <div>
-                <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('اختر الصف', 'Select Class')}</label>
+                <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                  {tx('اختر الصف الدراسي', 'Select Class')}
+                </label>
                 <select
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(parseInt(e.target.value))}
-                  className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 rounded p-2 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-sm text-[#14201B] rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-[#11694A]"
                 >
                   {[1, 2, 3, 4, 5, 6, 7].map(num => (
                     <option key={num} value={num}>{tx('صف {n}', 'Class {n}').replace('{n}', num)}</option>
                   ))}
                 </select>
               </div>
+
               <div>
-                <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('التاريخ', 'Date')}</label>
+                <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">
+                  {tx('التاريخ', 'Date')}
+                </label>
                 <input
                   type="date"
                   value={attendanceDate}
                   onChange={(e) => setAttendanceDate(e.target.value)}
-                  className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 rounded p-2 focus:outline-none"
+                  className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-sm text-[#14201B] rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-[#11694A]"
                 />
               </div>
             </div>
@@ -322,46 +372,60 @@ const TutorDashboard = () => {
         </div>
 
         {/* Mark Attendance & Review Leaves */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Mark Attendance Roster */}
-          <div className="lg:col-span-2 bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
-            <div className="flex justify-between items-center border-b border-gray-800 pb-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic">
-                📝 {tx('تسجيل حضور طلاب الصف {n}', 'Class {n} Student Attendance').replace('{n}', selectedClass)}
-              </h2>
-              <span className="text-xs text-gray-400">{tx('المجموع: {n} طالب', 'Total: {n} Students').replace('{n}', students.length)}</span>
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-6">
+            <div className="flex justify-between items-center pb-4 border-b border-[#E8E1D0]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
+                  <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                    {tx('تسجيل حضور طلاب الصف {n}', 'Class {n} Attendance Roster').replace('{n}', selectedClass)}
+                  </h2>
+                  <p className="text-xs text-[#4A5E56]">{attendanceDate}</p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#FBF8F0] text-[#0B3B2E] border border-[#E8E1D0] tabular-nums">
+                {students.length} {tx('طالب', 'Students')}
+              </span>
             </div>
 
             {students.length === 0 ? (
-              <div className="text-center py-16 text-gray-500">
-                {tx('لا يوجد طلاب مسجلين في هذا الصف', 'No approved students found for this class.')}
+              <div className="text-center py-12 text-[#4A5E56] text-sm">
+                {tx('لا يوجد طلاب مسجلين في هذا الصف.', 'No approved students found for this class.')}
               </div>
             ) : (
               <form onSubmit={handleSaveAttendance} className="space-y-6">
-                <div className="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
                   {students.map((student) => (
-                    <div key={student.id} className="flex justify-between items-center p-3 bg-gray-950/20 border border-gray-800/40 rounded-xl">
+                    <div key={student.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl gap-3">
                       <div>
-                        <div className="font-bold text-white text-sm">{student.full_name}</div>
-                        <span className="font-mono text-[10px] text-gray-500">{student.index_number}</span>
+                        <div className="font-sans font-bold text-[#0B3B2E] text-sm">{student.full_name}</div>
+                        <span className="font-mono text-[11px] text-[#4A5E56] tabular-nums">{student.index_number}</span>
                       </div>
-                      <div className="flex gap-2">
-                        {['present', 'absent', 'late', 'excused'].map((stat) => (
+                      <div className="flex flex-wrap gap-1.5 self-end sm:self-auto">
+                        {[
+                          { key: 'present', label: tx('حاضر', 'Present'), activeBg: 'bg-[#11694A] text-white' },
+                          { key: 'absent', label: tx('غائب', 'Absent'), activeBg: 'bg-[#B91C1C] text-white' },
+                          { key: 'late', label: tx('متأخر', 'Late'), activeBg: 'bg-[#C29A3A] text-white' },
+                          { key: 'excused', label: tx('معذور', 'Excused'), activeBg: 'bg-[#0F7C86] text-white' },
+                        ].map((stat) => (
                           <button
-                            key={stat}
+                            key={stat.key}
                             type="button"
-                            onClick={() => handleAttendanceChange(student.id, stat)}
-                            className={`px-2.5 py-1 rounded text-xs font-bold uppercase transition ${
-                              attendanceRecords[student.id] === stat
-                                ? stat === 'present' ? 'bg-emerald-500 text-gray-950' :
-                                  stat === 'absent' ? 'bg-red-500 text-gray-950' :
-                                  stat === 'late' ? 'bg-amber-500 text-gray-950' :
-                                  'bg-blue-500 text-white'
-                                : 'bg-gray-850 text-gray-500 hover:text-white'
+                            onClick={() => handleAttendanceChange(student.id, stat.key)}
+                            className={`px-3 py-1 rounded-lg text-xs font-semibold uppercase tracking-wider transition ${
+                              attendanceRecords[student.id] === stat.key
+                                ? stat.activeBg
+                                : 'bg-white border border-[#E8E1D0] text-[#4A5E56] hover:text-[#0B3B2E] hover:border-[#0B3B2E]'
                             }`}
                           >
-                            {stat.substring(0, 3)}
+                            {stat.label}
                           </button>
                         ))}
                       </div>
@@ -369,35 +433,67 @@ const TutorDashboard = () => {
                   ))}
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full py-3 bg-emerald-700 hover:bg-emerald-600 font-bold rounded-xl text-white text-sm transition"
-                >
-                  {tx('حفظ سجل حضور اليوم', 'Save Attendance Records')}
-                </button>
-                {attendanceSuccess && (
-                  <p className="text-sm text-emerald-400 text-center animate-pulse">✓ {tx('تم حفظ الحضور بنجاح!', 'Attendance saved successfully!')}</p>
-                )}
+                <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={attendanceSaving}
+                    className="w-full sm:w-auto px-6 py-2.5 bg-[#11694A] hover:bg-[#0B3B2E] disabled:bg-[#60736C] font-sans font-bold rounded-xl text-white text-sm transition shadow-sm inline-flex items-center justify-center gap-2"
+                  >
+                    {attendanceSaving ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        {tx('جاري الحفظ...', 'Saving...')}
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {tx('حفظ سجل حضور اليوم', 'Save Attendance Records')}
+                      </>
+                    )}
+                  </button>
+                  {attendanceSuccess && (
+                    <span className="text-xs text-[#11694A] font-bold animate-pulse">
+                      ✓ {tx('تم حفظ سجل الحضور بنجاح!', 'Attendance records updated successfully!')}
+                    </span>
+                  )}
+                </div>
               </form>
             )}
           </div>
 
           {/* Manage Leave Requests */}
-          <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic border-b border-gray-800 pb-4">
-              📝 {tx('طلبات الإجازات الواردة', 'Leave Requests Queue')}
-            </h2>
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E8E1D0]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#F7EDD2] text-[#C29A3A] flex items-center justify-center">
+                  <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
+                  {tx('طلبات الإجازات', 'Leave Requests Queue')}
+                </h2>
+              </div>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#FEE2E2] text-[#B91C1C] tabular-nums">
+                {leaves.length}
+              </span>
+            </div>
+
             {leaves.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                {tx('لا توجد طلبات إجازة معلقة', 'No pending leave requests.')}
+              <div className="text-center py-10 text-xs text-[#4A5E56]">
+                {tx('لا توجد طلبات إجازة معلقة.', 'No pending leave requests.')}
               </div>
             ) : (
-              <div className="space-y-4 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
+              <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
                 {leaves.map((lv) => (
                   <div
                     key={lv.id}
-                    className={`p-3 bg-gray-950/40 border border-gray-800 rounded-xl text-xs space-y-2 cursor-pointer transition ${
-                      selectedLeave?.id === lv.id ? 'ring-1 ring-amber-500 bg-gray-950/80' : ''
+                    className={`p-3 rounded-xl border text-xs space-y-1.5 cursor-pointer transition ${
+                      selectedLeave?.id === lv.id 
+                        ? 'border-[#11694A] bg-[#E3F1EA]/40' 
+                        : 'border-[#E8E1D0] bg-[#FBF8F0] hover:border-[#11694A]/40'
                     }`}
                     onClick={() => {
                       setSelectedLeave(lv);
@@ -405,13 +501,15 @@ const TutorDashboard = () => {
                     }}
                   >
                     <div className="flex justify-between items-center">
-                      <span className="font-bold text-white text-sm">{lv.profiles?.full_name}</span>
-                      <span className="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">
+                      <span className="font-bold text-[#0B3B2E] text-sm">{lv.profiles?.full_name}</span>
+                      <span className="text-[10px] bg-white text-[#4A5E56] border border-[#E8E1D0] px-2 py-0.5 rounded-full">
                         {tx('صف {n}', 'Class {n}').replace('{n}', lv.profiles?.class_number)}
                       </span>
                     </div>
-                    <div className="font-mono text-gray-400 text-[10px]">{lv.start_date} ~ {lv.end_date}</div>
-                    <p className="text-gray-300 italic">&quot; {lv.reason} &quot;</p>
+                    <div className="font-mono text-[#4A5E56] text-[10px] tabular-nums">
+                      {lv.start_date} ~ {lv.end_date}
+                    </div>
+                    <p className="text-[#14201B] italic text-xs">&quot;{lv.reason}&quot;</p>
                   </div>
                 ))}
               </div>
@@ -419,41 +517,48 @@ const TutorDashboard = () => {
 
             {/* Selected leave workflow detail */}
             {selectedLeave && (
-              <div className="bg-gray-950/60 p-4 rounded-xl border border-gray-800 space-y-3 mt-4">
-                <h4 className="font-bold text-xs text-white uppercase tracking-wider">
-                  {tx('تفاصيل المراجعة والقرار', 'Review & Respond')}
+              <div className="bg-[#FBF8F0] p-4 rounded-xl border border-[#E8E1D0] space-y-3 mt-4">
+                <h4 className="font-bold text-xs text-[#0B3B2E] uppercase tracking-wider">
+                  {tx('القرار: {name}', 'Decision: {name}').replace('{name}', selectedLeave.profiles?.full_name || '')}
                 </h4>
                 <div>
                   <textarea
                     value={leaveReply}
                     onChange={(e) => setLeaveReply(e.target.value)}
-                    placeholder={tx('ملاحظة سبب الموافقة/الرفض...', 'Approve/Reject reason note...')}
-                    className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 rounded p-2 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none h-16"
+                    placeholder={tx('أضف ملاحظة توجيهية للطالب/ولي الأمر...', 'Optional approval / rejection feedback note...')}
+                    className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-[#11694A] resize-none h-16"
                   />
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleReviewLeave('approved')}
-                    className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-xs transition"
+                    disabled={leaveProcessing}
+                    className="flex-1 py-2 bg-[#11694A] hover:bg-[#0B3B2E] text-white font-bold rounded-xl text-xs transition"
                   >
                     {tx('قبول الإجازة', 'Approve')}
                   </button>
                   <button
                     onClick={() => handleReviewLeave('rejected')}
-                    className="flex-1 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded text-xs transition"
+                    disabled={leaveProcessing}
+                    className="flex-1 py-2 bg-[#B91C1C] hover:bg-[#991B1B] text-white font-bold rounded-xl text-xs transition"
                   >
                     {tx('رفض الإجازة', 'Reject')}
                   </button>
                 </div>
               </div>
             )}
-            {leaveSuccess && <p className="text-xs text-emerald-400 text-center animate-pulse">✓ {tx('تمت معالجة الإجازة!', 'Leave processed!')}</p>}
+            {leaveSuccess && (
+              <p className="text-xs text-[#11694A] text-center font-bold animate-pulse">
+                ✓ {tx('تم تحديث حالة طلب الإجازة!', 'Leave request processed!')}
+              </p>
+            )}
           </div>
 
-          <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl">
-            <TutorLmsPanel />
-          </div>
+        </div>
 
+        {/* LMS Module */}
+        <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
+          <TutorLmsPanel />
         </div>
 
       </div>

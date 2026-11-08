@@ -607,6 +607,73 @@ select tst.fails($$select public.set_acting_org('0b000000-0000-0000-0000-0000000
 select tst.fails($$update public.profiles set acting_org_id = '0b000000-0000-0000-0000-000000000000' where id = auth.uid()$$, 'acting org only via RPC');
 
 -- ---------------------------------------------------------------------------
+-- 11e. Finance operations, activities, analytics (0025)
+-- ---------------------------------------------------------------------------
+select tst.login('00000000-0000-0000-0000-000000000004'); -- accountant
+select tst.ok((select count(*) >= 1 from public.notifications where title = 'Online payment received' and data ->> 'audience' = 'finance'),
+              'finance staff notified of online (PayHere) payment');
+select tst.login('00000000-0000-0000-0000-000000000003'); -- treasurer
+select tst.ok((select (public.send_fee_reminder('00000000-0000-0000-0000-000000000009', 'Thank you') ->> 'ok')::boolean), 'treasurer sends fee reminder from phone');
+select tst.fails($$select public.send_fee_reminder('00000000-0000-0000-0000-000000000009')$$, 'second reminder within 20 hours blocked');
+select tst.ok((select (public.send_overdue_reminders(0) ->> 'sent') is not null), 'bulk overdue reminders run');
+select tst.ok((select count(*) >= 1 from public.student_message_log('00000000-0000-0000-0000-000000000009')), 'student message log lists SMS/e-mail/push');
+select tst.ok((select (public.resend_receipt((select id from public.fee_receipts where student_id = '00000000-0000-0000-0000-000000000009' limit 1)) ->> 'ok')::boolean),
+              'receipt copy re-sent to family');
+select tst.ok((select public.finance_today() ? 'collected' and public.finance_today() ? 'latest'), 'today''s collection summary');
+select tst.login('00000000-0000-0000-0000-000000000009');
+select tst.fails($$select public.send_fee_reminder('00000000-0000-0000-0000-000000000009')$$, 'students cannot send reminders');
+select tst.fails($$select * from public.student_message_log('00000000-0000-0000-0000-000000000009')$$, 'students cannot read the message log');
+
+-- activities with several responsible lecturers
+select tst.login('00000000-0000-0000-0000-000000000002'); -- principal
+insert into public.activities (id, title, category, starts_at, budget)
+values ('a1000000-0000-0000-0000-000000000001', 'Annual Quran competition', 'event', now() + interval '10 days', 25000);
+select tst.ok((select public.assign_activity_staff('a1000000-0000-0000-0000-000000000001',
+  '[{"profile_id":"00000000-0000-0000-0000-000000000006","role":"lead","responsibilities":"Judging panel"},
+    {"profile_id":"00000000-0000-0000-0000-000000000005","role":"helper","responsibilities":"Registration desk"}]') = 2),
+  'two lecturers assigned to one activity');
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.ok((select jsonb_array_length(public.my_responsibilities() -> 'activities') = 1
+               and (public.my_responsibilities() -> 'activities' -> 0 ->> 'role') = 'lead'
+               and jsonb_array_length(public.my_responsibilities() -> 'activities' -> 0 -> 'team') = 2), 'assignee sees activity, role and team');
+select tst.ok((select count(*) >= 1 from public.notifications where title = 'New responsibility'), 'assignee notified (push)');
+select tst.fails($$select public.respond_activity('a1000000-0000-0000-0000-000000000001', 'declined')$$, 'declining needs a reason');
+select tst.succeeds($$select public.respond_activity('a1000000-0000-0000-0000-000000000001', 'accepted')$$, 'assignee accepts');
+select tst.fails($$select public.assign_activity_staff('a1000000-0000-0000-0000-000000000001', '[]')$$, 'lecturer cannot assign activity staff');
+select tst.login('00000000-0000-0000-0000-000000000003');
+select tst.fails($$select public.respond_activity('a1000000-0000-0000-0000-000000000001', 'accepted')$$, 'non-assignee cannot respond');
+
+-- analytics: totals must agree with the ledger
+select tst.login('00000000-0000-0000-0000-000000000004');
+insert into tst.r values ('fa', public.finance_analytics(12));
+select tst.ok((select jsonb_array_length(v -> 'months') = 12 from tst.r where k = 'fa'), '12-month finance trend');
+select tst.ok((select (v -> 'aging' ->> 'total')::numeric = (select sum(total_due - paid_amount) from public.student_fees
+               where status in ('unpaid', 'partial') and cancelled_at is null and org_id = public.current_org_id())
+               and (v -> 'aging' ->> 'total')::numeric = (v -> 'aging' ->> 'not_due')::numeric + (v -> 'aging' ->> 'd0_30')::numeric
+                  + (v -> 'aging' ->> 'd31_60')::numeric + (v -> 'aging' ->> 'd61_90')::numeric + (v -> 'aging' ->> 'd90_plus')::numeric
+               from tst.r where k = 'fa'), 'arrears ageing buckets add up to total outstanding');
+select tst.ok((select (select sum((m ->> 'cash_received')::numeric) from jsonb_array_elements(v -> 'months') m)
+               = (select coalesce(sum(amount), 0) from public.fee_payments where status = 'posted' and org_id = public.current_org_id()
+                  and (paid_at at time zone 'Asia/Colombo') >= date_trunc('month', public.org_today()) - interval '11 months')
+               from tst.r where k = 'fa'), 'monthly cash received sums to the payment ledger');
+select tst.login('00000000-0000-0000-0000-000000000002');
+select tst.ok((select public.academic_analytics() ? 'attendance_by_month' and public.academic_analytics() ? 'admissions_funnel'), 'academic analytics');
+select tst.login('00000000-0000-0000-0000-000000000009');
+select tst.fails($$select public.finance_analytics()$$, 'students cannot read finance analytics');
+
+-- outbox retry limit and scholarship invoices survive clean-up
+select tst.logout();
+insert into public.message_outbox (channel, to_address, body, status, attempts) values ('sms', '0770000001', 'retry test', 'pending', 5);
+select tst.as_service();
+select tst.ok((select count(*) = 0 from public.claim_outbox_batch(500) where to_address = '0770000001'), 'messages stop retrying after 5 attempts');
+select tst.login('00000000-0000-0000-0000-000000000004');
+insert into public.student_fee_concessions (student_id, kind, value, reason) values ('00000000-0000-0000-0000-000000000008', 'percent', 100, 'Full scholarship');
+select tst.login('00000000-0000-0000-0000-000000000003');
+select public.generate_monthly_invoices('2027-05');
+select tst.ok((select count(*) = 1 from public.student_fees where student_id = '00000000-0000-0000-0000-000000000008' and month = '2027-05' and total_due = 0),
+              '100% scholarship invoice kept (ledger lines exist)');
+
+-- ---------------------------------------------------------------------------
 -- 12. Global ledger integrity
 -- ---------------------------------------------------------------------------
 select tst.logout();

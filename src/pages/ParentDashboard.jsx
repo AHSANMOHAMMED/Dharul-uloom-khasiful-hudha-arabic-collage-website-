@@ -4,20 +4,19 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import PayFeeButton from '../components/PayFeeButton';
 import ReceiptsArrears from '../components/ReceiptsArrears';
-import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
 import { generateFeeReceipt } from '../lib/exportUtils';
-import { listActivationEventsForChildren } from '../lib/notifyApi';
 import { claimParentInvite } from '../lib/parentInviteApi';
+import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
+import { listActivationEventsForChildren } from '../lib/notifyApi';
+import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
 
-
-const ParentDashboard = () => {
+export default function ParentDashboard() {
   const { user } = useAuth();
   const { i18n } = useTranslation();
   
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState(null);
-  const [announcements, setAnnouncements] = useState([]);
   
   // Data for selected child
   const [attendance, setAttendance] = useState([]);
@@ -27,13 +26,16 @@ const ParentDashboard = () => {
   const [tutorJobs, setTutorJobs] = useState([]);
   const [lmsSubmissions, setLmsSubmissions] = useState([]);
   const [lmsAssignments, setLmsAssignments] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [activationEvents, setActivationEvents] = useState([]);
   
   // App state
   const [loading, setLoading] = useState(true);
-  const [dataLoading, setDataLoading] = useState(false);
   const [linkIndex, setLinkIndex] = useState('');
   const [linkError, setLinkError] = useState('');
   const [linkSuccess, setLinkSuccess] = useState('');
+  const [dataLoading, setDataLoading] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
   
   // Leave Form state
   const [leaveForm, setLeaveForm] = useState({
@@ -43,7 +45,6 @@ const ParentDashboard = () => {
   });
   const [leaveSuccess, setLeaveSuccess] = useState(false);
   const [leaveError, setLeaveError] = useState('');
-  const [activationEvents, setActivationEvents] = useState([]);
   const [inviteToken, setInviteToken] = useState('');
   const [inviteMsg, setInviteMsg] = useState('');
 
@@ -59,7 +60,6 @@ const ParentDashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChild]);
 
-  // Fetch all children linked to this parent
   const fetchLinkedChildren = async () => {
     if (!user) return;
     try {
@@ -71,17 +71,17 @@ const ParentDashboard = () => {
 
       if (error) throw error;
       
-      const mappedChildren = data.map(row => row.profiles).filter(Boolean);
+      const mappedChildren = (data || []).map(row => row.profiles).filter(Boolean);
       setChildren(mappedChildren);
       setActivationEvents(await listActivationEventsForChildren(mappedChildren.map((c) => c.id)));
-      
+
       if (mappedChildren.length > 0) {
         setSelectedChild(mappedChildren[0]);
       } else {
         setLoading(false);
       }
 
-      // Fetch pinned announcements
+      // Pinned announcements for parents
       const { data: annData } = await supabase
         .from('announcements')
         .select('id, title, body, is_pinned, created_at')
@@ -89,68 +89,39 @@ const ParentDashboard = () => {
         .order('created_at', { ascending: false })
         .limit(3);
       if (annData) setAnnouncements(annData);
-
     } catch (err) {
-      console.error('Error fetching linked children:', err);
+      console.error('Error fetching children:', err);
+    } finally {
       setLoading(false);
     }
   };
 
-  // Fetch metrics for selected child
   const fetchChildData = async (childId) => {
     try {
       setDataLoading(true);
-      
-      // 1. Fetch attendance
-      const { data: attData } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('student_id', childId)
-        .order('date', { ascending: false });
-      setAttendance(attData || []);
 
-      // 2. Fetch results
-      const { data: resData } = await supabase
-        .from('student_results')
-        .select('*')
-        .eq('student_id', childId)
-        .order('created_at', { ascending: false });
-      setResults(resData || []);
+      const [resData, attData, feeData, leaveData, jobData] = await Promise.all([
+        supabase.from('student_results').select('*').eq('student_id', childId).order('created_at', { ascending: false }),
+        supabase.from('attendance').select('*').eq('student_id', childId).order('date', { ascending: false }),
+        supabase.from('student_fees').select('*').eq('student_id', childId).order('month', { ascending: false }),
+        supabase.from('leave_requests').select('*').eq('student_id', childId).order('created_at', { ascending: false }),
+        supabase.from('tutor_jobs').select('*, profiles(full_name, phone)').limit(5)
+      ]);
 
-      // 3. Fetch fees
-      const { data: feesData } = await supabase
-        .from('student_fees')
-        .select('*')
-        .eq('student_id', childId)
-        .order('month', { ascending: false });
-      setFees(feesData && feesData.length > 0 ? feesData[0] : null);
-
-      // 4. Fetch leave requests
-      const { data: leavesData } = await supabase
-        .from('leave_requests')
-        .select('*')
-        .eq('student_id', childId)
-        .order('created_at', { ascending: false });
-      setLeaves(leavesData || []);
-
-      // 5. Fetch class teacher jobs
-      const { data: jobsData } = await supabase
-        .from('tutor_jobs')
-        .select('*, profiles(full_name, phone)')
-        .limit(5);
-      setTutorJobs(jobsData || []);
+      if (resData.data) setResults(resData.data);
+      if (attData.data) setAttendance(attData.data);
+      if (feeData.data && feeData.data.length > 0) setFees(feeData.data[0]);
+      else setFees(null);
+      if (leaveData.data) setLeaves(leaveData.data);
+      if (jobData.data) setTutorJobs(jobData.data);
 
       const child = children.find((c) => c.id === childId) || selectedChild;
-      if (child?.class_number) {
-        setLmsAssignments(await listAssignmentsForClass(child.class_number));
-      }
+      setLmsAssignments(child?.class_number ? await listAssignmentsForClass(child.class_number) : []);
       setLmsSubmissions(await getStudentSubmissions(childId));
-
     } catch (err) {
       console.error('Error fetching child details:', err);
     } finally {
       setDataLoading(false);
-      setLoading(false);
     }
   };
 
@@ -161,37 +132,35 @@ const ParentDashboard = () => {
     try {
       const result = await claimParentInvite(inviteToken.trim());
       if (!result?.ok) {
-        setInviteMsg(result?.error || 'Invite failed');
+        setInviteMsg(result?.error || tx('فشل تفعيل الدعوة', 'Invite failed'));
         return;
       }
       setInviteMsg(tx('تم ربط الطفل عبر الدعوة', 'Child linked via invite'));
       setInviteToken('');
       fetchLinkedChildren();
     } catch (err) {
-      setInviteMsg(err.message || 'Invite failed');
+      setInviteMsg(err.message || tx('فشل تفعيل الدعوة', 'Invite failed'));
     }
   };
 
-  // Link a child by student index number
   const handleLinkChild = async (e) => {
     e.preventDefault();
     setLinkError('');
     setLinkSuccess('');
-    
+
     if (!linkIndex.trim()) return;
 
     try {
-      // Server-side linking: auto-links when the parent's phone/e-mail matches the
-      // enrolment record for this index, otherwise queues a request for staff
-      // approval. (Direct inserts into parent_children are no longer allowed.)
+      // Server-side linking: auto-links when the parent's phone/email matches
       const { data, error } = await supabase.rpc('request_child_link', {
-        p_index: linkIndex.trim(),
+        p_index: linkIndex.trim().toUpperCase(),
         p_relationship: 'guardian',
         p_note: null,
       });
       if (error) throw error;
 
       setLinkIndex('');
+      setShowLinkModal(false);
       if (data?.status === 'linked' || data?.status === 'already_linked') {
         setLinkSuccess(tx('تم ربط الحساب بنجاح!', 'Child linked successfully!'));
         fetchLinkedChildren();
@@ -204,7 +173,6 @@ const ParentDashboard = () => {
     }
   };
 
-  // Submit Leave request
   const handleLeaveSubmit = async (e) => {
     e.preventDefault();
     setLeaveError('');
@@ -230,47 +198,82 @@ const ParentDashboard = () => {
       fetchChildData(selectedChild.id);
     } catch (err) {
       console.error('Error submitting leave request:', err);
-      setLeaveError('Failed to submit leave request');
+      setLeaveError(tx('تعذر إرسال طلب الإجازة', 'Failed to submit leave request'));
     }
   };
 
-  // Calculate attendance statistics
+  // Attendance stats
   const totalDays = attendance.length;
   const presentDays = attendance.filter(a => a.status === 'present' || a.status === 'late').length;
-  const absentDays = attendance.filter(a => a.status === 'absent').length;
   const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 100;
   const showAttendanceWarning = attendanceRate < 85 && totalDays > 3;
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
-        <div className="relative w-16 h-16 flex items-center justify-center">
-          <div className="absolute inset-0 border-t-2 border-r-2 border-emerald-500 rounded-full animate-spin"></div>
-          <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">👶</div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-parchment-50 text-ink-text-primary">
+        <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Decorative Background */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-900/10 rounded-full blur-[140px] pointer-events-none"></div>
-
-      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+    <div className="min-h-screen bg-parchment-50 text-ink-text-primary py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1240px] mx-auto space-y-8">
         
+        {/* 1. Header Banner */}
+        <div className="rounded-[14px] bg-ink-green-900 text-paper-white p-7 sm:p-10 shadow-manuscript-md border border-sand-border/20 relative overflow-hidden">
+          <KhatamPattern className="opacity-[0.04]" strokeColor="#FBF8F0" id="parent-header-khatam" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-gold-wash-100 text-role-parent text-[11px] font-semibold uppercase tracking-wider inline-block">
+                {tx('بوابة أولياء الأمور', 'Parent Portal & Guardian Ledger')}
+              </span>
+
+              <h1 className="font-serif text-2xl sm:text-4xl font-semibold text-paper-white">
+                {tx(`مرحباً بك، ${user?.username}`, `Welcome back, ${user?.username}`)}
+              </h1>
+
+              <p className="text-xs sm:text-sm text-dark-text-primary/75 max-w-xl font-sans">
+                {tx(
+                  'متابعة الحضور والغياب، تقديم طلبات الإجازة، تسوية الرسوم الدراسية، والاطلاع على النتائج الأكاديمية لأبنائك.',
+                  'Review residential boarding attendance, submit leave exeats, settle term fees, and examine terminal appraisals for your wards.'
+                )}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">{'person_add'}</span>
+                <span>{tx('ربط طالب جديد', 'Link Student Ward')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {linkSuccess && (
+          <div className="p-3.5 rounded-lg bg-mint-wash-100 border border-emerald-700/20 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">{'check_circle'}</span>
+            <span>{linkSuccess}</span>
+          </div>
+        )}
+
         {activationEvents.length > 0 && (
-          <div className="glass-panel p-5 rounded-2xl border border-amber-500/30 bg-amber-950/20 space-y-3">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-amber-300">
+          <div className="p-5 rounded-[14px] bg-gold-wash-100 border border-brass-gold-500/30 shadow-xs space-y-3">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-brass-gold-500">
               {tx('تفعيل الطلاب', 'Student activation updates')}
             </h2>
             <ul className="space-y-2">
               {activationEvents.slice(0, 5).map((ev) => (
-                <li key={ev.id} className="text-sm text-gray-200 border-b border-gray-800/60 pb-2">
-                  <div className="font-medium">{ev.summary}</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {ev.details?.index_number ? `Index: ${ev.details.index_number}` : ''}
-                    {ev.details?.class_number != null ? ` · Class ${ev.details.class_number}` : ''}
+                <li key={ev.id} className="text-xs text-ink-text-primary border-b border-sand-border/60 pb-2 last:border-0">
+                  <div className="font-semibold">{ev.summary}</div>
+                  <div className="text-[11px] text-ink-text-muted mt-0.5">
+                    {ev.details?.index_number ? `${tx('رقم القيد', 'Index')}: ${ev.details.index_number}` : ''}
+                    {ev.details?.class_number != null ? ` · ${tx('الصف', 'Class')} ${ev.details.class_number}` : ''}
                     {' · '}
                     {new Date(ev.created_at).toLocaleString()}
                   </div>
@@ -280,413 +283,491 @@ const ParentDashboard = () => {
           </div>
         )}
 
-        {/* Welcome Header */}
-        <div className="glass-panel p-8 rounded-[2rem] border border-emerald-500/20 shadow-glass flex flex-col md:flex-row md:justify-between items-start md:items-center gap-6 group hover:border-emerald-500/40 transition-all duration-500 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-
-          <div className="relative z-10 flex items-center gap-6">
-            <div className="hidden sm:flex w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-900 items-center justify-center shadow-glow-emerald">
-              <span className="text-4xl text-white font-arabic">و</span>
-            </div>
-            <div>
-              <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-glow-emerald border border-emerald-500/20">
-                {tx('بوابة أولياء الأمور', 'Parent Portal')}
-              </span>
-              <h1 className="mt-3 text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-emerald-500">
-                {tx('مرحباً بك، {name}', 'Welcome back, {name}').replace('{name}', user?.username)}
-              </h1>
-              <p className="text-sm text-gray-400 mt-1 font-medium">
-                {tx('تابع أنشطة ومستحقات أطفالك الدراسية من مكان واحد', 'Monitor your children academic performance, attendance, and fees.')}
-              </p>
-            </div>
-          </div>
-
-          {/* Child Switcher Tabs */}
-          {children.length > 0 && (
-            <div className="relative z-10 flex gap-2 mt-4 md:mt-0 overflow-x-auto py-1 hide-scrollbar">
-              {children.map((child) => (
-                <button
-                  key={child.id}
-                  onClick={() => setSelectedChild(child)}
-                  className={`px-5 py-3 rounded-2xl text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-lg hover:-translate-y-1 ${
-                    selectedChild?.id === child.id
-                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-glow-emerald border border-emerald-400/20'
-                      : 'bg-gray-900/80 text-gray-400 hover:text-white border border-gray-700 hover:border-gray-600'
-                  }`}
-                >
-                  <span className="text-xl">👶</span> {child.full_name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Pinned Announcements for parents */}
         {announcements.length > 0 && (
           <div className="space-y-2">
-            {announcements.map(ann => (
-              <div key={ann.id} className="flex items-start gap-3 bg-amber-950/20 border border-amber-500/20 p-4 rounded-xl">
-                <span className="text-amber-400 text-lg">📌</span>
+            {announcements.map((ann) => (
+              <div key={ann.id} className="flex items-start gap-3 p-4 rounded-[14px] bg-paper-white border border-sand-border shadow-xs">
+                <span className="material-symbols-outlined text-[18px] text-brass-gold-500">{'push_pin'}</span>
                 <div>
-                  <h3 className="font-bold text-amber-300 text-sm">{ann.title}</h3>
-                  <p className="text-xs text-amber-200/70 mt-0.5">{ann.body}</p>
+                  <h3 className="font-serif text-sm font-semibold text-ink-green-900">{ann.title}</h3>
+                  <p className="text-xs text-ink-text-secondary mt-0.5">{ann.body}</p>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Link Child Panel (If 0 children or want to add) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Link student card */}
-          <div className="glass-card rounded-[2rem] p-8 space-y-5 hover:border-emerald-500/30 transition-all duration-300">
-            <h3 className="text-xl font-extrabold text-white flex items-center gap-3 font-arabic">
-              <span className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">🔗</span>
-              {tx('ربط حساب طفل جديد', 'Link Child Account')}
+        {/* 2. Child Switcher Chips */}
+        {children.length > 0 ? (
+          <div className="p-4 rounded-[14px] bg-paper-white border border-sand-border shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider mr-2">
+                {tx('الطالب:', 'Student Ward:')}
+              </span>
+              {children.map((child) => {
+                const isSelected = selectedChild?.id === child.id;
+                return (
+                  <button
+                    key={child.id}
+                    type="button"
+                    onClick={() => setSelectedChild(child)}
+                    className={`flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border transition-all ${
+                      isSelected
+                        ? 'bg-mint-wash-100 border-emerald-700 text-ink-green-900 font-semibold ring-1 ring-emerald-700'
+                        : 'bg-parchment-50 border-sand-border hover:bg-sand-border/30 text-ink-text-secondary'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px] text-emerald-700">{'school'}</span>
+                    <span className="text-xs">{child.full_name}</span>
+                    {child.index_number && (
+                      <span className="font-mono text-[10px] text-ink-text-muted">({child.index_number})</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowLinkModal(true)}
+              className="text-xs text-emerald-700 hover:text-ink-green-900 font-semibold flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-[16px]">{'add'}</span>
+              <span>{tx('ربط طالب آخر', 'Link Another Ward')}</span>
+            </button>
+          </div>
+        ) : (
+          <div className="p-8 rounded-[14px] bg-paper-white border border-sand-border text-center space-y-4 shadow-manuscript-sm">
+            <span className="material-symbols-outlined text-4xl text-brass-gold-500">{'family_restroom'}</span>
+            <h3 className="font-serif text-lg font-semibold text-ink-green-900">
+              {tx('لا توجد حسابات طلاب مرتبطة حتى الآن', 'No Student Accounts Linked Yet')}
             </h3>
-            <p className="text-sm text-gray-400">
-              {tx('أدخل رقم القيد المخصص لطفلك للوصول إلى تفاصيل حضوره ونتائجه.', 'Enter your child unique student index number to link their profile.')}
+            <p className="text-xs text-ink-text-secondary max-w-md mx-auto">
+              {tx(
+                'اربط حساب ابنك باستخدام رقم القيد الخاص به (مثل: KH-2026-0147) لمتابعة الحضور والنتائج.',
+                'Link your child’s college profile using their index number (e.g. KH-2026-0147) to inspect attendance and marks.'
+              )}
             </p>
-            <form onSubmit={handleLinkChild} className="space-y-4">
-              <input
-                type="text"
-                value={linkIndex}
-                onChange={(e) => setLinkIndex(e.target.value)}
-                placeholder="KASHIF-2026-001"
-                className="w-full bg-gray-950/50 border border-gray-800 text-sm text-gray-200 placeholder-gray-600 rounded-xl p-3 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-shadow focus:shadow-glow-emerald"
-                required
-              />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
-                type="submit"
-                className="w-full py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold rounded-xl text-sm transition-all shadow-lg hover:-translate-y-1"
+                type="button"
+                onClick={() => setShowLinkModal(true)}
+                className="px-5 py-2.5 bg-emerald-700 text-white rounded-[10px] text-xs font-semibold shadow-xs hover:bg-emerald-500"
               >
-                {tx('ربط الطالب', 'Link Student')}
+                {tx('ربط بواسطة رقم القيد', 'Link by Index Number')}
               </button>
-              {linkError && <p className="text-xs text-red-400 mt-1">{linkError}</p>}
-              {linkSuccess && <p className="text-xs text-emerald-400 mt-1">{linkSuccess}</p>}
-            </form>
-            <form onSubmit={handleClaimInvite} className="space-y-3 pt-4 border-t border-gray-800">
-              <p className="text-xs text-gray-500">
-                {tx('أو استخدم رمز دعوة ولي الأمر من الإدارة', 'Or paste a parent invite token from admin')}
-              </p>
+            </div>
+            {/* Direct invite code redeem */}
+            <form onSubmit={handleClaimInvite} className="max-w-xs mx-auto flex gap-2 pt-2">
               <input
                 type="text"
+                placeholder={tx('أو أدخل رمز الدعوة...', 'Or enter invite token...')}
                 value={inviteToken}
                 onChange={(e) => setInviteToken(e.target.value)}
-                placeholder={tx('رمز الدعوة', 'Invite token')}
-                className="w-full bg-gray-950/50 border border-gray-800 text-sm text-gray-200 placeholder-gray-600 rounded-xl p-3 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className="flex-1 h-9 px-3 rounded-[8px] bg-parchment-50 border border-sand-border text-xs font-mono"
               />
-              <button
-                type="submit"
-                className="w-full py-2.5 bg-amber-600/90 hover:bg-amber-500 text-white font-bold rounded-xl text-sm"
-              >
-                {tx('تفعيل الدعوة', 'Claim invite')}
+              <button type="submit" className="px-3 h-9 bg-paper-white border border-sand-border rounded-[8px] text-xs font-semibold hover:bg-mint-wash-100 text-emerald-700">
+                {tx('تفعيل', 'Claim')}
               </button>
-              {inviteMsg && <p className="text-xs text-amber-300">{inviteMsg}</p>}
             </form>
+            {inviteMsg && <p className="text-xs text-emerald-700 font-semibold">{inviteMsg}</p>}
           </div>
+        )}
 
-          {/* If no children linked yet */}
-          {children.length === 0 ? (
-            <div className="lg:col-span-2 bg-gray-900/30 backdrop-blur-md rounded-2xl p-12 border border-gray-800/50 text-center flex flex-col items-center justify-center space-y-4">
-              <span className="text-5xl">🧸</span>
-              <h2 className="text-xl font-bold text-gray-300">
-                {tx('لم تقم بربط أي حساب طالب بعد', 'No children linked to your parent portal')}
-              </h2>
-              <p className="text-sm text-gray-500 max-w-sm">
-                {tx('يرجى ربط حساب ابنك باستخدام رقم القيد المرفق من إدارة الكلية لعرض التقارير.', 'Please use the linking panel to enter your child index number provided by the college.')}
-              </p>
-            </div>
-          ) : (
-            /* Selected Child Details */
-            <div className="lg:col-span-2 space-y-8">
-              
-              {dataLoading ? (
-                <div className="h-64 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-amber-500"></div>
+        {/* 3. Selected Ward Data Overview */}
+        {selectedChild && dataLoading && (
+          <div className="h-40 flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+        {selectedChild && !dataLoading && (
+          <div className="space-y-8">
+            
+            {/* Attendance Alert if low */}
+            {showAttendanceWarning && (
+              <div className="p-4 rounded-xl bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger flex items-start gap-3 text-xs">
+                <span className="material-symbols-outlined text-xl shrink-0">{'warning'}</span>
+                <div>
+                  <h4 className="font-semibold">{tx('تجاوز حد الغياب المسموح به', 'Absence Threshold Exceeded')}</h4>
+                  <p className="mt-0.5">
+                    {tx(
+                      `نسبة حضور الطالب في الحلقات حالياً هي ${attendanceRate}% (الحد الأدنى المطلوب 85%). يرجى التواصل مع مشرف الفصل.`,
+                      `Your ward's halaqah attendance is currently ${attendanceRate}% (required minimum is 85%). Please contact their class mentor.`
+                    )}
+                  </p>
                 </div>
-              ) : (
-                <>
-                  {/* Warning Alerts */}
-                  {showAttendanceWarning && (
-                    <div className="flex items-center gap-3 bg-red-950/40 border border-red-500/30 p-4 rounded-xl text-red-200">
-                      <span className="text-2xl">⚠️</span>
-                      <div>
-                        <h3 className="font-bold text-sm">
-                          {tx('تحذير غياب الطالب!', 'Child Attendance Alert!')}
-                        </h3>
-                        <p className="text-xs text-red-300">
-                          {tx(
-                            'نسبة حضور {name} هي {rate}% وهو أقل من الحد المسموح (85%). يرجى اتخاذ الإجراءات أو تبرير الغياب.',
-                            '{name} has an attendance of {rate}%, falling below the required 85%.',
-                          )
-                            .replace('{name}', selectedChild?.full_name)
-                            .replace('{rate}', attendanceRate)}
-                        </p>
-                      </div>
+              </div>
+            )}
+
+            {/* Quick KPI Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="p-5 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
+                <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider block mb-1">
+                  {tx('معدل الحضور', 'Attendance Metric')}
+                </span>
+                <span className="font-serif text-3xl font-bold text-emerald-700 tabular-nums">
+                  {attendanceRate}%
+                </span>
+                <span className="text-[11px] text-ink-text-muted block mt-1">
+                  {presentDays} {tx('حاضر من أصل', 'present of')} {totalDays} {tx('أيام مسجلة', 'recorded days')}
+                </span>
+              </div>
+
+              <div className="p-5 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
+                <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider block mb-1">
+                  {tx('الرصيد المستحق للرسوم', 'Tuition Balance')}
+                </span>
+                <span className="font-serif text-3xl font-bold text-brass-gold-500 tabular-nums">
+                  {tx('روبية', 'LKR')} {fees ? Math.max(0, Number(fees.total_due || 0) - Number(fees.paid_amount || 0)).toLocaleString() : '0'}
+                </span>
+                <span className="text-[11px] text-ink-text-muted block mt-1">
+                  {fees?.month ? `${tx('الفاتورة:', 'Billed:')} ${fees.month}` : tx('لا توجد متأخرات نشطة', 'No active arrears')}
+                </span>
+              </div>
+
+              <div className="p-5 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
+                <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider block mb-1">
+                  {tx('مشرف الفصل', 'Class Mentor Contact')}
+                </span>
+                <span className="font-serif text-base font-semibold text-ink-green-900 block truncate">
+                  {tutorJobs[0]?.profiles?.full_name || 'Ustaz Abdul Hakeem'}
+                </span>
+                <div className="flex items-center gap-2 mt-2">
+                  <a
+                    href={`tel:${tutorJobs[0]?.profiles?.phone || '0705668463'}`}
+                    className="px-2.5 py-1 rounded bg-sand-border/40 text-[11px] text-ink-text-primary font-semibold hover:bg-emerald-700 hover:text-white transition-colors"
+                  >
+                    {tx('اتصال', 'Call Tutor')}
+                  </a>
+                  <a
+                    href="https://wa.me/94705668463"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-2.5 py-1 rounded bg-mint-wash-100 text-[11px] text-emerald-700 font-semibold hover:bg-emerald-700 hover:text-white transition-colors"
+                  >
+                    {tx('واتساب', 'WhatsApp')}
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Split Grid: Leave Requests & Tuition Statement */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* Leave Exeat Request Form & History */}
+              <div className="lg:col-span-7 rounded-[14px] bg-paper-white border border-sand-border p-6 sm:p-8 shadow-manuscript space-y-6">
+                <div>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 block mb-0.5">
+                    {tx('التربية والسكن', 'Residential Tarbiyyah')}
+                  </span>
+                  <h3 className="font-serif text-xl font-semibold text-ink-green-900">
+                    {tx('تقديم طلب إجازة / خروج', 'Apply for Leave / Exeat')}
+                  </h3>
+                  <p className="text-xs text-ink-text-secondary">
+                    {tx(
+                      'جميع طلبات المبيت والخروج الاضطراري تتطلب موافقة ولي الأمر وتأكيد مشرف السكن.',
+                      'All overnight and emergency leaves require parental authorization and warden verification.'
+                    )}
+                  </p>
+                </div>
+
+                {leaveSuccess && (
+                  <div className="p-3.5 rounded-lg bg-mint-wash-100 border border-emerald-700/20 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px]">{'check_circle'}</span>
+                    <span>{tx('تم تسجيل طلب الإجازة وتحويله لمشرف الحلقة.', 'Leave request registered and routed to halaqah supervisor.')}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleLeaveSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                        {tx('تاريخ الخروج *', 'Departure Date *')}
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={leaveForm.startDate}
+                        onChange={(e) => setLeaveForm({ ...leaveForm, startDate: e.target.value })}
+                        className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                        {tx('تاريخ العودة المتوقع *', 'Expected Return Date *')}
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={leaveForm.endDate}
+                        onChange={(e) => setLeaveForm({ ...leaveForm, endDate: e.target.value })}
+                        className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                      {tx('سبب الإجازة *', 'Reason for Leave Exeat *')}
+                    </label>
+                    <textarea
+                      rows={2}
+                      required
+                      value={leaveForm.reason}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
+                      placeholder={tx('مثال: مناسبة عائلية، مراجعة طبية...', 'e.g. Family event, medical appointment...')}
+                      className="w-full p-2.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-500 text-white rounded-[10px] text-xs font-semibold shadow-xs"
+                  >
+                    {tx('إرسال طلب الإجازة', 'Submit Leave Request')}
+                  </button>
+                  {leaveError && <p className="text-xs text-feedback-danger font-medium">{leaveError}</p>}
+                </form>
+
+                {/* History of Leaves */}
+                <div className="pt-6 border-t border-sand-border space-y-3">
+                  <h4 className="font-serif text-sm font-semibold text-ink-green-900">
+                    {tx('سجل الإجازات السابق', 'Recent Leave History')}
+                  </h4>
+
+                  {leaves.length === 0 ? (
+                    <p className="text-xs text-ink-text-muted">{tx('لا توجد طلبات إجازة سابقة.', 'No prior leave requests recorded.')}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {leaves.slice(0, 4).map((l) => {
+                        const statusColors = {
+                          approved: 'bg-mint-wash-100 text-emerald-700 border-emerald-700/20',
+                          pending: 'bg-gold-wash-100 text-brass-gold-500 border-brass-gold-500/20',
+                          rejected: 'bg-feedback-danger/10 text-feedback-danger border-feedback-danger/20'
+                        };
+                        return (
+                          <div key={l.id} className="p-3 rounded-lg border border-sand-border text-xs flex items-center justify-between gap-4">
+                            <div>
+                              <span className="font-semibold text-ink-text-primary block">{l.reason}</span>
+                              <span className="text-[11px] text-ink-text-muted">
+                                {l.start_date} → {l.end_date}
+                              </span>
+                            </div>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase border ${statusColors[l.status] || statusColors.pending}`}>
+                              {l.status}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
+                </div>
 
-                  {/* Attendance Card & Results Card Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    {/* Attendance summary */}
-                    <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
-                      <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        📅 {tx('سجل الحضور', 'Attendance Log')}
-                      </h3>
-                      <div className="flex justify-between items-center p-3 bg-gray-950/40 rounded-xl border border-gray-800/30">
-                        <div className="text-center">
-                          <span className="text-2xl font-black text-emerald-400">{attendanceRate}%</span>
-                          <p className="text-[10px] text-gray-500 uppercase">{tx('الحضور', 'Attendance')}</p>
-                        </div>
-                        <div className="text-center">
-                          <span className="text-2xl font-black text-amber-500">{presentDays}</span>
-                          <p className="text-[10px] text-gray-500 uppercase">{tx('أيام الحضور', 'Present')}</p>
-                        </div>
-                        <div className="text-center">
-                          <span className="text-2xl font-black text-red-400">{absentDays}</span>
-                          <p className="text-[10px] text-gray-500 uppercase">{tx('أيام الغياب', 'Absent')}</p>
-                        </div>
-                      </div>
-                    </div>
+              </div>
 
-                    {/* Class Teacher Contact */}
-                    <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
-                      <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        📞 {tx('معلومات معلم الصف', 'Class Teacher Contact')}
-                      </h3>
-                      {tutorJobs.slice(0, 1).map(job => (
-                        <div key={job.id} className="p-3.5 bg-emerald-950/20 border border-emerald-500/20 rounded-xl">
-                          <h4 className="font-bold text-white text-sm">{job.profiles?.full_name}</h4>
-                          <p className="text-[11px] text-emerald-400">{job.title}</p>
-                          <p className="text-xs text-gray-400 mt-2 font-mono">📱 {job.profiles?.phone || 'N/A'}</p>
-                        </div>
-                      ))}
-                    </div>
-
+              {/* Tuition Fees & ERP Receipts */}
+              <div className="lg:col-span-5 space-y-6">
+                <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 sm:p-8 shadow-manuscript space-y-6">
+                  <div>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-brass-gold-500 block mb-0.5">
+                      {tx('الصندوق المالي', 'Waqf Ledger')}
+                    </span>
+                    <h3 className="font-serif text-xl font-semibold text-ink-green-900">
+                      {tx('تسوية الرسوم الدراسية', 'Term Fee Settlements')}
+                    </h3>
                   </div>
 
-                  {/* Monthly Fees Invoice Log */}
-                  <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-6">
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      💳 {tx('رسوم الطفل ومستحقاته المالية', 'Student Fees & Arrears')}
-                    </h3>
-                    {fees ? (
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center p-3.5 bg-gray-950/40 border border-gray-800/30 rounded-xl text-sm">
-                          <div>
-                            <span className="text-xs text-gray-500 uppercase">{tx('شهر الرسوم', 'Bill Month')}</span>
-                            <div className="font-bold text-white text-base">{fees.month}</div>
-                          </div>
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                            fees.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                            fees.status === 'partial' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                            'bg-red-500/10 text-red-400 border border-red-500/20'
-                          }`}>
-                            {fees.status.toUpperCase()}
+                  {fees ? (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-parchment-50 border border-sand-border text-xs space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-ink-text-muted">{tx('شهر الفاتورة:', 'Billing Month:')}</span>
+                          <span className="font-semibold text-ink-green-900">{fees.month}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-ink-text-muted">{tx('إجمالي الرسوم:', 'Total Term Dues:')}</span>
+                          <span className="font-mono tabular-nums text-ink-text-primary">{tx('روبية', 'LKR')} {Number(fees.total_due || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-ink-text-muted">{tx('المدفوع:', 'Paid to Date:')}</span>
+                          <span className="font-mono tabular-nums text-emerald-700 font-semibold">{tx('روبية', 'LKR')} {Number(fees.paid_amount || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between pt-2 border-t border-sand-border">
+                          <span className="font-semibold text-ink-text-primary">{tx('المتبقي:', 'Balance Due:')}</span>
+                          <span className="font-mono tabular-nums text-brass-gold-500 font-bold text-sm">
+                            {tx('روبية', 'LKR')} {Math.max(0, Number(fees.total_due || 0) - Number(fees.paid_amount || 0)).toLocaleString()}
                           </span>
                         </div>
+                      </div>
 
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                          <div className="p-3 bg-gray-950/20 rounded-lg">
-                            <div className="text-lg font-bold text-white font-mono">{tx('روبية', 'LKR')} {fees.total_due}</div>
-                            <span className="text-[10px] text-gray-500">{tx('الإجمالي', 'Total')}</span>
-                          </div>
-                          <div className="p-3 bg-gray-950/20 rounded-lg">
-                            <div className="text-lg font-bold text-emerald-400 font-mono">{tx('روبية', 'LKR')} {fees.paid_amount}</div>
-                            <span className="text-[10px] text-gray-500">{tx('المدفوع', 'Paid')}</span>
-                          </div>
-                          <div className="p-3 bg-gray-950/20 rounded-lg">
-                            <div className="text-lg font-bold text-red-400 font-mono">{tx('روبية', 'LKR')} {fees.total_due - fees.paid_amount}</div>
-                            <span className="text-[10px] text-gray-500">{tx('المتأخرات', 'Arrears')}</span>
-                          </div>
-                        </div>
-
-                        {fees.payments && fees.payments.length > 0 && (
-                          <div className="space-y-1.5">
-                            <span className="text-[10px] font-bold text-gray-500 uppercase">{tx('دفعات الرسوم الجزئية', 'Partial Payment Details')}</span>
-                            {fees.payments.map((p, idx) => (
-                              <div key={idx} className="flex justify-between text-xs bg-gray-950/30 p-2 rounded">
-                                <span className="text-gray-400">{p.date}</span>
-                                <span className="font-mono text-emerald-400 font-semibold">+ {tx('روبية', 'LKR')} {p.amount}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
                           <PayFeeButton fee={fees} />
-                          <button
-                            type="button"
-                            onClick={() => generateFeeReceipt(selectedChild, fees, 'Parent Portal')}
-                            className="px-4 py-2 rounded-xl border border-emerald-500/40 text-emerald-300 text-sm font-semibold hover:bg-emerald-500/10"
-                          >
-                            {tx('طباعة الإيصال', 'Print receipt')}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-6 text-xs text-gray-500">
-                        {tx('لا توجد مستحقات رسوم مفعلة حالياً', 'No generated monthly fees for this child.')}
-                      </div>
-                    )}
-                  </div>
-
-                  <ReceiptsArrears studentId={selectedChild?.id} />
-
-                  {/* Child LMS progress */}
-                  <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-3">
-                    <h3 className="text-base font-bold text-white">
-                      📚 {tx('الواجبات والتقدم', 'Assignments & Progress')}
-                    </h3>
-                    {lmsAssignments.length === 0 ? (
-                      <p className="text-xs text-gray-500">{tx('لا واجبات حالياً', 'No assignments yet')}</p>
-                    ) : (
-                      <ul className="space-y-2 text-sm">
-                        {lmsAssignments.map((a) => {
-                          const sub = lmsSubmissions.find((s) => s.assignment_id === a.id);
-                          return (
-                            <li key={a.id} className="p-3 bg-gray-950/40 rounded border border-gray-800 flex justify-between gap-2">
-                              <span className="text-white">{a.title}</span>
-                              <span className={`text-xs shrink-0 ${sub ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                {sub ? (sub.grade ? `Grade ${sub.grade}` : 'Submitted') : (a.due_date ? `Due ${a.due_date}` : 'Pending')}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
-
-                  {/* Leave Request Management Panel */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    
-                    {/* Submit leave request */}
-                    <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
-                      <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        📝 {tx('طلب إجازة للمستقبل', 'Submit Leave Request')}
-                      </h3>
-                      <form onSubmit={handleLeaveSubmit} className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('تاريخ البدء', 'Start Date')}</label>
-                            <input
-                              type="date"
-                              value={leaveForm.startDate}
-                              onChange={(e) => setLeaveForm({ ...leaveForm, startDate: e.target.value })}
-                              className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2 rounded focus:outline-none focus:ring-1 focus:ring-amber-500"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('تاريخ الانتهاء', 'End Date')}</label>
-                            <input
-                              type="date"
-                              value={leaveForm.endDate}
-                              onChange={(e) => setLeaveForm({ ...leaveForm, endDate: e.target.value })}
-                              className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 p-2 rounded focus:outline-none focus:ring-1 focus:ring-amber-500"
-                              required
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">{tx('سبب الغياب', 'Reason')}</label>
-                          <textarea
-                            value={leaveForm.reason}
-                            onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
-                            className="w-full bg-gray-950 border border-gray-800 text-xs text-gray-200 rounded p-2 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none h-16"
-                            placeholder={tx('اذكر سبب طلب الإجازة...', 'Medical, family travel, etc...')}
-                            required
-                          />
                         </div>
                         <button
-                          type="submit"
-                          className="w-full py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded text-xs transition"
+                          type="button"
+                          onClick={() => generateFeeReceipt(fees, selectedChild)}
+                          className="h-10 px-3.5 rounded-[10px] border border-sand-border hover:bg-parchment-50 text-ink-text-secondary text-xs flex items-center gap-1.5"
                         >
-                          {tx('تقديم الطلب للموافقة', 'Submit Leave Request')}
+                          <span className="material-symbols-outlined text-[16px]">{'receipt'}</span>
+                          <span>{tx('إيصال', 'Receipt')}</span>
                         </button>
-                        {leaveSuccess && <p className="text-xs text-emerald-400 text-center animate-pulse">✓ {tx('تم إرسال طلب الإجازة بنجاح!', 'Leave request submitted successfully!')}</p>}
-                        {leaveError && <p className="text-xs text-red-400 text-center">{leaveError}</p>}
-                      </form>
-                    </div>
-
-                    {/* Past leave requests & teacher responses */}
-                    <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
-                      <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        📋 {tx('سجل الإجازات والموافقات', 'Leave Status & Replies')}
-                      </h3>
-                      {leaves.length === 0 ? (
-                        <div className="text-center py-12 text-xs text-gray-500">
-                          {tx('لا توجد طلبات إجازة حالية', 'No submitted leave requests.')}
-                        </div>
-                      ) : (
-                        <div className="space-y-3 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
-                          {leaves.map((lv) => (
-                            <div key={lv.id} className="p-3 bg-gray-950/20 border border-gray-800 rounded-xl text-xs space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="font-mono text-gray-400">{lv.start_date} ~ {lv.end_date}</span>
-                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                                  lv.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' :
-                                  lv.status === 'rejected' ? 'bg-red-500/10 text-red-400' :
-                                  'bg-amber-500/10 text-amber-400'
-                                }`}>
-                                  {lv.status.toUpperCase()}
-                                </span>
-                              </div>
-                              <p className="text-gray-300"><span className="text-gray-500">{tx('السبب: ', 'Reason: ')}</span>{lv.reason}</p>
-                              {lv.response_note && (
-                                <div className="mt-2 p-2 bg-gray-950/40 border-l border-amber-500 rounded text-[11px] italic text-amber-300">
-                                  <span className="font-bold text-gray-400 block not-italic text-[9px] uppercase tracking-wider">{tx('رد المعلم: ', 'Tutor Reply:')}</span>
-                                  {lv.response_note}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                  </div>
-
-                  {/* Results & Academic report */}
-                  <div className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800 space-y-4">
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      🎓 {tx('التقرير الدراسي للطفل', 'Child Grades Report')}
-                    </h3>
-                    {results.length === 0 ? (
-                      <div className="text-center py-8 text-xs text-gray-500">
-                        {tx('لم تنشر أي نتائج دراسية للامتحانات', 'No academic reports generated.')}
                       </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {results.map((res) => (
-                          <div key={res.id} className="flex justify-between items-center p-3 bg-gray-950/40 rounded-xl border border-gray-800/30 text-xs">
-                            <div>
-                              <div className="font-bold text-white">{res.subject}</div>
-                              <div className="text-[10px] text-gray-500">{res.exam_name}</div>
-                            </div>
-                            <div className="text-right">
-                              <span className="font-mono text-amber-400 font-bold">{res.marks_obtained} / {res.max_marks}</span>
-                              <div className="text-[10px] text-emerald-400 font-bold">{tx('التقدير', 'Grade')}: {res.grade}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="p-6 rounded-xl bg-parchment-50 border border-sand-border text-center text-xs text-ink-text-muted">
+                      {tx('لا توجد فواتير رسوم نشطة حالياً لهذا الطالب.', 'No active term billings on record for this ward.')}
+                    </div>
+                  )}
+                </div>
 
-                </>
-              )}
+                {/* ERP Arrears & Receipts Integration */}
+                <ReceiptsArrears studentId={selectedChild?.id} />
+
+                {/* Child LMS progress */}
+                <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-3">
+                  <h3 className="font-serif text-lg font-semibold text-ink-green-900">
+                    {tx('الواجبات والتقدم', 'Assignments & Progress')}
+                  </h3>
+                  {lmsAssignments.length === 0 ? (
+                    <p className="text-xs text-ink-text-muted">{tx('لا واجبات حالياً', 'No assignments yet')}</p>
+                  ) : (
+                    <ul className="space-y-2 text-xs">
+                      {lmsAssignments.map((a) => {
+                        const sub = lmsSubmissions.find((s) => s.assignment_id === a.id);
+                        return (
+                          <li key={a.id} className="p-3 rounded-lg border border-sand-border flex justify-between gap-2">
+                            <span className="font-medium text-ink-text-primary">{a.title}</span>
+                            <span className={`text-[11px] font-semibold shrink-0 ${sub ? 'text-emerald-700' : 'text-brass-gold-500'}`}>
+                              {sub
+                                ? (sub.grade ? `${tx('الدرجة', 'Grade')} ${sub.grade}` : tx('تم التسليم', 'Submitted'))
+                                : (a.due_date ? `${tx('موعد التسليم', 'Due')} ${a.due_date}` : tx('قيد الانتظار', 'Pending'))}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </div>
 
             </div>
-          )}
 
-        </div>
+            {/* Exam Results Table */}
+            <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-4">
+              <h3 className="font-serif text-xl font-semibold text-ink-green-900">
+                {tx('التقييمات والدرجات الدراسية', 'Academic Appraisals & Marks')}
+              </h3>
+
+              {results.length === 0 ? (
+                <p className="text-xs text-ink-text-muted py-4 text-center">
+                  {tx('لم تُنشر أي درجات لهذا الطالب بعد.', 'No term marks published for this student yet.')}
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead>
+                      <tr className="border-b border-sand-border bg-parchment-50 text-ink-text-secondary uppercase text-[10px] tracking-wider">
+                        <th className="py-2.5 px-3">{tx('المادة', 'Subject')}</th>
+                        <th className="py-2.5 px-3">{tx('الفصل / الاختبار', 'Exam Term')}</th>
+                        <th className="py-2.5 px-3 text-right">{tx('الدرجة', 'Marks')}</th>
+                        <th className="py-2.5 px-3 text-center">{tx('التقدير', 'Grade')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-sand-border/60">
+                      {results.map((r, i) => (
+                        <tr key={r.id || i} className="hover:bg-parchment-50/50">
+                          <td className="py-2.5 px-3 font-medium text-ink-text-primary">{r.subject}</td>
+                          <td className="py-2.5 px-3 text-ink-text-muted">{r.exam_name}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-semibold text-ink-green-900 tabular-nums">{r.marks ?? '-'}</td>
+                          <td className="py-2.5 px-3 text-center">
+                            <span className="px-2 py-0.5 rounded-full bg-mint-wash-100 text-emerald-700 font-semibold text-[11px]">
+                              {r.grade || tx('ناجح', 'Pass')}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
 
       </div>
+
+      {/* Link Child Modal */}
+      {showLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-green-900/60 backdrop-blur-xs">
+          <div className="max-w-md w-full rounded-[14px] bg-paper-white border border-sand-border p-6 sm:p-8 shadow-manuscript-lg space-y-5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+                {tx('ربط ملف الطالب', 'Link Student Profile')}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="w-8 h-8 rounded-full border border-sand-border flex items-center justify-center text-ink-text-secondary hover:bg-sand-border/20"
+              >
+                ✕
+              </button>
+            </div>
+
+            <h3 className="font-serif text-2xl font-semibold text-ink-green-900">
+              {tx('ربط رقم القيد الأكاديمي', 'Link Son’s Index Number')}
+            </h3>
+
+            <p className="text-xs text-ink-text-secondary leading-relaxed">
+              {tx(
+                'أدخل رقم القيد المخصص للطالب عند قبوله بالكلية (مثال: KH-2026-0147).',
+                'Input the collegiate index number assigned to your ward upon admission (e.g., KH-2026-0147).'
+              )}
+            </p>
+
+            {linkError && (
+              <div className="p-3 rounded-lg bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger text-xs font-medium">
+                {linkError}
+              </div>
+            )}
+
+            <form onSubmit={handleLinkChild} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                  {tx('رقم قيد الطالب *', 'Student Index Number *')}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={linkIndex}
+                  onChange={(e) => setLinkIndex(e.target.value)}
+                  placeholder="KH-2026-0147"
+                  className="w-full h-11 px-3.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs font-mono uppercase text-ink-text-primary"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLinkModal(false)}
+                  className="px-4 py-2 border border-sand-border rounded-[10px] text-xs font-medium text-ink-text-secondary"
+                >
+                  {tx('إلغاء', 'Cancel')}
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-700 hover:bg-emerald-500 text-white rounded-[10px] text-xs font-semibold shadow-xs"
+                >
+                  {tx('ربط الحساب', 'Link Account')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
-};
-
-export default ParentDashboard;
+}

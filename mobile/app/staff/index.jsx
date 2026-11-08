@@ -10,12 +10,15 @@ import { toISODate, formatTime } from '../../lib/format';
 import { colors } from '../../lib/theme';
 import { fetchAnnouncements, AnnouncementCard } from '../../components/views/AnnouncementsView';
 import { unreadCount } from '../../components/views/NotificationsView';
+import ResponsibilitiesCard from '../../components/ResponsibilitiesCard';
+import { useResponsibilities } from '../../lib/useResponsibilities';
 import { Screen, Card, Txt, Button, Row, Badge, StatusBadge, SectionHeader, ListItem, EmptyState, StatTile, TileGrid } from '../../components';
 
 export default function StaffHome() {
   const { t } = useI18n();
   const { user, profile, caps } = useAuth();
   const [busy, setBusy] = useState(null);
+  const resp = useResponsibilities();
 
   const q = useAsync(async () => {
     const [today, announcements, unread, pendingLeaves, openTasks] = await Promise.all([
@@ -56,8 +59,17 @@ export default function StaffHome() {
   const openTasks = q.data?.openTasks;
 
   return (
-    <Screen loading={q.loading} error={q.error} onRefresh={q.refresh} refreshing={q.refreshing}>
+    <Screen
+      loading={q.loading}
+      error={q.error}
+      onRefresh={() => {
+        q.refresh();
+        resp.q.reload();
+      }}
+      refreshing={q.refreshing}
+    >
       <Txt variant="title">{t('home.greeting', { name: profile?.full_name?.split(' ')[0] || '' })}</Txt>
+      <ResponsibilitiesCard data={resp.q.data} live={resp.live} />
       <Card accent={colors.gold}>
         <Row style={{ justifyContent: 'space-between' }}>
           <Txt variant="h2">{`${t('staff.today')} · ${toISODate()}`}</Txt>
@@ -93,6 +105,12 @@ export default function StaffHome() {
 
       <SectionHeader title={t('home.quickLinks')} />
       {caps.canMarkAttendance ? <ListItem icon="checkbox-outline" title={t('attendance.mark')} onPress={() => router.push('/staff/attendance')} /> : null}
+      {caps.isFinanceViewer ? (
+        <ListItem icon="wallet-outline" iconColor={colors.primary} title={t('fin.title')} subtitle={t('fin.tileHint')} onPress={() => router.push('/finance')} />
+      ) : null}
+      {caps.canViewAnalytics ? (
+        <ListItem icon="bar-chart-outline" iconColor={colors.info} title={t('analytics.title')} subtitle={t('analytics.tileHint')} onPress={() => router.push('/analytics')} />
+      ) : null}
       {caps.isFinanceStaff ? (
         <ListItem icon="cash-outline" iconColor={colors.gold} title={t('counter.title')} subtitle={t('counter.tileHint')} onPress={() => router.push('/receive-payment')} />
       ) : null}
@@ -104,6 +122,7 @@ export default function StaffHome() {
         right={openTasks ? <Badge label={openTasks > 99 ? '99+' : String(openTasks)} tone="danger" /> : undefined}
         onPress={() => router.push('/tasks')}
       />
+      <ListItem icon="flag-outline" title={t('resp.title')} subtitle={t('resp.tileHint')} onPress={() => router.push('/responsibilities')} />
       <ListItem icon="ribbon-outline" iconColor={colors.gold} title={t('duty.title')} subtitle={t('duty.tileHint')} onPress={() => router.push('/duties')} />
       <ListItem icon="people-outline" title={t('mashoora.title')} subtitle={t('mashoora.tileHint')} onPress={() => router.push('/mashoora')} />
       <ListItem icon="time-outline" title={t('staff.myTimetable')} onPress={() => router.push({ pathname: '/timetable', params: { tutor: 'me' } })} />

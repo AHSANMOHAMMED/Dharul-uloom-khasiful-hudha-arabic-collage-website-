@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import RoleSwitcher from '../components/RoleSwitcher';
@@ -9,16 +9,17 @@ import TutorDashboard from './TutorDashboard';
 import TreasurerDashboard from './TreasurerDashboard';
 import PrincipalDashboard from './PrincipalDashboard';
 import LibrarianDashboard from './LibrarianDashboard';
+import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
 
-const UserDashboard = () => {
+export default function UserDashboard() {
   const {
     isAuthenticated, isApproved,
     isStudent, isParent, isTutor, isTreasurer,
     isPrincipal, isVP, isLibrarian, isAdmin, isNonTeachingStaff,
     logout, loading: authLoading
   } = useAuth();
-  useTranslation(); // subscribe: re-render on language change
+  useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -35,36 +36,47 @@ const UserDashboard = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-emerald-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-parchment-50 text-ink-text-primary">
+        <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
+  // Pending approval screen
   if (isAuthenticated && !isApproved) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4 relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-900/20 rounded-full blur-[100px]"></div>
-        <div className="max-w-md w-full glass-card p-10 rounded-3xl text-center space-y-8 relative z-10">
-          <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
-            <div className="absolute inset-0 border-t-2 border-r-2 border-amber-500 rounded-full animate-spin"></div>
-            <div className="h-20 w-20 bg-gradient-to-br from-amber-500/20 to-amber-900/40 text-amber-500 rounded-full flex items-center justify-center text-4xl border border-amber-500/30 shadow-glow-amber">
-              ⏳
-            </div>
+      <div className="min-h-screen bg-parchment-50 flex items-center justify-center p-6 relative overflow-hidden">
+        <KhatamPattern className="opacity-[0.05]" strokeColor="#0B3B2E" id="pending-dashboard-khatam" />
+        <div className="max-w-md w-full bg-paper-white rounded-[14px] border border-sand-border p-8 text-center space-y-6 shadow-manuscript-md relative z-10">
+          <div className="w-16 h-16 rounded-full bg-gold-wash-100 text-brass-gold-500 mx-auto flex items-center justify-center border border-brass-gold-500/30">
+            <span className="material-symbols-outlined text-3xl">{'hourglass_top'}</span>
           </div>
-          <div className="space-y-3">
-            <h2 className="text-3xl font-extrabold font-arabic text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">
-              {tx('الحساب قيد المراجعة', 'Pending Approval')}
+
+          <div className="space-y-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-brass-gold-500 block">
+              {tx('التدقيق والاعتماد', 'Dossier Verification')}
+            </span>
+            <h2 className="font-serif text-2xl font-semibold text-ink-green-900">
+              {tx('الحساب قيد المراجعة والاعتماد', 'Registration Pending Approval')}
             </h2>
-            <p className="text-sm text-gray-400 leading-relaxed font-light">
-              {tx('شكراً لتسجيلك. حسابك حالياً قيد المراجعة والتحقق من قبل إدارة الكلية. ستتمكن من تسجيل الدخول فور تفعيل حسابك.', 'Thank you for registering. Your credentials are pending review by the administration. You will have full access once approved.')}
+            <p className="text-xs text-ink-text-secondary leading-relaxed font-sans">
+              {tx(
+                'شكراً لتسجيلك في بوابة دار العلوم. حسابك حالياً قيد التدقيق والاعتماد من قبل إدارة الكلية. ستتمكن من الاطلاع على السجلات بمجرد تفعيل الحساب.',
+                'Thank you for registering. Your credentials are under review by college administration. Once approved, you will have direct access to your academic and financial ledgers.'
+              )}
             </p>
           </div>
+
+          <div className="p-3.5 rounded-lg bg-parchment-50 border border-sand-border text-xs text-ink-text-muted">
+            {tx('للمساعدة العاجلة، اتصل بمكتب القبول:', 'Need urgent assistance? Call Admissions Desk:')}{' '}
+            <span className="font-semibold text-ink-green-900">032-5612355</span>
+          </div>
+
           <button
             onClick={logout}
-            className="w-full py-3.5 bg-gray-900/80 hover:bg-gray-800 text-gray-300 font-bold rounded-2xl text-sm transition-all border border-gray-700 shadow-lg hover:-translate-y-1"
+            className="w-full h-11 bg-paper-white hover:bg-parchment-50 text-ink-text-primary font-semibold rounded-[10px] text-xs transition-all border border-sand-border shadow-xs"
           >
-            {tx('تسجيل الخروج', 'Logout / Switch Account')}
+            {tx('تسجيل الخروج / تبديل الحساب', 'Logout / Switch Account')}
           </button>
         </div>
       </div>
@@ -76,10 +88,10 @@ const UserDashboard = () => {
   const activeView = view || defaultSpecialView || 'tutor';
 
   const wrapWithSwitcher = (dashboard) => (
-    <>
+    <div className="w-full bg-parchment-50 min-h-screen">
       <RoleSwitcher />
       {dashboard}
-    </>
+    </div>
   );
 
   if (isLibrarian) return <LibrarianDashboard />;
@@ -100,29 +112,35 @@ const UserDashboard = () => {
   if (isTutor) return <TutorDashboard />;
   if (isStudent) return <StudentDashboard />;
   if (isParent) return <ParentDashboard />;
+
   // Non-teaching employees (accountant, HR, admissions, warden…) work in the ERP.
   if (isNonTeachingStaff) return <Navigate to="/erp" replace />;
 
   if (isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full glass-card p-8 rounded-3xl text-center space-y-4">
-          <div className="text-4xl">👋</div>
-          <h2 className="text-xl font-bold">
+      <div className="min-h-screen bg-parchment-50 text-ink-text-primary flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-paper-white border border-sand-border p-8 rounded-[14px] text-center space-y-4 shadow-manuscript-md">
+          <div className="w-16 h-16 rounded-full bg-mint-wash-100 text-emerald-700 mx-auto flex items-center justify-center border border-emerald-700/20">
+            <span className="material-symbols-outlined text-3xl">{'waving_hand'}</span>
+          </div>
+          <h2 className="text-xl font-serif font-bold text-ink-green-900">
             {tx('حساب زائر', 'Visitor account')}
           </h2>
-          <p className="text-sm text-gray-400">
-            {tx('يمكنك تقديم طلب القبول أو تصفح المكتبة. يتم تفعيل بوابات الطلاب وأولياء الأمور والموظفين من قبل الكلية.', 'You can apply for admission or browse the library. Student, parent and staff portals are activated by the college.')}
+          <p className="text-sm text-ink-text-secondary leading-relaxed">
+            {tx(
+              'يمكنك تقديم طلب القبول أو تصفح المكتبة. يتم تفعيل بوابات الطلاب وأولياء الأمور والموظفين من قبل الكلية.',
+              'You can apply for admission or browse the library. Student, parent and staff portals are activated by the college.'
+            )}
           </p>
-          <div className="flex justify-center gap-3">
-            <Link to="/admissions" className="px-4 py-2 bg-emerald-600 rounded-xl text-sm font-bold">
+          <div className="flex justify-center gap-3 pt-2">
+            <Link to="/admissions" className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-500 text-white rounded-[10px] text-xs font-semibold shadow-xs">
               {tx('طلب القبول', 'Apply now')}
             </Link>
-            <Link to="/library" className="px-4 py-2 bg-gray-800 rounded-xl text-sm font-bold">
+            <Link to="/library" className="px-5 py-2.5 bg-paper-white border border-sand-border hover:bg-parchment-50 text-ink-text-primary rounded-[10px] text-xs font-semibold">
               {tx('المكتبة', 'Library')}
             </Link>
           </div>
-          <button onClick={logout} className="text-xs text-gray-500 underline">
+          <button onClick={logout} className="text-xs text-ink-text-muted hover:text-feedback-danger underline pt-2">
             {tx('تسجيل الخروج', 'Logout')}
           </button>
         </div>
@@ -131,18 +149,16 @@ const UserDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-parchment-50 text-ink-text-primary flex items-center justify-center p-6">
       <div className="text-center space-y-4">
-        <div className="text-4xl animate-pulse">🔄</div>
-        <p className="text-gray-400 text-sm">
-          {tx('تحميل لوحة التحكم...', 'Loading your dashboard...')}
+        <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p className="text-xs text-ink-text-muted">
+          {tx('جاري تحميل مساحة البوابة...', 'Loading portal workspace...')}
         </p>
-        <button onClick={logout} className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-750 transition text-sm">
+        <button onClick={logout} className="text-xs text-ink-text-muted hover:text-feedback-danger underline">
           {tx('تسجيل الخروج', 'Logout')}
         </button>
       </div>
     </div>
   );
-};
-
-export default UserDashboard;
+}

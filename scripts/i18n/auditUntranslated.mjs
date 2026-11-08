@@ -25,7 +25,7 @@ const files = (d) => readdirSync(d).flatMap((f) => {
   if (statSync(p).isDirectory()) return ['test', 'locales'].includes(f) ? [] : files(p);
   return /\.jsx?$/.test(f) ? [p] : [];
 });
-const isArTest = (t) => (t.type === 'Identifier' && /^(ar|isAr|isArabic)$/.test(t.name))
+const isArTest = (t) => (t.type === 'Identifier' && /^(ar|isAr|isArabic|isRTL)$/.test(t.name))
   || (t.type === 'BinaryExpression' && t.right?.value === 'ar' && t.left?.property?.name === 'language');
 const english = (s) => /[A-Za-z]{2,}/.test(s) && !/^[\w.\-/#:]+$/.test(s.trim()) || /\s/.test(s.trim()) && /[A-Za-z]{3,}/.test(s);
 const ATTRS = new Set(['placeholder', 'title', 'aria-label', 'alt', 'label']);

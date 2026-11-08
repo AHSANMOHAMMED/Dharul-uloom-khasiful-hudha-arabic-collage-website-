@@ -58,10 +58,28 @@ const APP_ROUTES = new Set([
   'timetable', 'certificates', 'hostel', 'leave-requests', 'discipline', 'child', 'assignment', 'payslips',
   'payslip', 'my-attendance', 'staff-leave', 'settings', 'student', 'parent', 'staff', 'admin',
   'receive-payment', 'dictionary', 'tasks', 'task', 'duties', 'mashoora', 'petty-cash-spend',
+  'finance', 'responsibilities', 'activity', 'analytics',
 ]);
 
+// Older / web links that have a different mobile route.
+const LINK_ALIASES = { '/activities': '/responsibilities' };
+
+// Governance users open the activity itself (team + add people); everyone else
+// lands on My responsibilities. Set from the auth gate (setPushCaps).
+let governance = false;
+export function setPushCaps(caps) {
+  governance = !!caps?.isGovernance;
+}
+
 // Web ERP links (/erp?module=…) that have a mobile screen.
-const ERP_MODULE_ROUTES = { tasks: '/tasks', duties: '/duties', mashoora: '/mashoora' };
+const ERP_MODULE_ROUTES = {
+  tasks: '/tasks',
+  duties: '/duties',
+  mashoora: '/mashoora',
+  activities: '/responsibilities',
+  analytics: '/analytics',
+  finance: '/finance',
+};
 
 function erpRoute(link) {
   if (typeof link !== 'string' || !link.startsWith('/erp')) return null;
@@ -82,10 +100,15 @@ export function isAppRoute(link) {
 export function notificationRoute(input) {
   const n = input || {};
   const data = n.data && typeof n.data === 'object' ? n.data : n;
+  // Students / parents and finance staff (audience 'finance') both open the receipt.
   if (data.type === 'fee_receipt' && data.receipt_id) return `/receipt/${data.receipt_id}`;
   if (data.type === 'task' && data.task_id) return `/task/${data.task_id}`;
   if (data.type === 'duty') return '/duties';
-  const link = n.link || data.link;
+  if (data.type === 'activity') {
+    return governance && data.activity_id ? `/activity/${data.activity_id}` : '/responsibilities';
+  }
+  const raw = n.link || data.link;
+  const link = (typeof raw === 'string' && LINK_ALIASES[raw.split(/[?#]/)[0]]) || raw;
   if (isAppRoute(link)) return link;
   const erp = erpRoute(link);
   if (erp) return erp;

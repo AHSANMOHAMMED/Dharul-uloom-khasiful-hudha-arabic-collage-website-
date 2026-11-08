@@ -24,6 +24,12 @@ export function getCaps(profile) {
   const isHr = isAdmin || has(['hr_manager']);
   // Mirrors is_governance_admin(): assigns duties / tasks, marks tasks done.
   const isGovernance = isAdmin || has(LEADERSHIP);
+  // Mirrors is_accountant(): reverses receipts.
+  const isAccountant = isAdmin || has(['accountant']);
+  // Mirrors is_admissions_staff().
+  const isAdmissions = isAdmin || has(['admissions_officer', ...LEADERSHIP]);
+  // academic_analytics(): academic admin, admin, admissions or HR.
+  const canViewAcademicAnalytics = isAcademicAdmin || isAdmissions || isHr;
 
   return {
     isAdmin,
@@ -35,6 +41,11 @@ export function getCaps(profile) {
     isAcademicAdmin,
     isHr,
     isGovernance,
+    isAccountant,
+    isAdmissions,
+    canViewFinanceAnalytics: isFinanceViewer,
+    canViewAcademicAnalytics,
+    canViewAnalytics: isFinanceViewer || canViewAcademicAnalytics,
     // Mirrors attendance / leave_requests write policies (is_tutor() or is_staff()).
     canMarkAttendance: isTutor || isAdmin,
     canReviewStudentLeave: isTutor || isAdmin,

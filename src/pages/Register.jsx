@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
+import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
 
-const Register = () => {
-  useTranslation(); // subscribe: re-render on language change
+export default function Register() {
+  useTranslation();
   const { register } = useAuth();
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -20,9 +21,23 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword] = useState(false);
+
+  const roles = [
+    { id: 'parent', label: tx('ولي أمر طالب', 'Parent / Guardian'), icon: 'family_restroom' },
+    { id: 'student', label: tx('طالب منتظم', 'Student'), icon: 'school' },
+    { id: 'tutor', label: tx('أستاذ / مدرس', 'Faculty / Tutor'), icon: 'menu_book' },
+    { id: 'staff', label: tx('موظف إداري', 'Non-teaching staff'), icon: 'badge' },
+  ];
+  const phoneRequired = formData.role === 'tutor' || formData.role === 'parent';
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError('');
+  };
+
+  const handleRoleSelect = (roleId) => {
+    setFormData((prev) => ({ ...prev, role: roleId }));
     setError('');
   };
 
@@ -30,21 +45,18 @@ const Register = () => {
     e.preventDefault();
     setError('');
 
-    // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError(tx('كلمات المرور غير متطابقة', 'Passwords do not match'));
       return;
     }
 
-    // Validate password length
     if (formData.password.length < 8) {
       setError(tx('يجب أن تكون كلمة المرور 8 أحرف على الأقل', 'Password must be at least 8 characters'));
       return;
     }
 
-    // Validate index number if student
     if (formData.role === 'student' && !formData.indexNumber.trim()) {
-      setError(tx('رقم القيد مطلوب للطلاب', 'Index number is required for students'));
+      setError(tx('رقم القيد مطلوب للطلاب', 'Index number is required for student registration'));
       return;
     }
 
@@ -58,187 +70,241 @@ const Register = () => {
       formData.indexNumber,
       formData.phone
     );
-    
+
     if (result.success) {
       if (result.needsConfirmation) {
-        // Email confirmation is enabled on the project; no session yet.
         navigate('/login', {
           state: {
             message: tx('تم إنشاء حسابك. يرجى تأكيد بريدك الإلكتروني ثم تسجيل الدخول.', 'Account created. Please confirm your email, then sign in.')
           }
         });
       } else {
-        // Account created, redirect to dashboard.
-        // If they are a student or tutor, they will see the pending approval page inside the dashboard.
         navigate('/dashboard');
       }
     } else {
-      setError(result.error);
+      setError(result.error || tx('فشل التسجيل. يرجى التحقق من بياناتك.', 'Registration failed. Please check your details.'));
     }
-    
+
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full space-y-8"
-      >
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-islamic-green">
-            {tx('إنشاء حساب', 'Create Account')}
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-parchment-50">
+      
+      {/* Left Scholarly Branding Column */}
+      <div className="lg:w-1/2 bg-ink-green-900 text-paper-white p-8 sm:p-14 lg:p-20 flex flex-col justify-between relative overflow-hidden">
+        <KhatamPattern className="opacity-[0.05]" strokeColor="#FBF8F0" id="reg-left-khatam" />
+
+        <div className="relative z-10 space-y-4">
+          <Link to="/" className="inline-flex items-center gap-3">
+            <img 
+              src="/images/logo.jpg" 
+              alt={tx('شعار دار العلوم كاشف الهدى', 'Kashiful Hudha Emblem')} 
+              className="w-11 h-11 object-contain rounded-lg border border-sand-border/30 bg-paper-white/10"
+            />
+            <div className="flex flex-col">
+              <span className="font-serif text-xl font-semibold text-paper-white tracking-tight">
+                {tx('دار العلوم كاشف الهدى', 'Dharul Uloom Kashiful Hudha')}
+              </span>
+              <span className="text-xs text-gold-wash-100/90 font-arabic leading-none mt-0.5" dir="rtl">
+                دار العلوم كاشف الهدى
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        <div className="relative z-10 my-10 lg:my-0 space-y-6 max-w-lg">
+          <span className="text-xs font-semibold uppercase tracking-widest text-brass-gold-500 block">
+            {tx('التسجيل في البوابة', 'Portal Registration')}
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-semibold text-paper-white leading-tight">
+            {tx('انضم إلى مجتمعنا العلمي في الكلية.', 'Join our scholarly collegiate community.')}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {tx('أو ', 'Or ')}
-            <Link to="/login" className="font-medium text-islamic-green hover:text-islamic-dark">
-              {tx('تسجيل الدخول إلى حسابك', 'sign in to your account')}
-            </Link>
+          <p className="text-xs text-dark-text-primary/75 leading-relaxed font-sans">
+            {tx('يخضع تسجيل الحساب لاعتماد الإدارة. يجب على الطلاب إدخال رقم القيد في الكلية (مثل KH-2026-0147). ويمكن لأولياء الأمور ربط أبنائهم بعد الاعتماد.', 'Account registration is subject to administrative authentication. Students must supply their college index number (e.g., KH-2026-0147). Parents can link wards once approved.')}
           </p>
         </div>
 
-        <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" onSubmit={handleSubmit}>
+        <div className="relative z-10 text-xs text-dark-text-primary/60 flex items-center justify-between">
+          <span>{tx('بوابة التسجيل الرسمية', 'Official Registration Gateway')}</span>
+          <span>{tx('كلبيتيا، سريلانكا', 'Kalpitiya, Sri Lanka')}</span>
+        </div>
+      </div>
+
+      {/* Right Form Column */}
+      <div className="lg:w-1/2 p-6 sm:p-10 lg:p-16 flex items-center justify-center">
+        <div className="max-w-lg w-full rounded-[14px] bg-paper-white border border-sand-border p-6 sm:p-10 shadow-manuscript-md space-y-6">
+          
+          <div className="space-y-1">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
+              {tx('حساب جديد', 'New Account')}
+            </span>
+            <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-ink-green-900">
+              {tx('تسجيل حساب جديد', 'Register Portal Account')}
+            </h1>
+            <p className="text-xs text-ink-text-secondary">
+              {tx('اختر دورك الأكاديمي لتخصيص أدوات لوحة التحكم الخاصة بك.', 'Select your academic role to tailor your dashboard tools.')}
+            </p>
+          </div>
+
+          {/* Role Selector Cards */}
+          <div>
+            <label className="block text-xs font-semibold text-ink-text-primary mb-2">
+              {tx('اختر دورك *', 'Select Your Role *')}
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {roles.map((r) => {
+                const isSelected = formData.role === r.id;
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => handleRoleSelect(r.id)}
+                    className={`p-3 rounded-[12px] text-center border transition-all ${
+                      isSelected
+                        ? 'bg-mint-wash-100 border-emerald-700 ring-1 ring-emerald-700'
+                        : 'bg-paper-white border-sand-border hover:bg-parchment-50'
+                    }`}
+                  >
+                    <span className={`material-symbols-outlined text-[24px] block mb-1 ${isSelected ? 'text-emerald-700' : 'text-ink-text-muted'}`}>
+                      {r.icon}
+                    </span>
+                    <span className="font-serif text-xs font-semibold text-ink-green-900 block leading-tight">
+                      {r.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              {error}
+            <div className="p-3.5 rounded-lg bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger text-xs font-medium flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">{'error'}</span>
+              <span>{error}</span>
             </div>
           )}
 
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {tx('الاسم', 'Full Name')}
+              <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                {tx('الاسم الكامل *', 'Full Name *')}
               </label>
               <input
-                name="username"
                 type="text"
+                name="username"
                 required
                 value={formData.username}
                 onChange={handleChange}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                placeholder={tx('أدخل اسمك الكامل', 'Enter your full name')}
+                placeholder={tx('مثال: محمد أسلم', 'e.g. Mohamed Aslam')}
+                className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {tx('البريد الإلكتروني', 'Email Address')}
-              </label>
-              <input
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                placeholder={tx('أدخل بريدك الإلكتروني', 'Enter your email')}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {tx('نوع الحساب', 'Account Type')}
-              </label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-              >
-                <option value="parent">{tx('ولي أمر', 'Parent')}</option>
-                <option value="student">{tx('طالب', 'Student')}</option>
-                <option value="tutor">{tx('معلم / أستاذ', 'Teacher / Tutor')}</option>
-                <option value="staff">{tx('موظف إداري', 'Non-teaching staff')}</option>
-              </select>
-            </div>
-
-            {formData.role === 'student' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {tx('رقم القيد', 'Index Number')}
+                <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                  {tx('البريد الإلكتروني *', 'Email Address *')}
                 </label>
                 <input
-                  name="indexNumber"
+                  type="email"
+                  name="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder={'name@example.com'}
+                  className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                  {phoneRequired ? tx('رقم الهاتف *', 'Phone Number *') : tx('رقم الهاتف', 'Phone Number')}
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  required={phoneRequired}
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder={'0771234567'}
+                  className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+                />
+              </div>
+            </div>
+
+            {/* Student Index Number Field */}
+            {formData.role === 'student' && (
+              <div className="p-3.5 rounded-xl bg-gold-wash-100/40 border border-brass-gold-500/30">
+                <label className="block text-xs font-semibold text-ink-green-900 mb-1">
+                  {tx('رقم القيد في الكلية * (الصيغة: KH-YYYY-XXXX)', 'College Index Number * (Format: KH-YYYY-XXXX)')}
+                </label>
+                <input
                   type="text"
+                  name="indexNumber"
                   required
                   value={formData.indexNumber}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                  placeholder={tx('أدخل رقم القيد الخاص بك (مثال: KASHIF-2026-001)', 'Enter your index number (e.g., KASHIF-2026-001)')}
+                  placeholder={tx('مثال: KH-2026-0147', 'e.g. KH-2026-0147')}
+                  className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-brass-gold-500/50 focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary font-mono"
                 />
+                <span className="text-[11px] text-ink-text-muted mt-1 block">
+                  {tx('تجده في إشعار القبول أو كشف الدرجات الصادر عن الكلية.', 'Found on your admission slip or college marksheet.')}
+                </span>
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {tx('رقم الهاتف', 'Phone Number')}
-              </label>
-              <input
-                name="phone"
-                type="tel"
-                required={formData.role === 'tutor' || formData.role === 'parent'}
-                value={formData.phone}
-                onChange={handleChange}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                placeholder={tx('أدخل رقم الهاتف', 'Enter phone number')}
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                  {tx('كلمة المرور (8 أحرف على الأقل) *', 'Password (min 8 chars) *')}
+                </label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="••••••••••••"
+                  className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                  {tx('تأكيد كلمة المرور *', 'Confirm Password *')}
+                </label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  required
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="••••••••••••"
+                  className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {tx('كلمة المرور', 'Password')}
-              </label>
-              <input
-                name="password"
-                type="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                placeholder={tx('أدخل كلمة المرور (8 أحرف على الأقل)', 'Enter password (min 8 characters)')}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {tx('تأكيد كلمة المرور', 'Confirm Password')}
-              </label>
-              <input
-                name="confirmPassword"
-                type="password"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-islamic-green focus:border-islamic-green sm:text-sm"
-                placeholder={tx('أعد إدخال كلمة المرور', 'Re-enter password')}
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-islamic-green hover:bg-islamic-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-islamic-green disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading 
-              ? (tx('جاري التسجيل...', 'Creating account...'))
-              : (tx('إنشاء حساب', 'Create account'))
-            }
-          </button>
-
-          <div className="text-center">
-            <Link
-              to="/"
-              className="text-sm font-medium text-gray-600 hover:text-islamic-green"
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 active:bg-ink-green-900 text-white text-xs sm:text-sm font-semibold shadow-manuscript transition-colors disabled:opacity-50 mt-2"
             >
-              {tx('← العودة إلى الصفحة الرئيسية', '← Back to home')}
+              {loading ? tx('جارٍ إرسال التسجيل...', 'Submitting Registration...') : tx('إنشاء حساب في البوابة', 'Create Portal Account')}
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-sand-border text-center text-xs text-ink-text-secondary">
+            {tx('لديك حساب بالفعل؟', 'Already have an active account?')}{' '}
+            <Link to="/login" className="font-semibold text-emerald-700 hover:text-ink-green-900">
+              {tx('سجّل الدخول هنا', 'Sign in here')}
             </Link>
           </div>
-        </form>
-      </motion.div>
+
+        </div>
+      </div>
+
     </div>
   );
-};
-
-export default Register;
+}

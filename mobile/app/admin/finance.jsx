@@ -1,3 +1,5 @@
-import FinanceOutstandingView from '../../components/views/FinanceOutstandingView';
+import FinanceTabView from '../../components/views/FinanceTabView';
 
-export default FinanceOutstandingView;
+export default function AdminFinance() {
+  return <FinanceTabView />;
+}

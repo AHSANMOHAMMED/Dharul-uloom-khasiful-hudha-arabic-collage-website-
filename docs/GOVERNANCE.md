@@ -55,3 +55,23 @@ Guest applications (`submit_public_admission`) now go straight into the Admissio
 source *website*) and notify the admissions staff; duplicates within 10 minutes and invalid phone numbers are rejected.
 
 Tests: section 11d of `supabase/tests/rls_erp_test.sql`.
+
+## Activities with several responsible people (0025)
+
+ERP → Governance → **Activities** (web) and *My responsibilities* (mobile). An activity (event, exam duty, trip,
+programme, maintenance, religious, sports…) gets a team: each person has a role (team lead, coordinator,
+supervisor, member, helper) and written responsibilities (`assign_activity_staff`). Each person is notified on the
+phone, sees the activity with the whole team, and answers Accept / Decline (reason required) / Done
+(`respond_activity`); the organiser and team leads are notified. Expense claims can be tagged to an activity
+against its budget. `my_responsibilities()` lists everything a person is responsible for — duties, activities,
+tasks — and what that lets them do.
+
+## Finance on the phone (0025)
+
+Every payment (counter or PayHere online) is recorded automatically and pushed to the treasurer, accountant and
+admins. From the app they see *Today* (collected, online, by method, outstanding, pending approvals, failed
+messages), open any student (arrears by month, receipts, message log of SMS/WhatsApp/e-mail/push), receive a
+payment, send a reminder (once per 20 h per family) or reminders to all overdue families, resend a receipt, and
+(accountants) reverse a receipt. Analytics (web + mobile): 12-month invoiced vs collected, cash vs outgoings,
+arrears ageing (buckets always add up to the total outstanding), collection rate by class, methods, top arrears,
+expenses and petty cash by duty; attendance trend/by class, chronic absentees, exam averages, admissions funnel.

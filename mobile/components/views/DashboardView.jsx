@@ -1,13 +1,16 @@
 import * as WebBrowser from 'expo-web-browser';
+import { router } from 'expo-router';
+import { useAuth } from '../../lib/auth';
 import { supabase, must, WEB_URL } from '../../lib/supabase';
 import { useAsync } from '../../lib/useAsync';
 import { useI18n } from '../../lib/i18n';
 import { colors } from '../../lib/theme';
-import { Screen, Card, Txt, Button, StatTile, TileGrid, SectionHeader, useMoney } from '..';
+import { Screen, Card, Txt, Button, StatTile, TileGrid, SectionHeader, ListItem, useMoney } from '..';
 
 export default function DashboardView() {
   const { t } = useI18n();
   const money = useMoney();
+  const { caps } = useAuth();
   const q = useAsync(() => must(supabase.rpc('org_dashboard_stats')), []);
   const s = q.data || {};
   const fm = s.fees_month || {};
@@ -15,6 +18,15 @@ export default function DashboardView() {
 
   return (
     <Screen loading={q.loading} error={q.error} onRefresh={q.refresh} refreshing={q.refreshing}>
+      {caps.canViewAnalytics ? (
+        <ListItem
+          icon="bar-chart-outline"
+          iconColor={colors.info}
+          title={t('analytics.title')}
+          subtitle={t('analytics.tileHint')}
+          onPress={() => router.push('/analytics')}
+        />
+      ) : null}
       {q.data ? (
         <>
           <TileGrid>

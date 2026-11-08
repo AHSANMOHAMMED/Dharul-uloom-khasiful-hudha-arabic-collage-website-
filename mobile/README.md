@@ -63,15 +63,22 @@ app/
   report-card, attendance-history, timetable, certificates, hostel, leave-requests,
   discipline, link-child, child/[id], assignment/[id], payslips, payslip/[id],
   my-attendance, staff-leave, receipt/[id], receive-payment, dictionary,
-  tasks, task/[id], duties, petty-cash-spend, mashoora
+  tasks, task/[id], duties, petty-cash-spend, mashoora,
+  finance/ (index = Today, outstanding, student/[id]), responsibilities,
+  activity/[id], analytics
 components/              UI kit (Screen, Card, Button, ListItem, Badge/StatusBadge,
                          EmptyState, Loading, ErrorBanner, Money, SectionHeader, Field,
-                         Chips, StatTile, Row/KeyValue, RoleTabs, LiveIndicator, LiveToast)
+                         Chips, StatTile, Row/KeyValue, RoleTabs, LiveIndicator, LiveToast,
+                         PromptModal, Bars (HBar / ColumnChart / Legend), ActivityCard,
+                         ResponsibilitiesCard)
                          + views/ (shared screens)
 lib/                     supabase, auth context, roles (caps), i18n, payments, useAsync, format,
                          live (Realtime hooks + LiveProvider), push (registration + deep links),
                          receipts (PDF url, payment methods),
-                         governance (task statuses / move rules, duty & account names)
+                         governance (task statuses / move rules, duty & account names),
+                         finance (reminders, resend, reverse, message-log tones),
+                         activities (roles, statuses, respond / assign / remove),
+                         useResponsibilities (my_responsibilities + live + respond flow)
 ```
 
 ## Role routing
@@ -85,7 +92,9 @@ lib/                     supabase, auth context, roles (caps), i18n, payments, u
 Inside the staff portal, the tabs depend on the user's roles (`lib/roles.js` mirrors the SQL helpers):
 
 - Class attendance and student leave review are shown to teachers (`account_type = tutor`) and admins. These are the roles the RLS policies allow.
-- The Dashboard tab is shown to principal, vice principal, treasurer, accountant, HR manager and exam officer. Finance roles also get the outstanding-fees list.
+- The Dashboard tab is shown to principal, vice principal, treasurer, accountant, HR manager and exam officer. Finance viewers (treasurer, accountant, principal, vice principal) land on **Today** (finance), with Dashboard and Outstanding as the other two segments.
+- In the admin portal the Finance tab opens on **Today** too, with Outstanding as the second segment.
+- New caps in `lib/roles.js`: `isAccountant` (mirrors `is_accountant()`), `isAdmissions`, `canViewFinanceAnalytics`, `canViewAcademicAnalytics`, `canViewAnalytics`.
 
 ## Features
 
@@ -151,6 +160,72 @@ Inside the staff portal, the tabs depend on the user's roles (`lib/roles.js` mir
 2. The student's arrears load from `student_arrears` (live on `student_fees`). Tap a month to pay it first (`p_fee`); otherwise the server allocates oldest month first.
 3. Amount with quick **Oldest month** / **All arrears**, method chips (cash, bank transfer, cheque, online, other), reference (required unless cash), payer name, note.
 4. Confirm → `receive_student_payment(...)` → the app replaces the screen with the new receipt. The server notifies the student and every linked parent (in-app, push, SMS / e-mail).
+
+## Finance on the phone (0025)
+
+`/finance` (Today) uses `finance_today()` and is open to finance viewers (`caps.isFinanceViewer`; the RPC checks `is_finance_viewer()`). Entry points: staff Dashboard tab and admin Finance tab (default segment), staff Home quick links, staff More, admin Settings.
+
+- KPI tiles: collected today, receipts today, online (PayHere) today, total outstanding (opens `/finance/outstanding`), waiting for approval (petty cash + expenses) and failed messages in the last 24 h.
+- "Collected today by method" bars (`by_method`).
+- Live: `useLiveReload(['fee_receipts'])` re-fetches the summary on every receipt (counter or PayHere). The finance team also gets a notification + push for each payment (`data.audience = 'finance'`), which opens the receipt.
+- Quick actions:
+  - **Receive payment** → `/receive-payment` (finance staff).
+  - **Send overdue reminders** (finance staff): asks for the minimum days overdue (default 7), confirms, then calls `send_overdue_reminders(p_min_days, 200)` and shows `{sent, skipped}`.
+  - **Student lookup**: search by name or index → `/finance/student/<id>`.
+  - **Analytics** (when allowed).
+- Latest receipts (`latest`) → `/receipt/<id>`.
+
+`/finance/student/[id]`:
+
+- Arrears (`student_arrears`): total, overdue and each unpaid month (invoice, due date, total, paid, balance, overdue badge).
+- **Receive payment** (prefills the student: `/receive-payment?student=<id>`) and **Send reminder** with an optional note → `send_fee_reminder(p_student, p_note)`. The server allows one reminder per family per 20 h; its error is shown as is.
+- Receipts (`fee_receipts`, newest first) → receipt screen. Per posted receipt:
+  - **Resend** (finance staff) → `resend_receipt(p_receipt)` (copy to the parents).
+  - **Reverse** (accountant / admin only, `caps.isAccountant`) → reason required → `reverse_fee_receipt(p_receipt, p_reason)`.
+- Message log (`student_message_log(p_student, 60)`), filterable by SMS / WhatsApp / e-mail / push: subject, channel, recipient and address, status badge (queued, sending, sent, failed, blocked, skipped), error text, queued / sent time. Tap to expand the body.
+- Live on `student_fees` and `fee_receipts` (`student_id=eq.<id>`).
+- The outstanding list (`/finance/outstanding`, and the Outstanding segment) now opens this screen for each student.
+
+## My responsibilities and activities (0025)
+
+`/responsibilities` (employees) uses `my_responsibilities()`:
+
+- **My activities**: title, category, start/end time, location, my role, my responsibilities, team (name, role, status), and my status. Actions:
+  - **Accept** → `respond_activity(id, 'accepted')`;
+  - **Decline** → a reason is required → `respond_activity(id, 'declined', note)`;
+  - **Mark done** (after accepting) → optional short report → `respond_activity(id, 'done', note)`.
+  Tap a card to open `/activity/<id>`.
+- **My duties** with the trilingual name (`name_ta` / `name_ar` / `name_en`), since date, Lead and "Reviews leave" badges, and **Record a spend** when the duty has a petty cash fund.
+- **My tasks** counts (to do, in progress, review, overdue) → `/tasks`.
+- **What you can do**: one line per `permissions` flag, e.g. "You can approve student leave" (`leave_review`), "You can reverse receipts …" (`accountant`). Finance opens `/finance`; leave review opens the Leaves tab when it is shown.
+- Governance (admin, principal, vice principal) also gets **All upcoming activities** (`activities` with assignee counts) → `/activity/<id>`.
+- Live: `activity_assignees` (`profile_id=eq.<me>`), `activities`, `duty_assignments`, `tasks` (`assignee_id=eq.<me>`).
+
+`/activity/[id]`: details, my part (with the same respond actions), and the team (`activity_assignees` + profile name, role, responsibilities, status, response note). Governance users get:
+
+- **Add people**: an employee picker (approved tutors / staff, search by name), a role (lead, coordinator, supervisor, member, helper) and responsibilities for each picked person, then `assign_activity_staff(p_activity, [{profile_id, role, responsibilities}])`. Each person is notified.
+- **Edit** a member (re-assign with a new role / responsibilities; the RPC upserts) and **Remove** (`remove_activity_staff`).
+- Live on `activity_assignees` (`activity_id=eq.`) and `activities` (`id=eq.`).
+
+Staff Home shows a **My responsibilities** card at the top: up to three upcoming activities (time, place, role, my status), "N waiting for your answer", and the active duties as badges. Tap → `/responsibilities` or the activity.
+
+## Analytics (0025)
+
+`/analytics` (finance viewers and academic admin / admissions / HR) with two segments. All charts are plain `View` bars (`components/Bars.jsx`); no chart dependency.
+
+- **Finance** (`finance_analytics(p_months)`, 6 / 12 / 24 months):
+  - totals for the period: invoiced, collected against those months, cash received, collection rate, expenses + petty cash;
+  - invoiced vs collected per month (grouped columns; tap a month for its amounts);
+  - arrears by age (not due, 0–30, 31–60, 61–90, 90+ days) with the total and number of students owing;
+  - collection rate by class (with invoiced and outstanding);
+  - received by method; top arrears (tap → `/finance/student/<id>`); expenses by account.
+- **Academic** (`academic_analytics(p_days)`, 90 / 180 / 365 days):
+  - attendance rate per month, and by class (last 30 days), students below 75 %;
+  - latest published exam: average % and pass rate per subject;
+  - admissions funnel (enquiry → enrolled / rejected) with applications and conversion;
+  - students by class; institution task counts.
+
+Entry points: Finance Today, the Dashboard view (staff and admin), staff Home, staff More and admin Settings.
 
 ## Duties, petty cash, mashoora and tasks
 
@@ -223,6 +298,10 @@ Screens that re-fetch on change for the relevant student (`student_id=eq.<id>`):
 | Task detail | `tasks` (`id`), `task_comments` (`task_id`) |
 | My duties | `duty_assignments`, `petty_cash_entries` |
 | Mashoora | `tasks`, `duty_assignments` |
+| Finance Today | `fee_receipts` (all, RLS-scoped) |
+| Finance student | `student_fees`, `fee_receipts` (`student_id`) |
+| My responsibilities, staff Home card | `activity_assignees` (`profile_id`), `activities`, `duty_assignments`, `tasks` (`assignee_id`) |
+| Activity detail | `activity_assignees` (`activity_id`), `activities` (`id`) |
 
 A small green **Live** pill shows while the channel is SUBSCRIBED. RLS applies to Realtime, so clients only receive rows they could read anyway. Pull-to-refresh and refresh-on-focus still work if the socket is down.
 
@@ -230,11 +309,12 @@ A small green **Live** pill shows while the channel is SUBSCRIBED. RLS applies t
 
 `lib/push.js` registers the Expo push token (`register_push_token`) and routes taps:
 
-- `data.type = 'fee_receipt'` → `/receipt/<data.receipt_id>`
+- `data.type = 'fee_receipt'` → `/receipt/<data.receipt_id>` (students / parents, and finance staff with `data.audience = 'finance'`: "Online payment received" / "Payment recorded")
+- `data.type = 'activity'` → `/activity/<data.activity_id>` for governance users, otherwise `/responsibilities` (the role is passed to `lib/push.js` with `setPushCaps` from the auth gate)
 - `data.type = 'task'` → `/task/<data.task_id>`
 - `data.type = 'duty'` → `/duties`
 - otherwise `data.link` if it is an app route (e.g. `/receipt/<id>`, `/announcements`)
-- otherwise web ERP links with a mobile screen: `/erp?module=tasks` → `/tasks`, `module=duties` → `/duties`, `module=mashoora` → `/mashoora`
+- otherwise web ERP links with a mobile screen: `/erp?module=tasks` → `/tasks`, `module=duties` → `/duties`, `module=mashoora` → `/mashoora`, `module=activities` → `/responsibilities`, `module=analytics` → `/analytics`, `module=finance` → `/finance`; the server link `/activities` maps to `/responsibilities`
 - otherwise `/notifications`
 
 Taps are handled while running (`addNotificationResponseReceivedListener`) and on cold start (`getLastNotificationResponseAsync`, after the session is restored). Each response is handled once, and the related notification row (`data.notification_id`) is marked read. In-app notification rows use the same routing (`notificationRoute({ data, link })`).
@@ -254,6 +334,7 @@ If the edge function cannot be reached it falls back to `rpc('lookup_arabic_word
 ## Languages: EN / AR / TA
 
 - `lib/i18n.js` holds the English, Arabic and (Sri Lankan) Tamil dictionaries. Every key must exist in all three. Every UI string goes through `t()`.
+- New screens use the `fin.*`, `msg.*`, `resp.*`, `activity.*`, `analytics.*` and `month.short.*` keys.
 - The language toggle is on the login screen and in Settings. The choice is saved in SecureStore.
 - RTL is handled with manual helpers (`row`, `textAlign`, `chevron`), and the tab order is mirrored. `I18nManager` is never forced, so no app restart is needed.
 

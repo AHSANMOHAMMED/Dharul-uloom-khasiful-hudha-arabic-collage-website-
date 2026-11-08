@@ -25,7 +25,8 @@ export default function LiveToast() {
   }, [toast, dismissToast]);
 
   if (!toast) return null;
-  const isReceipt = toast.data?.type === 'fee_receipt';
+  const type = toast.data?.type;
+  const icon = type === 'fee_receipt' ? 'receipt-outline' : type === 'activity' ? 'flag-outline' : type === 'task' ? 'checkbox-outline' : 'notifications-outline';
 
   const open = async () => {
     dismissToast();
@@ -40,7 +41,7 @@ export default function LiveToast() {
     <View pointerEvents="box-none" style={[styles.wrap, { top: insets.top + 8 }]}>
       <Pressable onPress={open} style={({ pressed }) => [styles.card, row, pressed && styles.pressed]} accessibilityRole="button">
         <View style={styles.icon}>
-          <Ionicons name={isReceipt ? 'receipt-outline' : 'notifications-outline'} size={20} color={colors.primaryDark} />
+          <Ionicons name={icon} size={20} color={colors.primaryDark} />
         </View>
         <View style={styles.body}>
           <Txt variant="strong" style={styles.title} numberOfLines={1}>{toast.title || t('notif.title')}</Txt>

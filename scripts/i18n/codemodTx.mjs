@@ -31,7 +31,7 @@ function files(dir) {
 }
 
 const isArTest = (t) =>
-  (t.type === 'Identifier' && (t.name === 'ar' || t.name === 'isAr')) ||
+  (t.type === 'Identifier' && (t.name === 'ar' || t.name === 'isAr' || t.name === 'isRTL' || t.name === 'isArabic')) ||
   (t.type === 'BinaryExpression' && t.operator === '===' &&
     t.right.type === 'StringLiteral' && t.right.value === 'ar' &&
     t.left.type === 'MemberExpression' && !t.left.computed &&

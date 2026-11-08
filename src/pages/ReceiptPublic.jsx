@@ -7,6 +7,7 @@ import { tx } from '../lib/tx';
 import { printReceipt, receiptPdfUrl } from '../lib/receiptPrint';
 import { printReceiptDotMatrix } from '../lib/receiptText';
 import ReceiptSlip from '../components/ReceiptSlip';
+import KhatamPattern from '../components/KhatamPattern';
 
 /**
  * /r/:token  — public secret-link receipt (no login; fee_receipt_by_token)
@@ -27,7 +28,6 @@ export default function ReceiptPublic() {
       } else if (id) {
         receipt = await rpc('fee_receipt_details', { p_receipt: id });
         if (receipt && receipt.payer_name === undefined) {
-          // payer name lives on fee_receipts (RLS: own / child / finance viewer)
           const rows = await query('fee_receipts', (q) => q.select('payer_name').eq('id', id).limit(1)).catch(() => []);
           receipt = { ...receipt, payer_name: rows?.[0]?.payer_name ?? null };
         }
@@ -50,10 +50,20 @@ export default function ReceiptPublic() {
   const pdf = r ? receiptPdfUrl(r.public_token) : null;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 pb-16 pt-24" dir={tx('rtl', 'ltr')}>
-      <div className="mx-auto max-w-3xl space-y-5">
+    <div className="min-h-screen bg-parchment-50 px-4 pb-16 pt-24 relative overflow-hidden" dir={tx('rtl', 'ltr')}>
+      <KhatamPattern className="opacity-[0.04]" strokeColor="#0B3B2E" id="receipt-public-khatam" />
+
+      <div className="mx-auto max-w-3xl space-y-6 relative z-10">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold text-emerald-800">{tx('إيصال الدفع', 'Payment receipt')}</h1>
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 block mb-0.5">
+              {tx('سند استلام رسمي', 'Official Financial Voucher')}
+            </span>
+            <h1 className="text-2xl font-serif font-bold text-ink-green-900">
+              {tx('إيصال تحصيل الرسوم', 'Tuition & Waqf Fee Receipt')}
+            </h1>
+          </div>
+
           {r && (
             <div className="flex flex-wrap gap-2">
               {pdf && (
@@ -61,17 +71,19 @@ export default function ReceiptPublic() {
                   href={pdf}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
+                  className="rounded-[10px] bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500 transition-colors shadow-xs flex items-center gap-1.5"
                 >
-                  {tx('تنزيل PDF', 'Download PDF')}
+                  <span className="material-symbols-outlined text-[16px]">{'picture_as_pdf'}</span>
+                  <span>{tx('تنزيل PDF', 'Download PDF')}</span>
                 </a>
               )}
               <button
                 type="button"
                 onClick={() => printReceipt(r)}
-                className="rounded-xl border border-emerald-700 px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
+                className="rounded-[10px] border border-sand-border bg-paper-white px-4 py-2 text-xs font-semibold text-ink-text-primary hover:bg-parchment-50 transition-colors flex items-center gap-1.5"
               >
-                {tx('طباعة', 'Print')}
+                <span className="material-symbols-outlined text-[16px]">{'print'}</span>
+                <span>{tx('طباعة', 'Print')}</span>
               </button>
               <button
                 type="button"
@@ -85,35 +97,44 @@ export default function ReceiptPublic() {
         </div>
 
         {needsLogin ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
-            <p className="text-slate-700">{tx('سجّل الدخول لعرض هذا الإيصال.', 'Sign in to view this receipt.')}</p>
-            <Link to="/login" className="mt-3 inline-block rounded-xl bg-emerald-700 px-5 py-2 text-sm font-semibold text-white">
-              {tx('دخول', 'Sign In')}
+          <div className="rounded-[14px] border border-sand-border bg-paper-white p-8 text-center space-y-3 shadow-manuscript-sm">
+            <span className="material-symbols-outlined text-3xl text-brass-gold-500">{'lock'}</span>
+            <p className="text-ink-text-secondary text-sm">
+              {tx('سجّل الدخول إلى بوابتك المؤسسية لعرض هذا الإيصال.', 'Sign in to view this receipt.')}
+            </p>
+            <Link
+              to="/login"
+              className="mt-2 inline-block rounded-[10px] bg-emerald-700 px-5 py-2.5 text-xs font-semibold text-white hover:bg-emerald-500 transition-colors"
+            >
+              {tx('تسجيل الدخول', 'Sign In')}
             </Link>
           </div>
         ) : state.loading ? (
           <div className="flex justify-center py-16">
-            <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-emerald-600" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-700 border-t-transparent" />
           </div>
         ) : state.error ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="rounded-[14px] border border-feedback-danger/30 bg-feedback-danger/10 p-4 text-xs text-feedback-danger">
             {state.error.message || String(state.error)}
             <button type="button" onClick={load} className="ms-3 font-semibold underline">
               {tx('إعادة المحاولة', 'Retry')}
             </button>
           </div>
         ) : !r ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
-            <h2 className="text-xl font-bold text-amber-900">{tx('الإيصال غير موجود', 'Receipt not found')}</h2>
-            <p className="mt-1 text-sm text-amber-800">
+          <div className="rounded-[14px] border border-sand-border bg-paper-white p-8 text-center space-y-2 shadow-manuscript-sm">
+            <span className="material-symbols-outlined text-3xl text-feedback-warning">{'search_off'}</span>
+            <h2 className="text-xl font-serif font-bold text-ink-green-900">{tx('الإيصال غير موجود', 'Receipt Not Found')}</h2>
+            <p className="text-xs text-ink-text-secondary max-w-md mx-auto">
               {tx(
                 'الرابط غير صالح أو لا تملك صلاحية عرض هذا الإيصال. تواصل مع مكتب الحسابات.',
-                'The link is invalid or you do not have access to this receipt. Please contact the accounts office.',
+                'The link is invalid or you do not have access to this receipt. Please contact the accounts office.'
               )}
             </p>
           </div>
         ) : (
-          <ReceiptSlip receipt={r} />
+          <div className="rounded-[14px] border border-sand-border bg-paper-white p-6 shadow-manuscript-md">
+            <ReceiptSlip receipt={r} />
+          </div>
         )}
       </div>
     </div>

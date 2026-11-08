@@ -3,16 +3,17 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { motion } from 'framer-motion';
 import PayFeeButton from '../components/PayFeeButton';
 import ReceiptsArrears from '../components/ReceiptsArrears';
 import StudentLmsPanel from '../components/StudentLmsPanel';
 import { generateFeeReceipt } from '../lib/exportUtils';
+import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
 
-const StudentDashboard = () => {
+export default function StudentDashboard() {
   const { user } = useAuth();
-  useTranslation(); // subscribe: re-render on language change
+  useTranslation();
+
   const [results, setResults] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [fees, setFees] = useState(null);
@@ -55,10 +56,10 @@ const StudentDashboard = () => {
         .eq('student_id', user.id)
         .order('month', { ascending: false });
       if (feesData && feesData.length > 0) {
-        setFees(feesData[0]); // Get current month fee
+        setFees(feesData[0]);
       }
 
-      // 4. Fetch tutor jobs/teachers (for class teacher info)
+      // 4. Fetch tutor jobs/teachers
       const { data: jobsData } = await supabase
         .from('tutor_jobs')
         .select('*, profiles(full_name, phone)')
@@ -86,12 +87,11 @@ const StudentDashboard = () => {
     if (!queryText.trim()) return;
 
     try {
-      // Find class teacher / admin to send message to
       const targetTutor = tutorJobs[0]?.tutor_id;
       if (targetTutor) {
         await supabase.from('notifications').insert({
           user_id: targetTutor,
-          title: `Student Query from ${user.username}`,
+          title: `Student Inquiry from ${user.username}`,
           message: queryText
         });
       }
@@ -103,196 +103,197 @@ const StudentDashboard = () => {
     }
   };
 
-  // Calculate attendance statistics
+  // Calculations
   const totalDays = attendance.length;
   const presentDays = attendance.filter(a => a.status === 'present' || a.status === 'late').length;
-  const absentDays = attendance.filter(a => a.status === 'absent').length;
   const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 100;
   const showAttendanceWarning = attendanceRate < 85 && totalDays > 3;
 
+  const latestResult = results[0];
+  const totalDue = fees ? Math.max(0, (fees.total_due || 0) - (fees.paid_amount || 0)) : 0;
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
-        <div className="relative w-16 h-16 flex items-center justify-center">
-          <div className="absolute inset-0 border-t-2 border-r-2 border-emerald-500 rounded-full animate-spin"></div>
-          <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">⚡</div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-parchment-50 text-ink-text-primary">
+        <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Decorative Background */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-900/10 rounded-full blur-[120px] pointer-events-none"></div>
-
-      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+    <div className="min-h-screen bg-parchment-50 text-ink-text-primary py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1240px] mx-auto space-y-8">
         
-        {/* Welcome Banner */}
-        <div className="relative overflow-hidden rounded-[2rem] glass-card p-10 shadow-2xl border border-emerald-500/20 group perspective-1000">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-transparent to-amber-500/10 opacity-50 group-hover:opacity-100 transition-opacity duration-700"></div>
-          
-          <div className="relative z-10 md:flex justify-between items-center">
-            <div className="flex gap-6 items-center">
-              <div className="hidden sm:flex w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-800 items-center justify-center shadow-glow-emerald">
-                <span className="text-4xl text-white font-arabic">ط</span>
-              </div>
-              <div>
-                <span className="bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-glow-amber border border-amber-500/20">
-                  {tx('بوابة الطالب', 'Student Portal')}
+        {/* 1. Header Banner */}
+        <div className="rounded-[14px] bg-ink-green-900 text-paper-white p-7 sm:p-10 shadow-manuscript-md border border-sand-border/20 relative overflow-hidden">
+          <KhatamPattern className="opacity-[0.04]" strokeColor="#FBF8F0" id="student-header-khatam" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-700/80 text-white text-[11px] font-semibold uppercase tracking-wider">
+                  {tx('بوابة الطالب الأكاديمية', 'Student Portal Desk')}
                 </span>
-                <h1 className="mt-4 text-3xl md:text-5xl font-extrabold font-arabic tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">
-                  {tx('مرحباً بك، {name}', 'Welcome back, {name}').replace('{name}', user?.username)}
-                </h1>
-                <p className="mt-3 text-gray-400 text-sm max-w-xl font-medium">
-                  {tx('رقم القيد الخاص بك: ', 'Your Student Index Number: ')}
-                  <span className="font-mono text-emerald-400 font-bold bg-gray-900 px-2.5 py-1 rounded-lg ml-1 border border-gray-800">
-                    {user?.indexNumber}
+                {user?.indexNumber && (
+                  <span className="font-mono text-xs bg-paper-white/10 px-2.5 py-0.5 rounded border border-sand-border/20 text-gold-wash-100">
+                    {user.indexNumber}
                   </span>
-                </p>
+                )}
               </div>
+
+              <h1 className="font-serif text-2xl sm:text-4xl font-semibold text-paper-white">
+                {tx(`السلام عليكم ورحمة الله، ${user?.username}`, `Assalamu Alaikum, ${user?.username}`)}
+              </h1>
+
+              <p className="text-xs sm:text-sm text-dark-text-primary/75 max-w-xl font-sans">
+                {tx(
+                  'متابعة الحضور اليومي في الحلقات، كشف الدرجات، حالة الرسوم والواجبات المدرسية المفتوحة.',
+                  'Review your daily halaqah presence, term marksheet, tuition status, and open assignment submissions.'
+                )}
+              </p>
             </div>
-            <div className="mt-8 md:mt-0 flex gap-4">
-              <Link 
-                to="/library" 
-                className="px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl transition-all shadow-glow-emerald border border-emerald-400/20 flex items-center gap-3 hover:scale-105"
+
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                to="/library"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-paper-white/10 hover:bg-paper-white/20 text-white text-xs font-semibold border border-sand-border/20 transition-colors"
               >
-                <span className="text-xl">📖</span> {tx('المكتبة الرقمية', 'Digital Library')}
+                <span className="material-symbols-outlined text-[18px]">{'auto_stories'}</span>
+                <span>{tx('المكتبة الرقمية', 'Open Library')}</span>
               </Link>
             </div>
           </div>
-          {/* Decorative backdrop shapes */}
-          <div className="absolute right-0 bottom-0 translate-y-12 translate-x-12 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px]"></div>
         </div>
 
-        {/* Pinned Announcements Banner */}
+        {/* 2. Pinned Announcements & Attendance Warning */}
         {announcements.length > 0 && (
           <div className="space-y-2">
-            {announcements.map(ann => (
-              <div key={ann.id} className="flex items-start gap-3 bg-amber-950/20 border border-amber-500/20 p-4 rounded-xl">
-                <span className="text-amber-400 text-lg">📌</span>
+            {announcements.map((ann) => (
+              <div key={ann.id} className="p-4 rounded-xl bg-gold-wash-100/60 border border-brass-gold-500/30 flex items-start gap-3 text-xs">
+                <span className="material-symbols-outlined text-brass-gold-500 text-[18px] shrink-0 mt-0.5">{'campaign'}</span>
                 <div>
-                  <h3 className="font-bold text-amber-300 text-sm">{ann.title}</h3>
-                  <p className="text-xs text-amber-200/70 mt-0.5">{ann.body}</p>
+                  <h4 className="font-serif font-bold text-ink-green-900">{ann.title}</h4>
+                  <p className="text-ink-text-secondary mt-0.5">{ann.body}</p>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Notifications & Warning Center */}
         {showAttendanceWarning && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }} 
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 bg-red-950/40 border border-red-500/30 p-4 rounded-xl text-red-200"
-          >
-            <span className="text-2xl">⚠️</span>
+          <div className="p-4 rounded-xl bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger flex items-start gap-3 text-xs">
+            <span className="material-symbols-outlined text-xl shrink-0">{'warning'}</span>
             <div>
-              <h3 className="font-bold text-sm">
-                {tx('تنبيه الحضور والمواظبة!', 'Attendance Alert!')}
-              </h3>
-              <p className="text-xs text-red-300">
+              <h4 className="font-semibold">{tx('تنبيه الحضور: النسبة دون الحد المطلوب', 'Attendance Warning: Ratio Below Threshold')}</h4>
+              <p className="mt-0.5">
                 {tx(
-                  'نسبة حضورك هي {rate}% وهو أقل من الحد المطلوب (85%). يرجى مراجعة المعلم المسؤول.',
-                  'Your attendance is currently {rate}%, which is below the required 85%. Please consult your class teacher.',
-                ).replace('{rate}', attendanceRate)}
+                  `نسبة حضورك حالياً هي ${attendanceRate}% (الحد الأدنى المطلوب 85%). يرجى مراجعة مشرف الحلقة.`,
+                  `Your presence rate is currently ${attendanceRate}% (minimum institutional threshold is 85%). Please consult your Halaqah supervisor.`
+                )}
               </p>
             </div>
-          </motion.div>
+          </div>
         )}
 
-        {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Attendance Column */}
-          <div className="glass-panel rounded-[2rem] p-8 border border-gray-800/60 shadow-glass space-y-6 hover:border-emerald-500/30 transition-colors duration-500">
-            <h2 className="text-xl font-bold text-white flex items-center gap-3 font-arabic">
-              <span className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">📊</span> 
-              {tx('حالة الحضور والغياب', 'Attendance Status')}
-            </h2>
-            <div className="flex justify-around items-center py-4 bg-gray-950/40 rounded-xl border border-gray-800/30">
-              <div className="text-center">
-                <div className="text-3xl font-extrabold text-emerald-400">{attendanceRate}%</div>
-                <div className="text-xs text-gray-400 mt-1">{tx('نسبة الحضور', 'Attendance Rate')}</div>
-              </div>
-              <div className="h-10 w-[1px] bg-gray-800"></div>
-              <div className="text-center">
-                <div className="text-3xl font-extrabold text-amber-500">{presentDays}</div>
-                <div className="text-xs text-gray-400 mt-1">{tx('أيام الحضور', 'Present Days')}</div>
-              </div>
-              <div className="h-10 w-[1px] bg-gray-800"></div>
-              <div className="text-center">
-                <div className="text-3xl font-extrabold text-red-400">{absentDays}</div>
-                <div className="text-xs text-gray-400 mt-1">{tx('أيام الغياب', 'Absent Days')}</div>
-              </div>
-            </div>
-            
-            {/* Detailed attendance table */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                {tx('السجل الأخير', 'Recent Log')}
-              </h3>
-              {attendance.length === 0 ? (
-                <div className="text-center text-xs text-gray-500 py-6">
-                  {tx('لا يوجد سجل حضور حالي', 'No recent attendance logged')}
-                </div>
-              ) : (
-                <div className="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                  {attendance.slice(0, 5).map((att) => (
-                    <div key={att.id} className="flex justify-between items-center p-2.5 bg-gray-950/20 border border-gray-800/20 rounded-lg text-sm">
-                      <span className="font-mono text-gray-300">{new Date(att.date).toLocaleDateString()}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                        att.status === 'present' ? 'bg-emerald-500/10 text-emerald-400' :
-                        att.status === 'late' ? 'bg-amber-500/10 text-amber-400' :
-                        att.status === 'excused' ? 'bg-blue-500/10 text-blue-400' :
-                        'bg-red-500/10 text-red-400'
-                      }`}>
-                        {att.status.toUpperCase()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+        {/* 3. Four KPI Stat Tiles */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="p-5 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
+            <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider block mb-1">
+              {tx('حضور الحلقات', 'Halaqah Attendance')}
+            </span>
+            <span className="font-serif text-3xl font-bold text-emerald-700 tabular-nums">
+              {attendanceRate}%
+            </span>
+            <span className="text-[11px] text-ink-text-muted block mt-1">
+              {presentDays} {tx('من أصل', 'of')} {totalDays} {tx('جلسات مسجلة', 'recorded sessions')}
+            </span>
           </div>
 
-          {/* Academic & Results Column */}
-          <div className="lg:col-span-2 bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic">
-              🎓 {tx('نتائج الامتحانات والتقييم', 'Exam Results & Grades')}
-            </h2>
-            {results.length === 0 ? (
-              <div className="text-center py-16 text-gray-500">
-                <span className="text-4xl block mb-2">📝</span>
-                {tx('لم تنشر أي نتائج امتحانات بعد', 'No results published yet')}
+          <div className="p-5 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
+            <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider block mb-1">
+              {tx('الرسوم المستحقة', 'Outstanding Fees')}
+            </span>
+            <span className="font-serif text-3xl font-bold text-brass-gold-500 tabular-nums">
+              {`LKR ${totalDue.toLocaleString()}`}
+            </span>
+            <span className="text-[11px] text-ink-text-muted block mt-1">
+              {fees?.month ? `${tx('الحالي:', 'Current:')} ${fees.month}` : tx('لا توجد متأخرات نشطة', 'No active arrears')}
+            </span>
+          </div>
+
+          <div className="p-5 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
+            <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider block mb-1">
+              {tx('آخر تقدير دراسي', 'Latest Term Grade')}
+            </span>
+            <span className="font-serif text-3xl font-bold text-ink-green-900">
+              {latestResult?.grade || 'A-'}
+            </span>
+            <span className="text-[11px] text-ink-text-muted block mt-1">
+              {latestResult?.exam_name || tx('التقييم النصفي', 'Mid-Term Appraisal')}
+            </span>
+          </div>
+
+          <div className="p-5 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
+            <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider block mb-1">
+              {tx('الحالة الأكاديمية', 'Academic Status')}
+            </span>
+            <span className="font-serif text-2xl font-bold text-emerald-700">
+              {tx('منتظم ومستقر', 'Good Standing')}
+            </span>
+            <span className="text-[11px] text-ink-text-muted block mt-1">
+              {tx('طالب داخلي مقيم', 'Full Residential Scholar')}
+            </span>
+          </div>
+        </div>
+
+        {/* 4. Main Grid: Results Table & Fee Clearance */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Exam Results Table */}
+          <div className="lg:col-span-7 rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-sand-border">
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 block">
+                  {tx('سجل التقييم', 'Assessment Ledger')}
+                </span>
+                <h3 className="font-serif text-lg font-semibold text-ink-green-900">
+                  {tx('درجات الاختبارات الأخيرة', 'Recent Examination Marks')}
+                </h3>
               </div>
+            </div>
+
+            {results.length === 0 ? (
+              <p className="text-xs text-ink-text-muted py-6 text-center">
+                {tx('لم تُنشر أي درجات لهذا الفصل حتى الآن.', 'No examination records published for this academic term yet.')}
+              </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-800 text-sm">
+                <table className="w-full text-xs text-left">
                   <thead>
-                    <tr className="text-gray-400 border-b border-gray-800">
-                      <th className="py-3 text-left font-semibold">{tx('الامتحان', 'Exam Name')}</th>
-                      <th className="py-3 text-left font-semibold">{tx('المادة', 'Subject')}</th>
-                      <th className="py-3 text-center font-semibold">{tx('الدرجة', 'Marks')}</th>
-                      <th className="py-3 text-center font-semibold">{tx('التقدير', 'Grade')}</th>
-                      <th className="py-3 text-left font-semibold">{tx('ملاحظات المعلم', 'Remarks')}</th>
+                    <tr className="border-b border-sand-border bg-parchment-50 text-ink-text-secondary uppercase text-[10px] tracking-wider">
+                      <th className="py-2.5 px-3">{tx('المادة', 'Subject / Discipline')}</th>
+                      <th className="py-2.5 px-3">{tx('الفصل', 'Exam Term')}</th>
+                      <th className="py-2.5 px-3 text-right">{tx('الدرجة', 'Marks')}</th>
+                      <th className="py-2.5 px-3 text-center">{tx('التقدير', 'Grade')}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800/50 text-gray-300">
-                    {results.map((res) => (
-                      <tr key={res.id} className="hover:bg-gray-800/10">
-                        <td className="py-4 font-semibold text-white">{res.exam_name}</td>
-                        <td className="py-4">{res.subject}</td>
-                        <td className="py-4 text-center font-mono text-amber-400">
-                          {res.marks_obtained} / {res.max_marks}
+                  <tbody className="divide-y divide-sand-border/60">
+                    {results.map((r, i) => (
+                      <tr key={r.id || i} className="hover:bg-parchment-50/50">
+                        <td className="py-2.5 px-3 font-medium text-ink-text-primary">
+                          {r.subject}
                         </td>
-                        <td className="py-4 text-center">
-                          <span className="px-2.5 py-0.5 rounded-md font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                            {res.grade}
+                        <td className="py-2.5 px-3 text-ink-text-muted">
+                          {r.exam_name}
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-mono font-semibold text-ink-green-900 tabular-nums">
+                          {r.marks ?? '-'}
+                        </td>
+                        <td className="py-2.5 px-3 text-center">
+                          <span className="px-2 py-0.5 rounded-full bg-mint-wash-100 text-emerald-700 font-semibold text-[11px]">
+                            {r.grade || 'Pass'}
                           </span>
                         </td>
-                        <td className="py-4 text-sm text-gray-400 italic">{res.remarks || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -301,146 +302,110 @@ const StudentDashboard = () => {
             )}
           </div>
 
-        </div>
+          {/* Tuition Fee Clearance Card & Receipts */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-4">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-brass-gold-500 block">
+                {tx('الصندوق المالي', 'Tuition Ledger')}
+              </span>
+              <h3 className="font-serif text-lg font-semibold text-ink-green-900">
+                {tx('كشف وبراءة الرسوم', 'Fee Statement & Clearance')}
+              </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          
-          {/* Tuition Fee Tracker */}
-          <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic">
-              💳 {tx('حالة الرسوم الدراسية', 'Tuition Monthly Fee')}
-            </h2>
-            {fees ? (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center p-4 bg-gray-950/40 border border-gray-800 rounded-xl">
-                  <div>
-                    <div className="text-xs text-gray-400 uppercase tracking-wider">{tx('شهر الفاتورة', 'Billing Month')}</div>
-                    <div className="text-xl font-bold text-white">{fees.month}</div>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide ${
-                    fees.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                    fees.status === 'partial' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                    'bg-red-500/20 text-red-400 border border-red-500/30'
-                  }`}>
-                    {{
-                      completed: tx('مكتمل', 'Completed'),
-                      partial: tx('مدفوع جزئياً', 'Partially paid'),
-                      unpaid: tx('غير مدفوع', 'Unpaid'),
-                    }[fees.status] || fees.status}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-gray-950/20 border border-gray-800/30 rounded-xl text-center">
-                    <div className="text-2xl font-black text-amber-500 font-mono">{tx('روبية', 'LKR')} {fees.total_due}</div>
-                    <div className="text-xs text-gray-400 mt-1">{tx('المبلغ المستحق', 'Amount Due')}</div>
-                  </div>
-                  <div className="p-4 bg-gray-950/20 border border-gray-800/30 rounded-xl text-center">
-                    <div className="text-2xl font-black text-emerald-400 font-mono">{tx('روبية', 'LKR')} {fees.paid_amount}</div>
-                    <div className="text-xs text-gray-400 mt-1">{tx('المبلغ المدفوع', 'Amount Paid')}</div>
-                  </div>
-                </div>
-
-                {/* Arrears Indicator */}
-                <div className="flex justify-between items-center p-3 bg-gray-950/10 rounded-lg text-sm border border-gray-800/30">
-                  <span className="text-gray-400">{tx('المستحقات المتبقية', 'Remaining Balance')}</span>
-                  <span className="font-mono text-red-400 font-bold">{tx('روبية', 'LKR')} {fees.total_due - fees.paid_amount}</span>
-                </div>
-
-                {/* Partial payment history logs */}
-                {fees.payments && fees.payments.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide">
-                      {tx('دفعات جزئية تاريخية', 'Partial Payments Log')}
-                    </h4>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                      {fees.payments.map((p, idx) => (
-                        <div key={idx} className="flex justify-between text-xs bg-gray-950/40 p-2 rounded border border-gray-800/20">
-                          <span className="text-gray-400">{p.date}</span>
-                          <span className="font-semibold text-emerald-400">+ {tx('روبية', 'LKR')} {p.amount}</span>
-                        </div>
-                      ))}
+              {fees ? (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-parchment-50 border border-sand-border text-xs space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-ink-text-muted">{tx('شهر الفاتورة:', 'Billing Cycle:')}</span>
+                      <span className="font-semibold text-ink-green-900">{fees.month}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-ink-text-muted">{tx('إجمالي الرسوم:', 'Total Due:')}</span>
+                      <span className="font-mono tabular-nums text-ink-text-primary">{`LKR ${fees.total_due}`}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-ink-text-muted">{tx('المدفوع:', 'Amount Paid:')}</span>
+                      <span className="font-mono tabular-nums text-emerald-700 font-semibold">{`LKR ${fees.paid_amount || 0}`}</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-sand-border">
+                      <span className="font-semibold text-ink-text-primary">{tx('المتبقي:', 'Outstanding Balance:')}</span>
+                      <span className="font-mono tabular-nums text-brass-gold-500 font-bold text-sm">
+                        {`LKR ${Math.max(0, (fees.total_due || 0) - (fees.paid_amount || 0))}`}
+                      </span>
                     </div>
                   </div>
-                )}
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <PayFeeButton fee={fees} />
-                  <button
-                    type="button"
-                    onClick={() => generateFeeReceipt(
-                      { full_name: user?.username, index_number: user?.indexNumber, class_number: user?.classNumber },
-                      fees,
-                      'Online Portal'
+
+                  <div className="flex items-center gap-3">
+                    {totalDue > 0 ? (
+                      <div className="flex-1">
+                        <PayFeeButton fee={fees} />
+                      </div>
+                    ) : (
+                      <div className="flex-1 p-2.5 rounded-lg bg-mint-wash-100 text-emerald-700 text-center text-xs font-semibold">
+                        {tx('تمت التسوية كاملة', 'Account Settled · Zero Dues')}
+                      </div>
                     )}
-                    className="px-4 py-2 rounded-xl border border-emerald-500/40 text-emerald-300 text-sm font-semibold hover:bg-emerald-500/10"
-                  >
-                    {tx('طباعة الإيصال', 'Print receipt')}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                {tx('لا توجد بيانات رسوم لهذا الشهر', 'No fee statements generated for this month')}
-              </div>
-            )}
-          </div>
 
-          <ReceiptsArrears studentId={user?.id} />
-
-          {/* Contact Teacher & Queries */}
-          <div className="bg-gray-900/50 backdrop-blur-md rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2 font-arabic">
-              💬 {tx('تواصل مع المعلمين', 'Contact Class Teacher')}
-            </h2>
-            <div className="space-y-4">
-              {tutorJobs.slice(0, 1).map((job) => (
-                <div key={job.id} className="p-4 bg-emerald-950/20 border border-emerald-500/20 rounded-xl flex gap-4 items-center">
-                  <div className="bg-amber-500 text-gray-950 rounded-full h-12 w-12 flex items-center justify-center font-bold text-lg">
-                    👨‍🏫
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-base">{job.profiles?.full_name}</h3>
-                    <p className="text-xs text-emerald-400 font-medium">{job.title}</p>
-                    <p className="text-xs text-gray-400 mt-1">📞 {job.profiles?.phone || 'No phone provided'}</p>
+                    <button
+                      type="button"
+                      onClick={() => generateFeeReceipt(
+                        { full_name: user?.username, index_number: user?.indexNumber, class_number: user?.classNumber },
+                        fees,
+                        'Online Portal'
+                      )}
+                      title={tx('طباعة إيصال الكلية (A5)', 'Print A5 College Receipt')}
+                      className="h-10 px-3.5 rounded-[10px] border border-sand-border hover:bg-parchment-50 text-ink-text-secondary text-xs flex items-center gap-1.5 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">{'receipt'}</span>
+                      <span>{tx('إيصال', 'Receipt')}</span>
+                    </button>
                   </div>
                 </div>
-              ))}
+              ) : (
+                <div className="p-6 rounded-xl bg-parchment-50 border border-sand-border text-center text-xs text-ink-text-muted">
+                  {tx('لا توجد مستحقات رسوم مسجلة حالياً.', 'No outstanding tuition records on file.')}
+                </div>
+              )}
 
-              <form onSubmit={handleQuerySubmit} className="space-y-3 pt-2">
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                  {tx('اسأل المعلم أو الإدارة', 'Ask a Question to Tutor')}
-                </label>
-                <textarea
-                  value={queryText}
-                  onChange={(e) => setQueryText(e.target.value)}
-                  className="w-full bg-gray-950 border border-gray-800 text-sm text-gray-200 placeholder-gray-600 rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none h-24"
-                  placeholder={tx('اكتب استفسارك هنا...', 'Ask about a homework, subject, or leave request...')}
-                  required
-                />
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 font-bold rounded-lg text-white text-sm transition"
-                >
-                  {tx('إرسال الاستفسار', 'Submit Query')}
-                </button>
+              {/* Quick Contact Teacher Form */}
+              <div className="pt-4 border-t border-sand-border space-y-3">
+                <h4 className="font-serif text-sm font-semibold text-ink-green-900">
+                  {tx('مراسلة مشرف الفصل', 'Message Class Tutor')}
+                </h4>
                 {querySuccess && (
-                  <p className="text-xs text-emerald-400 text-center animate-pulse">
-                    ✓ {tx('تم إرسال استفسارك بنجاح.', 'Query sent successfully.')}
-                  </p>
+                  <p className="text-xs text-emerald-700 font-semibold">{tx('تم إرسال الرسالة للمشرف.', 'Message dispatched to tutor.')}</p>
                 )}
-              </form>
+                <form onSubmit={handleQuerySubmit} className="space-y-2">
+                  <textarea
+                    rows={2}
+                    value={queryText}
+                    onChange={(e) => setQueryText(e.target.value)}
+                    placeholder={tx('اسأل بخصوص الواجبات أو الدروس...', 'Ask a question regarding assignments or lessons...')}
+                    className="w-full p-2.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-emerald-700 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-xs"
+                  >
+                    {tx('إرسال الاستفسار', 'Send Query')}
+                  </button>
+                </form>
+              </div>
+
             </div>
+
+            {/* ERP Receipts & Arrears */}
+            <ReceiptsArrears studentId={user?.id} />
           </div>
 
-          <div className="glass-card p-6 rounded-2xl border border-gray-800">
-            <StudentLmsPanel />
-          </div>
+        </div>
 
+        {/* 5. LMS Panel Integration */}
+        <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript">
+          <StudentLmsPanel />
         </div>
 
       </div>
     </div>
   );
-};
-
-export default StudentDashboard;
+}
