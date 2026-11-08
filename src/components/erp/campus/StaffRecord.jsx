@@ -5,6 +5,7 @@ import { query, rpc, updateRow } from '../../../lib/erp/rpc';
 import { STAFF_ROLES, toOptions } from '../../../lib/erp/campusApi';
 import { ChipMultiSelect, KeyValue, WideModal } from './common';
 import { useAction } from './hooks';
+import { printRecord } from '../../../lib/printReport';
 
 const HR_EMPTY = {
   department: '', job_title: '', employment_type: 'permanent', employment_start: '', employment_end: '', status: 'active',
@@ -14,7 +15,39 @@ const EMP_TYPES = ['permanent', 'contract', 'part_time', 'visiting', 'volunteer'
 const HR_STATUSES = ['active', 'on_leave', 'resigned', 'terminated'];
 
 function HrForm({ employee, canEdit, onSaved }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const printProfile = () => {
+    const v = state.data || {};
+    const roles = [employee.assigned_tutor_role, ...(employee.extra_roles || [])].filter((r) => r && r !== 'none');
+    try {
+      printRecord({
+        title: t('Staff record', 'سجل الموظف'),
+        subtitle: `${employee.full_name || ''}${v.employee_no ? ` · ${v.employee_no}` : ''}`,
+        dir: document.documentElement.dir || 'ltr',
+        lang,
+        sections: [
+          { title: t('Employee', 'الموظف'), items: [
+            [t('Name', 'الاسم'), employee.full_name], [t('Employee no.', 'رقم الموظف'), v.employee_no],
+            [t('Account type', 'نوع الحساب'), employee.account_type], [t('Roles', 'الأدوار'), roles.join(', ')],
+            [t('Department', 'القسم'), v.department], [t('Job title', 'المسمى الوظيفي'), v.job_title],
+            [t('Employment type', 'نوع التوظيف'), v.employment_type], [t('Status', 'الحالة'), v.status],
+            [t('Start date', 'تاريخ البدء'), v.employment_start], [t('End date', 'تاريخ الانتهاء'), v.employment_end],
+          ] },
+          { title: t('Contact', 'الاتصال'), items: [
+            [t('Phone', 'الهاتف'), employee.phone], [t('Email', 'البريد الإلكتروني'), employee.email],
+            [t('Emergency contact', 'جهة اتصال الطوارئ'), v.emergency_contact], [t('Emergency phone', 'هاتف الطوارئ'), v.emergency_phone],
+          ] },
+          { title: t('Statutory & bank', 'البيانات الرسمية والبنكية'), items: [
+            [t('National ID (NIC)', 'رقم الهوية'), v.national_id], [t('EPF no.', 'رقم EPF'), v.epf_no],
+            [t('Bank', 'البنك'), v.bank_name], [t('Branch', 'الفرع'), v.bank_branch], [t('Account no.', 'رقم الحساب'), v.bank_account_no],
+          ] },
+        ],
+        signatures: [t('HR manager', 'مدير الموارد البشرية'), t('Principal', 'المدير')],
+      });
+    } catch (err) {
+      window.alert(err.message);
+    }
+  };
   const [busy, run] = useAction();
   const [state, reload] = useAsync(() => query('staff_hr', (q) => q.select('*').eq('profile_id', employee.id).maybeSingle()), [employee.id]);
   const [form, setForm] = useState(HR_EMPTY);
@@ -58,8 +91,11 @@ function HrForm({ employee, canEdit, onSaved }) {
         {f('emergency_phone', t('Emergency phone', 'هاتف الطوارئ'), 'tel')}
       </div>
       <Field label={t('Notes', 'ملاحظات')}><Textarea value={form.notes || ''} onChange={set('notes')} disabled={!canEdit} /></Field>
-      {canEdit ? <div className="flex justify-end"><Button type="submit" disabled={busy}>{t('Save record', 'حفظ السجل')}</Button></div>
-        : <p className="text-xs text-gray-500">{t('Read only — HR managers edit employee records.', 'للقراءة فقط — يحرر مدير الموارد البشرية السجلات.')}</p>}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {!canEdit && <p className="text-xs text-gray-500 me-auto">{t('Read only — HR managers edit employee records.', 'للقراءة فقط — يحرر مدير الموارد البشرية السجلات.')}</p>}
+        <Button type="button" variant="secondary" onClick={printProfile}>{t('Print profile', 'طباعة الملف')}</Button>
+        {canEdit && <Button type="submit" disabled={busy}>{t('Save record', 'حفظ السجل')}</Button>}
+      </div>
     </form>
   );
 }

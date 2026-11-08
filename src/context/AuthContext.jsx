@@ -236,6 +236,9 @@ export const AuthProvider = ({ children }) => {
     isFinanceViewer: isFinanceStaff || isPrincipal || isVP,
     isHrStaff: isAdmin || hasRole('hr_manager'),
     isAcademicAdmin: isAdmin || hasRole('principal', 'vice_principal', 'exam_officer'),
+    isItOfficer: hasRole('it_officer'),
+    // Mirrors public.is_document_admin(): manages letterheads, sees all non-exam documents.
+    isDocumentAdmin: isAdmin || hasRole('principal', 'vice_principal', 'it_officer'),
     isAdmissionsStaff: isAdmin || hasRole('admissions_officer', 'principal', 'vice_principal'),
     isWelfareStaff: isAdmin || hasRole('principal', 'vice_principal', 'counselor', 'warden'),
     isHostelStaff: isAdmin || hasRole('warden', 'principal', 'vice_principal'),

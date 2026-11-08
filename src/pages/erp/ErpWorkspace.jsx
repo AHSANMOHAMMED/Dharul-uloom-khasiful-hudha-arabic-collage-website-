@@ -16,6 +16,15 @@ const MODULES = [
   { id: 'analytics', label: (t) => t('Analytics', 'التحليلات'), icon: 'insights', group: 'core',
     show: (a) => a.isAdmin || a.isFinanceViewer || a.isAcademicAdmin,
     load: () => import('../../components/erp/ops/AnalyticsPanel') },
+  { id: 'reports', label: (t) => t('Reports', 'التقارير'), icon: 'summarize', group: 'core',
+    show: (a) => a.isEmployee,
+    load: () => import('../../components/erp/ops/ReportsPanel') },
+  { id: 'import', label: (t) => t('Bulk import', 'الاستيراد الجماعي'), icon: 'upload_file', group: 'core',
+    show: (a) => a.isAdmin || a.isAdmissionsStaff || a.isAcademicAdmin || a.isHrStaff || a.isEmployee,
+    load: () => import('../../components/erp/ops/ImportPanel') },
+  { id: 'documents', label: (t) => t('Documents & exam papers', 'المستندات وأوراق الامتحان'), icon: 'description', group: 'core',
+    show: (a) => a.isEmployee,
+    load: () => import('../../components/erp/docs/DocumentsPanel') },
   { id: 'tasks', label: (t) => t('Task board', 'لوحة المهام'), icon: 'view_kanban', group: 'core',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/governance/TaskBoard') },
@@ -40,6 +49,9 @@ const MODULES = [
   { id: 'accounting', label: (t) => t('Accounting', 'المحاسبة'), icon: 'account_balance', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/AccountingPanel') },
+  { id: 'cheques', label: (t) => t('Cheques', 'الشيكات'), icon: 'request_quote', group: 'finance',
+    show: (a) => a.isFinanceViewer,
+    load: () => import('../../components/erp/finance/ChequesPanel') },
   { id: 'expenses', label: (t) => t('Expenses', 'المصروفات'), icon: 'receipt_long', group: 'finance',
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/finance/ExpensesPanel') },
@@ -181,7 +193,7 @@ export default function ErpWorkspace() {
     .filter((x) => x.items.length);
 
   return (
-    <div className="min-h-screen bg-parchment-50 text-ink-text-primary pt-6 relative overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="erp-theme min-h-screen bg-parchment-50 text-ink-text-primary pt-6 relative overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <KhatamPattern className="opacity-[0.03]" strokeColor="#0B3B2E" id="erp-bg-khatam" />
 
       <div className="max-w-[1600px] mx-auto px-4 lg:px-6 flex flex-col lg:flex-row gap-6 pb-12 relative z-10">

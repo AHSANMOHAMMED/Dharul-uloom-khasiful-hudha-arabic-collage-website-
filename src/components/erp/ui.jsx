@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { toTamil } from '../../lib/tx';
 
 /**
- * Shared ERP UI kit (dark portal theme used by the role dashboards).
+ * Shared ERP UI kit — Modern Manuscript light theme (parchment canvas, white
+ * paper cards, sand borders, ink-green text, emerald actions).
  * Every ERP module should compose these instead of ad-hoc markup so the
  * workspace stays visually consistent and RTL-safe (logical spacing only).
  */
@@ -43,10 +44,10 @@ export function useAsync(fn, deps = []) {
 
 export function Card({ title, actions, children, className = '' }) {
   return (
-    <section className={`glass-card rounded-2xl p-5 border border-gray-800 ${className}`}>
+    <section className={`rounded-[14px] bg-paper-white p-5 border border-sand-border shadow-manuscript-sm ${className}`}>
       {(title || actions) && (
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          {title && <h3 className="text-lg font-bold text-white">{title}</h3>}
+          {title && <h3 className="text-lg font-serif font-semibold text-ink-green-900">{title}</h3>}
           {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
         </div>
       )}
@@ -57,33 +58,33 @@ export function Card({ title, actions, children, className = '' }) {
 
 export function Stat({ label, value, hint, tone = 'emerald' }) {
   const tones = {
-    emerald: 'text-emerald-400',
-    amber: 'text-amber-400',
-    red: 'text-red-400',
-    blue: 'text-sky-400',
-    gray: 'text-gray-300',
+    emerald: 'text-emerald-700',
+    amber: 'text-amber-700',
+    red: 'text-feedback-danger',
+    blue: 'text-feedback-info',
+    gray: 'text-ink-text-primary',
   };
   return (
-    <div className="glass-card rounded-2xl p-4 border border-gray-800">
-      <div className="text-xs uppercase tracking-wide text-gray-400">{label}</div>
+    <div className="rounded-[14px] bg-paper-white p-4 border border-sand-border shadow-manuscript-sm">
+      <div className="text-xs uppercase tracking-wide text-ink-text-muted">{label}</div>
       <div className={`text-2xl font-extrabold mt-1 ${tones[tone] || tones.emerald}`}>{value}</div>
-      {hint && <div className="text-xs text-gray-500 mt-1">{hint}</div>}
+      {hint && <div className="text-xs text-ink-text-muted mt-1">{hint}</div>}
     </div>
   );
 }
 
 export function Button({ variant = 'primary', size = 'md', className = '', ...props }) {
   const variants = {
-    primary: 'bg-emerald-600 hover:bg-emerald-500 text-white',
-    secondary: 'bg-gray-800 hover:bg-gray-700 text-gray-100 border border-gray-700',
-    danger: 'bg-red-700 hover:bg-red-600 text-white',
-    ghost: 'bg-transparent hover:bg-gray-800 text-gray-300',
+    primary: 'bg-emerald-700 hover:bg-emerald-600 text-white shadow-xs',
+    secondary: 'bg-paper-white hover:bg-parchment-50 text-ink-green-900 border border-sand-border shadow-xs',
+    danger: 'bg-feedback-danger hover:bg-red-700 text-white',
+    ghost: 'bg-transparent hover:bg-mint-wash-100 text-emerald-700',
   };
   const sizes = { sm: 'px-3 py-1.5 text-xs', md: 'px-4 py-2 text-sm' };
   return (
     <button
       type="button"
-      className={`rounded-xl font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`rounded-[10px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     />
   );
@@ -92,15 +93,15 @@ export function Button({ variant = 'primary', size = 'md', className = '', ...pr
 export function Field({ label, children, hint }) {
   return (
     <label className="block text-sm">
-      <span className="block text-gray-400 mb-1">{label}</span>
+      <span className="block text-ink-text-secondary font-medium mb-1">{label}</span>
       {children}
-      {hint && <span className="block text-xs text-gray-500 mt-1">{hint}</span>}
+      {hint && <span className="block text-xs text-ink-text-muted mt-1">{hint}</span>}
     </label>
   );
 }
 
 const inputCls =
-  'w-full rounded-xl bg-gray-900 border border-gray-700 px-3 py-2 text-gray-100 focus:outline-none focus:border-emerald-500';
+  'w-full rounded-[10px] bg-paper-white border border-sand-border px-3 py-2 text-ink-text-primary placeholder:text-ink-text-muted focus:outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/20 disabled:bg-parchment-50 disabled:text-ink-text-secondary';
 
 export function Input(props) {
   return <input className={inputCls} {...props} />;
@@ -125,11 +126,11 @@ export function Select({ options = [], placeholder, ...props }) {
 
 export function Badge({ children, tone = 'gray' }) {
   const tones = {
-    gray: 'bg-gray-800 text-gray-300',
-    green: 'bg-emerald-900/60 text-emerald-300',
-    amber: 'bg-amber-900/60 text-amber-300',
-    red: 'bg-red-900/60 text-red-300',
-    blue: 'bg-sky-900/60 text-sky-300',
+    gray: 'bg-parchment-50 text-ink-text-secondary border border-sand-border',
+    green: 'bg-mint-wash-100 text-emerald-700 border border-emerald-700/20',
+    amber: 'bg-gold-wash-100 text-amber-800 border border-brass-gold-500/30',
+    red: 'bg-red-50 text-feedback-danger border border-feedback-danger/20',
+    blue: 'bg-sky-50 text-feedback-info border border-feedback-info/20',
   };
   return <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${tones[tone] || tones.gray}`}>{children}</span>;
 }
@@ -151,9 +152,9 @@ export function StatusBadge({ status }) {
 export function Table({ columns, rows, empty = 'No records', rowKey = 'id' }) {
   if (!rows?.length) return <EmptyState text={empty} />;
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-800">
+    <div className="overflow-x-auto rounded-[12px] border border-sand-border bg-paper-white">
       <table className="min-w-full text-sm">
-        <thead className="bg-gray-900/80 text-gray-400">
+        <thead className="bg-parchment-50 text-ink-text-secondary border-b border-sand-border">
           <tr>
             {columns.map((c) => (
               <th key={c.key} className={`px-3 py-2 text-start font-semibold whitespace-nowrap ${c.className || ''}`}>
@@ -162,11 +163,11 @@ export function Table({ columns, rows, empty = 'No records', rowKey = 'id' }) {
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-800">
+        <tbody className="divide-y divide-sand-border">
           {rows.map((r, i) => (
-            <tr key={r[rowKey] ?? i} className="hover:bg-gray-900/50">
+            <tr key={r[rowKey] ?? i} className="hover:bg-parchment-50/70">
               {columns.map((c) => (
-                <td key={c.key} className={`px-3 py-2 text-gray-200 align-top ${c.className || ''}`}>
+                <td key={c.key} className={`px-3 py-2 text-ink-text-primary align-top ${c.className || ''}`}>
                   {c.render ? c.render(r) : r[c.key] ?? '—'}
                 </td>
               ))}
@@ -179,20 +180,20 @@ export function Table({ columns, rows, empty = 'No records', rowKey = 'id' }) {
 }
 
 export function EmptyState({ text = 'Nothing here yet' }) {
-  return <div className="text-center text-gray-500 py-8 text-sm">{text}</div>;
+  return <div className="text-center text-ink-text-muted py-8 text-sm">{text}</div>;
 }
 
 export function Loading() {
   return (
     <div className="flex justify-center py-10">
-      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-emerald-500" />
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-700 border-t-transparent" />
     </div>
   );
 }
 
 export function ErrorNote({ error }) {
   if (!error) return null;
-  return <div className="rounded-xl bg-red-950/60 border border-red-800 text-red-200 px-4 py-3 text-sm">{error.message || String(error)}</div>;
+  return <div role="alert" className="rounded-[10px] bg-red-50 border border-feedback-danger/30 text-feedback-danger px-4 py-3 text-sm">{error.message || String(error)}</div>;
 }
 
 /** Renders loading / error / children(data) for a useAsync state. */
@@ -205,11 +206,11 @@ export function AsyncView({ state, children }) {
 export function Modal({ open, title, onClose, children, footer }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-gray-950 border border-gray-800 p-6 space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-green-900/50 backdrop-blur-xs p-4" role="dialog" aria-modal="true">
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript-lg p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
-          <h3 className="text-lg font-bold text-white">{title}</h3>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white flex items-center justify-center" aria-label="Close">
+          <h3 className="text-lg font-serif font-semibold text-ink-green-900">{title}</h3>
+          <button type="button" onClick={onClose} className="text-ink-text-muted hover:text-ink-green-900 flex items-center justify-center" aria-label="Close">
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
@@ -230,7 +231,7 @@ export function Tabs({ tabs, active, onChange }) {
           type="button"
           onClick={() => onChange(tab.id)}
           className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
-            active === tab.id ? 'bg-emerald-600 text-white' : 'bg-gray-900 text-gray-400 hover:text-white border border-gray-800'
+            active === tab.id ? 'bg-emerald-700 text-white shadow-xs' : 'bg-paper-white text-ink-text-secondary hover:text-ink-green-900 border border-sand-border'
           }`}
         >
           {tab.label}
@@ -244,8 +245,8 @@ export function PageHeader({ title, subtitle, actions }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
       <div>
-        <h2 className="text-2xl font-extrabold text-white">{title}</h2>
-        {subtitle && <p className="text-sm text-gray-400 mt-1">{subtitle}</p>}
+        <h2 className="text-2xl font-serif font-semibold text-ink-green-900">{title}</h2>
+        {subtitle && <p className="text-sm text-ink-text-secondary mt-1">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>

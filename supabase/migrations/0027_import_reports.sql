@@ -212,11 +212,12 @@ begin
         errs := errs || 'class_number must be 1-7'::text;
       end if;
     end if;
-    foreach c in array array[to_jsonb('date_of_birth'::text), to_jsonb('admission_date'::text)] loop
-      if public.jtext(r, c #>> '{}') is not null and public.try_date(r ->> (c #>> '{}')) is null then
-        errs := errs || ((c #>> '{}') || ' must be a date (YYYY-MM-DD)');
-      end if;
-    end loop;
+    if public.jtext(r, 'date_of_birth') is not null and public.try_date(r ->> 'date_of_birth') is null then
+      errs := errs || 'date_of_birth must be a date (YYYY-MM-DD)'::text;
+    end if;
+    if public.jtext(r, 'admission_date') is not null and public.try_date(r ->> 'admission_date') is null then
+      errs := errs || 'admission_date must be a date (YYYY-MM-DD)'::text;
+    end if;
     v_gender := lower(coalesce(public.jtext(r, 'gender'), ''));
     v_gender := case v_gender when 'm' then 'male' when 'f' then 'female' when '' then null else v_gender end;
     if v_gender is not null and v_gender not in ('male', 'female') then
@@ -317,7 +318,7 @@ declare
   n_upd    int := 0;
   c        jsonb;
   roles    text[] := array['none', 'principal', 'vice_principal', 'treasurer', 'accountant', 'hr_manager',
-                           'librarian', 'admissions_officer', 'warden', 'counselor', 'exam_officer'];
+                           'librarian', 'admissions_officer', 'warden', 'counselor', 'exam_officer', 'it_officer'];
 begin
   if not (public.is_admin() or public.is_hr_staff()) then
     raise exception 'You are not allowed to import staff' using errcode = '42501';
@@ -612,7 +613,8 @@ language sql stable security invoker set search_path = public as $$
     and f.month between p_from_month and p_to_month
     and (p_class is null or p.class_number = p_class)
   group by p.id, p.index_number, p.full_name, p.class_number
-  order by outstanding desc, p.full_name;
+  -- Output-column names are not in scope inside the body: order by position (7 = outstanding).
+  order by 7 desc, 2;
 $$;
 
 create or replace function public.report_exam_results(p_exam uuid)

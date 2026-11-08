@@ -6,11 +6,11 @@ import { classOptions, studentLabel } from '../../../lib/erp/campusApi';
 export function WideModal({ open, title, onClose, children, footer }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 p-4 overflow-y-auto" role="dialog" aria-modal="true">
-      <div className="w-full max-w-4xl my-8 rounded-2xl bg-gray-950 border border-gray-800 p-6 space-y-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink-green-900/50 backdrop-blur-xs p-4 overflow-y-auto" role="dialog" aria-modal="true">
+      <div className="w-full max-w-4xl my-8 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript-lg p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
-          <h3 className="text-lg font-bold text-white">{title}</h3>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white flex items-center justify-center" aria-label="Close">
+          <h3 className="text-lg font-serif font-semibold text-ink-green-900">{title}</h3>
+          <button type="button" onClick={onClose} className="text-ink-text-muted hover:text-ink-green-900 flex items-center justify-center" aria-label="Close">
             <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
@@ -63,9 +63,9 @@ export function KeyValue({ items }) {
   return (
     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
       {items.map(([k, v]) => (
-        <div key={k} className="flex justify-between gap-3 border-b border-gray-800/70 py-1">
-          <dt className="text-gray-400">{k}</dt>
-          <dd className="text-gray-100 text-end">{v ?? '—'}</dd>
+        <div key={k} className="flex justify-between gap-3 border-b border-sand-border py-1">
+          <dt className="text-ink-text-secondary">{k}</dt>
+          <dd className="text-ink-text-primary text-end">{v ?? '—'}</dd>
         </div>
       ))}
     </dl>
@@ -86,7 +86,7 @@ export function ChipMultiSelect({ options, value = [], onChange, disabled }) {
             disabled={disabled}
             onClick={() => toggle(o.value)}
             className={`px-3 py-1 rounded-full text-xs font-semibold border transition disabled:opacity-50 ${
-              on ? 'bg-emerald-700 border-emerald-500 text-white' : 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-500'
+              on ? 'bg-emerald-700 border-emerald-700 text-white' : 'bg-paper-white border-sand-border text-ink-text-secondary hover:border-emerald-700/50'
             }`}
           >
             {o.label}
@@ -99,10 +99,10 @@ export function ChipMultiSelect({ options, value = [], onChange, disabled }) {
 
 export function Checkbox({ checked, onChange, label, disabled }) {
   return (
-    <label className="inline-flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+    <label className="inline-flex items-center gap-2 text-sm text-ink-text-primary cursor-pointer">
       <input
         type="checkbox"
-        className="accent-emerald-600 h-4 w-4"
+        className="accent-emerald-700 h-4 w-4"
         checked={Boolean(checked)}
         disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}

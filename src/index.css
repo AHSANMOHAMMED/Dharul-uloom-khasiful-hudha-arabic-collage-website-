@@ -108,3 +108,45 @@ html[lang="ta"] td {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * ERP theme bridge
+ * Most ERP modules were written for the old dark portal (white/grey text on
+ * near-black cards). The workspace is now the light Modern Manuscript theme,
+ * which made that text unreadable (white on white, pale grey on white).
+ * These rules — scoped to the ERP workspace only — map the legacy dark
+ * utilities to their light equivalents. New code should use the theme tokens
+ * (ink-*, sand-border, parchment-50, mint-wash-100…) directly; migrate a
+ * module's classes and these rules simply stop matching it.
+ * ─────────────────────────────────────────────────────────────────────────── */
+.erp-theme .text-gray-100,
+.erp-theme .text-gray-200,
+.erp-theme .text-gray-300 { color: #14201B; }
+.erp-theme .text-gray-400 { color: #4B5A53; }
+.erp-theme .text-gray-500,
+.erp-theme .text-gray-600 { color: #5F6E67; }
+/* White text stays white on coloured buttons/badges; elsewhere it is ink. */
+.erp-theme .text-white:not([class*='bg-']):not(:is(.bg-emerald-500, .bg-emerald-600, .bg-emerald-700, .bg-red-600, .bg-red-700, .bg-amber-600, .bg-amber-700, .bg-sky-600, .bg-sky-700, .bg-feedback-danger, .bg-ink-green-900, .bg-brass-gold-500) *) { color: #0B3B2E; }
+.erp-theme .text-amber-200, .erp-theme .text-amber-300, .erp-theme .text-amber-400 { color: #92400E; }
+.erp-theme .text-emerald-200, .erp-theme .text-emerald-300, .erp-theme .text-emerald-400 { color: #11694A; }
+.erp-theme .text-red-200, .erp-theme .text-red-300, .erp-theme .text-red-400 { color: #B3261E; }
+.erp-theme .text-sky-200, .erp-theme .text-sky-300, .erp-theme .text-sky-400 { color: #1D5FA8; }
+
+.erp-theme [class*='bg-gray-950'],
+.erp-theme [class*='bg-gray-900'] { background-color: #FFFFFF; }
+.erp-theme [class*='bg-gray-800'] { background-color: #FBF8F0; }
+.erp-theme [class*='bg-black/'] { background-color: rgba(11, 59, 46, 0.5); }
+.erp-theme [class*='bg-emerald-950'], .erp-theme [class*='bg-emerald-900/'] { background-color: #E3F1EA; }
+.erp-theme [class*='bg-amber-950'], .erp-theme [class*='bg-amber-900/'] { background-color: #FEF6E4; }
+.erp-theme [class*='bg-red-950'], .erp-theme [class*='bg-red-900/'] { background-color: #FEF2F2; }
+.erp-theme [class*='bg-sky-950'], .erp-theme [class*='bg-sky-900/'] { background-color: #EFF6FF; }
+
+.erp-theme [class*='border-gray-7'],
+.erp-theme [class*='border-gray-8'],
+.erp-theme [class*='border-gray-9'] { border-color: #E8E1D0; }
+.erp-theme [class*='divide-gray-'] > :not([hidden]) ~ :not([hidden]) { border-color: #E8E1D0; }
+.erp-theme [class*='border-emerald-8'], .erp-theme [class*='border-emerald-9'] { border-color: rgba(17, 105, 74, 0.25); }
+.erp-theme [class*='border-amber-8'] { border-color: rgba(194, 154, 58, 0.45); }
+.erp-theme [class*='border-red-8'] { border-color: rgba(179, 38, 30, 0.3); }
+.erp-theme [class*='border-sky-8'] { border-color: rgba(29, 95, 168, 0.3); }
+.erp-theme .glass-card { background-color: #FFFFFF; }

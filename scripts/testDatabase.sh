@@ -30,8 +30,18 @@ for f in $(ls "$ROOT"/supabase/migrations/*.sql | sort); do
     "${PSQL[@]}" -f "$ROOT/supabase/tests/fixtures_pre_0018.sql"
   fi
   echo "== $base"
-  "${PSQL[@]}" -f "$f" 2>&1 | grep -v NOTICE || true
-  [[ ${PIPESTATUS[0]} -eq 0 ]] || { echo "Migration failed: $base" >&2; exit 1; }
+  # Capture psql's own exit code (a pipeline + `|| true` would hide it).
+  set +e
+  out="$("${PSQL[@]}" -f "$f" 2>&1)"
+  rc=$?
+  set -e
+  printf '%s\n' "$out" | grep -v NOTICE || true
+  [[ $rc -eq 0 ]] || { echo "Migration failed: $base" >&2; exit 1; }
 done
-"${PSQL[@]}" -f "$ROOT/supabase/tests/rls_erp_test.sql" 2>&1 | grep -E 'FAIL|passed|failed|^ +[0-9]+ \|' || true
+set +e
+out="$("${PSQL[@]}" -f "$ROOT/supabase/tests/rls_erp_test.sql" 2>&1)"
+rc=$?
+set -e
+printf '%s\n' "$out" | grep -E 'FAIL|passed|failed|ERROR|^ +[0-9]+ \|' || true
+[[ $rc -eq 0 ]] || { echo "DB test script aborted (exit $rc)" >&2; exit 1; }
 "${PSQL[@]}" -At -c "select count(*) from tst.results where not ok" | grep -qx 0 && echo "DB TESTS PASSED" || { echo "DB TESTS FAILED" >&2; exit 1; }

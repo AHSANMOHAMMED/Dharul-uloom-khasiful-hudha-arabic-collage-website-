@@ -6,6 +6,7 @@ import { formatDate, formatMoney, query, rpc, updateRow } from '../../../lib/erp
 import { classOptions } from '../../../lib/erp/campusApi';
 import { KeyValue, WideModal } from './common';
 import { useAction } from './hooks';
+import { printRecord } from '../../../lib/printReport';
 
 const EMPTY = {
   admission_no: '', admission_date: '', date_of_birth: '', gender: '', nationality: 'Sri Lankan', national_id: '',
@@ -15,7 +16,7 @@ const EMPTY = {
 const STATUSES = ['active', 'suspended', 'graduated', 'withdrawn', 'transferred', 'alumni'];
 
 function DetailsForm({ student, canEdit, onSaved }) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [busy, run] = useAction();
   const [state, reload] = useAsync(
     () => query('student_details', (q) => q.select('*').eq('profile_id', student.id).maybeSingle()),
@@ -87,11 +88,52 @@ function DetailsForm({ student, canEdit, onSaved }) {
       <Field label={t('Medical notes', 'ملاحظات طبية')}>
         <Textarea value={form.medical_notes || ''} onChange={set('medical_notes')} disabled={!canEdit} />
       </Field>
-      {canEdit ? (
-        <div className="flex justify-end"><Button type="submit" disabled={busy}>{t('Save record', 'حفظ السجل')}</Button></div>
-      ) : (
-        <p className="text-xs text-gray-500">{t('Read only — editing requires academic or admissions staff.', 'للقراءة فقط — التعديل لطاقم الشؤون الأكاديمية أو القبول.')}</p>
-      )}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {!canEdit && (
+          <p className="text-xs text-gray-500 me-auto">{t('Read only — editing requires academic or admissions staff.', 'للقراءة فقط — التعديل لطاقم الشؤون الأكاديمية أو القبول.')}</p>
+        )}
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => {
+            const v = state.data || {};
+            try {
+              printRecord({
+                title: t('Student profile', 'ملف الطالب'),
+                subtitle: `${student.full_name || ''} · ${student.index_number || ''}`,
+                dir: document.documentElement.dir || 'ltr',
+                lang,
+                sections: [
+                  { title: t('Student', 'الطالب'), items: [
+                    [t('Name', 'الاسم'), student.full_name], [t('Index no.', 'رقم القيد'), student.index_number],
+                    [t('Class', 'الصف'), student.class_number], [t('Status', 'الحالة'), v.status || 'active'],
+                    [t('Admission no.', 'رقم القبول'), v.admission_no], [t('Admission date', 'تاريخ القبول'), v.admission_date],
+                    [t('Date of birth', 'تاريخ الميلاد'), v.date_of_birth], [t('Gender', 'الجنس'), v.gender],
+                    [t('Nationality', 'الجنسية'), v.nationality], [t('National ID / birth cert.', 'رقم الهوية'), v.national_id],
+                    [t('Blood group', 'فصيلة الدم'), v.blood_group], [t('Previous school', 'المدرسة السابقة'), v.previous_school],
+                  ] },
+                  { title: t('Contact', 'الاتصال'), items: [
+                    [t('Phone', 'الهاتف'), student.phone], [t('Email', 'البريد الإلكتروني'), student.email],
+                    [t('Address', 'العنوان'), v.address], [t('City', 'المدينة'), v.city],
+                  ] },
+                  { title: t('Guardian', 'ولي الأمر'), items: [
+                    [t('Guardian name', 'اسم ولي الأمر'), v.guardian_name], [t('Relationship', 'صلة القرابة'), v.guardian_relationship],
+                    [t('Guardian phone', 'هاتف ولي الأمر'), v.guardian_phone], [t('Guardian e-mail', 'بريد ولي الأمر'), v.guardian_email],
+                    [t('Emergency contact', 'جهة اتصال الطوارئ'), v.emergency_contact],
+                  ] },
+                  { title: t('Medical notes', 'ملاحظات طبية'), items: [[t('Medical notes', 'ملاحظات طبية'), v.medical_notes]] },
+                ],
+                signatures: [t('Class tutor', 'معلم الصف'), t('Principal', 'المدير')],
+              });
+            } catch (err) {
+              window.alert(err.message);
+            }
+          }}
+        >
+          {t('Print profile', 'طباعة الملف')}
+        </Button>
+        {canEdit && <Button type="submit" disabled={busy}>{t('Save record', 'حفظ السجل')}</Button>}
+      </div>
     </form>
   );
 }

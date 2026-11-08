@@ -195,8 +195,8 @@ select tst.ok((select count(*) = 1 from public.parent_children where parent_id =
 
 -- auto-verified link via admission contact
 select tst.logout();
-insert into public.admissions (student_name, age, parent_name, phone, address, course, enrolled_index, pipeline_stage, status)
-values ('Student One', 10, 'Parent One', '077-123-4567', 'Kalpitiya', 'quran', 'T-S1', 'enrolled', 'enrolled');
+insert into public.admissions (student_name, date_of_birth, age, parent_name, phone, address, course, enrolled_index, pipeline_stage, status)
+values ('Student One', current_date - interval '10 years', 10, 'Parent One', '077-123-4567', 'Kalpitiya', 'quran', 'T-S1', 'enrolled', 'enrolled');
 delete from public.parent_children where parent_id = '00000000-0000-0000-0000-000000000010';
 select tst.login('00000000-0000-0000-0000-000000000010');
 select tst.ok((select (public.request_child_link('T-S1') ->> 'status') = 'linked'), 'parent with matching admission phone is auto-linked');
@@ -323,7 +323,8 @@ select tst.fails($$select public.review_staff_leave((select id from public.staff
 select tst.login('00000000-0000-0000-0000-000000000005');
 select tst.succeeds($$select public.review_staff_leave((select id from public.staff_leave_requests limit 1), true)$$, 'HR approves leave');
 select tst.ok((select (public.generate_payroll('2026-11') ->> 'staff_count')::int = 2), 'payroll generated for 2 staff');
-select tst.ok((select net = 40000 + 3000 - round(40000/26.0*2, 2) - 500 - round((40000 - round(40000/26.0*2, 2)) * 0.08, 2) - 2000
+-- EPF (0028) is charged on basic + EPF-eligible allowances (TRAVEL) less unpaid leave.
+select tst.ok((select net = 40000 + 3000 - round(40000/26.0*2, 2) - 500 - round((40000 + 3000 - round(40000/26.0*2, 2)) * 0.08, 2) - 2000
                from public.payslips where staff_id = '00000000-0000-0000-0000-000000000006'), 'tutor net pay = basic+allow-unpaid-EPF-welfare-advance');
 select tst.fails($$select public.approve_payroll((select id from public.payroll_runs where period = '2026-11'))$$, 'HR (preparer) cannot approve payroll');
 select tst.login('00000000-0000-0000-0000-000000000004');
@@ -342,6 +343,13 @@ select tst.ok((select count(*) = 0 from public.staff_salary_profiles where profi
 select tst.login('00000000-0000-0000-0000-000000000002'); -- principal
 select tst.succeeds($$insert into public.subjects (code, name_en, category) values ('ARB', 'Arabic Grammar', 'arabic'), ('QRN', 'Quran', 'quran')$$, 'principal creates subjects');
 select tst.succeeds($$insert into public.exams (id, name, class_number, status) values ('e0000000-0000-0000-0000-000000000001', 'Term 1', 3, 'marking')$$, 'principal creates exam');
+-- 0028: marks must match a configured exam paper, and a tutor must be assigned to the subject.
+select tst.succeeds($$insert into public.exam_subjects (exam_id, subject_id, max_marks)
+  select 'e0000000-0000-0000-0000-000000000001', id, 100 from public.subjects where code in ('ARB', 'QRN') and org_id = public.current_org_id()$$,
+  'principal configures exam papers');
+select tst.succeeds($$insert into public.class_subjects (class_number, subject_id, tutor_id)
+  select 3, id, '00000000-0000-0000-0000-000000000006' from public.subjects where code in ('ARB', 'QRN') and org_id = public.current_org_id()$$,
+  'principal assigns tutor to class subjects');
 select tst.login('00000000-0000-0000-0000-000000000006');
 select tst.succeeds($$insert into public.student_results (student_id, exam_id, subject_id, marks_obtained, max_marks)
   select s.id, 'e0000000-0000-0000-0000-000000000001', sub.id, case when sub.code = 'ARB' then 88 else 52 end, 100
@@ -358,6 +366,9 @@ select tst.ok((select grade = 'A+' from public.student_results where marks_obtai
 select tst.ok((select (public.student_report_card(auth.uid(), 'e0000000-0000-0000-0000-000000000001') ->> 'rank') is not null), 'report card with rank');
 select tst.login('00000000-0000-0000-0000-000000000006');
 select tst.fails($$update public.student_results set marks_obtained = 99 where exam_id = 'e0000000-0000-0000-0000-000000000001'$$, 'tutor cannot change published marks');
+-- Later sections expect tutor 1 to have no class-3 assignment.
+select tst.logout();
+delete from public.class_subjects where tutor_id = '00000000-0000-0000-0000-000000000006';
 
 -- ---------------------------------------------------------------------------
 -- 10. Certificates, hostel, discipline
@@ -760,6 +771,263 @@ select tst.ok(public.is_admin(), 'mfa: other org admin unaffected by this org re
 select tst.logout();
 update public.organizations set require_mfa_for_staff = false;
 delete from auth.mfa_factors;
+
+-- ---------------------------------------------------------------------------
+-- 14. Bulk import + reports (0027)
+-- ---------------------------------------------------------------------------
+select tst.login('00000000-0000-0000-0000-000000000008');
+select tst.fails($$select public.import_students('[]'::jsonb, false)$$, 'import: student cannot import students');
+select tst.fails($$select public.import_staff('[]'::jsonb, false)$$, 'import: student cannot import staff');
+
+select tst.login('00000000-0000-0000-0000-000000000001');
+create temp table imp as select public.import_students($j$[
+  {"index_number":"T-N1","full_name":"New Student","class_number":"2","date_of_birth":"2014-03-05","gender":"M","guardian_name":"Abdullah","phone":"0770000001"},
+  {"index_number":"T-S1","full_name":"Student One Renamed","class_number":3,"guardian_name":"Updated Guardian"},
+  {"index_number":"T-N2","full_name":"Bad Class","class_number":"9"},
+  {"index_number":"T-N1","full_name":"Duplicate","class_number":1},
+  {"index_number":"T-N3","full_name":"Bad Date","class_number":1,"date_of_birth":"05/03/2014"},
+  {"index_number":"OC-S1","full_name":"Other org","class_number":1}
+]$j$::jsonb, true) as r;
+select tst.ok((select (r ->> 'errors')::int = 4 and not (r ->> 'committed')::boolean from imp), 'import: invalid rows reported, nothing committed',
+              (select r::text from imp));
+select tst.ok(not exists (select 1 from public.valid_index_numbers where index_number = 'T-N1'), 'import: all-or-nothing when any row is invalid');
+select tst.ok((select r -> 'rows' -> 1 ->> 'action' = 'update' and r -> 'rows' -> 0 ->> 'action' = 'create' from imp), 'import: create vs update detected');
+drop table imp;
+
+create temp table imp as select public.import_students($j$[
+  {"index_number":"T-N1","full_name":"New Student","class_number":"2","date_of_birth":"2014-03-05","gender":"M","guardian_name":"Abdullah","phone":"0770000001"},
+  {"index_number":"T-S1","full_name":"Student One","class_number":3,"guardian_name":"Updated Guardian"}
+]$j$::jsonb, true) as r;
+select tst.ok((select (r ->> 'committed')::boolean and (r ->> 'created')::int = 1 and (r ->> 'updated')::int = 1 from imp), 'import: valid file commits',
+              (select r::text from imp));
+drop table imp;
+select tst.ok((select class_number = 2 and details ->> 'guardian_name' = 'Abdullah' from public.valid_index_numbers where index_number = 'T-N1'),
+              'import: new student pre-seeded with details');
+select tst.ok((select guardian_name = 'Updated Guardian' from public.student_details where profile_id = '00000000-0000-0000-0000-000000000008'),
+              'import: existing student details updated');
+
+-- The student registers with the imported index number: details are applied.
+select tst.logout();
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-000000000030', 'n1@t.lk', '{"account_type":"student","index_number":"T-N1","full_name":"New Student"}');
+select tst.ok((select d.date_of_birth = '2014-03-05' and d.gender = 'male' and d.guardian_name = 'Abdullah' and p.phone = '0770000001'
+               from public.student_details d join public.profiles p on p.id = d.profile_id
+               where d.profile_id = '00000000-0000-0000-0000-000000000030'),
+              'import: details applied when the student signs up');
+
+-- Staff import by HR.
+select tst.login('00000000-0000-0000-0000-000000000005');
+create temp table imp as select public.import_staff($j$[
+  {"email":"New.Teacher@t.lk","full_name":"New Teacher","account_type":"tutor","department":"Hifz","job_title":"Ustadh","employee_no":"E-100","employment_start":"2026-01-10"},
+  {"email":"tutor1@t.lk","full_name":"Tutor One","department":"Arabic","staff_role":"treasurer"},
+  {"email":"bad","full_name":"x","account_type":"guest"}
+]$j$::jsonb, false) as r;
+select tst.ok((select (r ->> 'errors')::int = 1 and r -> 'rows' -> 1 -> 'warnings' ->> 0 like 'role not changed%' from imp),
+              'import staff: dry run validates and warns on role change', (select r::text from imp));
+drop table imp;
+create temp table imp as select public.import_staff($j$[
+  {"email":"New.Teacher@t.lk","full_name":"New Teacher","account_type":"tutor","department":"Hifz","job_title":"Ustadh","employee_no":"E-100","employment_start":"2026-01-10"},
+  {"email":"tutor1@t.lk","full_name":"Tutor One","department":"Arabic","staff_role":"treasurer"}
+]$j$::jsonb, true) as r;
+select tst.ok((select (r ->> 'committed')::boolean from imp), 'import staff: commits', (select r::text from imp));
+drop table imp;
+select tst.logout();
+select tst.ok((select department = 'Arabic' from public.staff_hr where profile_id = '00000000-0000-0000-0000-000000000006'),
+              'import staff: existing staff HR record updated');
+select tst.ok((select assigned_tutor_role = 'none' from public.profiles where id = '00000000-0000-0000-0000-000000000006'),
+              'import staff: role of existing account unchanged');
+select tst.ok((select account_type = 'tutor' and details ->> 'department' = 'Hifz' from public.org_invitations where lower(email) = 'new.teacher@t.lk'),
+              'import staff: invitation created for new staff');
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-000000000031', 'new.teacher@t.lk', '{"account_type":"guest","full_name":"New Teacher"}');
+select tst.ok((select h.department = 'Hifz' and h.employee_no = 'E-100' and p.account_type = 'tutor' and p.is_approved
+               from public.staff_hr h join public.profiles p on p.id = h.profile_id
+               where h.profile_id = '00000000-0000-0000-0000-000000000031'),
+              'import staff: HR details applied on sign-up');
+
+-- Exam marks import (security invoker: RLS on student_results applies).
+insert into public.subjects (id, org_id, code, name_en) values
+  ('0c000000-0000-0000-0000-000000000001', public.default_org_id(), 'QUR', 'Quran');
+insert into public.exams (id, org_id, name, class_number, status) values
+  ('0d000000-0000-0000-0000-000000000001', public.default_org_id(), 'Term 1 Test', 3, 'marking');
+insert into public.exam_subjects (org_id, exam_id, subject_id, max_marks) values
+  (public.default_org_id(), '0d000000-0000-0000-0000-000000000001', '0c000000-0000-0000-0000-000000000001', 50);
+select tst.login('00000000-0000-0000-0000-000000000001');
+create temp table imp as select public.import_exam_marks('0d000000-0000-0000-0000-000000000001', $j$[
+  {"index_number":"T-S1","subject_code":"qur","marks":"42"},
+  {"index_number":"T-S2","subject_code":"QUR","marks":60},
+  {"index_number":"NOPE","subject_code":"XYZ","marks":"a"}
+]$j$::jsonb, false) as r;
+select tst.ok((select (r ->> 'errors')::int = 2 from imp), 'marks import: over-max, unknown student/subject rejected', (select r::text from imp));
+drop table imp;
+select tst.ok((select (public.import_exam_marks('0d000000-0000-0000-0000-000000000001',
+               '[{"index_number":"T-S1","subject_code":"QUR","marks":42}]'::jsonb, true) ->> 'committed')::boolean),
+              'marks import: commits');
+select tst.ok((select marks_obtained = 42 and max_marks = 50 and grade <> '' from public.student_results
+               where exam_id = '0d000000-0000-0000-0000-000000000001' and student_id = '00000000-0000-0000-0000-000000000008'),
+              'marks import: result stored with computed grade');
+
+-- Reports respect RLS / tenancy.
+select tst.ok((select count(*) >= 3 from public.report_student_roster()), 'report: admin sees student roster');
+select tst.ok((select count(*) = 1 from public.report_exam_results('0d000000-0000-0000-0000-000000000001')), 'report: exam results');
+select tst.succeeds($$select * from public.report_fee_summary('2026-01', '2027-12')$$, 'report: fee summary runs');
+select tst.succeeds($$select * from public.report_attendance_summary(current_date - 30, current_date)$$, 'report: attendance summary runs');
+select tst.ok((select count(*) >= 5 from public.report_staff_directory()), 'report: staff directory');
+select tst.login('00000000-0000-0000-0000-000000000013');
+select tst.ok((select count(*) = 0 from public.report_student_roster() where index_number like 'T-%'), 'report: other org admin sees none of our students');
+select tst.login('00000000-0000-0000-0000-000000000008');
+select tst.ok((select count(*) = 0 from public.report_fee_summary('2026-01', '2027-12') where index_number <> 'T-S1'),
+              'report: student sees only own fees');
+
+-- ---------------------------------------------------------------------------
+-- 15. Documents & exam papers (0031)
+-- ---------------------------------------------------------------------------
+select tst.logout();
+update public.profiles set extra_roles = array['it_officer'] where id = '00000000-0000-0000-0000-000000000016'; -- warden doubles as IT officer
+insert into public.subjects (id, org_id, code, name_en) values
+  ('0c000000-0000-0000-0000-000000000002', public.default_org_id(), 'FQH', 'Fiqh');
+insert into public.exam_subjects (org_id, exam_id, subject_id, max_marks) values
+  (public.default_org_id(), '0d000000-0000-0000-0000-000000000001', '0c000000-0000-0000-0000-000000000002', 100);
+
+-- Ordinary documents: owner, sharing, server-managed fields, versions.
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.succeeds($$insert into public.documents (id, title, kind, body_html) values
+  ('0e000000-0000-0000-0000-000000000001', 'Letter to parents', 'letter', '<p>Assalamu alaikum</p>')$$, 'docs: tutor creates a letter');
+select tst.ok((select ref_no like 'DUKH/%' and version = 1 from public.documents where id = '0e000000-0000-0000-0000-000000000001'), 'docs: reference number assigned');
+select tst.fails($$insert into public.documents (title, kind) values ('Sneaky paper', 'exam_paper')$$, 'docs: exam papers cannot be created directly');
+update public.documents set body_html = '<p>Assalamu alaikum, dear parents</p>', owner_id = '00000000-0000-0000-0000-000000000001'
+  where id = '0e000000-0000-0000-0000-000000000001';
+select tst.ok((select version = 2 and owner_id = '00000000-0000-0000-0000-000000000006' from public.documents where id = '0e000000-0000-0000-0000-000000000001'),
+              'docs: edit bumps version; owner cannot be changed');
+select tst.ok((select count(*) = 1 from public.document_versions where document_id = '0e000000-0000-0000-0000-000000000001'), 'docs: previous version kept');
+select tst.login('00000000-0000-0000-0000-000000000004');
+select tst.ok((select count(*) = 0 from public.documents where id = '0e000000-0000-0000-0000-000000000001'), 'docs: unshared letter hidden from colleagues');
+select tst.login('00000000-0000-0000-0000-000000000006');
+update public.documents set share_roles = array['accountant'] where id = '0e000000-0000-0000-0000-000000000001';
+select tst.login('00000000-0000-0000-0000-000000000004');
+select tst.ok((select count(*) = 1 from public.documents where id = '0e000000-0000-0000-0000-000000000001'), 'docs: shared with a role becomes visible');
+select tst.login('00000000-0000-0000-0000-000000000008');
+select tst.ok((select count(*) = 0 from public.documents), 'docs: students see no staff documents');
+
+-- Exam paper workflow.
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.fails($$select public.assign_exam_paper('0d000000-0000-0000-0000-000000000001', '0c000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000006')$$,
+                 'paper: tutor cannot assign exam papers');
+select tst.login('00000000-0000-0000-0000-000000000002'); -- principal = academic admin
+create temp table paper as select public.assign_exam_paper('0d000000-0000-0000-0000-000000000001', '0c000000-0000-0000-0000-000000000002',
+  '00000000-0000-0000-0000-000000000006', current_date + 7, 'Answer all questions', 120, 100) as id;
+grant select on paper to authenticated;
+select tst.ok((select status = 'assigned' from public.exam_papers where id = (select id from paper)), 'paper: assigned');
+select tst.fails($$select public.assign_exam_paper('0d000000-0000-0000-0000-000000000001', '0c000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000006')$$,
+                 'paper: only one paper per exam subject');
+
+select tst.login('00000000-0000-0000-0000-000000000016'); -- IT officer
+select tst.ok((select count(*) = 0 from public.exam_papers), 'paper: IT cannot see a paper before it is submitted');
+select tst.login('00000000-0000-0000-0000-000000000004'); -- accountant
+select tst.ok((select count(*) = 0 from public.documents where kind = 'exam_paper'), 'paper: other staff never see exam papers');
+
+select tst.login('00000000-0000-0000-0000-000000000006'); -- examiner
+update public.documents set body_html = body_html || '<p>Q1. Define wudu.</p>', share_roles = array['all_staff']
+  where id = (select document_id from public.exam_papers where id = (select id from paper));
+select tst.ok((select status = 'drafting' from public.exam_papers where id = (select id from paper)), 'paper: first save moves to drafting');
+select tst.ok((select share_roles = '{}' from public.documents where id = (select document_id from public.exam_papers where id = (select id from paper))),
+              'paper: exam papers cannot be shared');
+select tst.succeeds($$select public.exam_paper_transition((select id from paper), 'submit')$$, 'paper: examiner submits');
+update public.documents set body_html = '<p>changed after submit</p>'
+  where id = (select document_id from public.exam_papers where id = (select id from paper));
+select tst.ok((select body_html not like '%changed after submit%' from public.documents where id = (select document_id from public.exam_papers where id = (select id from paper))),
+              'paper: examiner cannot edit after submitting');
+select tst.fails($$select public.exam_paper_transition((select id from paper), 'approve')$$, 'paper: examiner cannot approve');
+
+select tst.login('00000000-0000-0000-0000-000000000016'); -- IT officer
+select tst.ok((select count(*) = 1 from public.exam_papers), 'paper: IT sees submitted paper');
+select tst.succeeds($$select public.exam_paper_transition((select id from paper), 'start_review')$$, 'paper: IT starts review');
+select tst.succeeds($$update public.documents set body_html = body_html || '<p>Formatted by IT</p>'
+  where id = (select document_id from public.exam_papers where id = (select id from paper))$$, 'paper: IT formats during review');
+select tst.fails($$select public.exam_paper_transition((select id from paper), 'return')$$, 'paper: returning requires a note');
+select tst.fails($$select public.exam_paper_transition((select id from paper), 'approve')$$, 'paper: IT cannot approve');
+
+select tst.login('00000000-0000-0000-0000-000000000002'); -- principal
+select tst.ok((select public.exam_paper_transition((select id from paper), 'approve') = 'approved'), 'paper: principal approves');
+select tst.ok((select locked and status = 'final' from public.documents where id = (select document_id from public.exam_papers where id = (select id from paper))),
+              'paper: approval locks the document');
+select tst.login('00000000-0000-0000-0000-000000000016');
+update public.documents set body_html = '<p>tampered</p>' where id = (select document_id from public.exam_papers where id = (select id from paper));
+select tst.ok((select body_html not like '%tampered%' from public.documents where id = (select document_id from public.exam_papers where id = (select id from paper))),
+              'paper: locked paper cannot be edited by IT');
+select tst.succeeds($$select public.open_document((select document_id from public.exam_papers where id = (select id from paper)), 'printed')$$, 'paper: IT opens for printing');
+select tst.succeeds($$select public.exam_paper_transition((select id from paper), 'printed')$$, 'paper: printing recorded');
+select tst.login('00000000-0000-0000-0000-000000000004');
+select tst.fails($$select public.open_document((select document_id from public.exam_papers where id = (select id from paper)))$$, 'paper: open_document refuses other staff');
+select tst.login('00000000-0000-0000-0000-000000000002');
+select tst.ok((select count(*) >= 6 from public.exam_paper_events where paper_id = (select id from paper)), 'paper: full audit trail kept');
+select tst.ok((select count(*) >= 1 from public.exam_paper_events where paper_id = (select id from paper) and action = 'printed'
+               and actor_id = '00000000-0000-0000-0000-000000000016'), 'paper: who opened it for printing is logged');
+select tst.succeeds($$select public.exam_paper_transition((select id from paper), 'release')$$, 'paper: released after the exam');
+select tst.login('00000000-0000-0000-0000-000000000004');
+select tst.ok((select count(*) = 1 from public.documents where kind = 'exam_paper'), 'paper: released paper readable by staff');
+select tst.logout();
+select tst.ok((select count(*) >= 1 from public.notifications where user_id = '00000000-0000-0000-0000-000000000006' and title = 'Exam paper assigned'),
+              'paper: examiner was notified of the assignment');
+drop table paper;
+
+-- ---------------------------------------------------------------------------
+-- 16. Cheques & daily reminders (0032)
+-- ---------------------------------------------------------------------------
+select tst.login('00000000-0000-0000-0000-000000000003'); -- treasurer
+create temp table fee as select id from public.student_fees
+  where student_id = '00000000-0000-0000-0000-000000000009' and month = '2027-09';
+grant select on fee to authenticated;
+select tst.succeeds($$select public.record_fee_payment((select id from fee), 100, 'cheque', 'CHQ-555')$$, 'cheque: fee paid by cheque');
+select tst.succeeds($$select public.record_fee_payment((select id from fee), 50, 'cheque', 'CHQ-555')$$, 'cheque: same cheque pays more');
+select tst.ok((select count(*) = 1 and sum(amount) = 150 and max(cardinality(fee_payment_ids)) = 2 from public.cheques where cheque_no = 'CHQ-555'),
+              'cheque: one register entry for the cheque');
+update public.cheques set bank_name = 'BOC', branch = 'Kalpitiya', cheque_date = current_date + 10, status = 'cleared' where cheque_no = 'CHQ-555';
+select tst.ok((select status = 'pending' and bank_name = 'BOC' from public.cheques where cheque_no = 'CHQ-555'),
+              'cheque: details editable, status only via the workflow');
+select tst.fails($$select public.update_cheque_status((select id from public.cheques where cheque_no = 'CHQ-555'), 'deposited')$$,
+                 'cheque: post-dated cheque cannot be deposited early');
+select tst.fails($$select public.update_cheque_status((select id from public.cheques where cheque_no = 'CHQ-555'), 'bounced')$$,
+                 'cheque: bounce needs a reason');
+update public.cheques set cheque_date = current_date where cheque_no = 'CHQ-555';
+select tst.succeeds($$select public.update_cheque_status((select id from public.cheques where cheque_no = 'CHQ-555'), 'deposited')$$, 'cheque: deposited');
+select tst.login('00000000-0000-0000-0000-000000000004'); -- accountant
+select tst.ok((select (public.update_cheque_status((select id from public.cheques where cheque_no = 'CHQ-555'), 'bounced', null, 'Insufficient funds')
+               ->> 'receipt_reversed')::boolean), 'cheque: bounce reverses the receipts');
+select tst.ok((select count(*) = 2 from public.fee_payments where id = any ((select fee_payment_ids from public.cheques where cheque_no = 'CHQ-555')::uuid[])
+               and status = 'reversed'), 'cheque: both linked receipts reversed');
+select tst.ok((select count(*) = 2 from public.cheque_events where cheque_id = (select id from public.cheques where cheque_no = 'CHQ-555')),
+              'cheque: status history kept');
+select tst.fails($$select public.update_cheque_status((select id from public.cheques where cheque_no = 'CHQ-555'), 'cleared')$$,
+                 'cheque: bounced cheque cannot be marked cleared');
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.ok((select count(*) = 0 from public.cheques), 'cheque: non-finance staff see no cheques');
+select tst.fails($$select public.update_cheque_status((select id from public.cheques limit 1), 'cancelled', null, 'x')$$, 'cheque: non-finance cannot change status');
+drop table fee;
+
+-- Issued, maturing cheque + tasks for reminders.
+select tst.login('00000000-0000-0000-0000-000000000003');
+select tst.succeeds($$insert into public.cheques (direction, cheque_no, bank_name, amount, cheque_date, party_name, purpose)
+  values ('issued', '000123', 'BOC', 25000, current_date + 1, 'Book supplier', 'Library books')$$, 'cheque: treasurer records issued cheque');
+select tst.logout();
+insert into public.tasks (org_id, title, assignee_id, due_date, created_by) values
+  (public.default_org_id(), 'Prepare exam hall', '00000000-0000-0000-0000-000000000006', public.org_today() + 1, '00000000-0000-0000-0000-000000000002'),
+  (public.default_org_id(), 'Submit attendance', '00000000-0000-0000-0000-000000000006', public.org_today() - 2, '00000000-0000-0000-0000-000000000002');
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.fails($$select public.run_daily_reminders()$$, 'reminders: tutor cannot run the job');
+select tst.as_service();
+create temp table rem as select public.run_daily_reminders() as r;
+select tst.ok((select (r ->> 'tasks_due')::int >= 1 and (r ->> 'tasks_overdue')::int >= 1 and (r ->> 'cheques')::int >= 1 from rem),
+              'reminders: due, overdue and cheque reminders sent', (select r::text from rem));
+select tst.ok((select (public.run_daily_reminders() ->> 'tasks_due')::int = 0), 'reminders: not repeated the same day');
+drop table rem;
+select tst.logout();
+select tst.ok((select count(*) >= 1 from public.notifications where user_id = '00000000-0000-0000-0000-000000000006' and title = 'Task due tomorrow'),
+              'reminders: assignee notified of task due tomorrow');
+select tst.ok((select count(*) >= 1 from public.notifications where user_id = '00000000-0000-0000-0000-000000000002' and title = 'Task overdue'),
+              'reminders: creator notified of overdue task');
+select tst.ok((select count(*) >= 1 from public.notifications where user_id = '00000000-0000-0000-0000-000000000003' and title = 'Issued cheque maturing'),
+              'reminders: treasurer warned about maturing issued cheque');
 
 -- ---------------------------------------------------------------------------
 select tst.logout();
