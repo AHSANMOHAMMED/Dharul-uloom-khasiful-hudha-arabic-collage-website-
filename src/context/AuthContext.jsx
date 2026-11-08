@@ -2,6 +2,9 @@ import { createContext, useState, useContext, useEffect, useCallback } from 'rea
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { getSiteOrgSlug } from '../lib/siteOrg';
 import { tx } from '../lib/tx';
+import { getAssurance, getMfaStatus } from '../lib/mfaApi';
+
+const NO_MFA = { currentLevel: 'aal1', nextLevel: 'aal1', required: false, hasFactor: false };
 
 const AuthContext = createContext();
 
@@ -26,6 +29,23 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [mfa, setMfa] = useState(NO_MFA);
+
+  // 2FA state: whether this session still owes a code, or must enrol first.
+  const loadMfa = useCallback(async (authUser) => {
+    if (!authUser || !isSupabaseConfigured) return NO_MFA;
+    try {
+      const [aal, status] = await Promise.all([getAssurance(), getMfaStatus().catch(() => null)]);
+      return {
+        currentLevel: aal?.currentLevel || 'aal1',
+        nextLevel: aal?.nextLevel || 'aal1',
+        required: Boolean(status?.required),
+        hasFactor: Boolean(status?.has_factor) || aal?.nextLevel === 'aal2',
+      };
+    } catch {
+      return NO_MFA;
+    }
+  }, []);
 
   // Merge the auth user with its profile row into the shape the UI expects.
   const buildUser = useCallback(async (authUser) => {
@@ -69,7 +89,11 @@ export const AuthProvider = ({ children }) => {
     // Hydrate from any persisted session on first load.
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!active) return;
-      setUser(await buildUser(session?.user ?? null));
+      const authUser = session?.user ?? null;
+      const [u, m] = await Promise.all([buildUser(authUser), loadMfa(authUser)]);
+      if (!active) return;
+      setUser(u);
+      setMfa(m);
       setLoading(false);
     });
 
@@ -82,7 +106,11 @@ export const AuthProvider = ({ children }) => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setTimeout(async () => {
         if (!active) return;
-        setUser(await buildUser(session?.user ?? null));
+        const authUser = session?.user ?? null;
+        const [u, m] = await Promise.all([buildUser(authUser), loadMfa(authUser)]);
+        if (!active) return;
+        setUser(u);
+        setMfa(m);
         setLoading(false);
       }, 0);
     });
@@ -91,7 +119,7 @@ export const AuthProvider = ({ children }) => {
       active = false;
       sub?.subscription?.unsubscribe();
     };
-  }, [buildUser]);
+  }, [buildUser, loadMfa]);
 
   const login = async (email, password) => {
     if (!isSupabaseConfigured) {
@@ -101,9 +129,11 @@ export const AuthProvider = ({ children }) => {
     if (error) {
       return { success: false, error: error.message };
     }
-    const mapped = await buildUser(data.user);
+    const [mapped, m] = await Promise.all([buildUser(data.user), loadMfa(data.user)]);
     setUser(mapped);
-    return { success: true, user: mapped };
+    setMfa(m);
+    // The caller must collect a 6-digit code before the session is privileged.
+    return { success: true, user: mapped, mfaRequired: m.nextLevel === 'aal2' && m.currentLevel !== 'aal2' };
   };
 
   const register = async (username, email, password, accountType = 'guest', indexNumber = '', phone = '') => {
@@ -164,6 +194,7 @@ export const AuthProvider = ({ children }) => {
       await supabase.auth.signOut();
     }
     setUser(null);
+    setMfa(NO_MFA);
   };
 
   // Mirrors the SQL helpers in 0015_security_tenancy.sql. UI gating only —
@@ -209,10 +240,17 @@ export const AuthProvider = ({ children }) => {
     isWelfareStaff: isAdmin || hasRole('principal', 'vice_principal', 'counselor', 'warden'),
     isHostelStaff: isAdmin || hasRole('warden', 'principal', 'vice_principal'),
     isApproved: user?.isApproved ?? false,
+    mfa,
+    // Signed in with a password but the account has 2FA: ask for the code.
+    mfaChallengeNeeded: Boolean(user) && mfa.nextLevel === 'aal2' && mfa.currentLevel !== 'aal2',
+    // The organisation requires 2FA for this role and none is set up yet.
+    mfaSetupNeeded: Boolean(user) && mfa.required && !mfa.hasFactor,
     refreshUser: async () => {
       if (!isSupabaseConfigured) return;
       const { data: { user: authUser } } = await supabase.auth.getUser();
-      setUser(await buildUser(authUser ?? null));
+      const [u, m] = await Promise.all([buildUser(authUser ?? null), loadMfa(authUser ?? null)]);
+      setUser(u);
+      setMfa(m);
     },
   };
 

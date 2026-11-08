@@ -16,6 +16,7 @@
 // Every provider call has an 8 s timeout to stay inside the 10 s API budget.
 
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { callerIsAdmin } from '../_shared/authz.ts';
 import { base64, buildReceiptPdf } from '../_shared/receiptPdf.ts';
 import { normalizeLkPhone } from '../_shared/phone.ts';
 
@@ -207,8 +208,7 @@ Deno.serve(async (req) => {
   if (bearer !== serviceKey) {
     const { data: { user } } = await admin.auth.getUser(bearer);
     if (!user) return json({ error: 'Unauthorized' }, 401);
-    const { data: profile } = await admin.from('profiles').select('role').eq('id', user.id).maybeSingle();
-    if (profile?.role !== 'admin' && profile?.role !== 'super_admin') return json({ error: 'Forbidden' }, 403);
+    if (!(await callerIsAdmin(bearer))) return json({ error: 'Forbidden' }, 403);
   }
 
   let limit = 50;

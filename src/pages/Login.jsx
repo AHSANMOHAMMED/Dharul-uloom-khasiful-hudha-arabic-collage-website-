@@ -5,10 +5,11 @@ import { useAuth } from '../context/AuthContext';
 import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
 import { safeRedirectPath } from '../lib/useTabParam';
+import MfaChallenge from '../components/security/MfaChallenge';
 
 export default function Login() {
   useTranslation();
-  const { login, user } = useAuth();
+  const { login, user, mfaChallengeNeeded } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -20,6 +21,28 @@ export default function Login() {
   const [error, setError] = useState('');
   const [info] = useState(location.state?.message || '');
   const [loading, setLoading] = useState(false);
+  const [signedInUser, setSignedInUser] = useState(null);
+
+  // Send each role to its workspace, or back to the page that sent them here.
+  const goToWorkspace = (u) => {
+    const back = safeRedirectPath(location.state?.from);
+    if (back) navigate(back, { replace: true });
+    else if (u?.role === 'admin' || u?.role === 'super_admin') navigate('/admin');
+    else if (u?.role === 'librarian') navigate('/library-admin');
+    else navigate('/dashboard');
+  };
+
+  // Password accepted but the account has 2FA: ask for the code before routing.
+  if (user && mfaChallengeNeeded) {
+    return (
+      <div className="min-h-screen bg-parchment-50 flex items-center justify-center p-6 relative">
+        <KhatamPattern className="opacity-[0.05]" strokeColor="#0B3B2E" id="mfa-login-khatam" />
+        <div className="relative z-10 max-w-md w-full bg-paper-white rounded-[14px] border border-sand-border p-6 sm:p-8 shadow-manuscript-md">
+          <MfaChallenge onVerified={() => goToWorkspace(signedInUser || user)} onCancel={() => setSignedInUser(null)} />
+        </div>
+      </div>
+    );
+  }
 
   // If user is already logged in but not approved, show pending screen
   if (user && user.isApproved === false) {
@@ -74,18 +97,9 @@ export default function Login() {
     const result = await login(formData.email, formData.password);
     
     if (result.success) {
-      const u = result.user;
-      // Return to the page that sent the user here (e.g. a deep link into the ERP).
-      const back = safeRedirectPath(location.state?.from);
-      if (back) {
-        navigate(back, { replace: true });
-      } else if (u.role === 'admin' || u.role === 'super_admin') {
-        navigate('/admin');
-      } else if (u.role === 'librarian') {
-        navigate('/library-admin');
-      } else {
-        navigate('/dashboard');
-      }
+      setSignedInUser(result.user);
+      // With 2FA the challenge screen above takes over and routes on success.
+      if (!result.mfaRequired) goToWorkspace(result.user);
     } else {
       setError(result.error || tx('فشل تسجيل الدخول. يرجى التحقق من بيانات الدخول.', 'Authentication failed. Please verify credentials.'));
     }

@@ -9,6 +9,7 @@
 //               deep-links back to kashifulhudha://payment-*.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { bearerOf, callerMfaOk } from '../_shared/authz.ts';
 import { checkoutHash, checkoutSignature, checkoutUrl } from '../_shared/payhere.ts';
 
 const corsHeaders = {
@@ -69,7 +70,9 @@ Deno.serve(async (req) => {
   const { data: profile } = await admin
     .from('profiles').select('role, org_id').eq('id', user.id).maybeSingle();
   const isOwnFee = user.id === fee.student_id;
-  const isOrgAdmin = (profile?.role === 'admin' && profile?.org_id === fee.org_id) || profile?.role === 'super_admin';
+  const isOrgAdmin =
+    ((profile?.role === 'admin' && profile?.org_id === fee.org_id) || profile?.role === 'super_admin') &&
+    (await callerMfaOk(bearerOf(req)));
   let isParent = false;
   if (!isOwnFee && !isOrgAdmin) {
     const { data: link } = await admin

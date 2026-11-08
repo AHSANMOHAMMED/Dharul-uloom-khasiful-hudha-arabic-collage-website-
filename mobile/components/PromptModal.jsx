@@ -23,6 +23,8 @@ export default function PromptModal({
   requiredMessage,
   multiline = true,
   keyboardType,
+  secure = false,
+  maxLength,
   confirmLabel,
   confirmVariant = 'primary',
   onSubmit,
@@ -66,6 +68,8 @@ export default function PromptModal({
             onChangeText={setValue}
             multiline={multiline}
             keyboardType={keyboardType}
+            secureTextEntry={secure}
+            maxLength={maxLength}
             inputStyle={multiline ? styles.input : undefined}
             autoFocus
           />

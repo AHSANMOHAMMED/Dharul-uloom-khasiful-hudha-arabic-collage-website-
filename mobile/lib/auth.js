@@ -13,6 +13,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(isConfigured);
   const [profileError, setProfileError] = useState(null);
   const profileIdRef = useRef(null);
+  // Two-step verification: the session owes a code when nextLevel is aal2.
+  const [aal, setAal] = useState({ currentLevel: 'aal1', nextLevel: 'aal1' });
+
+  const loadAal = useCallback(async () => {
+    if (!supabase) return;
+    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (!error && data) setAal({ currentLevel: data.currentLevel, nextLevel: data.nextLevel });
+  }, []);
 
   const loadProfile = useCallback(async (userId) => {
     if (!supabase || !userId) {
@@ -33,14 +41,22 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return;
       setSession(data.session);
-      if (data.session?.user) await loadProfile(data.session.user.id);
+      if (data.session?.user) await Promise.all([loadProfile(data.session.user.id), loadAal()]);
       if (active) setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       if (event === 'SIGNED_OUT' || !s) {
+        setAal({ currentLevel: 'aal1', nextLevel: 'aal1' });
         setProfile(null);
         profileIdRef.current = null;
+        return;
+      }
+      if (event === 'MFA_CHALLENGE_VERIFIED' || event === 'TOKEN_REFRESHED') {
+        setTimeout(() => {
+          loadAal();
+          if (event === 'MFA_CHALLENGE_VERIFIED') loadProfile(s.user.id);
+        }, 0);
         return;
       }
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
@@ -50,7 +66,7 @@ export function AuthProvider({ children }) {
         const sameUser = profileIdRef.current === s.user.id;
         setTimeout(() => {
           if (!sameUser) setLoading(true);
-          loadProfile(s.user.id).finally(() => setLoading(false));
+          Promise.all([loadProfile(s.user.id), loadAal()]).finally(() => setLoading(false));
         }, 0);
       }
     });
@@ -58,7 +74,7 @@ export function AuthProvider({ children }) {
       active = false;
       sub?.subscription?.unsubscribe();
     };
-  }, [loadProfile]);
+  }, [loadProfile, loadAal]);
 
   const value = useMemo(
     () => ({
@@ -68,6 +84,9 @@ export function AuthProvider({ children }) {
       profileError,
       loading,
       caps: getCaps(profile),
+      aal,
+      mfaPending: Boolean(session) && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2',
+      refreshAal: loadAal,
       refreshProfile: () => loadProfile(session?.user?.id),
       signOut: async () => {
         if (supabase) await supabase.auth.signOut();
@@ -75,7 +94,7 @@ export function AuthProvider({ children }) {
         setSession(null);
       },
     }),
-    [session, profile, profileError, loading, loadProfile],
+    [session, profile, profileError, loading, loadProfile, aal, loadAal],
   );
 
   return createElement(AuthContext.Provider, { value }, children);

@@ -113,6 +113,7 @@ FRONTEND_URL=http://localhost:5173
 | [docs/PLATFORM_GUIDE.md](docs/PLATFORM_GUIDE.md) | Current architecture, features, data flows |
 | [docs/UI_ENHANCEMENT_SPEC.md](docs/UI_ENHANCEMENT_SPEC.md) | Web + mobile UI enhancement brief |
 | [docs/GO_LIVE.md](docs/GO_LIVE.md) | Deploy / secrets / smoke checklist |
+| [docs/SECURITY.md](docs/SECURITY.md) | Two-step verification (DB-enforced), mobile fingerprint/PIN lock, password policy, rollout & recovery |
 | [docs/ROLE_RLS_MATRIX.md](docs/ROLE_RLS_MATRIX.md) | Role × capability matrix |
 
 ## Features

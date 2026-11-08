@@ -1,5 +1,6 @@
 // Generic transactional email via Resend (contact form / admissions).
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { callerIsAdmin } from '../_shared/authz.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -35,17 +36,11 @@ Deno.serve(async (req) => {
   let trusted = false;
   const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
   if (token) {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     if (token === serviceKey) {
       trusted = true;
     } else {
-      const admin = createClient(supabaseUrl, serviceKey);
-      const { data: { user } } = await admin.auth.getUser(token);
-      if (user) {
-        const { data: profile } = await admin.from('profiles').select('role').eq('id', user.id).maybeSingle();
-        trusted = profile?.role === 'admin' || profile?.role === 'super_admin';
-      }
+      trusted = await callerIsAdmin(token);
     }
   }
 

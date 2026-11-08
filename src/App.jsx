@@ -10,6 +10,7 @@ import InstallPrompt from './components/InstallPrompt'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { tx } from './lib/tx';
+import MfaGate from './components/security/MfaGate';
 
 /**
  * Routes that are standalone authenticated workspaces.
@@ -26,10 +27,11 @@ const DASHBOARD_ROUTES = [
   '/verify',
   '/r/',
   '/receipt/',
+  '/account',
 ];
 
 /** Routes that require a signed-in user (public receipt/verify links excluded). */
-const PROTECTED_ROUTES = ['/admin', '/dashboard', '/library-admin', '/erp'];
+const PROTECTED_ROUTES = ['/admin', '/dashboard', '/library-admin', '/erp', '/account'];
 
 function isDashboardPath(pathname) {
   return DASHBOARD_ROUTES.some((r) => pathname === r || pathname.startsWith(r));
@@ -62,6 +64,7 @@ const NotFound = lazy(() => import('./pages/NotFound'))
 const ErpWorkspace = lazy(() => import('./pages/erp/ErpWorkspace'))
 const VerifyCertificate = lazy(() => import('./pages/erp/VerifyCertificate'))
 const ReceiptPublic = lazy(() => import('./pages/ReceiptPublic'))
+const AccountSecurity = lazy(() => import('./pages/AccountSecurity'))
 
 /**
  * AppShell — conditionally renders the public Navbar + Footer only when
@@ -93,12 +96,15 @@ function AppShell({ children }) {
   // Hide public chrome when any logged-in staff/admin is on their workspace.
   const isStaffUser = isAdmin || isLibrarian || isTutor || isStudent || isParent || isNonTeachingStaff;
   const hideChrome = onDashboardRoute && isAuthenticated && isStaffUser;
+  const onProtectedRoute = PROTECTED_ROUTES.some((r) => location.pathname.startsWith(r));
+  // Workspaces only render once the session has passed two-step verification.
+  const content = onProtectedRoute ? <MfaGate>{children}</MfaGate> : children;
 
   if (hideChrome) {
     return (
       <div className="min-h-screen flex flex-col bg-[#FBF8F0]">
         <DashboardTopBar />
-        <main className="flex-grow">{children}</main>
+        <main className="flex-grow">{content}</main>
         <footer className="py-4 text-center text-[11px] text-[#4A5E56] font-sans border-t border-[#E8E1D0]/60 bg-white/40">
           {tx(
             'دار العلوم كاشف الهدى العربية · البوابة المؤسسية المعتمدة © 2026',
@@ -115,7 +121,7 @@ function AppShell({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow">{children}</main>
+      <main className="flex-grow">{content}</main>
       <Footer />
       <OfflineIndicator />
       <InstallPrompt />
@@ -176,6 +182,7 @@ function App() {
               {/* Fee-reminder notifications (0025) link to /fees; fees live in the portal. */}
               <Route path="/fees"       element={<Navigate to="/dashboard" replace />} />
               <Route path="/erp"        element={<ErpWorkspace />} />
+              <Route path="/account/security" element={<AccountSecurity />} />
               <Route path="/verify"     element={<VerifyCertificate />} />
               <Route path="/verify/:code" element={<VerifyCertificate />} />
               <Route path="/r/:token"   element={<ReceiptPublic />} />

@@ -687,6 +687,81 @@ select tst.ok((select bool_and(f.paid_amount = coalesce((select sum(amount) from
 select tst.ok((select count(*) > 0 from public.audit_logs where table_name = 'fee_payments'), 'audit log captures financial changes');
 
 -- ---------------------------------------------------------------------------
+-- 13. Two-factor authentication (0026)
+-- ---------------------------------------------------------------------------
+create or replace function tst.login_aal(p uuid, p_aal text) returns void language plpgsql as $$
+begin
+  execute 'reset role';
+  perform set_config('request.jwt.claim.sub', p::text, false);
+  perform set_config('request.jwt.claims', json_build_object('role', 'authenticated', 'sub', p, 'aal', p_aal)::text, false);
+  execute 'set role authenticated';
+end $$;
+grant execute on function tst.login_aal(uuid, text) to authenticated;
+
+-- Baseline: no factor, requirement off -> password session keeps working.
+select tst.login('00000000-0000-0000-0000-000000000001');
+select tst.ok(public.is_admin(), 'mfa: admin without factor keeps access at aal1');
+select tst.ok((public.my_mfa_status() ->> 'ok')::boolean, 'mfa: status ok without factor');
+
+-- Admin and treasurer enrol a verified factor.
+select tst.logout();
+insert into auth.mfa_factors (user_id, status) values
+  ('00000000-0000-0000-0000-000000000001', 'verified'),
+  ('00000000-0000-0000-0000-000000000003', 'verified'),
+  ('00000000-0000-0000-0000-000000000006', 'unverified');
+
+select tst.login('00000000-0000-0000-0000-000000000001');
+select tst.ok(not public.is_admin(), 'mfa: enrolled admin at aal1 is not admin');
+select tst.ok((select count(*) = 0 from public.student_fees), 'mfa: enrolled admin at aal1 reads no fees');
+select tst.ok((select count(*) = 1 from public.profiles), 'mfa: enrolled admin at aal1 sees only own profile');
+update public.organizations set name_en = 'mfa-hijack' where id = public.default_org_id();
+select tst.logout();
+select tst.ok((select name_en <> 'mfa-hijack' from public.organizations where id = public.default_org_id()),
+              'mfa: enrolled admin at aal1 cannot write org');
+
+select tst.login('00000000-0000-0000-0000-000000000003');
+select tst.fails($$select public.generate_monthly_invoices('2027-09')$$, 'mfa: enrolled treasurer at aal1 cannot run billing RPC');
+
+select tst.login_aal('00000000-0000-0000-0000-000000000003', 'aal2');
+select tst.succeeds($$select public.generate_monthly_invoices('2027-09')$$, 'mfa: treasurer at aal2 runs billing RPC');
+
+select tst.login_aal('00000000-0000-0000-0000-000000000001', 'aal2');
+select tst.ok(public.is_admin(), 'mfa: admin at aal2 is admin');
+select tst.ok((select count(*) > 1 from public.profiles), 'mfa: admin at aal2 sees org profiles');
+
+-- An unverified factor does not trigger the gate.
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.ok(public.is_tutor(), 'mfa: unverified factor does not lock tutor out');
+
+-- Requiring 2FA for staff needs an aal2 session.
+select tst.logout();
+delete from auth.mfa_factors where user_id = '00000000-0000-0000-0000-000000000001';
+select tst.login('00000000-0000-0000-0000-000000000001');
+select tst.fails($$update public.organizations set require_mfa_for_staff = true where id = public.default_org_id()$$,
+                 'mfa: cannot require 2FA from an aal1 session');
+select tst.login_aal('00000000-0000-0000-0000-000000000001', 'aal2');
+select tst.succeeds($$update public.organizations set require_mfa_for_staff = true where id = public.default_org_id()$$,
+                    'mfa: admin at aal2 can require 2FA for staff');
+
+-- With the requirement on: privileged staff without 2FA are locked out, others unaffected.
+select tst.login('00000000-0000-0000-0000-000000000004');
+select tst.ok((public.my_mfa_status() ->> 'required')::boolean, 'mfa: accountant is required to use 2FA');
+select tst.ok(not public.is_accountant(), 'mfa: accountant without 2FA loses finance role');
+select tst.ok((select count(*) = 0 from public.journal_entries), 'mfa: accountant without 2FA reads no journals');
+select tst.ok((select count(*) = 1 from public.profiles where id = auth.uid()), 'mfa: locked-out user can still read own profile');
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.ok(public.is_tutor(), 'mfa: ordinary tutor unaffected by staff requirement');
+select tst.login('00000000-0000-0000-0000-000000000008');
+select tst.ok((select count(*) >= 1 from public.attendance), 'mfa: student unaffected by staff requirement');
+select tst.login('00000000-0000-0000-0000-000000000013');
+select tst.ok(public.is_admin(), 'mfa: other org admin unaffected by this org requirement');
+
+-- Clean up so later sections (if any) run with the default policy.
+select tst.logout();
+update public.organizations set require_mfa_for_staff = false;
+delete from auth.mfa_factors;
+
+-- ---------------------------------------------------------------------------
 select tst.logout();
 \echo '-----------------------------------------------'
 select count(*) filter (where ok) as passed, count(*) filter (where not ok) as failed from tst.results;

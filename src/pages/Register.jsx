@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
+import { passwordProblem } from '../lib/passwordPolicy';
 
 export default function Register() {
   useTranslation();
@@ -50,8 +51,9 @@ export default function Register() {
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError(tx('يجب أن تكون كلمة المرور 8 أحرف على الأقل', 'Password must be at least 8 characters'));
+    const weak = passwordProblem(formData.password);
+    if (weak) {
+      setError(weak);
       return;
     }
 
@@ -257,7 +259,7 @@ export default function Register() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-ink-text-primary mb-1">
-                  {tx('كلمة المرور (8 أحرف على الأقل) *', 'Password (min 8 chars) *')}
+                  {tx('كلمة المرور (10 أحرف على الأقل، حروف وأرقام) *', 'Password (min 10 chars, letters and numbers) *')}
                 </label>
                 <input
                   type={showPassword ? 'text' : 'password'}

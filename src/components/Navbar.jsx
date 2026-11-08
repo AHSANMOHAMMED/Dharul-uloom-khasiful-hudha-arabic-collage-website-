@@ -435,6 +435,13 @@ export default function Navbar() {
                     {tx('إدارة المكتبة', 'Library Admin')}
                   </Link>
                 )}
+                <Link
+                  to="/account/security"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-center h-10 rounded-[10px] border border-sand-border text-ink-text-primary font-medium text-sm"
+                >
+                  {tx('الأمان وتسجيل الدخول', 'Security & sign-in')}
+                </Link>
                 <button
                   type="button"
                   onClick={() => { logout(); setIsOpen(false); }}

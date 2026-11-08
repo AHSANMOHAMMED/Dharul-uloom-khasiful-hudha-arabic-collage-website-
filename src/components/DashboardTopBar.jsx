@@ -153,6 +153,15 @@ export default function DashboardTopBar() {
             </div>
           </div>
 
+          <Link
+            to="/account/security"
+            title={tx('الأمان وتسجيل الدخول', 'Security & sign-in')}
+            aria-label={tx('الأمان وتسجيل الدخول', 'Security & sign-in')}
+            className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-[10px] border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]"
+          >
+            <span className="material-symbols-outlined text-[18px]">{'shield_person'}</span>
+          </Link>
+
           {/* Logout Button */}
           <button
             type="button"
@@ -208,6 +217,10 @@ export default function DashboardTopBar() {
           <Link to="/" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-[#14201B] hover:bg-[#FBF8F0]">
             <span className="material-symbols-outlined text-[18px]">{'public'}</span>
             <span>{tx('الموقع العام', 'Public website')}</span>
+          </Link>
+          <Link to="/account/security" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-[#14201B] hover:bg-[#FBF8F0]">
+            <span className="material-symbols-outlined text-[18px]">{'shield_person'}</span>
+            <span>{tx('الأمان وتسجيل الدخول', 'Security & sign-in')}</span>
           </Link>
           <Link to="/library" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-[#14201B] hover:bg-[#FBF8F0]">
             <span className="material-symbols-outlined text-[18px]">{'menu_book'}</span>

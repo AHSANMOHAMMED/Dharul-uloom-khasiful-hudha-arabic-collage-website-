@@ -8,12 +8,14 @@ import { colors } from '../lib/theme';
 import { handleInitialPush, listenForPushTaps, registerForPush, setPushCaps } from '../lib/push';
 import { LiveProvider } from '../lib/live';
 import LiveToast from '../components/LiveToast';
+import LockScreen from '../components/LockScreen';
+import { AppLockProvider, useAppLock } from '../lib/appLock';
 
 // Routes reachable without a session (deep links included).
 const PUBLIC = new Set(['login', 'payment-success', 'payment-cancel']);
 
 function AuthGate() {
-  const { session, loading, caps } = useAuth();
+  const { session, loading, caps, mfaPending } = useAuth();
   const segments = useSegments();
   // Push routing depends on the role (activity → team screen for governance).
   const isGovernance = caps.isGovernance;
@@ -24,7 +26,9 @@ function AuthGate() {
     if (loading) return;
     const first = segments[0];
     if (!session && first && !PUBLIC.has(first)) router.replace('/login');
-  }, [session, loading, segments]);
+    // A password-only session on a 2FA account stays on the code step.
+    else if (session && mfaPending && first !== 'login') router.replace('/login');
+  }, [session, loading, segments, mfaPending]);
 
   // Register this device for native push once signed in.
   const userId = session?.user?.id;
@@ -103,7 +107,28 @@ function RootStack() {
         <Stack.Screen name="analytics" options={{ title: t('analytics.title') }} />
       </Stack>
       <LiveToast />
+      <LockOverlay />
     </>
+  );
+}
+
+function LockOverlay() {
+  const { locked } = useAppLock();
+  return locked ? <LockScreen /> : null;
+}
+
+function LockedApp({ children }) {
+  const { session, signOut } = useAuth();
+  return (
+    <AppLockProvider
+      signedIn={Boolean(session)}
+      onTooManyAttempts={async () => {
+        await signOut();
+        router.replace('/login');
+      }}
+    >
+      {children}
+    </AppLockProvider>
   );
 }
 
@@ -112,9 +137,11 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <I18nProvider>
         <AuthProvider>
-          <LiveProvider>
-            <RootStack />
-          </LiveProvider>
+          <LockedApp>
+            <LiveProvider>
+              <RootStack />
+            </LiveProvider>
+          </LockedApp>
         </AuthProvider>
       </I18nProvider>
     </SafeAreaProvider>

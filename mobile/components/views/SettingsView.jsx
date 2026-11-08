@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { Alert, Switch, View } from 'react-native';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
@@ -6,11 +8,38 @@ import { useI18n } from '../../lib/i18n';
 import { accountLabelKey, staffRoles } from '../../lib/roles';
 import { WEB_URL } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
-import { Screen, Card, Txt, Button, Chips, KeyValue, SectionHeader, ListItem } from '..';
+import { useAppLock, biometricSupport } from '../../lib/appLock';
+import { Screen, Card, Txt, Button, Chips, KeyValue, SectionHeader, ListItem, PromptModal } from '..';
 
 export default function SettingsView({ links = [] }) {
   const { t, lang, setLang } = useI18n();
-  const { profile, user, signOut } = useAuth();
+  const { profile, user, signOut, aal } = useAuth();
+  const lock = useAppLock();
+  const [bio, setBio] = useState({ available: false, enrolled: false });
+  const [pinPrompt, setPinPrompt] = useState(false);
+  useEffect(() => {
+    biometricSupport().then(setBio).catch(() => {});
+  }, []);
+  const bioUsable = bio.available && bio.enrolled;
+
+  const toggleLock = async (on) => {
+    if (!on) {
+      await lock.disableLock();
+      return;
+    }
+    if (bioUsable) {
+      // Confirm the person holding the phone can pass the check before relying on it.
+      const ok = await lock.unlockWithBiometrics(t('lock.prompt'));
+      if (!ok) return;
+      await lock.enableLock();
+      Alert.alert(t('lock.title'), t('lock.addPinToo'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('lock.setPin'), onPress: () => setPinPrompt(true) },
+      ]);
+    } else {
+      setPinPrompt(true);
+    }
+  };
   const roles = [
     ...(profile?.role === 'admin' || profile?.role === 'super_admin' ? [profile.role] : []),
     ...staffRoles(profile),
@@ -42,6 +71,51 @@ export default function SettingsView({ links = [] }) {
         {profile?.class_number ? <KeyValue label={t('common.class')} value={String(profile.class_number)} /> : null}
         {roles.length ? <KeyValue label={t('settings.roles')} value={roles.map((r) => t(`role.${r}`)).join(', ')} /> : null}
       </Card>
+
+      <SectionHeader title={t('security.title')} />
+      <Card>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <Txt style={{ fontWeight: '700' }}>{t('lock.setting')}</Txt>
+            <Txt variant="small">{bioUsable ? t('lock.settingHelpBio') : t('lock.settingHelpPin')}</Txt>
+          </View>
+          <Switch
+            value={lock.enabled}
+            onValueChange={toggleLock}
+            trackColor={{ true: colors.primary }}
+            accessibilityLabel={t('lock.setting')}
+          />
+        </View>
+        {lock.enabled ? (
+          <Button small variant="outline" title={lock.hasPin ? t('lock.changePin') : t('lock.setPin')} onPress={() => setPinPrompt(true)} />
+        ) : null}
+        <KeyValue label={t('mfa.title')} value={aal?.nextLevel === 'aal2' ? t('mfa.on') : t('mfa.off')} />
+        <Button
+          small
+          variant="ghost"
+          icon="shield-checkmark-outline"
+          title={t('mfa.manageOnWeb')}
+          onPress={() => WebBrowser.openBrowserAsync(`${WEB_URL}/account/security`)}
+        />
+      </Card>
+      <PromptModal
+        visible={pinPrompt}
+        title={t('lock.setPin')}
+        message={t('lock.pinHelp')}
+        label={t('lock.pin')}
+        keyboardType="number-pad"
+        multiline={false}
+        secure
+        maxLength={6}
+        required
+        confirmLabel={t('common.save')}
+        onSubmit={async (v) => {
+          if (!/^\d{6}$/.test(v)) throw new Error(t('lock.pinHelp'));
+          await lock.setPin(v);
+          if (!lock.enabled) await lock.enableLock();
+        }}
+        onClose={() => setPinPrompt(false)}
+      />
 
       <SectionHeader title={t('lang.label')} />
       <Card>

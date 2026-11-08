@@ -14,6 +14,14 @@ create table auth.users (
   email_confirmed_at timestamptz,
   created_at timestamptz default now()
 );
+-- Supabase Auth MFA factors (status is an enum there; text is enough here).
+create table auth.mfa_factors (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  factor_type text not null default 'totp',
+  status text not null default 'unverified',
+  created_at timestamptz default now()
+);
 -- Same resolution order as Supabase's auth.uid(): legacy GUC, then the
 -- request.jwt.claims JSON that PostgREST v10+ sets.
 create or replace function auth.uid() returns uuid language sql stable as

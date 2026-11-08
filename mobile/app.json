@@ -20,6 +20,12 @@
         {
           "color": "#047857"
         }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Kashiful Hudha to use Face ID to unlock the app."
+        }
       ]
     ],
     "experiments": {
