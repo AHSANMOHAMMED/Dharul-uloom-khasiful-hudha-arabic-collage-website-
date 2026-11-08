@@ -36,7 +36,39 @@ export default function Navbar() {
   }, [isOpen])
 
   return (
-    <header className="sticky top-0 z-50 bg-paper-white/95 backdrop-blur-sm border-b border-sand-border shadow-[0_1px_8px_rgba(11,59,46,0.04)]">
+    <header className="sticky top-0 z-50 bg-paper-white/95 backdrop-blur-md border-b border-sand-border shadow-[0_2px_12px_rgba(11,59,46,0.04)]">
+      {/* Top Institutional Utility Ribbon */}
+      <div className="hidden lg:block bg-ink-green-950 text-sand-wash/90 text-xs border-b border-white/10 py-1.5">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5 text-sand-wash/85 font-serif">
+              <span className="material-symbols-outlined text-[14px] text-brass-gold-400">verified</span>
+              <span>{tx('دار العلوم كاشف الهدى العربية · مدلايبلي، سريلانكا · تأسست عام ١٩٩٦م', 'D.U. Kashiful Hudha Arabic College · Mudalaippali, Sri Lanka · Est. 1996')}</span>
+            </span>
+            <span className="text-sand-wash/30">|</span>
+            <span className="flex items-center gap-1 text-sand-wash/80" dir="ltr">
+              <span className="material-symbols-outlined text-[14px] text-brass-gold-400">call</span>
+              <span>032-5612355</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] font-medium">
+            <Link to="/library" className="hover:text-brass-gold-300 transition-colors flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">local_library</span>
+              <span>{tx('المكتبة الرقمية', 'Digital Maktabah')}</span>
+            </Link>
+            <span className="text-sand-wash/30">·</span>
+            <Link to="/admissions" className="text-brass-gold-400 hover:text-brass-gold-300 font-semibold transition-colors flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">school</span>
+              <span>{tx('باب القبول مفتوح ٢٠٢٦', 'Admissions 2026 Open')}</span>
+            </Link>
+            <span className="text-sand-wash/30">·</span>
+            <a href="mailto:info@kashifulhudha.edu.lk" className="hover:text-sand-wash transition-colors text-sand-wash/70" dir="ltr">
+              {tx('info@kashifulhudha.edu.lk', 'info@kashifulhudha.edu.lk')}
+            </a>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         
         {/* Brand Logo & Name */}
