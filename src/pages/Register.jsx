@@ -100,8 +100,8 @@ export default function Register() {
         <div className="relative z-10 space-y-4">
           <Link to="/" className="inline-flex items-center gap-3">
             <img 
-              src="/images/logo.jpg" 
-              alt={tx('شعار دار العلوم كاشف الهدى', 'Kashiful Hudha Emblem')} 
+              src="/images/logo.svg" 
+              alt={tx('شعار دار العلوم كاشف الهدى', 'D.U. Kashiful Hudha Arabic College Emblem')}
               className="w-11 h-11 object-contain rounded-lg border border-sand-border/30 bg-paper-white/10"
             />
             <div className="flex flex-col">

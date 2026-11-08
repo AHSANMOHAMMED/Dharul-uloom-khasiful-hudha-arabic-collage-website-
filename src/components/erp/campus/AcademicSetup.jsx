@@ -38,7 +38,7 @@ export function SubjectsTab({ canEdit }) {
             { key: 'name_ar', label: t('Arabic name', 'الاسم بالعربية') },
             { key: 'category', label: t('Category', 'الفئة') },
             { key: 'credit_hours', label: t('Credits', 'الساعات') },
-            { key: 'is_active', label: t('Active', 'نشطة'), render: (r) => (r.is_active ? <Badge tone="green">✓</Badge> : <Badge>—</Badge>) },
+            { key: 'is_active', label: t('Active', 'نشطة'), render: (r) => (r.is_active ? <Badge tone="green"><span className="material-symbols-outlined text-[13px]">check</span></Badge> : <Badge>—</Badge>) },
             { key: 'act', label: '', render: (r) => canEdit && (
               <div className="flex gap-2">
                 <Button size="sm" variant="ghost" onClick={() => setModal({ ...r, name_ar: r.name_ar || '', credit_hours: String(r.credit_hours) })}>{t('Edit', 'تعديل')}</Button>

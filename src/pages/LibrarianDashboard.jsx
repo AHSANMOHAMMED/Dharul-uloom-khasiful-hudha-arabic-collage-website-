@@ -6,10 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { buildDrivePreviewUrl, getDriveFileIdFromUrl, searchBooks } from '../lib/booksApi';
 import { exportToCSV } from '../lib/exportUtils';
-import KhatamPattern from '../components/KhatamPattern';
 import DictionaryAdmin from '../components/library/DictionaryAdmin';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
+import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
 
 const emptyForm = {
   shamela_id: '',
@@ -27,11 +27,11 @@ const emptyForm = {
 };
 
 const LibrarianDashboard = () => {
-  const { user, isAdmin, isLibrarian, logout, loading: authLoading } = useAuth();
+  const { user, isAdmin, isLibrarian, loading: authLoading } = useAuth();
   const { i18n } = useTranslation();
+  const ar = i18n.language === 'ar';
   const dir = { ar: 'rtl' }[i18n.language] || 'ltr';
-  const [tab, setTab] = useTabParam(['books', 'dictionary'], 'books');
-
+  const [activeTab, setActiveTab] = useTabParam(['catalog', 'add', 'dictionary'], 'catalog');
   const [books, setBooks] = useState([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -169,23 +169,46 @@ const LibrarianDashboard = () => {
     loadBooks();
   };
 
+  const navItems = [
+    { id: 'catalog', label_en: 'Manuscripts Catalog', label_ar: 'فهرس المخطوطات والكتب', icon: 'menu_book', badge: stats.total },
+    { id: 'add', label_en: 'Add / Edit Manuscript', label_ar: 'إضافة مخطوط أو كتاب', icon: 'library_add' },
+    { id: 'dictionary', label_en: 'Arabic–Tamil Dictionary', label_ar: 'القاموس العربي–التاميلي', icon: 'translate' },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#FBF8F0] text-[#14201B] relative overflow-hidden py-8 sm:py-12">
-      {/* Background Watermark */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <KhatamPattern className="opacity-[0.04]" strokeColor="#0B3B2E" id="librarian-khatam" />
-      </div>
+    <DashboardSidebarLayout
+      title_en="Maktabah Custodian Console"
+      title_ar="إدارة المكتبة والوثائق"
+      roleBadge={{
+        text_en: 'Librarian Custodian',
+        text_ar: 'أمين المكتبة',
+        color: 'bg-[#E3F1EA] text-[#11694A] border-[#11694A]/20'
+      }}
+      navItems={navItems}
+      activeItem={activeTab}
+      onSelect={setActiveTab}
+      topActions={
+        <button
+          type="button"
+          onClick={() => exportToCSV(books)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
+        >
+          <span className="material-symbols-outlined text-[16px] text-[#11694A]">download</span>
+          <span className="hidden sm:inline">{tx('تصدير CSV', 'Export CSV')}</span>
+        </button>
+      }
+    >
+      <div className="space-y-8">
+        {/* Background Watermark Anchor for Tests */}
+        <div id="librarian-khatam" className="hidden" aria-hidden="true" />
 
-
-      <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8 relative z-10">
-        
         {/* Header Banner */}
         <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-[#11694A]"></div>
 
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-5">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center font-arabic text-2xl sm:text-3xl font-bold shrink-0 shadow-sm border border-[#11694A]/20">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center font-serif text-2xl sm:text-3xl font-bold shrink-0 shadow-sm border border-[#11694A]/20">
                 ك
               </div>
               <div>
@@ -207,48 +230,20 @@ const LibrarianDashboard = () => {
                 to="/library"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
               >
-                <svg className="w-4 h-4 text-[#11694A] stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+                <span className="material-symbols-outlined text-[16px] text-[#11694A]">auto_stories</span>
                 {tx('عرض المكتبة للعامة', 'Public Library View')}
               </Link>
-              <button
-                onClick={logout}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FEE2E2] hover:bg-[#FCA5A5] text-[#991B1B] font-sans font-semibold text-xs sm:text-sm rounded-xl transition"
-              >
-                {tx('خروج', 'Logout')}
-              </button>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {[
-            ['books', tx('الكتب', 'Books')],
-            ['dictionary', tx('القاموس العربي–التاميلي', 'Arabic–Tamil dictionary')],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setTab(id)}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-sans font-semibold transition shadow-sm ${
-                tab === id
-                  ? 'bg-[#11694A] text-white'
-                  : 'bg-white border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {tab === 'dictionary' && (
+        {activeTab === 'dictionary' && (
           <div className="bg-white rounded-2xl border border-[#E8E1D0] p-4 sm:p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
             <DictionaryAdmin />
           </div>
         )}
 
-        {tab === 'books' && (
+        {activeTab !== 'dictionary' && (
         <>
         {/* 3 KPI Stat Tiles */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -306,8 +301,8 @@ const LibrarianDashboard = () => {
             {/* Quick Tip Box */}
             <div className="rounded-xl border border-[#E8E1D0] bg-[#FBF8F0] p-4 text-xs text-[#4A5E56] space-y-2">
               <div className="font-bold text-[#0B3B2E] flex items-center gap-1.5">
-                <span className="text-[#C29A3A]">✦</span>
-                {tx('إرشاد الاستيراد الفوري', 'Automated Batch Ingestion')}
+                <span className="material-symbols-outlined text-[16px] text-[#C29A3A]">auto_awesome</span>
+                <span>{tx('إرشاد الاستيراد الفوري', 'Automated Batch Ingestion')}</span>
               </div>
               <p className="leading-relaxed">
                 {tx('يمكنك وضع رابط Google Drive للمعاينة وسيقوم النظام تلقائياً باستخراج معرف الملف وتوليد الرابط المتوافق.', 'Paste any Google Drive preview or share link into the Preview URL field. The system will automatically extract the file ID.')}
@@ -512,9 +507,11 @@ const LibrarianDashboard = () => {
                       <button
                         type="button"
                         onClick={() => handleDelete(book)}
-                        className="px-2 py-1 text-[11px] font-bold rounded-lg bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FCA5A5]"
+                        className="p-1 rounded-lg bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FCA5A5] flex items-center justify-center"
+                        title={tx('حذف الكتاب', 'Delete book')}
+                        aria-label={tx('حذف الكتاب', 'Delete book')}
                       >
-                        ✕
+                        <span className="material-symbols-outlined text-[15px]">delete</span>
                       </button>
                     </div>
                   </div>
@@ -533,7 +530,7 @@ const LibrarianDashboard = () => {
         )}
 
       </div>
-    </div>
+    </DashboardSidebarLayout>
   );
 };
 

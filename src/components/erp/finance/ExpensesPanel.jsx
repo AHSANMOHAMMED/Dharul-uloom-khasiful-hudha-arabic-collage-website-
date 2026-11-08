@@ -299,8 +299,8 @@ export default function ExpensesPanel() {
                       render: (e) => (
                         <div className="text-xs">
                           <div>{people[e.submitted_by]?.full_name || '—'}</div>
-                          {e.approved_by && <div className="text-gray-500">✓ {people[e.approved_by]?.full_name || '—'}</div>}
-                          {e.paid_by && <div className="text-gray-500">💵 {people[e.paid_by]?.full_name || '—'}</div>}
+                          {e.approved_by && <div className="text-gray-500 flex items-center gap-1"><span className="material-symbols-outlined text-[13px] text-emerald-500">check_circle</span><span>{people[e.approved_by]?.full_name || '—'}</span></div>}
+                          {e.paid_by && <div className="text-gray-500 flex items-center gap-1"><span className="material-symbols-outlined text-[13px] text-amber-500">payments</span><span>{people[e.paid_by]?.full_name || '—'}</span></div>}
                         </div>
                       ),
                     },

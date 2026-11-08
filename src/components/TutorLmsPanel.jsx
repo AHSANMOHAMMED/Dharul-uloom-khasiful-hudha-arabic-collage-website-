@@ -199,9 +199,10 @@ const TutorLmsPanel = () => {
             <button
               type="button"
               onClick={() => setGradingId(null)}
-              className="text-xs text-[#4A5E56] hover:text-[#0B3B2E]"
+              className="text-xs text-[#4A5E56] hover:text-[#0B3B2E] inline-flex items-center gap-1"
             >
-              ✕ {tx('إغلاق', 'Close')}
+              <span className="material-symbols-outlined text-[14px]">close</span>
+              <span>{tx('إغلاق', 'Close')}</span>
             </button>
           </div>
           

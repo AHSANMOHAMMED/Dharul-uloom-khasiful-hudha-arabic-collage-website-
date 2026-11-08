@@ -152,8 +152,9 @@ const StudentLmsPanel = () => {
 
                   {sub ? (
                     <div className="p-3 bg-[#E3F1EA] rounded-lg border border-[#11694A]/20 flex justify-between items-center text-xs">
-                      <span className="text-[#11694A] font-bold">
-                        ✓ {tx('تم التسليم بنجاح', 'Submitted')}
+                      <span className="text-[#11694A] font-bold flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                        <span>{tx('تم التسليم بنجاح', 'Submitted')}</span>
                       </span>
                       {sub.grade && (
                         <span className="font-bold text-[#0B3B2E]">

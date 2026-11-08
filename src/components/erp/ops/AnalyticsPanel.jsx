@@ -192,9 +192,9 @@ function FinanceView({ data, months, canRemind }) {
           <TotalLine label={t('Total outstanding', 'إجمالي المتبقي')} value={formatMoney(ageing.total)} tone="text-white font-bold" />
           <div className="mt-2">
             {ageing.balanced ? (
-              <Badge tone="green">✓ {t('Balanced', 'متوازن')}</Badge>
+              <Badge tone="green"><span className="material-symbols-outlined text-[13px] align-middle me-1">check_circle</span>{t('Balanced', 'متوازن')}</Badge>
             ) : (
-              <Badge tone="red">⚠ {t('Buckets differ from total — refresh', 'الفئات تختلف عن الإجمالي — حدّث')}</Badge>
+              <Badge tone="red"><span className="material-symbols-outlined text-[13px] align-middle me-1">warning</span>{t('Buckets differ from total — refresh', 'الفئات تختلف عن الإجمالي — حدّث')}</Badge>
             )}
           </div>
         </Card>

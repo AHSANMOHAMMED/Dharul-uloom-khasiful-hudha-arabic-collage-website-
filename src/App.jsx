@@ -4,7 +4,6 @@ import { useEffect, useRef, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
-import DashboardTopBar from './components/DashboardTopBar'
 import OfflineIndicator from './components/OfflineIndicator'
 import InstallPrompt from './components/InstallPrompt'
 import { ToastContainer, toast } from 'react-toastify'
@@ -73,7 +72,7 @@ const AccountSecurity = lazy(() => import('./pages/AccountSecurity'))
 function AppShell({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, isLibrarian, isTutor, isStudent, isParent, isNonTeachingStaff, isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const onDashboardRoute = isDashboardPath(location.pathname);
 
   // Signing out from any workspace (top bar, dashboard header, pending screen…)
@@ -93,9 +92,8 @@ function AppShell({ children }) {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // Hide public chrome when any logged-in staff/admin is on their workspace.
-  const isStaffUser = isAdmin || isLibrarian || isTutor || isStudent || isParent || isNonTeachingStaff;
-  const hideChrome = onDashboardRoute && isAuthenticated && isStaffUser;
+  // Hide public chrome when any logged-in user is on their workspace.
+  const hideChrome = onDashboardRoute && isAuthenticated;
   const onProtectedRoute = PROTECTED_ROUTES.some((r) => location.pathname.startsWith(r));
   // Workspaces only render once the session has passed two-step verification.
   const content = onProtectedRoute ? <MfaGate>{children}</MfaGate> : children;
@@ -103,14 +101,7 @@ function AppShell({ children }) {
   if (hideChrome) {
     return (
       <div className="min-h-screen flex flex-col bg-[#FBF8F0]">
-        <DashboardTopBar />
         <main className="flex-grow">{content}</main>
-        <footer className="py-4 text-center text-[11px] text-[#4A5E56] font-sans border-t border-[#E8E1D0]/60 bg-white/40">
-          {tx(
-            'دار العلوم كاشف الهدى العربية · البوابة المؤسسية المعتمدة © 2026',
-            'Dharul Uloom Kashiful Hudha Arabic College · Institutional Workspace © 2026'
-          )}
-        </footer>
         <OfflineIndicator />
         <InstallPrompt />
         <ToastContainer position="bottom-center" theme="colored" autoClose={5000} />

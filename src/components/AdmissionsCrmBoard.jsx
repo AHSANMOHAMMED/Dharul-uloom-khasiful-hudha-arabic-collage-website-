@@ -183,10 +183,11 @@ export default function AdmissionsCrmBoard() {
             </div>
             <button
               type="button"
-              className="text-xs font-bold px-2.5 py-1 rounded-lg bg-white border border-[#E8E1D0] text-[#4A5E56] hover:text-[#0B3B2E]"
+              className="text-xs font-bold px-2.5 py-1 rounded-lg bg-white border border-[#E8E1D0] text-[#4A5E56] hover:text-[#0B3B2E] inline-flex items-center gap-1"
               onClick={() => setSelected(null)}
             >
-              ✕ {tx('إغلاق', 'Close')}
+              <span className="material-symbols-outlined text-[14px]">close</span>
+              <span>{tx('إغلاق', 'Close')}</span>
             </button>
           </div>
 

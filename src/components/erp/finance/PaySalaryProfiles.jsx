@@ -104,7 +104,7 @@ function ProfileForm({ initial, components, existingIds, onClose, onSaved }) {
               <Input type="number" min="0" step="0.01" value={c.amount} onChange={(e) => setComp(i, { amount: e.target.value })} />
             </div>
             <Button variant="ghost" size="sm" onClick={() => set({ components: form.components.filter((_, j) => j !== i) })} aria-label={t('Remove', 'حذف')}>
-              ✕
+              <span className="material-symbols-outlined text-[16px]">close</span>
             </Button>
           </div>
         ))}
@@ -183,7 +183,7 @@ export default function PaySalaryProfiles() {
                     </div>
                   ),
                 },
-                { key: 'epf_applicable', label: 'EPF', render: (r) => (r.epf_applicable ? '✓' : '—') },
+                { key: 'epf_applicable', label: 'EPF', render: (r) => (r.epf_applicable ? <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span> : '—') },
                 { key: 'effective_from', label: t('Effective', 'ساري من'), render: (r) => formatDate(r.effective_from) },
                 {
                   key: 'is_active',

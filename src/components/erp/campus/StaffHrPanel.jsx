@@ -191,7 +191,7 @@ function LeaveTypes({ canEdit }) {
             { key: 'name', label: t('Name', 'الاسم') },
             { key: 'days_per_year', label: t('Days / year', 'أيام / سنة') },
             { key: 'is_paid', label: t('Paid', 'مدفوعة'), render: (r) => (r.is_paid ? <Badge tone="green">{t('paid', 'مدفوعة')}</Badge> : <Badge tone="amber">{t('unpaid', 'غير مدفوعة')}</Badge>) },
-            { key: 'is_active', label: t('Active', 'نشط'), render: (r) => (r.is_active ? '✓' : '—') },
+            { key: 'is_active', label: t('Active', 'نشط'), render: (r) => (r.is_active ? <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span> : '—') },
             { key: 'act', label: '', render: (r) => canEdit && (
               <div className="flex gap-2">
                 <Button size="sm" variant="ghost" onClick={() => setModal({ ...r, days_per_year: String(r.days_per_year) })}>{t('Edit', 'تعديل')}</Button>

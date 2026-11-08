@@ -235,7 +235,7 @@ export default function Gallery() {
                 aria-label={tx('إغلاق', 'Close')}
                 className="w-8 h-8 rounded-full border border-sand-border flex items-center justify-center text-ink-text-primary hover:bg-sand-border/30 text-sm"
               >
-                ✕
+                <span className="material-symbols-outlined text-[16px]">close</span>
               </button>
             </div>
 

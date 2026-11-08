@@ -403,7 +403,7 @@ export async function adminUpsertCourseProgram(row) {
     description_en: row.description_en || null,
     description_ar: row.description_ar || null,
     description_ta: row.description_ta || null,
-    icon: row.icon || '📚',
+    icon: row.icon || 'menu_book',
     admission_code: row.admission_code || null,
     sort_order: row.sort_order ?? 0,
     is_published: row.is_published ?? true,

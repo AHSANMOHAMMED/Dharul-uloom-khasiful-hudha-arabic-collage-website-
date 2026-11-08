@@ -270,7 +270,7 @@ export default function About() {
               <div className="lg:col-span-4 flex flex-col items-center text-center">
                 <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-sand-border bg-ink-green-900 p-1 mb-4">
                   <img 
-                    src="/images/logo.jpg" 
+                    src="/images/logo.svg" 
                     alt={tx('مدير كلية كاشف الهدى', 'Principal of Kashiful Hudha')}
                     className="w-full h-full object-contain rounded-full bg-paper-white"
                   />

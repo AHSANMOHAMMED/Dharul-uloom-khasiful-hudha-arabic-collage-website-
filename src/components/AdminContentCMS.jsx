@@ -348,7 +348,7 @@ function emptyGallery() {
   return { id: null, title_en: '', title_ar: '', title_ta: '', category: 'facilities', image_url: null, sort_order: 0, is_published: true };
 }
 function emptyCourse() {
-  return { id: null, slug: '', title_en: '', title_ar: '', title_ta: '', duration_en: '', duration_ar: '', duration_ta: '', description_en: '', description_ar: '', description_ta: '', icon: '📚', admission_code: null, sort_order: 0, is_published: true };
+  return { id: null, slug: '', title_en: '', title_ar: '', title_ta: '', duration_en: '', duration_ar: '', duration_ta: '', description_en: '', description_ar: '', description_ta: '', icon: 'menu_book', admission_code: null, sort_order: 0, is_published: true };
 }
 
 export default AdminContentCMS;

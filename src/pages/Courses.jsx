@@ -278,7 +278,7 @@ export default function Courses() {
                 aria-label={tx('إغلاق', 'Close')}
                 className="w-8 h-8 rounded-full border border-sand-border flex items-center justify-center text-ink-text-secondary hover:bg-sand-border/30"
               >
-                ✕
+                <span className="material-symbols-outlined text-[16px]">close</span>
               </button>
             </div>
 

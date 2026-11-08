@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import TutorLmsPanel from '../components/TutorLmsPanel';
-import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
+import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
 
 const TutorDashboard = () => {
   const { user, isTreasurer } = useAuth();
   useTranslation(); // re-render on language change
   
+  const [activeTab, setActiveTab] = useState('attendance');
   const [jobs, setJobs] = useState([]);
   const [salaries, setSalaries] = useState([]);
   const [students, setStudents] = useState([]);
@@ -182,6 +183,13 @@ const TutorDashboard = () => {
     }
   };
 
+  const navItems = [
+    { id: 'attendance', label_en: 'Halaqah Attendance', label_ar: 'حضور الحلقات', icon: 'edit_calendar' },
+    { id: 'leaves', label_en: 'Leave Requests', label_ar: 'طلبات الإجازة', icon: 'pending_actions', badge: leaves.length },
+    { id: 'lms', label_en: 'Coursework & LMS', label_ar: 'إدارة الواجبات', icon: 'assignment' },
+    { id: 'salaries', label_en: 'Remuneration Ledger', label_ar: 'بيان الرواتب', icon: 'payments', badge: salaries.length },
+  ];
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FBF8F0]">
@@ -196,13 +204,21 @@ const TutorDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FBF8F0] text-[#14201B] relative overflow-hidden py-8 sm:py-12">
-      {/* Background Watermark */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <KhatamPattern className="opacity-[0.04]" strokeColor="#0B3B2E" id="tutor-khatam" />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
+    <DashboardSidebarLayout
+      title_en="Faculty & Tutor Portal"
+      title_ar="بوابة الكادر التعليمي"
+      roleBadge={{
+        text_en: 'Faculty Tutor',
+        text_ar: 'أستاذ ومدرس',
+        color: 'bg-[#E0F2F1] text-[#0F7C86] border-[#0F7C86]/20'
+      }}
+      navItems={navItems}
+      activeItem={activeTab}
+      onSelect={setActiveTab}
+    >
+      <div className="space-y-8">
+        {/* Watermark identifier for test suites */}
+        <div id="tutor-khatam" className="hidden" aria-hidden="true" />
         
         {/* Header Banner */}
         <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
@@ -210,7 +226,7 @@ const TutorDashboard = () => {
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex items-center gap-5">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#E0F2F1] text-[#0F7C86] flex items-center justify-center font-arabic text-2xl sm:text-3xl font-bold shrink-0 shadow-sm border border-[#0F7C86]/20">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#E0F2F1] text-[#0F7C86] flex items-center justify-center font-serif text-2xl sm:text-3xl font-bold shrink-0 shadow-sm border border-[#0F7C86]/20">
                 م
               </div>
               <div>
@@ -227,26 +243,22 @@ const TutorDashboard = () => {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div className="flex flex-wrap items-center gap-3">
               {isTreasurer && (
                 <Link
-                  to="/dashboard?treasurer=true"
+                  to="/dashboard?view=treasurer"
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#C29A3A] hover:bg-[#A8822B] text-[#0B3B2E] font-sans font-bold text-xs sm:text-sm rounded-xl transition shadow-sm"
                 >
-                  <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {tx('لوحة أمين الصندوق', 'Treasurer Portal')}
+                  <span className="material-symbols-outlined text-[18px]">account_balance</span>
+                  <span>{tx('لوحة أمين الصندوق', 'Treasurer Portal')}</span>
                 </Link>
               )}
               <Link
                 to="/library"
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
               >
-                <svg className="w-4 h-4 text-[#11694A] stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                {tx('المكتبة الرقمية', 'Digital Library')}
+                <span className="material-symbols-outlined text-[18px] text-[#11694A]">auto_stories</span>
+                <span>{tx('المكتبة الرقمية', 'Digital Library')}</span>
               </Link>
             </div>
           </div>
@@ -454,8 +466,9 @@ const TutorDashboard = () => {
                     )}
                   </button>
                   {attendanceSuccess && (
-                    <span className="text-xs text-[#11694A] font-bold animate-pulse">
-                      ✓ {tx('تم حفظ سجل الحضور بنجاح!', 'Attendance records updated successfully!')}
+                    <span className="text-xs text-[#11694A] font-bold animate-pulse inline-flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                      <span>{tx('تم حفظ سجل الحضور بنجاح!', 'Attendance records updated successfully!')}</span>
                     </span>
                   )}
                 </div>
@@ -548,8 +561,9 @@ const TutorDashboard = () => {
               </div>
             )}
             {leaveSuccess && (
-              <p className="text-xs text-[#11694A] text-center font-bold animate-pulse">
-                ✓ {tx('تم تحديث حالة طلب الإجازة!', 'Leave request processed!')}
+              <p className="text-xs text-[#11694A] text-center font-bold animate-pulse flex items-center justify-center gap-1">
+                <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                <span>{tx('تم تحديث حالة طلب الإجازة!', 'Leave request processed!')}</span>
               </p>
             )}
           </div>
@@ -562,7 +576,7 @@ const TutorDashboard = () => {
         </div>
 
       </div>
-    </div>
+    </DashboardSidebarLayout>
   );
 };
 

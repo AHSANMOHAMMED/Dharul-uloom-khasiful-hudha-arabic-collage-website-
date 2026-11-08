@@ -55,8 +55,9 @@ export default function PayRuns() {
                   <div className="text-xs">
                     <div>{people[r.created_by]?.full_name || '—'}</div>
                     {r.approved_by && (
-                      <div className="text-gray-500">
-                        ✓ {people[r.approved_by]?.full_name || '—'} · {formatDate(r.approved_at)}
+                      <div className="text-gray-500 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[13px] text-emerald-500">check_circle</span>
+                        <span>{people[r.approved_by]?.full_name || '—'} · {formatDate(r.approved_at)}</span>
                       </div>
                     )}
                   </div>

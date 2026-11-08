@@ -42,8 +42,8 @@ export default function Navbar() {
         {/* Brand Logo & Name */}
         <Link to="/" className="flex items-center gap-3 shrink-0 group">
           <img 
-            src="/images/logo.jpg" 
-            alt={tx('شعار دار العلوم كاشف الهدى', 'Dharul Uloom Kashiful Hudha Logo')} 
+            src="/images/logo.svg" 
+            alt={tx('شعار دار العلوم كاشف الهدى', 'D.U. Kashiful Hudha Arabic College Emblem')}
             className="w-10 h-10 object-contain rounded-lg border border-sand-border shadow-xs group-hover:border-emerald-700 transition-colors"
           />
           <div className="flex flex-col">

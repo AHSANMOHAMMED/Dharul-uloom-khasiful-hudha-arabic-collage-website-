@@ -209,8 +209,8 @@ export function Modal({ open, title, onClose, children, footer }) {
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-gray-950 border border-gray-800 p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h3 className="text-lg font-bold text-white">{title}</h3>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white" aria-label="Close">
-            ✕
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-white flex items-center justify-center" aria-label="Close">
+            <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
         {children}

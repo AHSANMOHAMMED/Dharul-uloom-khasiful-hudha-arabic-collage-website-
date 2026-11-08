@@ -124,7 +124,7 @@ function CaseDetail({ c, employees, onClose, onChanged }) {
     <WideModal open title={`${c.summary} · ${c.student?.full_name || ''}`} onClose={onClose}>
       <div className="flex flex-wrap gap-2 items-center">
         <StatusBadge status={c.status} /><Badge tone="blue">{c.case_type}</Badge>
-        {c.is_confidential && <Badge tone="red">🔒 {t('confidential', 'سري')}</Badge>}
+        {c.is_confidential && <Badge tone="red"><span className="material-symbols-outlined text-[12px] align-middle me-0.5">lock</span>{t('confidential', 'سري')}</Badge>}
         <span className="text-xs text-gray-500">{t('Opened', 'فتحت')} {formatDate(c.created_at)} · {c.opener?.full_name || ''}</span>
       </div>
       {c.details && <p className="text-sm text-gray-300 whitespace-pre-wrap">{c.details}</p>}
@@ -198,7 +198,7 @@ function WelfareCases({ students }) {
       <AsyncView state={state}>
         {(rows) => (
           <Table rows={rows} empty={t('No cases.', 'لا توجد حالات.')} columns={[
-            { key: 'summary', label: t('Summary', 'الملخص'), render: (c) => <button type="button" className="text-emerald-300 hover:underline text-start" onClick={() => setSelectedId(c.id)}>{c.is_confidential ? '🔒 ' : ''}{c.summary}</button> },
+            { key: 'summary', label: t('Summary', 'الملخص'), render: (c) => <button type="button" className="text-emerald-300 hover:underline text-start flex items-center gap-1" onClick={() => setSelectedId(c.id)}>{c.is_confidential && <span className="material-symbols-outlined text-[13px]">lock</span>}<span>{c.summary}</span></button> },
             { key: 'student', label: t('Student', 'الطالب'), render: (c) => studentLabel(c.student) },
             { key: 'case_type', label: t('Type', 'النوع') },
             { key: 'assignee', label: t('Assigned', 'المسؤول'), render: (c) => c.assignee?.full_name || '—' },

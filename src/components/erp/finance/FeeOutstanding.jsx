@@ -54,7 +54,7 @@ export default function FeeOutstanding() {
               <Table
                 rowKey="student_id"
                 rows={rows}
-                empty={t('No outstanding balances 🎉', 'لا توجد أرصدة مستحقة 🎉')}
+                empty={t('No outstanding balances — Account settled', 'لا توجد أرصدة مستحقة — الحسابات مكتملة')}
                 columns={[
                   {
                     key: 'full_name',

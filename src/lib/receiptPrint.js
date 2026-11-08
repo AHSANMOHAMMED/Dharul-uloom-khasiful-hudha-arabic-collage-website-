@@ -262,7 +262,7 @@ export function receiptHtml(receipt, { copies = 1, paper } = {}) {
   const two = copies >= 2;
   const size = paper || (two ? 'A4' : 'A5');
   const body = two
-    ? `${slipHtml(receipt, 'Office copy')}<div class="cut"><span>✂ cut here</span></div>${slipHtml(receipt, 'Parent copy')}`
+    ? `${slipHtml(receipt, 'Office copy')}<div class="cut"><span>--- cut here ---</span></div>${slipHtml(receipt, 'Parent copy')}`
     : slipHtml(receipt, '');
   return `<!DOCTYPE html>
 <html lang="en" dir="ltr">

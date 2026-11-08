@@ -399,7 +399,8 @@ const AnalyticsDashboard = () => {
               {allFees.filter(f => f.status !== 'completed').length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-[#4A5E56]">
-                    ✓ {tx('لا توجد متأخرات مالية — جميع الرسوم مستوفاة!', 'No outstanding fees — all balances cleared!')}
+                    <span className="material-symbols-outlined text-[15px] align-middle me-1 text-[#11694A]">check_circle</span>
+                    <span>{tx('لا توجد متأخرات مالية — جميع الرسوم مستوفاة!', 'No outstanding fees — all balances cleared!')}</span>
                   </td>
                 </tr>
               )}

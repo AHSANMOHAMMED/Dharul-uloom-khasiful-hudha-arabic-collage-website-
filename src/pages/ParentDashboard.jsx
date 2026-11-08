@@ -9,12 +9,14 @@ import { claimParentInvite } from '../lib/parentInviteApi';
 import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
 import { listActivationEventsForChildren } from '../lib/notifyApi';
 import KhatamPattern from '../components/KhatamPattern';
+import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
 import { tx } from '../lib/tx';
 
 export default function ParentDashboard() {
   const { user } = useAuth();
   const { i18n } = useTranslation();
   
+  const [activeTab, setActiveTab] = useState('overview');
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState(null);
   
@@ -208,6 +210,37 @@ export default function ParentDashboard() {
   const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 100;
   const showAttendanceWarning = attendanceRate < 85 && totalDays > 3;
 
+  const navItems = [
+    { id: 'overview', label_en: 'Family Overview', label_ar: 'نظرة عامة', icon: 'family_restroom' },
+    { id: 'attendance', label_en: 'Halaqah Presence', label_ar: 'سجل الحضور', icon: 'event_available' },
+    { id: 'results', label_en: 'Academic Marksheet', label_ar: 'الشهادات والدرجات', icon: 'history_edu', badge: results.length },
+    { id: 'leaves', label_en: 'Leave Exeats', label_ar: 'أذونات الإجازة', icon: 'time_to_leave', badge: leaves.length },
+    { id: 'fees', label_en: 'Tuition Ledgers', label_ar: 'الرسوم المدرسية', icon: 'payments' },
+    { id: 'link', label_en: 'Link Scholar', label_ar: 'ربط طالب جديد', icon: 'person_add' },
+  ];
+
+  const childSelector = children.length > 0 ? (
+    <div className="flex flex-col gap-1">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-[#4A5E56] font-sans">
+        {tx('اختر الطالب للمتابعة', 'Selected Ward')}
+      </span>
+      <select
+        value={selectedChild?.id || ''}
+        onChange={(e) => {
+          const c = children.find(ch => ch.id === e.target.value);
+          if (c) setSelectedChild(c);
+        }}
+        className="w-full text-xs font-semibold py-1.5 px-2 rounded-lg border border-[#E8E1D0] bg-white text-[#0B3B2E] focus:outline-none"
+      >
+        {children.map(ch => (
+          <option key={ch.id} value={ch.id}>
+            {ch.full_name} ({ch.index_number || 'No Index'})
+          </option>
+        ))}
+      </select>
+    </div>
+  ) : null;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-parchment-50 text-ink-text-primary">
@@ -217,20 +250,48 @@ export default function ParentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-parchment-50 text-ink-text-primary py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-[1240px] mx-auto space-y-8">
+    <DashboardSidebarLayout
+      title_en="Parent Portal"
+      title_ar="بوابة أولياء الأمور"
+      roleBadge={{
+        text_en: 'Guardian / Parent',
+        text_ar: 'ولي أمر معتمد',
+        color: 'bg-[#FEF9EE] text-[#C29A3A] border-[#C29A3A]/30'
+      }}
+      navItems={navItems}
+      activeItem={activeTab}
+      onSelect={(id) => {
+        if (id === 'link') {
+          setShowLinkModal(true);
+        } else {
+          setActiveTab(id);
+        }
+      }}
+      roleSwitcher={childSelector}
+      topActions={
+        <button
+          type="button"
+          onClick={() => setShowLinkModal(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-colors"
+        >
+          <span className="material-symbols-outlined text-[16px]">person_add</span>
+          <span className="hidden sm:inline">{tx('ربط طالب', 'Link Ward')}</span>
+        </button>
+      }
+    >
+      <div className="space-y-8">
         
         {/* 1. Header Banner */}
-        <div className="rounded-[14px] bg-ink-green-900 text-paper-white p-7 sm:p-10 shadow-manuscript-md border border-sand-border/20 relative overflow-hidden">
+        <div className="rounded-[14px] bg-ink-green-900 text-paper-white p-6 sm:p-8 shadow-manuscript-md border border-sand-border/20 relative overflow-hidden">
           <KhatamPattern className="opacity-[0.04]" strokeColor="#FBF8F0" id="parent-header-khatam" />
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5">
               <span className="px-2.5 py-0.5 rounded-full bg-gold-wash-100 text-role-parent text-[11px] font-semibold uppercase tracking-wider inline-block">
                 {tx('بوابة أولياء الأمور', 'Parent Portal & Guardian Ledger')}
               </span>
 
-              <h1 className="font-serif text-2xl sm:text-4xl font-semibold text-paper-white">
+              <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-paper-white">
                 {tx(`مرحباً بك، ${user?.username}`, `Welcome back, ${user?.username}`)}
               </h1>
 
@@ -241,14 +302,13 @@ export default function ParentDashboard() {
                 )}
               </p>
             </div>
-
             <div className="flex items-center gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowLinkModal(true)}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-colors"
               >
-                <span className="material-symbols-outlined text-[18px]">{'person_add'}</span>
+                <span className="material-symbols-outlined text-[18px]">person_add</span>
                 <span>{tx('ربط طالب جديد', 'Link Student Ward')}</span>
               </button>
             </div>
@@ -711,8 +771,9 @@ export default function ParentDashboard() {
                 type="button"
                 onClick={() => setShowLinkModal(false)}
                 className="w-8 h-8 rounded-full border border-sand-border flex items-center justify-center text-ink-text-secondary hover:bg-sand-border/20"
+                aria-label={tx('إغلاق', 'Close')}
               >
-                ✕
+                <span className="material-symbols-outlined text-[16px]">close</span>
               </button>
             </div>
 
@@ -768,6 +829,6 @@ export default function ParentDashboard() {
         </div>
       )}
 
-    </div>
+    </DashboardSidebarLayout>
   );
 }

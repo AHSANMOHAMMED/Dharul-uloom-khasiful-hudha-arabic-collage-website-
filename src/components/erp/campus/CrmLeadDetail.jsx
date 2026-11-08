@@ -81,7 +81,7 @@ export function FollowupsTable({ rows, busy, onDone, showLead, t }) {
       { key: 'kind', label: t('Type', 'النوع') },
       { key: 'note', label: t('Note', 'ملاحظة') },
       { key: 'assignee', label: t('Assigned', 'المسؤول'), render: (r) => r.assignee?.full_name || '—' },
-      { key: 'done', label: t('Outcome', 'النتيجة'), render: (r) => (r.done_at ? <span className="text-emerald-300">✓ {r.outcome || ''} <span className="text-xs text-gray-500">{fmtDateTime(r.done_at)}</span></span> : null) },
+      { key: 'done', label: t('Outcome', 'النتيجة'), render: (r) => (r.done_at ? <span className="text-emerald-300 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">check_circle</span><span>{r.outcome || ''}</span> <span className="text-xs text-gray-500">{fmtDateTime(r.done_at)}</span></span> : null) },
       { key: 'act', label: '', render: (r) => (!r.done_at ? (
         <div className="flex gap-2">
           <Button size="sm" disabled={busy} onClick={() => onDone(r)}>{t('Mark done', 'تم')}</Button>

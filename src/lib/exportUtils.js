@@ -113,7 +113,7 @@ export function generateFeeReceipt(student, fee, receivedBy = 'Treasurer') {
     <div class="arabic">دار العلوم كاشف الهدى</div>
   </div>
 
-  <div class="receipt-title">📄 Fee Payment Receipt</div>
+  <div class="receipt-title">Fee Payment Receipt</div>
 
   <div class="meta-grid">
     <div>
@@ -171,7 +171,7 @@ export function generateFeeReceipt(student, fee, receivedBy = 'Treasurer') {
   </div>
 
   <div class="no-print" style="text-align:center;margin-top:32px;">
-    <button onclick="window.print()" style="padding:10px 28px;background:#1a5c38;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🖨 Print Receipt</button>
+    <button onclick="window.print()" style="padding:10px 28px;background:#1a5c38;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Print Receipt</button>
   </div>
 </body>
 </html>`;

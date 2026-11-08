@@ -93,7 +93,7 @@ export default function AcctJournalForm({ lockedUntil, onClose, onSaved }) {
                 </div>
                 {rows.length > 2 && (
                   <Button variant="ghost" size="sm" onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))} aria-label={t('Remove', 'حذف')}>
-                    ✕
+                    <span className="material-symbols-outlined text-[16px]">close</span>
                   </Button>
                 )}
               </div>
@@ -139,7 +139,7 @@ export default function AcctJournalForm({ lockedUntil, onClose, onSaved }) {
         </div>
         <div className="col-span-3 text-xs">
           {balanced
-            ? t('Balanced ✓', 'متوازن ✓')
+            ? t('Balanced', 'متوازن ومطابق')
             : rowErrors.some(Boolean)
               ? t('Each line needs an account and either a debit or a credit (not both).', 'كل سطر يحتاج حسابًا ومبلغًا مدينًا أو دائنًا (وليس كليهما).')
               : t('Debits must equal credits across at least two lines.', 'يجب أن يتساوى المدين والدائن في سطرين على الأقل.')}

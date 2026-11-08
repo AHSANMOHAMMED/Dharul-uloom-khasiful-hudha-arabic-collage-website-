@@ -148,7 +148,7 @@ function StructureForm({ initial, categories, years, onClose, onSaved }) {
             value={form.academic_year_id}
             onChange={(e) => set({ academic_year_id: e.target.value })}
             placeholder={t('All years', 'كل الأعوام')}
-            options={years.map((y) => ({ value: y.id, label: `${y.name}${y.is_current ? ' ★' : ''}` }))}
+            options={years.map((y) => ({ value: y.id, label: `${y.name}${y.is_current ? ' (Current)' : ''}` }))}
           />
         </Field>
         <Field label={t('Amount', 'المبلغ')}>
@@ -221,7 +221,7 @@ export default function FeeSetup() {
                   { key: 'name', label: t('Name', 'الاسم'), render: (c) => (ar && c.name_ar ? c.name_ar : c.name) },
                   { key: 'income_account_code', label: t('Income a/c', 'حساب الإيراد') },
                   { key: 'default_amount', label: t('Default', 'الافتراضي'), render: (c) => <Num>{formatMoney(c.default_amount)}</Num> },
-                  { key: 'is_recurring', label: t('Recurring', 'متكرر'), render: (c) => (c.is_recurring ? '✓' : '—') },
+                  { key: 'is_recurring', label: t('Recurring', 'متكرر'), render: (c) => (c.is_recurring ? <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span> : '—') },
                   {
                     key: 'is_active',
                     label: t('Status', 'الحالة'),

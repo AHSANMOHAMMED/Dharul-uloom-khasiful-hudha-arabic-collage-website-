@@ -79,7 +79,7 @@ export default function FeeChargeForm({ studentId: fixedStudent, month: fixedMon
               <Input type="number" min="0" step="0.01" value={l.amount} onChange={(e) => setLine(i, { amount: e.target.value })} />
               {lines.length > 1 && (
                 <Button variant="ghost" size="sm" onClick={() => setLines((ls) => ls.filter((_, j) => j !== i))} aria-label={t('Remove', 'حذف')}>
-                  ✕
+                  <span className="material-symbols-outlined text-[16px]">close</span>
                 </Button>
               )}
             </div>

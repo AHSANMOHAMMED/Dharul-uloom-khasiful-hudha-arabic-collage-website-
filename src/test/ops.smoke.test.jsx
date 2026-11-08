@@ -164,7 +164,7 @@ describe('Ops totals', () => {
         <Component />
       </MemoryRouter>,
     )
-    expect(await screen.findByText('✓ Balanced', { exact: false })).toBeTruthy()
+    expect(await screen.findByText('Balanced', { exact: false })).toBeTruthy()
     // invoiced 1000 + 1200
     expect(screen.getAllByText('LKR 2,200.00').length).toBeGreaterThan(0)
   })

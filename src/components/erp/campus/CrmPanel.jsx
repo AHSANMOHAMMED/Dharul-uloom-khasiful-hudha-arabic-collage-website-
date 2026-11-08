@@ -102,7 +102,7 @@ function Pipeline({ onChangedStats }) {
         <div className="text-xs text-gray-500">{r.phone}</div>
         <div className="flex flex-wrap gap-1 mt-1">
           <Badge>{labelOf(LEAD_SOURCES, r.source, ar)}</Badge>
-          {r.follow_up_at && <Badge tone={new Date(r.follow_up_at).getTime() < now ? 'red' : 'amber'}>⏰ {formatDate(r.follow_up_at)}</Badge>}
+          {r.follow_up_at && <Badge tone={new Date(r.follow_up_at).getTime() < now ? 'red' : 'amber'}><span className="material-symbols-outlined text-[12px] align-middle me-0.5">schedule</span>{formatDate(r.follow_up_at)}</Badge>}
         </div>
       </button>
       {r.pipeline_stage !== 'enrolled' && (

@@ -605,8 +605,9 @@ const TreasurerDashboard = () => {
                   </div>
                   {feeSuccess && (
                     <div className="md:col-span-2 text-center">
-                      <p className="text-xs text-[#11694A] font-bold animate-pulse">
-                        ✓ {tx('تم تسجيل الدفعة وإرسال الإشعار لولي الأمر!', 'Payment logged and parent notified!')}
+                      <p className="text-xs text-[#11694A] font-bold animate-pulse flex items-center justify-center gap-1">
+                        <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                        <span>{tx('تم تسجيل الدفعة وإرسال الإشعار لولي الأمر!', 'Payment logged and parent notified!')}</span>
                       </p>
                     </div>
                   )}
@@ -727,8 +728,9 @@ const TreasurerDashboard = () => {
                       {tx('تحديث وتأكيد الصرف', 'Log Salary / Payout')}
                     </button>
                     {salarySuccess && (
-                      <p className="text-xs text-[#11694A] text-center mt-2 font-bold animate-pulse">
-                        ✓ {tx('تم تحديث حالة الراتب وإشعار المعلم!', 'Salary status updated and tutor notified!')}
+                      <p className="text-xs text-[#11694A] text-center mt-2 font-bold animate-pulse flex items-center justify-center gap-1">
+                        <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                        <span>{tx('تم تحديث حالة الراتب وإشعار المعلم!', 'Salary status updated and tutor notified!')}</span>
                       </p>
                     )}
                   </div>

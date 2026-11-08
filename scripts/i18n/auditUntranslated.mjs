@@ -43,6 +43,11 @@ export function auditUntranslated(rootDir = ROOT) {
       },
       JSXText(p) {
         const t = p.node.value.trim();
+        const parent = p.parent;
+        const classAttr = parent?.openingElement?.attributes?.find?.((a) => a.name?.name === 'className');
+        if (typeof classAttr?.value?.value === 'string' && classAttr.value.value.includes('material-symbols')) {
+          return;
+        }
         if (t && /[A-Za-z]{3,}/.test(t)) out.push({ file: rel, line: p.node.loc.start.line, kind: 'jsx-text', text: t.slice(0, 60) });
       },
       JSXAttribute(p) {

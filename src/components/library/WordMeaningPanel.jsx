@@ -110,8 +110,8 @@ export default function WordMeaningPanel({ initialWord = '', initialContext = ''
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-bold text-emerald-900">{tx('معنى الكلمة (عربي ← تاميل)', 'Word meaning (Arabic → Tamil)')}</h3>
         {onClose && (
-          <button type="button" onClick={onClose} className="rounded-lg px-2 text-slate-500 hover:bg-white hover:text-slate-900" aria-label={tx('إغلاق', 'Close')}>
-            ✕
+          <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-500 hover:bg-white hover:text-slate-900 flex items-center justify-center" aria-label={tx('إغلاق', 'Close')}>
+            <span className="material-symbols-outlined text-[16px]">close</span>
           </button>
         )}
       </div>
