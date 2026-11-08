@@ -1,157 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <!-- Gradients -->
-    <radialGradient id="emblemBg" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#144e3d"/>
-      <stop offset="70%" stop-color="#0b3b2e"/>
-      <stop offset="100%" stop-color="#06241c"/>
-    </radialGradient>
-    
-    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f3d889"/>
-      <stop offset="30%" stop-color="#d4af37"/>
-      <stop offset="70%" stop-color="#aa8222"/>
-      <stop offset="100%" stop-color="#73540e"/>
-    </linearGradient>
-
-    <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#fff4cf"/>
-      <stop offset="50%" stop-color="#e0bb43"/>
-      <stop offset="100%" stop-color="#9a7415"/>
-    </linearGradient>
-
-    <linearGradient id="pageGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="50%" stop-color="#fdfbf7"/>
-      <stop offset="100%" stop-color="#eedcba"/>
-    </linearGradient>
-
-    <filter id="goldShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.4"/>
-    </filter>
-
-    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
-  </defs>
-
-  <!-- Outer Protective Base -->
-  <circle cx="256" cy="256" r="250" fill="#06241c"/>
-
-  <!-- Outer Ornate Gold Border -->
-  <circle cx="256" cy="256" r="244" fill="none" stroke="url(#goldGradient)" stroke-width="5"/>
-  <circle cx="256" cy="256" r="236" fill="none" stroke="url(#goldLight)" stroke-width="1.5" stroke-dasharray="4,3"/>
-  <circle cx="256" cy="256" r="226" fill="none" stroke="url(#goldGradient)" stroke-width="3"/>
-
-  <!-- Main Dark Green Shield Background -->
-  <circle cx="256" cy="256" r="222" fill="url(#emblemBg)"/>
-
-  <!-- Geometric 16-Point Background Pattern (Subtle Watermark) -->
-  <g opacity="0.12" stroke="url(#goldLight)" stroke-width="1" fill="none">
-    <circle cx="256" cy="256" r="190"/>
-    <rect x="86" y="86" width="340" height="340" rx="16"/>
-    <rect x="86" y="86" width="340" height="340" rx="16" transform="rotate(45 256 256)"/>
-    <rect x="86" y="86" width="340" height="340" rx="16" transform="rotate(22.5 256 256)"/>
-    <rect x="86" y="86" width="340" height="340" rx="16" transform="rotate(67.5 256 256)"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Dharul Uloom Kashiful Hudha Arabic College emblem</title>
+  <desc id="desc">An open book beneath twin minarets, with the college name and registration details.</desc>
+  <rect width="512" height="512" rx="18" fill="#fffefa"/>
+  <path d="M0 0h37c-12 58-4 102 7 144 17 68 6 132-19 190-12 28-13 62 4 104L0 512z" fill="#f3a04a"/>
+  <path d="M512 0h-35c11 61 3 106-8 151-16 67-5 130 20 187 12 28 12 63-5 103l28 21z" fill="#8abb62"/>
+  <g fill="#e8b65e" opacity=".7">
+    <circle cx="76" cy="49" r="4"/><circle cx="117" cy="28" r="3"/><circle cx="158" cy="52" r="3"/><circle cx="201" cy="28" r="4"/>
+    <circle cx="309" cy="36" r="3"/><circle cx="362" cy="27" r="4"/><circle cx="406" cy="53" r="3"/><circle cx="447" cy="31" r="4"/>
+    <circle cx="93" cy="114" r="3"/><circle cx="420" cy="113" r="3"/>
   </g>
-
-  <!-- Islamic Dome / Mihrab Arch Silhouette -->
-  <path d="M 146 330 L 146 220 Q 146 130 256 90 Q 366 130 366 220 L 366 330 Z" 
-        fill="#0b3b2e" stroke="url(#goldGradient)" stroke-width="3" filter="url(#goldShadow)"/>
-
-  <path d="M 158 326 L 158 222 Q 158 142 256 104 Q 354 142 354 222 L 354 326 Z" 
-        fill="none" stroke="url(#goldLight)" stroke-width="1.5" opacity="0.7"/>
-
-  <!-- Crescent & Star at Apex -->
-  <g transform="translate(256, 75)" filter="url(#goldShadow)">
-    <!-- Crescent -->
-    <path d="M 0 -14 A 12 12 0 1 0 11 7 A 9 9 0 1 1 0 -14 Z" fill="url(#goldLight)"/>
-    <!-- Star -->
-    <polygon points="6,-6 8,-1 13,-1 9,2 11,7 6,4 2,7 3,2 0,-1 5,-1" fill="url(#goldLight)"/>
+  <g fill="none" stroke="#272b2b" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M151 239V112h54v127M148 112h60l-7-12h-46zM160 96q18-26 36 0M175 69v-9m6 9V47m-8 25h10M161 137h34m-34 43h34m-35-5h36M161 139v38m35-38v38"/>
+    <path d="M307 239V112h54v127M304 112h60l-7-12h-46zM316 96q18-26 36 0M331 69v-9m6 9V47m-8 25h10M317 137h34m-34 43h34m-35-5h36M317 139v38m35-38v38"/>
   </g>
-
-  <!-- Radiating Rays of Divine Guidance (Kashif-ul-Hudha) -->
-  <g opacity="0.3" stroke="url(#goldLight)" stroke-width="1.5">
-    <line x1="256" y1="210" x2="256" y2="135"/>
-    <line x1="256" y1="210" x2="210" y2="145"/>
-    <line x1="256" y1="210" x2="302" y2="145"/>
-    <line x1="256" y1="210" x2="175" y2="175"/>
-    <line x1="256" y1="210" x2="337" y2="175"/>
+  <g fill="#272b2b">
+    <path d="M255 177l-21 24 15-31-28 16 22-27-34 5 32-15-32-9 35-3-24-24 31 17-4-34 15 31 10-33 1 35 25-24-14 32 32-12-24 24 35 3-34 9 29 16-34-4 21 27-30-17 7 34-18-29z"/>
   </g>
-
-  <!-- Open Holy Quran (Al-Mushaf Ash-Sharif) -->
-  <g filter="url(#goldShadow)">
-    <!-- Left Page Base -->
-    <path d="M 256 248 C 220 236 170 236 142 244 C 138 245 136 248 136 252 L 136 304 C 166 296 216 296 256 310 Z" 
-          fill="url(#pageGrad)" stroke="#c29a3a" stroke-width="1.5"/>
-    
-    <!-- Right Page Base -->
-    <path d="M 256 248 C 292 236 342 236 370 244 C 374 245 376 248 376 252 L 376 304 C 346 296 296 296 256 310 Z" 
-          fill="url(#pageGrad)" stroke="#c29a3a" stroke-width="1.5"/>
-
-    <!-- Left Page Top Layer (Perspective Curves) -->
-    <path d="M 256 244 C 222 232 176 232 146 240 L 146 298 C 176 290 222 290 256 304 Z" 
-          fill="#fbf8f0"/>
-    
-    <!-- Right Page Top Layer -->
-    <path d="M 256 244 C 290 232 336 232 366 240 L 366 298 C 336 290 290 290 256 304 Z" 
-          fill="#fbf8f0"/>
-
-    <!-- Calligraphic Script Lines on Left Page -->
-    <path d="M 160 252 Q 200 246 242 254 M 160 262 Q 200 256 242 264 M 160 272 Q 200 266 242 274 M 160 282 Q 200 276 242 284" 
-          stroke="#0b3b2e" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
-
-    <!-- Calligraphic Script Lines on Right Page -->
-    <path d="M 270 254 Q 312 246 352 252 M 270 264 Q 312 256 352 262 M 270 274 Q 312 266 352 272 M 270 284 Q 312 276 352 282" 
-          stroke="#0b3b2e" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
-
-    <!-- Quran Spine Binding -->
-    <path d="M 253 243 L 259 243 L 259 308 L 253 308 Z" fill="#9a7415"/>
+  <path d="M84 191c-11 45-7 99 22 132 24 27 60 40 98 43m224-175c11 45 7 99-22 132-24 27-60 40-98 43" fill="none" stroke="#25282b" stroke-width="4"/>
+  <g stroke="#24282b" stroke-width="5" stroke-linejoin="round">
+    <path d="M256 241c-29-18-71-19-103-9l-6 54c34-10 77-8 109 9z" fill="#fffefa"/>
+    <path d="M256 241c29-18 71-19 103-9l6 54c-34-10-77-8-109 9z" fill="#fffefa"/>
+    <path d="M256 241v54" fill="none"/>
+    <path d="M158 238l-17 43 21-12 18-34m174 3 17 43-21-12-18-34" fill="#292b2c"/>
   </g>
-
-  <!-- Wooden Rehal / Book Stand -->
-  <g filter="url(#goldShadow)">
-    <polygon points="186,346 256,298 326,346 306,356 256,322 206,356" fill="url(#goldGradient)" stroke="#5c4107" stroke-width="1"/>
-    <polygon points="206,356 256,322 306,356 316,368 256,334 196,368" fill="#7a5811" stroke="#4a3505" stroke-width="1"/>
-    <!-- Feet of Stand -->
-    <path d="M 196 368 L 180 380 L 216 380 L 232 368 Z" fill="url(#goldGradient)"/>
-    <path d="M 316 368 L 332 380 L 296 380 L 280 368 Z" fill="url(#goldGradient)"/>
-  </g>
-
-  <!-- Top Arabic Institutional Calligraphy -->
-  <!-- "دار العلوم كاشف الهدى" -->
-  <text x="256" y="160" text-anchor="middle" font-family="'Amiri', 'Traditional Arabic', serif" font-weight="700" font-size="28" fill="url(#goldLight)" filter="url(#goldShadow)">
-    دار العلوم كاشف الهدى
-  </text>
-  <text x="256" y="186" text-anchor="middle" font-family="'Amiri', 'Traditional Arabic', serif" font-weight="700" font-size="19" fill="#fdfbf7" opacity="0.9">
-    الكلية العربية الإسلامية
-  </text>
-
-  <!-- Bottom Arch Banner -->
-  <path d="M 80 400 C 130 452 382 452 432 400 L 416 384 C 372 430 140 430 96 384 Z" 
-        fill="url(#goldGradient)" stroke="#06241c" stroke-width="2" filter="url(#goldShadow)"/>
-
-  <!-- Institutional English Name in Banner -->
-  <text x="256" y="416" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="800" font-size="14.5" fill="#06241c" letter-spacing="1">
-    D.U. KASHIFUL HUDHA ARABIC COLLEGE
-  </text>
-  
-  <!-- Location Subtext -->
-  <text x="256" y="434" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="700" font-size="11" fill="#fdfbf7" letter-spacing="1.5">
-    MUDALAIPPALI · SRI LANKA · EST. 1996
-  </text>
-
-  <!-- Small 8-Point Gold Stars on Ribbon Ends -->
-  <g transform="translate(88, 392)" fill="url(#goldLight)">
-    <polygon points="0,-6 2,-2 6,-2 3,1 4,5 0,3 -4,5 -3,1 -6,-2 -2,-2"/>
-  </g>
-  <g transform="translate(424, 392)" fill="url(#goldLight)">
-    <polygon points="0,-6 2,-2 6,-2 3,1 4,5 0,3 -4,5 -3,1 -6,-2 -2,-2"/>
-  </g>
-
-  <!-- Arabic Location below Book -->
-  <text x="256" y="378" text-anchor="middle" font-family="'Amiri', serif" font-weight="700" font-size="13" fill="url(#goldLight)">
-    مدلي بالي — سريلانكا
-  </text>
+  <text x="256" y="322" text-anchor="middle" font-family="serif" font-size="23" font-weight="700" fill="#232629">2000 / 1421</text>
+  <text x="256" y="344" text-anchor="middle" font-family="serif" font-size="13" font-weight="700" letter-spacing=".8" fill="#24282b">DARUL ULOOM KASHIFUL HUDHA</text>
+  <text x="256" y="379" text-anchor="middle" font-family="serif" font-size="26" font-weight="700" fill="#172b4c" direction="rtl">دار العلوم كاشف الهدى</text>
+  <path d="M97 391q159 94 318 0" fill="none" stroke="#25282b" stroke-width="3"/>
+  <text x="256" y="418" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="800" letter-spacing="1.2" fill="#172b4c">ARABIC COLLEGE</text>
+  <text x="256" y="449" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="800" letter-spacing="1.2" fill="#172b4c">KALPITIYA · SRI LANKA</text>
 </svg>

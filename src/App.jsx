@@ -102,8 +102,8 @@ function AppShell({ children }) {
 
   if (hideChrome) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#FBF8F0]">
-        <main className="flex-grow">{content}</main>
+      <div className="min-h-screen w-full min-w-0 flex flex-col bg-[#FBF8F0]">
+        <main className="w-full min-w-0 flex-grow">{content}</main>
         <OfflineIndicator />
         <InstallPrompt />
         <ToastContainer position="bottom-center" theme="colored" autoClose={5000} />
@@ -112,9 +112,9 @@ function AppShell({ children }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen w-full min-w-0 flex flex-col">
       <Navbar />
-      <main className="flex-grow">{content}</main>
+      <main className="w-full min-w-0 flex-grow">{content}</main>
       <Footer />
       <OfflineIndicator />
       <InstallPrompt />

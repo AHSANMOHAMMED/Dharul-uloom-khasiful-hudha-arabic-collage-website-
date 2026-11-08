@@ -39,18 +39,8 @@ export default function About() {
     {
       year: '2008',
       title: tx('التسجيل الرسمي لدى وزارة الشؤون الدينية', 'Official Ministry Registration'),
-      desc: tx('الحصول على الاعتماد الرسمي من إدارة الشؤون الدينية والثقافية الإسلامية بسريلانكا.', 'Formally recognized under the Department of Muslim Religious and Cultural Affairs (MRCA/13/1/PAS/187).')
+      desc: tx('التسجيل لدى إدارة الشؤون الدينية والثقافية الإسلامية في سريلانكا.', 'Registered with Sri Lanka’s Department of Muslim Religious and Cultural Affairs.')
     },
-    {
-      year: '2016',
-      title: tx('توسعة السكن الداخلي ومصلى الكلية', 'Residential Campus Expansion'),
-      desc: tx('إنشاء الأجنحة السكنية وقاعات المطالعة وتوسيع دائرة استيعاب طلاب العلوم الشرعية.', 'Construction of student boarding halls, dedicated mutala’ah rooms, and expansion of the classical Arabic curriculum.')
-    },
-    {
-      year: '2024',
-      title: tx('تدشين المكتبة الرقمية وإجازات السند', 'Digital Maktabah & Sanad Launch'),
-      desc: tx('افتتاح المكتبة التراثية الرقمية الشاملة وتخريج أوائل دفعات إجازة الكتب الستة بأسانيد متصلة.', 'Inauguration of the 12,500+ volume Shamela-linked catalog and advanced Dawrah al-Hadith certification program.')
-    }
   ]
 
   return (
@@ -93,16 +83,16 @@ export default function About() {
                 {tx('من حلقة قرآنية متواضعة إلى صرحٍ تعليمي إسلامي معتمد', 'From a Humble Coastal Circle to an Authenticated College of Arabic Scholarship')}
               </h2>
               <p className="text-sm sm:text-base text-ink-text-secondary leading-relaxed font-sans">
-                {tx('تأسست دار العلوم كاشف الهدى في عام ٢٠٠٤ م كمؤسسة تعليمية عربية أولية في قرية مُدلايبّلّي بريف شبه جزيرة كالبيتيا، مقاطعة بوتالام، سريلانكا. وقد انطلقت المسيرة برعاية نخبة من العلماء المخلصين الذين استشعروا الحاجة الماسة إلى بناء صرحٍ يجمع بين متانة الحفظ ونقاء العقيدة.', 'Dharul Uloom Kashiful Hudha was established in 2004 as a preliminary Arabic educational institute in the rural coastal village of Mudalippalli, Kalpitiya, Puttalam District, Sri Lanka. Officially registered in 2008 with the Ministry of Religious Affairs (Registration No: MRCA/13/1/PAS/187), the college provides full boarding education combining religious sciences with essential academic disciplines.')}
+                {tx('تأسست دار العلوم كاشف الهدى في عام ٢٠٠٤ م كمؤسسة تعليمية عربية أولية في قرية مُدلايبّلّي بريف شبه جزيرة كالبيتيا، مقاطعة بوتالام، سريلانكا. وقد انطلقت المسيرة برعاية نخبة من العلماء المخلصين الذين استشعروا الحاجة الماسة إلى بناء صرحٍ يجمع بين متانة الحفظ ونقاء العقيدة.', 'The Sri Lankan Arabic College directory lists Dharul Uloom Kashiful Hudha in Mudalippalli, Kalpitiya, Puttalam, with an establishment year of 2004 and registration in 2008. The college provides residential Arabic and Islamic studies.')}
               </p>
               <p className="text-sm sm:text-base text-ink-text-secondary leading-relaxed font-sans">
-                {tx('واليوم تحتضن الكلية أكثر من ٨٥٠ طالباً وتضم مكتبة تراثية غنية تتجاوز ١٢,٥٠٠ كتاب ومخطوطة، وتمنح خريجيها إجازات علمية مسندة إلى رسول الله ﷺ في كتب الحديث الشريف.', 'Today, the institution accommodates hundreds of residential students under senior scholars, with an expanding digital research repository and classical sanad chains transmitting knowledge with reverence and clarity.')}
+                {tx('تواصل الكلية تقديم التعليم العربي والإسلامي في بيئتها التعليمية في كالبيتيا.', 'The college continues to provide Arabic and Islamic education in Kalpitiya.')}
               </p>
 
               <div className="pt-2 flex items-center gap-6 text-xs text-ink-text-muted">
                 <div>
-                  <span className="font-serif text-xl font-bold text-ink-green-900 block tabular-nums">MRCA/13/1/PAS/187</span>
-                  <span>{tx('رقم التسجيل الوزاري', 'Ministry Registration')}</span>
+                  <span className="font-serif text-xl font-bold text-ink-green-900 block">{tx('مُدلايبالي', 'Mudalippalli')}</span>
+                  <span>{tx('موقع الكلية', 'College location')}</span>
                 </div>
                 <div className="h-8 w-px bg-sand-border"></div>
                 <div>
@@ -115,20 +105,10 @@ export default function About() {
             {/* Campus Archival Card */}
             <div className="lg:col-span-5">
               <div className="p-4 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
-                <div className="rounded-lg overflow-hidden bg-ink-green-900 h-64 relative">
-                  <img 
-                    src="/images/gallery/campus-1.jpg" 
-                    alt={tx('أروقة باحة الكلية', 'Campus Courtyard Colonnade')}
-                    onError={(e) => {
-                      e.currentTarget.src = "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80";
-                    }}
-                    className="w-full h-full object-cover opacity-80"
-                  />
-                  <div className="absolute inset-0 bg-ink-green-900/40"></div>
-                  <div className="absolute bottom-3 left-3 right-3 text-paper-white text-xs bg-ink-green-900/80 backdrop-blur-sm p-2.5 rounded border border-sand-border/20">
-                    <span className="font-serif font-semibold block">{tx('باحة الكلية وأروقة الحلقات', 'Campus Courtyard & Halaqah Colonnade')}</span>
-                    <span className="text-[11px] text-dark-text-primary/75">{tx('مدلپلّي، كالبيتيا · سريلانكا', 'Mudalippalli, Kalpitiya · Sri Lanka')}</span>
-                  </div>
+                <div className="min-h-64 rounded-lg bg-[#f4f1e9] px-6 py-8 flex flex-col items-center justify-center text-center">
+                  <img src="/images/logo.svg" alt={tx('شعار دار العلوم كاشف الهدى', 'Dharul Uloom Kashiful Hudha emblem')} className="mb-5 h-44 w-44 object-contain" />
+                  <span className="font-serif font-semibold text-ink-green-900">{tx('مُدلايبالي، كالبيتيا', 'Mudalippalli, Kalpitiya')}</span>
+                  <span className="mt-1 text-xs text-ink-text-muted">{tx('مقاطعة بوتالام · سريلانكا', 'Puttalam District · Sri Lanka')}</span>
                 </div>
               </div>
             </div>
@@ -261,53 +241,15 @@ export default function About() {
         </div>
       </section>
 
-      {/* 6. Principal's Message & Final Admissions CTA */}
+      {/* 6. Admissions and contact links */}
       <section className="w-full py-20 border-b border-sand-border">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="p-8 sm:p-12 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript-md">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              
-              <div className="lg:col-span-4 flex flex-col items-center text-center">
-                <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-sand-border bg-ink-green-900 p-1 mb-4">
-                  <img 
-                    src="/images/logo.svg" 
-                    alt={tx('مدير كلية كاشف الهدى', 'Principal of Kashiful Hudha')}
-                    className="w-full h-full object-contain rounded-full bg-paper-white"
-                  />
-                </div>
-                <h4 className="font-serif text-lg font-semibold text-ink-green-900">
-                  {tx('الشيخ عبد الحكيم الكاشفي', 'Ustaz Abdul Hakeem Al-Kashifi')}
-                </h4>
-                <span className="text-xs text-brass-gold-500 font-medium">{tx('مدير الكلية ورئيس هيئة التدريس', 'Principal & Head of Faculty')}</span>
-                <span className="text-[11px] text-ink-text-muted mt-1">{tx('دار العلوم كاشف الهدى', 'Dharul Uloom Kashiful Hudha')}</span>
-              </div>
-
-              <div className="lg:col-span-8 border-t lg:border-t-0 lg:border-l border-sand-border pt-6 lg:pt-0 lg:pl-8">
-                <span className="material-symbols-outlined text-brass-gold-500 text-3xl mb-3 block">
-                  {'format_quote'}
-                </span>
-                <blockquote className="font-serif italic text-base sm:text-lg text-ink-text-primary leading-relaxed mb-6">
-                  {tx('"إن العلم الشرعي ليس مجرد معلومات تُحفظ أو شهادات تُنال، بل هو نورٌ يقذفه الله في القلب يثمر خشيةً وأمانةً وعملاً صالحاً. وعهدنا لأبنائنا الطلاب وأولياء أمورهم أن نبذل غاية الجهد لتربيتهم على السمت النبوي الشريف وصيانة الدين بالحجة والبرهان."', '"True Islamic scholarship is never mere accumulation of texts, but an illuminated trust that cultivates God-consciousness, moral restraint, and compassionate leadership. Our solemn pledge to every family is that their sons will be nurtured with uncompromising scholastic rigor and fatherly tarbiyyah."')}
-                </blockquote>
-                
-                <div className="flex flex-wrap items-center gap-4">
-                  <Link
-                    to="/admissions"
-                    className="inline-flex items-center justify-center h-11 px-6 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-semibold shadow-manuscript transition-colors"
-                  >
-                    <span>{tx('التقديم للدفعة القادمة', 'Apply for Next Intake')}</span>
-                    <span className="material-symbols-outlined ml-1.5 text-[18px]">{'arrow_forward'}</span>
-                  </Link>
-
-                  <Link
-                    to="/contact"
-                    className="inline-flex items-center justify-center h-11 px-6 rounded-[10px] border border-sand-border hover:bg-sand-border/20 text-ink-text-primary text-xs font-medium transition-colors"
-                  >
-                    <span>{tx('التواصل مع الإدارة', 'Contact Administration')}</span>
-                  </Link>
-                </div>
-              </div>
-
+          <div className="rounded-[14px] bg-ink-green-900 p-8 text-center text-paper-white shadow-manuscript-md sm:p-12">
+            <h2 className="font-serif text-2xl font-semibold sm:text-3xl">{tx('تواصل معنا أو استفسر عن القبول', 'Ask about admissions or contact the college')}</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-dark-text-primary/80">{tx('للحصول على أحدث المعلومات حول الدراسة والقبول، تواصل مباشرة مع الكلية.', 'Contact the college for current information about study programs and admissions.')}</p>
+            <div className="mt-7 flex flex-wrap justify-center gap-3">
+              <Link to="/admissions" className="inline-flex h-11 items-center justify-center rounded-lg bg-[#e77835] px-5 text-sm font-semibold text-white hover:bg-[#ce6327]">{tx('معلومات القبول', 'Admissions information')}</Link>
+              <Link to="/contact" className="inline-flex h-11 items-center justify-center rounded-lg border border-white/30 px-5 text-sm font-semibold text-white hover:bg-white/10">{tx('تواصل معنا', 'Contact us')}</Link>
             </div>
           </div>
         </div>

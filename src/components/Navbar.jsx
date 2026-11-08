@@ -78,7 +78,7 @@ export default function Navbar() {
             alt={tx('شعار دار العلوم كاشف الهدى', 'D.U. Kashiful Hudha Arabic College Emblem')}
             className="w-10 h-10 object-contain rounded-lg border border-sand-border shadow-xs group-hover:border-emerald-700 transition-colors"
           />
-          <div className="flex flex-col">
+          <div className="hidden min-[380px]:flex max-w-[200px] flex-col">
             <span className="font-serif text-base sm:text-lg font-semibold text-ink-green-900 leading-tight tracking-tight">
               {tx('دار العلوم كاشف الهدى', 'Dharul Uloom Kashiful Hudha')}
             </span>
@@ -89,7 +89,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden xl:flex items-center gap-6" aria-label={tx('التنقل الرئيسي', 'Main navigation')}>
+        <nav className="hidden xl:flex items-center gap-3" aria-label={tx('التنقل الرئيسي', 'Main navigation')}>
           <Link
             to="/"
             className={`text-sm transition-colors ${
@@ -232,7 +232,9 @@ export default function Navbar() {
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           
           {/* Trilingual Language Selector */}
-          <LanguageSelect className="text-xs bg-paper-white border border-sand-border text-ink-green-900 py-1 px-2 rounded-lg" />
+          <div className="hidden sm:block">
+            <LanguageSelect className="text-xs bg-paper-white border border-sand-border text-ink-green-900 py-1 px-2 rounded-lg" />
+          </div>
 
           {/* Authenticated State vs Public CTA */}
           {isAuthenticated ? (
@@ -304,9 +306,9 @@ export default function Navbar() {
 
               <Link
                 to="/admissions"
-                className="inline-flex items-center justify-center h-9 px-3.5 sm:px-4 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 active:bg-ink-green-900 text-white text-xs font-medium shadow-xs transition-colors"
+                className="hidden md:inline-flex items-center justify-center h-9 px-3.5 sm:px-4 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 active:bg-ink-green-900 text-white text-xs font-medium shadow-xs transition-colors"
               >
-                <span>{tx('التقديم للقبول', 'Apply for Admission')}</span>
+                <span>{tx('التقديم للقبول', 'Apply')}</span>
               </Link>
             </div>
           )}
@@ -456,6 +458,11 @@ export default function Navbar() {
               {tx('نظام الإدارة (ERP)', 'College ERP')}
             </Link>
           )}
+
+          <div className="flex items-center justify-between border-y border-sand-border py-3 sm:hidden">
+            <span className="text-sm font-medium text-ink-text-secondary">{tx('اللغة', 'Language')}</span>
+            <LanguageSelect className="text-xs bg-paper-white border border-sand-border text-ink-green-900 py-1 px-2 rounded-lg" />
+          </div>
 
           <div className="pt-3 border-t border-sand-border flex flex-col gap-2">
             {isAuthenticated ? (

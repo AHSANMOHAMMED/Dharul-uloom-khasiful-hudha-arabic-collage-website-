@@ -80,7 +80,7 @@ export default function DashboardTopBar() {
             title={tx('العودة إلى لوحة التحكم', 'Back to dashboard')}
           >
             <img
-              src="/images/logo.jpg"
+              src="/images/logo.svg"
               alt={tx('شعار كاشف الهدى', 'Kashiful Hudha Emblem')}
               className="w-9 h-9 object-contain rounded-lg border border-[#E8E1D0] shadow-xs group-hover:border-[#11694A] transition-colors"
             />

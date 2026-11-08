@@ -9,23 +9,23 @@ import { tx } from '../lib/tx';
 const faqs = () => [
   {
     q: tx('ما هي شروط السن للقبول في السكن الداخلي؟', 'What are the minimum age criteria for residential admission?'),
-    a: tx('يشترط لبرنامج حفظ القرآن الكريم أن يكون عمر المتقدم بين ١٠ و ١٤ عاماً، وللمرحلة المتوسطة ١٣ عاماً فما فوق مع اجتياز اختبار القراءة والتلاوة.', 'For the foundational Hifz al-Quran program, candidates must be between 10 and 14 years old. For Intermediate Nahw & Sarf or Alim studies, students aged 13 and above with foundational reading proficiency are considered.')
+    a: tx('تختلف شروط القبول بحسب البرنامج والسنة الدراسية. يرجى التواصل مع مكتب القبول لمعرفة الأعمار والوثائق المطلوبة حالياً.', 'Entry ages and required documents depend on the program and intake. Contact admissions for current requirements.')
   },
   {
     q: tx('هل تتوفر منح دراسية وكفالات للأيتام وطلاب العلم؟', 'Are scholarships and boarding waqf subsidies available?'),
-    a: tx('نعم، توفر دار العلوم عبر أوقاف الكلية رعاية كاملة وجزئية تشمل السكن والإعاشة والكتب للطلاب المستحقين والأيتام بعد دراسة الحالة.', 'Yes. Through our community Waqf endowment, full and partial tuition waivers covering residential meals, boarding lodging, and kitabs are provided to deserving and orphaned students.')
+    a: tx('يرجى التواصل مع الكلية للسؤال عن المنح أو المساعدات المتاحة وشروط الاستحقاق الحالية.', 'Contact the college to ask whether scholarships or other assistance are currently available and what the eligibility requirements are.')
   },
   {
     q: tx('ما هي مواعيد الزيارة المسموحة لأولياء الأمور؟', 'Can parents visit residential students during term time?'),
-    a: tx('تُتاح الزيارات في عطلات نهاية الأسبوع المحددة (من عصر الجمعة إلى مغرب السبت)، ويتم تقديم طلبات الإجازات والخروج مسبقاً عبر بوابة ولي الأمر.', 'Parents may visit on designated alternate weekends (Fridays after Asr through Saturday Maghrib). All exeat leaves must be pre-approved via the Parent Portal.')
+    a: tx('تواصل مع الكلية لتأكيد مواعيد الزيارة الحالية وإجراءات خروج الطلاب المقيمين.', 'Contact the college to confirm current visiting hours and leave procedures for residential students.')
   },
   {
     q: tx('هل شهادات الكلية معتمدة رسمياً؟', 'Is the curriculum officially recognized by religious education authorities?'),
-    a: tx('نعم، الكلية مسجلة رسمياً لدى إدارة الشؤون الدينية والثقافية الإسلامية بسريلانكا وتمنح إجازات بالسند المتصل في الكتب الستة.', 'Dharul Uloom Kashiful Hudha is officially registered under the Department of Muslim Religious & Cultural Affairs of Sri Lanka (MRCA/13/1/PAS/187) and awards authenticated traditional Sanad chains.')
+    a: tx('للحصول على معلومات حديثة عن التسجيل والاعتراف والشهادات، يرجى التواصل مع إدارة الكلية.', 'Contact the college for current information about registration, recognition and qualifications.')
   },
   {
     q: tx('كيف يمكن للباحثين الاطلاع على المخطوطات النادرة؟', 'How can external scholars access rare manuscripts in the Maktabah?'),
-    a: tx('المخطوطات المفهرسة متاحة رقمياً عبر مستودع المكتبة في الموقع، وللاطلاع الميداني يُرجى التنسيق المسبق مع أمين المكتبة.', 'High-resolution digital scans are accessible publicly via our online Digital Library vault. Physical archival consultation requires advance appointment with the Chief Librarian.')
+    a: tx('يرجى التواصل مع المكتبة للتأكد من المواد المتاحة وشروط الزيارة أو الاطلاع.', 'Contact the library to confirm which materials are available and any visit or access requirements.')
   }
 ]
 

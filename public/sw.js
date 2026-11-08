@@ -7,7 +7,7 @@
 //   - Supabase API calls: Network-Only (never cache authenticated data)
 // =============================================================================
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v1.0.1';
 const STATIC_CACHE = `kashiful-hudha-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `kashiful-hudha-runtime-${CACHE_VERSION}`;
 
