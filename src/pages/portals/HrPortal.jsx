@@ -1,7 +1,5 @@
 import { lazy } from 'react';
 import RolePortalShell from '../../components/portals/RolePortalShell';
-import { ERP_QUICK_LINK } from '../../lib/portalChrome';
-import { tx } from '../../lib/tx';
 import { useAuth } from '../../context/AuthContext';
 
 const StaffHrPanel = lazy(() => import('../../components/erp/campus/StaffHrPanel'));
@@ -15,7 +13,6 @@ function SelfLeaveWrap() {
 }
 
 export default function HrPortal() {
-  const { user } = useAuth();
   const tabs = [
     { id: 'staff', label_en: 'Staff', label_ar: 'الموظفون', icon: 'badge', embed: StaffHrPanel },
     { id: 'leave', label_en: 'Leave', label_ar: 'الإجازات', icon: 'event_busy', embed: SelfLeaveWrap },
@@ -34,18 +31,13 @@ export default function HrPortal() {
       }}
       tabs={tabs}
       defaultTab="staff"
-      quickLinks={[ERP_QUICK_LINK]}
-      banner={
-        <div className="rounded-[14px] bg-[#0B3B2E] text-white p-5 sm:p-6">
-          <p className="text-[11px] uppercase tracking-wider text-[#C29A3A] font-semibold">{tx('الموارد البشرية', 'Human Resources')}</p>
-          <h1 className="font-serif text-2xl font-semibold mt-1">
-            {tx(`مرحباً، ${user?.username || ''}`, `Welcome, ${user?.username || ''}`)}
-          </h1>
-          <p className="text-xs text-white/75 mt-1">
-            {tx('سجلات الموظفين، الإجازات، والرواتب.', 'Staff records, leave, and payroll.')}
-          </p>
-        </div>
-      }
+      bannerProps={{
+        portal_en: 'Human Resources',
+        portal_ar: 'الموارد البشرية',
+        hint_en: 'Staff records, leave requests, and payroll runs.',
+        hint_ar: 'سجلات الموظفين وطلبات الإجازة وتشغيل الرواتب.',
+        accent: 'emerald',
+      }}
     />
   );
 }

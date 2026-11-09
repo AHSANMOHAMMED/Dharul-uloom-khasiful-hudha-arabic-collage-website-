@@ -39,7 +39,6 @@ export default function ParentDashboard() {
   const [linkError, setLinkError] = useState('');
   const [linkSuccess, setLinkSuccess] = useState('');
   const [dataLoading, setDataLoading] = useState(false);
-  const [showLinkModal, setShowLinkModal] = useState(false);
   
   // Leave Form state
   const [leaveForm, setLeaveForm] = useState({
@@ -165,6 +164,7 @@ export default function ParentDashboard() {
       setInviteMsg(tx('تم ربط الطفل عبر الدعوة', 'Child linked via invite'));
       setInviteToken('');
       fetchLinkedChildren();
+      setActiveTab('overview');
     } catch (err) {
       setInviteMsg(err.message || tx('فشل تفعيل الدعوة', 'Invite failed'));
     }
@@ -187,10 +187,10 @@ export default function ParentDashboard() {
       if (error) throw error;
 
       setLinkIndex('');
-      setShowLinkModal(false);
       if (data?.status === 'linked' || data?.status === 'already_linked') {
         setLinkSuccess(tx('تم ربط الحساب بنجاح!', 'Child linked successfully!'));
         fetchLinkedChildren();
+        setActiveTab('overview');
       } else {
         setLinkSuccess(tx('تم إرسال طلب الربط. ستتم الموافقة عليه من قبل إدارة الكلية.', 'Link request sent. The college office will verify and approve it.'));
       }
@@ -241,7 +241,7 @@ export default function ParentDashboard() {
     { id: 'results', label_en: 'Academic Marksheet', label_ar: 'الشهادات والدرجات', icon: 'history_edu', badge: results.length },
     { id: 'leaves', label_en: 'Leave Exeats', label_ar: 'أذونات الإجازة', icon: 'time_to_leave', badge: leaves.length },
     { id: 'fees', label_en: 'Tuition Ledgers', label_ar: 'الرسوم المدرسية', icon: 'payments' },
-    { id: 'link', label_en: 'Link Scholar', label_ar: 'ربط طالب جديد', icon: 'person_add' },
+    { id: 'link', label_en: 'Link Ward', label_ar: 'ربط طالب', icon: 'person_add' },
   ];
 
   const childSelector = children.length > 0 ? (
@@ -285,23 +285,19 @@ export default function ParentDashboard() {
       }}
       navItems={navItems}
       activeItem={activeTab}
-      onSelect={(id) => {
-        if (id === 'link') {
-          setShowLinkModal(true);
-        } else {
-          setActiveTab(id);
-        }
-      }}
+      onSelect={setActiveTab}
       roleSwitcher={childSelector}
       topActions={
-        <button
-          type="button"
-          onClick={() => setShowLinkModal(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-colors"
-        >
-          <span className="material-symbols-outlined text-[16px]">person_add</span>
-          <span className="hidden sm:inline">{tx('ربط طالب', 'Link Ward')}</span>
-        </button>
+        children.length === 0 ? (
+          <button
+            type="button"
+            onClick={() => setActiveTab('link')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-colors"
+          >
+            <span className="material-symbols-outlined text-[16px]">person_add</span>
+            <span className="hidden sm:inline">{tx('ربط طالب', 'Link Ward')}</span>
+          </button>
+        ) : null
       }
     >
       <div className="space-y-8">
@@ -327,25 +323,8 @@ export default function ParentDashboard() {
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowLinkModal(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-colors"
-              >
-                <span className="material-symbols-outlined text-[18px]">person_add</span>
-                <span>{tx('ربط طالب جديد', 'Link Student Ward')}</span>
-              </button>
-            </div>
           </div>
         </div>
-        )}
-
-        {activeTab === 'overview' && linkSuccess && (
-          <div className="p-3.5 rounded-lg bg-mint-wash-100 border border-emerald-700/20 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">{'check_circle'}</span>
-            <span>{linkSuccess}</span>
-          </div>
         )}
 
         {activeTab === 'overview' && activationEvents.length > 0 && (
@@ -414,11 +393,11 @@ export default function ParentDashboard() {
 
             <button
               type="button"
-              onClick={() => setShowLinkModal(true)}
+              onClick={() => setActiveTab('link')}
               className="text-xs text-emerald-700 hover:text-ink-green-900 font-semibold flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-[16px]">{'add'}</span>
-              <span>{tx('ربط طالب آخر', 'Link Another Ward')}</span>
+              <span>{tx('ربط طالب آخر', 'Link another')}</span>
             </button>
           </div>
         ) : (
@@ -429,33 +408,17 @@ export default function ParentDashboard() {
             </h3>
             <p className="text-xs text-ink-text-secondary max-w-md mx-auto">
               {tx(
-                'اربط حساب ابنك باستخدام رقم القيد الخاص به (مثل: KH-2026-0147) لمتابعة الحضور والنتائج.',
-                'Link your child’s college profile using their index number (e.g. KH-2026-0147) to inspect attendance and marks.'
+                'اربط حساب ابنك برقم القيد أو رمز الدعوة من تبويب ربط طالب.',
+                'Link your child with an index number or invite code from the Link Ward tab.',
               )}
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setShowLinkModal(true)}
-                className="px-5 py-2.5 bg-emerald-700 text-white rounded-[10px] text-xs font-semibold shadow-xs hover:bg-emerald-500"
-              >
-                {tx('ربط بواسطة رقم القيد', 'Link by Index Number')}
-              </button>
-            </div>
-            {/* Direct invite code redeem */}
-            <form onSubmit={handleClaimInvite} className="max-w-xs mx-auto flex gap-2 pt-2">
-              <input
-                type="text"
-                placeholder={tx('أو أدخل رمز الدعوة...', 'Or enter invite token...')}
-                value={inviteToken}
-                onChange={(e) => setInviteToken(e.target.value)}
-                className="flex-1 h-9 px-3 rounded-[8px] bg-parchment-50 border border-sand-border text-xs font-mono"
-              />
-              <button type="submit" className="px-3 h-9 bg-paper-white border border-sand-border rounded-[8px] text-xs font-semibold hover:bg-mint-wash-100 text-emerald-700">
-                {tx('تفعيل', 'Claim')}
-              </button>
-            </form>
-            {inviteMsg && <p className="text-xs text-emerald-700 font-semibold">{inviteMsg}</p>}
+            <button
+              type="button"
+              onClick={() => setActiveTab('link')}
+              className="px-5 py-2.5 bg-emerald-700 text-white rounded-[10px] text-xs font-semibold shadow-xs hover:bg-emerald-500"
+            >
+              {tx('فتح ربط طالب', 'Open Link Ward')}
+            </button>
           </div>
         ))}
 
@@ -732,78 +695,87 @@ export default function ParentDashboard() {
           </PortalTabChrome>
         )}
 
-      </div>
+        {activeTab === 'link' && (
+          <PortalTabChrome
+            title_en="Link Ward"
+            title_ar="ربط طالب"
+            subtitle_en="One place for index number or invite code"
+            subtitle_ar="مكان واحد لرقم القيد أو رمز الدعوة"
+            onBack={() => setActiveTab('overview')}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-4">
+                <div>
+                  <h3 className="font-serif text-lg font-semibold text-ink-green-900">
+                    {tx('برقم القيد', 'By index number')}
+                  </h3>
+                  <p className="text-xs text-ink-text-secondary mt-1">
+                    {tx(
+                      'أدخل رقم القيد (مثال: KH-2026-0147). إن تطابق الهاتف/البريد يُربط تلقائياً، وإلا يُرسل طلب للموافقة.',
+                      'Enter the collegiate index (e.g. KH-2026-0147). Matching phone/email auto-links; otherwise a request is sent for approval.',
+                    )}
+                  </p>
+                </div>
+                {linkError && (
+                  <div className="p-3 rounded-lg bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger text-xs font-medium">
+                    {linkError}
+                  </div>
+                )}
+                {linkSuccess && (
+                  <div className="p-3 rounded-lg bg-mint-wash-100 border border-emerald-700/20 text-emerald-800 text-xs font-semibold">
+                    {linkSuccess}
+                  </div>
+                )}
+                <form onSubmit={handleLinkChild} className="space-y-3">
+                  <input
+                    type="text"
+                    required
+                    value={linkIndex}
+                    onChange={(e) => setLinkIndex(e.target.value)}
+                    placeholder="KH-2026-0147"
+                    className="w-full h-11 px-3.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs font-mono uppercase"
+                  />
+                  <button type="submit" className="w-full h-11 bg-emerald-700 hover:bg-emerald-500 text-white rounded-[10px] text-xs font-semibold shadow-xs">
+                    {tx('ربط الحساب', 'Link account')}
+                  </button>
+                </form>
+              </div>
 
-      {/* Link Child Modal */}
-      {showLinkModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-green-900/60 backdrop-blur-xs">
-          <div className="max-w-md w-full rounded-[14px] bg-paper-white border border-sand-border p-6 sm:p-8 shadow-manuscript-lg space-y-5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
-                {tx('ربط ملف الطالب', 'Link Student Profile')}
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowLinkModal(false)}
-                className="w-8 h-8 rounded-full border border-sand-border flex items-center justify-center text-ink-text-secondary hover:bg-sand-border/20"
-                aria-label={tx('إغلاق', 'Close')}
-              >
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
+              <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-4">
+                <div>
+                  <h3 className="font-serif text-lg font-semibold text-ink-green-900">
+                    {tx('برمز الدعوة', 'By invite code')}
+                  </h3>
+                  <p className="text-xs text-ink-text-secondary mt-1">
+                    {tx(
+                      'إن أرسلت لك الكلية رمز دعوة ولي الأمر، أدخله هنا لتفعيل الربط فوراً.',
+                      'If the college sent you a parent invite token, enter it here for an instant link.',
+                    )}
+                  </p>
+                </div>
+                {inviteMsg && (
+                  <div className="p-3 rounded-lg bg-mint-wash-100 border border-emerald-700/20 text-emerald-800 text-xs font-semibold">
+                    {inviteMsg}
+                  </div>
+                )}
+                <form onSubmit={handleClaimInvite} className="space-y-3">
+                  <input
+                    type="text"
+                    value={inviteToken}
+                    onChange={(e) => setInviteToken(e.target.value)}
+                    placeholder={tx('رمز الدعوة…', 'Invite token…')}
+                    className="w-full h-11 px-3.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs font-mono"
+                  />
+                  <button type="submit" className="w-full h-11 bg-ink-green-900 hover:bg-emerald-700 text-white rounded-[10px] text-xs font-semibold shadow-xs">
+                    {tx('تفعيل الدعوة', 'Claim invite')}
+                  </button>
+                </form>
+              </div>
             </div>
+          </PortalTabChrome>
+        )}
 
-            <h3 className="font-serif text-2xl font-semibold text-ink-green-900">
-              {tx('ربط رقم القيد الأكاديمي', 'Link Son’s Index Number')}
-            </h3>
-
-            <p className="text-xs text-ink-text-secondary leading-relaxed">
-              {tx(
-                'أدخل رقم القيد المخصص للطالب عند قبوله بالكلية (مثال: KH-2026-0147).',
-                'Input the collegiate index number assigned to your ward upon admission (e.g., KH-2026-0147).'
-              )}
-            </p>
-
-            {linkError && (
-              <div className="p-3 rounded-lg bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger text-xs font-medium">
-                {linkError}
-              </div>
-            )}
-
-            <form onSubmit={handleLinkChild} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-ink-text-primary mb-1">
-                  {tx('رقم قيد الطالب *', 'Student Index Number *')}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={linkIndex}
-                  onChange={(e) => setLinkIndex(e.target.value)}
-                  placeholder="KH-2026-0147"
-                  className="w-full h-11 px-3.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs font-mono uppercase text-ink-text-primary"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowLinkModal(false)}
-                  className="px-4 py-2 border border-sand-border rounded-[10px] text-xs font-medium text-ink-text-secondary"
-                >
-                  {tx('إلغاء', 'Cancel')}
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-emerald-700 hover:bg-emerald-500 text-white rounded-[10px] text-xs font-semibold shadow-xs"
-                >
-                  {tx('ربط الحساب', 'Link Account')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
+      </div>
     </DashboardSidebarLayout>
   );
 }

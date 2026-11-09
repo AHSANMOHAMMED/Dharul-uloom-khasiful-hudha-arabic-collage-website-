@@ -24,7 +24,7 @@ export default function UserDashboard() {
     isAuthenticated, isApproved,
     isStudent, isParent, isTutor, isTreasurer,
     isPrincipal, isVP, isLibrarian, isAdmin, isSuperAdmin, isNonTeachingStaff,
-    hasRole, isAccountant, isHrStaff, isAdmissionsStaff, isHostelStaff,
+    hasRole,
     logout, loading: authLoading,
   } = useAuth();
   const { enabled } = useFeatures();
@@ -102,10 +102,12 @@ export default function UserDashboard() {
     );
   }
 
-  const isAccountantRole = isAccountant || hasRole?.('accountant');
-  const isHr = isHrStaff || hasRole?.('hr_manager');
-  const isAdmissions = isAdmissionsStaff || hasRole?.('admissions_officer');
-  const isWarden = hasRole?.('warden') || (isHostelStaff && hasRole?.('warden'));
+  // Duty hats must use explicit staffRoles — isAccountant/isAdmissionsStaff also
+  // return true for admins/principals and would wrongly multi-route leadership.
+  const isAccountantRole = hasRole?.('accountant');
+  const isHr = hasRole?.('hr_manager');
+  const isAdmissions = hasRole?.('admissions_officer');
+  const isWarden = hasRole?.('warden');
   const isCounselor = hasRole?.('counselor');
   const isExam = hasRole?.('exam_officer');
 

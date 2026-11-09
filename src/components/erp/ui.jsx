@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toTamil } from '../../lib/tx';
+import { useErpEmbedded } from '../../context/ErpEmbedContext';
 
 /**
  * Shared ERP UI kit — Modern Manuscript light theme (parchment canvas, white
@@ -242,8 +243,14 @@ export function Tabs({ tabs, active, onChange }) {
 }
 
 export function PageHeader({ title, subtitle, actions }) {
+  const embedded = useErpEmbedded();
+  if (embedded) {
+    // Actions (print/export/new) still matter inside portals; title is provided by portal chrome.
+    if (!actions) return null;
+    return <div className="flex flex-wrap justify-end gap-2 mb-4">{actions}</div>;
+  }
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+    <div className="flex flex-wrap items-end justify-between gap-4 mb-6 erp-page-header">
       <div>
         <h2 className="text-2xl font-serif font-semibold text-ink-green-900">{title}</h2>
         {subtitle && <p className="text-sm text-ink-text-secondary mt-1">{subtitle}</p>}

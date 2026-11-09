@@ -1,8 +1,5 @@
 import { lazy } from 'react';
 import RolePortalShell from '../../components/portals/RolePortalShell';
-import { ERP_QUICK_LINK } from '../../lib/portalChrome';
-import { tx } from '../../lib/tx';
-import { useAuth } from '../../context/AuthContext';
 
 const FinanceTodayPanel = lazy(() => import('../../components/erp/ops/FinanceTodayPanel'));
 const FeeManagement = lazy(() => import('../../components/erp/finance/FeeManagement'));
@@ -14,7 +11,6 @@ const PayrollPanel = lazy(() => import('../../components/erp/finance/PayrollPane
 const AuditLogPanel = lazy(() => import('../../components/erp/finance/AuditLogPanel'));
 
 export default function TreasurerPortal() {
-  const { user } = useAuth();
   const tabs = [
     { id: 'today', label_en: 'Today', label_ar: 'اليوم', icon: 'today', embed: FinanceTodayPanel },
     { id: 'fees', label_en: 'Fees', label_ar: 'الرسوم', icon: 'payments', embed: FeeManagement, embedProps: { embedded: true } },
@@ -37,23 +33,13 @@ export default function TreasurerPortal() {
       }}
       tabs={tabs}
       defaultTab="today"
-      quickLinks={[ERP_QUICK_LINK]}
-      banner={
-        <div className="rounded-[14px] bg-[#0B3B2E] text-white p-5 sm:p-6">
-          <p className="text-[11px] uppercase tracking-wider text-[#C29A3A] font-semibold">
-            {tx('المالية', 'Treasury')}
-          </p>
-          <h1 className="font-serif text-2xl font-semibold mt-1">
-            {tx(`مرحباً، ${user?.username || ''}`, `Welcome, ${user?.username || ''}`)}
-          </h1>
-          <p className="text-xs text-white/75 mt-1 max-w-2xl">
-            {tx(
-              'تحصيل الرسوم، اليومية المحاسبية، الشيكات، التبرعات، والمصروفات من لوحة واحدة.',
-              'Collect fees, post journals, manage cheques, donations and expenses from one desk.',
-            )}
-          </p>
-        </div>
-      }
+      bannerProps={{
+        portal_en: 'Treasury',
+        portal_ar: 'الخزينة',
+        hint_en: 'Collect fees, post journals, and review cash movement from one desk.',
+        hint_ar: 'تحصيل الرسوم وترحيل القيود ومتابعة الحركة النقدية من مكتب واحد.',
+        accent: 'gold',
+      }}
     />
   );
 }

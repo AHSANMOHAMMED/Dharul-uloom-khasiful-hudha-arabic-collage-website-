@@ -181,7 +181,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute end-0 mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[28rem] overflow-hidden rounded-2xl border border-[#E8E1D0] bg-white shadow-lg z-50">
+        <div className="absolute end-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[min(28rem,70vh)] overflow-hidden rounded-2xl border border-[#E8E1D0] bg-white shadow-lg z-[80]">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#E8E1D0] bg-[#FBF8F0]">
             <span className="text-xs font-serif font-bold text-[#0B3B2E]">{tx('الإشعارات الواردة', 'Notifications')}</span>
             <div className="flex items-center gap-3">

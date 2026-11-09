@@ -218,10 +218,9 @@ export default function DashboardSidebarLayout({
             </div>
           </div>
 
-          {/* Tools Strip: Language Switcher, Notifications, Logout */}
+          {/* Tools strip — language only here; notifications sit in the sticky header */}
           <div className="flex items-center justify-between gap-1.5 pt-1">
-            <LanguageSelect className="text-[11px] bg-white border border-[#E8E1D0] text-[#0B3B2E] py-1 px-2 rounded-lg" />
-            <NotificationBell />
+            <LanguageSelect className="text-[11px] bg-white border border-[#E8E1D0] text-[#0B3B2E] py-1 px-2 rounded-lg flex-1" />
             <button
               type="button"
               onClick={logout}
@@ -273,16 +272,27 @@ export default function DashboardSidebarLayout({
             </div>
           </div>
 
-          {/* Right Top Header Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Right Top Header Actions — notifications live here so mobile users can open them without the sidebar */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {topActions}
+
+            <NotificationBell />
+
+            <Link
+              to="/messages"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[#E8E1D0] bg-white text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
+              title={tx('الرسائل', 'Messages')}
+              aria-label={tx('الرسائل', 'Messages')}
+            >
+              <span className="material-symbols-outlined text-[18px] text-[#11694A]">chat</span>
+            </Link>
 
             <Link
               to="/library"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
             >
               <span className="material-symbols-outlined text-[16px] text-[#11694A]">auto_stories</span>
-              <span className="hidden sm:inline">{tx('المكتبة', 'Library')}</span>
+              <span>{tx('المكتبة', 'Library')}</span>
             </Link>
 
             <button
