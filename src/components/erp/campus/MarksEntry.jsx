@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AsyncView, Badge, Button, Card, Field, Input, Select, Table, useAsync, useLang } from '../ui';
-import { query } from '../../../lib/erp/rpc';
+import { query, rpc } from '../../../lib/erp/rpc';
+import { useAuth } from '../../../context/AuthContext';
 import { printTable } from '../../../lib/printReport';
 import { ClassSelect } from './common';
 import { useAction } from './hooks';
@@ -15,14 +16,18 @@ import { useAction } from './hooks';
  */
 export default function MarksEntry() {
   const { t, lang } = useLang();
+  const auth = useAuth();
   const [busy, run] = useAction();
   const [examId, setExamId] = useState('');
   const [paperId, setPaperId] = useState('');
   const [cls, setCls] = useState('');
   const [grid, setGrid] = useState({});
+  const [corrReason, setCorrReason] = useState('');
+  const canCorrect = auth.isAcademicAdmin || auth.isAdmin;
 
   const [exams] = useAsync(() => query('exams', (q) => q.select('id, name, class_number, status').neq('status', 'draft').order('created_at', { ascending: false })), []);
   const exam = (exams.data || []).find((e) => e.id === examId);
+  const published = exam?.status === 'published';
   const [papers] = useAsync(
     () => (examId ? query('exam_subjects', (q) => q.select('*, subjects(code, name_en, name_ar)').eq('exam_id', examId)) : Promise.resolve([])),
     [examId]
@@ -59,6 +64,40 @@ export default function MarksEntry() {
       return;
     }
     const entries = Object.entries(grid).filter(([, v]) => v.marks !== '');
+    if (published) {
+      if (!canCorrect) {
+        window.alert(t('Published results can only be corrected by the exam officer or principal.', 'نتائج الامتحان المنشور يصححها مسؤول الامتحانات أو المدير فقط.'));
+        return;
+      }
+      if (!corrReason.trim()) {
+        window.alert(t('Enter a correction reason before saving published marks.', 'أدخل سبب التصحيح قبل حفظ درجات الامتحان المنشور.'));
+        return;
+      }
+      const changed = entries.filter(([sid, v]) => {
+        const prev = resultsBy[sid];
+        return prev && Number(v.marks) !== Number(prev.marks_obtained);
+      });
+      if (!changed.length) {
+        window.alert(t('No mark changes to correct.', 'لا توجد درجات لتصحيحها.'));
+        return;
+      }
+      const res = await run(async () => {
+        for (const [sid, v] of changed) {
+          const corrId = await rpc('request_result_correction', {
+            p_result: resultsBy[sid].id,
+            p_new_marks: Number(v.marks),
+            p_reason: corrReason.trim(),
+          });
+          await rpc('apply_result_correction', { p_correction: corrId, p_approve: true });
+        }
+        return changed.length;
+      }, (n) => `${n} ${t('corrections applied', 'تصحيحات مطبّقة')}`);
+      if (res.ok) {
+        setCorrReason('');
+        reloadSheet();
+      }
+      return;
+    }
     const base = (studentId, v) => ({
       student_id: studentId, exam_id: examId, subject_id: paper.subject_id,
       marks_obtained: Number(v.marks), max_marks: max, remarks: v.remarks || null,
@@ -138,8 +177,17 @@ export default function MarksEntry() {
           <Button className="w-full" disabled={busy || !paper || !classNo || invalid} onClick={save}>{t('Save marks', 'حفظ الدرجات')}</Button>
         </div>
       </div>
-      {exam?.status === 'published' && (
-        <p className="text-sm text-amber-300 mb-3">{t('This exam is published — only the exam officer / principal can change marks.', 'هذا الامتحان منشور — يمكن لمسؤول الامتحانات أو المدير فقط تعديل الدرجات.')}</p>
+      {published && (
+        <div className="mb-3 space-y-2">
+          <p className="text-sm text-amber-700">
+            {t('This exam is published — mark changes create an audited correction.', 'هذا الامتحان منشور — تغيير الدرجات ينشئ تصحيحاً موثّقاً.')}
+          </p>
+          {canCorrect && (
+            <Field label={t('Correction reason (required)', 'سبب التصحيح (مطلوب)')}>
+              <Input value={corrReason} onChange={(e) => setCorrReason(e.target.value)} placeholder={t('e.g. Script recheck', 'مثال: إعادة تصحيح الورقة')} />
+            </Field>
+          )}
+        </div>
       )}
       {paper && (
         <div className="flex flex-wrap gap-3 text-xs text-gray-400 mb-3">

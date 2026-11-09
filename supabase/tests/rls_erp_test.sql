@@ -1085,6 +1085,130 @@ select tst.ok((select count(*) >= 3 from public.platform_audit_feed(null, null, 
 select tst.succeeds($$select public.platform_update_user('00000000-0000-0000-0000-000000000006', p_assigned_tutor_role => 'none')$$, 'platform: restore staff role');
 
 -- ---------------------------------------------------------------------------
+-- 19. P0 gap closure (0040–0044): storage, period lock, lifecycle, guardians,
+--     result corrections, fee adjustments, hostel leave
+-- ---------------------------------------------------------------------------
+
+-- Storage: private books bucket is staff-read only. Prefer privilege denial;
+-- if SELECT is allowed, assert zero visible rows for non-staff.
+select tst.login('00000000-0000-0000-0000-000000000008'); -- student
+do $$
+declare
+  n int;
+begin
+  begin
+    select count(*) into n from storage.objects where bucket_id = 'books';
+    perform tst.ok(n = 0, 'storage: student lists zero private books objects');
+  exception when insufficient_privilege then
+    perform tst.ok(true, 'storage: student denied storage.objects privilege');
+  end;
+end $$;
+select tst.login('00000000-0000-0000-0000-000000000010'); -- parent
+do $$
+declare
+  n int;
+begin
+  begin
+    select count(*) into n from storage.objects where bucket_id = 'books';
+    perform tst.ok(n = 0, 'storage: parent lists zero private books objects');
+  exception when insufficient_privilege then
+    perform tst.ok(true, 'storage: parent denied storage.objects privilege');
+  end;
+end $$;
+
+-- Period lock blocks posting journals dated on/before the lock date.
+select tst.login('00000000-0000-0000-0000-000000000004'); -- accountant
+select tst.succeeds($$select public.set_books_lock_date(current_date)$$, 'period lock: accountant sets books_locked_until');
+select tst.fails($$
+  select public.create_journal_entry(current_date, 'Should fail under lock',
+    '[{"code":"1000","debit":10},{"code":"3000","credit":10}]'::jsonb, true)
+$$, 'period lock: cannot post journal on locked date');
+select tst.succeeds($$select public.set_books_lock_date(null)$$, 'period lock: clear lock for remaining tests');
+
+-- Ensure student_details row exists for lifecycle tests.
+select tst.as_service();
+insert into public.student_details (profile_id, org_id, status)
+values ('00000000-0000-0000-0000-000000000008', public.default_org_id(), 'active')
+on conflict (profile_id) do update set status = 'active';
+
+select tst.login('00000000-0000-0000-0000-000000000002'); -- principal
+select tst.succeeds($$select public.transition_student_status('00000000-0000-0000-0000-000000000008', 'suspended', 'Disciplinary review', '{}'::jsonb)$$,
+                    'lifecycle: principal suspends student');
+select tst.ok((select status = 'suspended' from public.student_details where profile_id = '00000000-0000-0000-0000-000000000008'),
+              'lifecycle: status persisted');
+select tst.ok((select count(*) >= 1 from public.student_lifecycle_events
+               where student_id = '00000000-0000-0000-0000-000000000008' and to_status = 'suspended'),
+              'lifecycle: event recorded');
+select tst.succeeds($$select public.transition_student_status('00000000-0000-0000-0000-000000000008', 'active', 'Restored', '{}'::jsonb)$$,
+                    'lifecycle: restore to active');
+
+-- Guardian unlink revokes parent visibility of results.
+select tst.succeeds($$select public.unlink_child('00000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000008', 'Custody change')$$,
+                    'guardian: principal unlinks parent');
+select tst.login('00000000-0000-0000-0000-000000000010');
+select tst.ok((select count(*) = 0 from public.student_results where student_id = '00000000-0000-0000-0000-000000000008'),
+              'guardian: revoked parent sees no child results');
+-- Direct parent_children writes are blocked by RLS; restore via service role for later suite steps.
+select tst.as_service();
+select tst.succeeds($$
+  update public.parent_children
+  set status = 'active', revoked_at = null, revoke_reason = null, revoked_by = null, verified_at = coalesce(verified_at, now())
+  where parent_id = '00000000-0000-0000-0000-000000000010'
+    and child_id = '00000000-0000-0000-0000-000000000008'
+$$, 'guardian: restore active link for remaining suite');
+
+-- Published result requires correction RPC (direct update blocked).
+select tst.login('00000000-0000-0000-0000-000000000002');
+update public.exams set status = 'published', published_at = now() where id = 'e0000000-0000-0000-0000-000000000001';
+select tst.fails($$
+  update public.student_results set marks_obtained = marks_obtained + 1
+  where exam_id = 'e0000000-0000-0000-0000-000000000001' and student_id = '00000000-0000-0000-0000-000000000008'
+$$, 'results: direct edit blocked after publish');
+select tst.succeeds($$
+  select public.apply_result_correction(
+    public.request_result_correction(
+      (select id from public.student_results where exam_id = 'e0000000-0000-0000-0000-000000000001' and student_id = '00000000-0000-0000-0000-000000000008' limit 1),
+      55, 'Script recheck'),
+    true)
+$$, 'results: audited correction applied');
+
+-- Fee credit adjustment (credit the same invoice that received the new charge).
+select tst.login('00000000-0000-0000-0000-000000000004'); -- accountant
+select tst.succeeds($$
+  select public.credit_fee_invoice(
+    public.add_fee_charges(
+      '00000000-0000-0000-0000-000000000008',
+      to_char(current_date, 'YYYY-MM'),
+      '[{"category":"OTHER","description":"P0 credit test charge","amount":25}]'::jsonb),
+    5, 'Goodwill credit')
+$$, 'fees: credit_fee_invoice posts adjustment');
+select tst.ok((select count(*) >= 1 from public.fee_adjustments where kind = 'credit'),
+              'fees: fee_adjustments row recorded');
+
+-- Hostel overnight leave (ensure active allocation on capacity room).
+select tst.as_service();
+update public.hostel_rooms set capacity = 4 where id = 'c0000000-0000-0000-0000-000000000001';
+insert into public.hostel_allocations (org_id, student_id, room_id, bed_no, status)
+select public.default_org_id(), '00000000-0000-0000-0000-000000000008', 'c0000000-0000-0000-0000-000000000001', 'A', 'active'
+where not exists (
+  select 1 from public.hostel_allocations
+  where student_id = '00000000-0000-0000-0000-000000000008' and status = 'active'
+);
+select tst.login('00000000-0000-0000-0000-000000000016');
+select tst.succeeds($$
+  select public.approve_hostel_leave(
+    '00000000-0000-0000-0000-000000000008',
+    now() - interval '1 hour',
+    now() + interval '2 hours',
+    'Family visit',
+    'Kalpitiya')
+$$, 'hostel: warden approves overnight leave');
+select tst.succeeds($$
+  select public.mark_hostel_leave_return(
+    (select id from public.hostel_leave_passes where student_id = '00000000-0000-0000-0000-000000000008' order by created_at desc limit 1))
+$$, 'hostel: mark leave returned');
+
+-- ---------------------------------------------------------------------------
 select tst.logout();
 \echo '-----------------------------------------------'
 select count(*) filter (where ok) as passed, count(*) filter (where not ok) as failed from tst.results;

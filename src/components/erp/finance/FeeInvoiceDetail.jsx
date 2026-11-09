@@ -227,6 +227,16 @@ export default function FeeInvoiceDetail({ invoiceId, student, onClose, onChange
                     {t('Waive balance', 'إعفاء الرصيد')}
                   </Button>
                 )}
+                {open && canWaive && balance > 0 && (
+                  <Button size="sm" variant="secondary" onClick={() => setMode('credit')}>
+                    {t('Credit invoice', 'قيد دائن')}
+                  </Button>
+                )}
+                {open && canWaive && balance > 0 && (
+                  <Button size="sm" variant="secondary" onClick={() => setMode('writeoff')}>
+                    {t('Write off', 'شطب')}
+                  </Button>
+                )}
                 {open && isFinanceStaff && (
                   <Button
                     size="sm"
@@ -277,6 +287,78 @@ export default function FeeInvoiceDetail({ invoiceId, student, onClose, onChange
                         p_amount: num(waiveAmount) > 0 ? num(waiveAmount) : null,
                       }),
                     t('Balance waived', 'تم إعفاء الرصيد'),
+                  );
+                  if (ok) {
+                    setWaiveAmount('');
+                    refresh();
+                  }
+                  return ok;
+                }}
+              >
+                <Field label={t('Amount (blank = full balance)', 'المبلغ (فارغ = كامل الرصيد)')}>
+                  <Input type="number" min="0" step="0.01" value={waiveAmount} onChange={(e) => setWaiveAmount(e.target.value)} />
+                </Field>
+              </ConfirmModal>
+
+              <ConfirmModal
+                open={mode === 'credit'}
+                title={t('Credit invoice', 'قيد دائن على الفاتورة')}
+                message={t(
+                  `Post a credit adjustment up to ${formatMoney(balance)} without rewriting issued lines.`,
+                  `تسجيل قيد دائن حتى ${formatMoney(balance)} دون تعديل بنود الفاتورة الأصلية.`,
+                )}
+                requireReason
+                danger={false}
+                confirmLabel={t('Post credit', 'ترحيل القيد')}
+                onClose={() => {
+                  setMode(null);
+                  setWaiveAmount('');
+                }}
+                onConfirm={async (reason) => {
+                  const amt = num(waiveAmount);
+                  if (!(amt > 0)) {
+                    window.alert(t('Enter a credit amount.', 'أدخل مبلغ القيد الدائن.'));
+                    return false;
+                  }
+                  const ok = await runAction(
+                    () => rpc('credit_fee_invoice', { p_fee: invoice.id, p_amount: amt, p_reason: reason }),
+                    t('Credit posted', 'تم ترحيل القيد الدائن'),
+                  );
+                  if (ok) {
+                    setWaiveAmount('');
+                    refresh();
+                  }
+                  return ok;
+                }}
+              >
+                <Field label={t('Credit amount', 'مبلغ القيد الدائن')}>
+                  <Input type="number" min="0" step="0.01" value={waiveAmount} onChange={(e) => setWaiveAmount(e.target.value)} />
+                </Field>
+              </ConfirmModal>
+
+              <ConfirmModal
+                open={mode === 'writeoff'}
+                title={t('Write off balance', 'شطب الرصيد')}
+                message={t(
+                  `Write off up to ${formatMoney(balance)} with an audited adjustment.`,
+                  `شطب حتى ${formatMoney(balance)} مع قيد تدقيق.`,
+                )}
+                requireReason
+                danger={false}
+                confirmLabel={t('Write off', 'شطب')}
+                onClose={() => {
+                  setMode(null);
+                  setWaiveAmount('');
+                }}
+                onConfirm={async (reason) => {
+                  const ok = await runAction(
+                    () =>
+                      rpc('write_off_fee_invoice', {
+                        p_fee: invoice.id,
+                        p_reason: reason,
+                        p_amount: num(waiveAmount) > 0 ? num(waiveAmount) : null,
+                      }),
+                    t('Balance written off', 'تم شطب الرصيد'),
                   );
                   if (ok) {
                     setWaiveAmount('');

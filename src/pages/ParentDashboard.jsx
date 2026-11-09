@@ -73,8 +73,9 @@ export default function ParentDashboard() {
       setLoading(true);
       const { data, error } = await supabase
         .from('parent_children')
-        .select('child_id, profiles!parent_children_child_id_fkey(id, full_name, index_number, class_number)')
-        .eq('parent_id', user.id);
+        .select('child_id, status, profiles!parent_children_child_id_fkey(id, full_name, index_number, class_number)')
+        .eq('parent_id', user.id)
+        .eq('status', 'active');
 
       if (error) throw error;
       

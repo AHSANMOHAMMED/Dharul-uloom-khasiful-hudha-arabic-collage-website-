@@ -15,7 +15,7 @@ const EMPTY = {
 };
 const STATUSES = ['active', 'suspended', 'graduated', 'withdrawn', 'transferred', 'alumni'];
 
-function DetailsForm({ student, canEdit, onSaved }) {
+function DetailsForm({ student, canEdit, canTransition, onSaved }) {
   const { t, lang } = useLang();
   const [busy, run] = useAction();
   const [state, reload] = useAsync(
@@ -36,19 +36,43 @@ function DetailsForm({ student, canEdit, onSaved }) {
 
   const save = async (e) => {
     e.preventDefault();
+    const prevStatus = state.data?.status || 'active';
+    const nextStatus = form.status || 'active';
     const row = { profile_id: student.id };
     Object.entries(form).forEach(([k, v]) => {
+      if (k === 'status' || k === 'status_reason') return;
       row[k] = v === '' ? null : v;
     });
-    row.status = form.status || 'active';
+    // Keep prior status on upsert — transitions go through the audited RPC.
+    row.status = prevStatus;
+    row.status_reason = state.data?.status_reason ?? null;
     const res = await run(
       () => query('student_details', (q) => q.upsert(row, { onConflict: 'profile_id' }).select().single()),
       t('Student record saved', 'تم حفظ سجل الطالب')
     );
-    if (res.ok) {
-      reload();
-      onSaved?.();
+    if (!res.ok) return;
+    if (nextStatus !== prevStatus) {
+      if (!canTransition) {
+        window.alert(t('Only the principal or admin can change lifecycle status.', 'يمكن للمدير أو المسؤول فقط تغيير حالة دورة الحياة.'));
+        reload();
+        return;
+      }
+      const tr = await run(
+        () => rpc('transition_student_status', {
+          p_student: student.id,
+          p_to_status: nextStatus,
+          p_reason: form.status_reason || t('Status updated from student record', 'تم تحديث الحالة من سجل الطالب'),
+          p_evidence: {},
+        }),
+        t('Lifecycle status updated', 'تم تحديث حالة السجل')
+      );
+      if (!tr.ok) {
+        reload();
+        return;
+      }
     }
+    reload();
+    onSaved?.();
   };
 
   if (state.loading && !state.data) return <Loading />;
@@ -81,7 +105,7 @@ function DetailsForm({ student, canEdit, onSaved }) {
         {f('emergency_contact', t('Emergency contact', 'جهة اتصال الطوارئ'))}
         {f('blood_group', t('Blood group', 'فصيلة الدم'))}
         <Field label={t('Status', 'الحالة')}>
-          <Select value={form.status} onChange={set('status')} disabled={!canEdit} options={STATUSES.map((s) => ({ value: s, label: s }))} />
+          <Select value={form.status} onChange={set('status')} disabled={!canTransition} options={STATUSES.map((s) => ({ value: s, label: s }))} />
         </Field>
         {f('status_reason', t('Status reason', 'سبب الحالة'))}
       </div>
@@ -226,6 +250,75 @@ function Fees({ student }) {
   );
 }
 
+function LifecycleEvents({ student }) {
+  const { t } = useLang();
+  const [state] = useAsync(
+    () => query('student_lifecycle_events', (q) =>
+      q.select('id, from_status, to_status, reason, created_at, actor:profiles!actor_id(full_name)')
+        .eq('student_id', student.id).order('created_at', { ascending: false }).limit(50)),
+    [student.id]
+  );
+  return (
+    <AsyncView state={state}>
+      {(rows) => (
+        <Table rows={rows} empty={t('No lifecycle events yet.', 'لا توجد أحداث دورة حياة بعد.')} columns={[
+          { key: 'when', label: t('When', 'متى'), render: (r) => formatDate(r.created_at) },
+          { key: 'from', label: t('From', 'من'), render: (r) => r.from_status || '—' },
+          { key: 'to', label: t('To', 'إلى'), render: (r) => <StatusBadge status={r.to_status} /> },
+          { key: 'reason', label: t('Reason', 'السبب') },
+          { key: 'by', label: t('By', 'بواسطة'), render: (r) => r.actor?.full_name || '—' },
+        ]} />
+      )}
+    </AsyncView>
+  );
+}
+
+function GuardianLinks({ student }) {
+  const { t } = useLang();
+  const auth = useAuth();
+  const [busy, run] = useAction();
+  const canUnlink = auth.isAdmin || auth.isPrincipal || auth.isVP || auth.isAdmissionsStaff;
+  const [state, reload] = useAsync(
+    () => query('parent_children', (q) =>
+      q.select('id, parent_id, status, permissions, relationship, verified_at, revoked_at, parent:profiles!parent_id(full_name, email, phone)')
+        .eq('child_id', student.id).order('created_at', { ascending: false })),
+    [student.id]
+  );
+  const unlink = async (row) => {
+    const reason = window.prompt(t('Reason for unlinking this guardian?', 'سبب إلغاء ربط ولي الأمر؟'));
+    if (!reason) return;
+    const res = await run(
+      () => rpc('unlink_child', { p_parent: row.parent_id, p_child: student.id, p_reason: reason }),
+      t('Guardian unlinked', 'تم إلغاء الربط')
+    );
+    if (res.ok) reload();
+  };
+  return (
+    <AsyncView state={state}>
+      {(rows) => (
+        <Table rows={rows} empty={t('No guardian links.', 'لا توجد روابط أولياء أمور.')} columns={[
+          { key: 'parent', label: t('Guardian', 'ولي الأمر'), render: (r) => (
+            <div>
+              <div>{r.parent?.full_name || '—'}</div>
+              <div className="text-xs text-ink-text-muted">{r.parent?.email} {r.parent?.phone}</div>
+            </div>
+          ) },
+          { key: 'relationship', label: t('Relationship', 'الصلة') },
+          { key: 'status', label: t('Status', 'الحالة'), render: (r) => <StatusBadge status={r.status} /> },
+          { key: 'verified_at', label: t('Verified', 'التحقق'), render: (r) => formatDate(r.verified_at) },
+          {
+            key: 'act',
+            label: '',
+            render: (r) => (canUnlink && r.status === 'active' ? (
+              <Button size="sm" variant="danger" disabled={busy} onClick={() => unlink(r)}>{t('Unlink', 'إلغاء الربط')}</Button>
+            ) : null),
+          },
+        ]} />
+      )}
+    </AsyncView>
+  );
+}
+
 function AdminControls({ student, onChanged }) {
   const { t } = useLang();
   const auth = useAuth();
@@ -272,6 +365,7 @@ export default function StudentDetail({ student, onClose, onChanged }) {
   const [tab, setTab] = useState('record');
   if (!student) return null;
   const canEdit = auth.isAcademicAdmin || auth.isAdmissionsStaff;
+  const canTransition = auth.isAdmin || auth.isPrincipal || auth.isVP;
   return (
     <WideModal open title={student.full_name || student.email} onClose={onClose}>
       <KeyValue items={[
@@ -284,12 +378,16 @@ export default function StudentDetail({ student, onClose, onChanged }) {
       ]} />
       <Tabs active={tab} onChange={setTab} tabs={[
         { id: 'record', label: t('Student record', 'سجل الطالب') },
+        { id: 'lifecycle', label: t('Lifecycle', 'دورة الحياة') },
+        { id: 'guardians', label: t('Guardians', 'أولياء الأمور') },
         { id: 'enrol', label: t('Enrolments', 'التسجيلات') },
         { id: 'perf', label: t('Attendance & results', 'الحضور والنتائج') },
         { id: 'fees', label: t('Fees', 'الرسوم') },
         { id: 'account', label: t('Account', 'الحساب') },
       ]} />
-      {tab === 'record' && <DetailsForm student={student} canEdit={canEdit} onSaved={onChanged} />}
+      {tab === 'record' && <DetailsForm student={student} canEdit={canEdit} canTransition={canTransition} onSaved={onChanged} />}
+      {tab === 'lifecycle' && <LifecycleEvents student={student} />}
+      {tab === 'guardians' && <GuardianLinks student={student} />}
       {tab === 'enrol' && <Enrolments student={student} />}
       {tab === 'perf' && <AttendanceAndResults student={student} />}
       {tab === 'fees' && <Fees student={student} />}

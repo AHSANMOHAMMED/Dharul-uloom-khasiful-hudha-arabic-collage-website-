@@ -207,6 +207,37 @@ Before enabling real payments or opening registration:
    migration has already changed the database contract, roll back the frontend
    and edge functions only after checking compatibility with the deployed schema.
 
+## Backup, restore drill, and recovery targets
+
+A backup that has never been restored is an unproven recovery plan.
+
+| Field | Value (set with college management) |
+|-------|-------------------------------------|
+| RPO (max acceptable data loss) | _e.g. 24h — confirm_ |
+| RTO (max acceptable recovery time) | _e.g. 8h — confirm_ |
+| Supabase plan / PITR | _record plan_ |
+| Off-site dump owner | _name_ |
+| Last successful restore drill | _date / staging project_ |
+
+### Restore checklist (staging)
+
+1. Record production migration version and Edge Function versions.  
+2. `supabase db dump` (or plan backup) **and** export required Storage buckets (DB dump alone does not restore student documents).  
+3. Store encrypted backup off the production project with restricted access.  
+4. Restore into a **separate** staging project.  
+5. Validate: one student, one fee receipt, one parent link, one published result, one library/cover object if used.  
+6. Log duration, data-loss window, failures, and sign-off.  
+7. Before each migration batch in production, take a backup and note version (see safety gates above).
+
+### Scheduled job owners
+
+| Job | Schedule / trigger | Idempotent? | Alert when | Owner |
+|-----|--------------------|-------------|------------|-------|
+| `generate-monthly-fees` | Cron / staff | Must not double-invoice | Failure / timeout | Finance |
+| `send-outbound` | Worker / cron | Per-row claim | Stuck queued / high fail | IT |
+| `run_daily_reminders` | Cron | Yes | Missed day | IT |
+| PayHere notify | Gateway POST | `apply_gateway_payment` | Rejected / unmatched | Finance + IT |
+
 ## Monitoring and rollback
 
 Monitor these signals after release:

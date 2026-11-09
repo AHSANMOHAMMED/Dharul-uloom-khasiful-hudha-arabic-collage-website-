@@ -261,15 +261,19 @@ Parity rule: **same RPCs and tables**; mobile may use simpler UI but must not in
 
 ## 8. Known gaps & polish backlog (honest)
 
-These are **depth/polish**, not “module missing from the map”:
+Track verifiable status in [GAP_STATUS_REGISTER.md](./GAP_STATUS_REGISTER.md) — do not treat “listed in a portal” as production-verified.
 
-1. **Legacy dashboards** (`PrincipalDashboard`, `TreasurerDashboard`) still in repo — keep unused or delete after tests stop referencing them.  
-2. **Some ERP panels** still use gray utility classes — rely on `.erp-theme` bridge; gradual token migration preferred.  
-3. **LMS** quizzes / discussion boards thinner than commercial LMS.  
-4. **Bank reconciliation / budgeting** UI polish incomplete vs enterprise finance suites.  
-5. **Ops:** live PayHere merchant E2E, Twilio/Resend/Expo push + crons, EAS store IDs, Tamil linguistic review, custom domains per org.  
-6. **Mobile:** fewer dense chart dashboards; some admin CMS flows stay web-first.  
-7. **Theme drift risk:** any new portal must use `ROLE_BADGE` + parchment shell — no one-off color systems.
+Still open after Phase 1 P0:
+
+1. **Legacy dashboards** (`PrincipalDashboard`, `TreasurerDashboard`) — unused entry path; prefer portals.  
+2. **ERP panel token migration** — `.erp-theme` bridge; gradual cleanup.  
+3. **LMS quizzes / discussion** — foundation only.  
+4. **Bank reconciliation / budgeting UI** — Partial.  
+5. **Ops integrations** — PayHere live E2E, Twilio/Resend/Expo crons, EAS IDs.  
+6. **Exam appeals / resits** — Missing (corrections closed in P0).  
+7. **Hostel emergency roll-call** — Missing (overnight leave closed in P0).  
+8. **APIT / effective-dated payroll tables** — Missing.  
+9. **Mobile offline sync** — Missing (see §11.8).
 
 ---
 
@@ -296,4 +300,96 @@ These are **depth/polish**, not “module missing from the map”:
 
 ---
 
-*Updated for portal theme unification, single Sign-out chrome, overview→full-module navigation, and web/mobile feature parity expansions. For phase vision use MASTER_PRD; for deploy use GO_LIVE.md.*
+## 11. Operational rulebook (Phase 0 / P0)
+
+Statuses: see [GAP_STATUS_REGISTER.md](./GAP_STATUS_REGISTER.md). Privacy: [PRIVACY_PDPA.md](./PRIVACY_PDPA.md). Ops: [GO_LIVE.md](./GO_LIVE.md).
+
+### 11.1 Student lifecycle state machine
+
+Canonical record statuses on `student_details.status`: `active`, `suspended`, `graduated`, `withdrawn`, `transferred`, `alumni`.
+
+**Audited transitions** via `transition_student_status` → `student_lifecycle_events` (never delete the student to mean exit):
+
+| From | To | Who |
+|------|----|-----|
+| active | suspended / withdrawn / transferred / graduated | principal, VP, admin |
+| suspended | active / withdrawn | principal, VP, admin |
+| withdrawn / transferred / graduated | (no auto reverse) | Requires new policy decision |
+
+Side effects on withdraw/transfer: end open hostel allocations. Fee cancel/credit is a separate finance RPC (do not auto-void paid receipts).
+
+### 11.2 Guardian relationship model
+
+- Links live in `parent_children` with `status` (`active`|`revoked`), category `permissions`, verification/revoke metadata.
+- `request_child_link`: auto-link only when a **single** admission contact match; ambiguous matches → staff review queue.
+- `unlink_child` revokes future access; history retained.
+- Parent RLS reads require `status = 'active'`.
+
+### 11.3 Permission matrix (summary)
+
+| Layer | Rule |
+|-------|------|
+| Tenant | `org_id` / `current_org_id()` — never trust client org alone |
+| Role/hat | staff helpers + duties; UI RoleSwitcher is navigation only |
+| Relationship | tutor↔class, parent↔active child, counselor↔assigned case |
+| Record state | published results locked; books period lock; confidential welfare |
+| Approval | payroll maker≠checker; result correction apply path; finance adjustments audited |
+| MFA | `mfa_ok()` on privileged helpers |
+
+### 11.4 Financial invariants
+
+- Invoice line amounts are not silently rewritten after issue; use `fee_adjustments` / credit / write-off RPCs.
+- One PayHere payment ID applied at most once (`apply_gateway_payment`).
+- Browser return URL is not authority — notify_url + md5sig is.
+- Posted journals balance; reverse/adjust, do not delete.
+- `books_locked_until` blocks posting in locked periods.
+
+### 11.5 Assessment / result lifecycle
+
+`draft → scheduled → marking → published`. After publish, tutors cannot edit marks; controlled path = `result_corrections` + `apply_result_correction`. Appeals/resits = Missing (Phase 2).
+
+### 11.6 Safeguarding / confidentiality
+
+Welfare cases: `is_confidential`, assignee, `is_welfare_staff()`. Do not put case detail in SMS/push. Escalation routes = Needs institutional policy. Hostel overnight leave tracked in `hostel_leave_passes`; emergency roll-call UI still Missing.
+
+### 11.7 Privacy register and retention
+
+See [PRIVACY_PDPA.md](./PRIVACY_PDPA.md). Legal basis and retention numbers require college counsel before 1 Jan 2027 PDPA commencement provisions.
+
+### 11.8 Offline / mobile sync contract
+
+**Authoritative server required** for: payments, result publish/correction, role changes, welfare case closure, guardian link/unlink, fee adjustments.  
+**Future (Phase 2):** attendance draft offline with idempotency keys — not implemented. Never last-write-wins for marks/fees/safeguarding.
+
+### 11.9 Outbox delivery contract
+
+Per-recipient rows: queued → processing → accepted/delivered/failed (see messaging migrations). Consent: `profiles.notify_*`. Quiet hours / Unicode segment cost preview = Missing.
+
+### 11.10 Operational readiness
+
+Backup/restore drill and job owners: [GO_LIVE.md](./GO_LIVE.md). Set RPO/RTO with college management. A backup never restored is unproven.
+
+### 11.11 Tenant SaaS lifecycle
+
+`/platform` provisions orgs, ACL, acting-org. Subscription suspension must not erase academic/financial history — Needs institutional policy for export/grace read-only.
+
+### 11.12 Acceptance test catalogue
+
+| Scenario (gap MD §16) | Automated / UAT |
+|-----------------------|-----------------|
+| Ambiguous parent phone → no auto-link | `test:db` + `0041` |
+| Guardian unlink revokes access | `test:db` unlink |
+| Triple PayHere callback | existing `apply_gateway_payment` tests |
+| Wrong amount callback rejected | payhere-notify + RPC |
+| Edit marks after publish blocked | `0042` + MarksEntry |
+| Withdraw preserves history | `0040` + `test:db` |
+| Cross-tenant org_id change | existing RLS suite |
+| Storage wrong parent denied | `test:db` storage negatives |
+| Hostel leave overdue visible | `0044` UI + RPC |
+| Tamil/Arabic broadcast cost | UAT (Missing automation) |
+| Production restore drill | GO_LIVE checklist (ops) |
+
+---
+
+*Updated for P0 gap closure (lifecycle, guardians, result corrections, fee adjustments, hostel leave) and operational rulebook. Evidence: GAP_STATUS_REGISTER.md.*
+

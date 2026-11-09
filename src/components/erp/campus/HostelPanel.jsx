@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
-import { deleteRow, formatDate, formatMoney, insertRow, query, today, updateRow } from '../../../lib/erp/rpc';
+import { deleteRow, formatDate, formatMoney, insertRow, query, rpc, today, updateRow } from '../../../lib/erp/rpc';
 import { studentLabel } from '../../../lib/erp/campusApi';
 import { StudentPicker } from './common';
 import { useAction, useEmployees, useStudents } from './hooks';
@@ -185,10 +185,94 @@ function Residents({ canManage, onChanged }) {
   );
 }
 
+function OvernightLeave({ allocations, canManage }) {
+  const { t } = useLang();
+  const [busy, run] = useAction();
+  const [form, setForm] = useState(null);
+  const [state, reload] = useAsync(async () => {
+    await rpc('refresh_hostel_leave_overdue').catch(() => null);
+    return query('hostel_leave_passes', (q) =>
+      q.select('*, student:profiles!student_id(full_name, index_number)')
+        .order('return_by', { ascending: false }).limit(200));
+  }, []);
+
+  const approve = async () => {
+    const res = await run(() => rpc('approve_hostel_leave', {
+      p_student: form.student_id,
+      p_depart_at: new Date(form.depart_at).toISOString(),
+      p_return_by: new Date(form.return_by).toISOString(),
+      p_reason: form.reason,
+      p_destination: form.destination || null,
+    }), t('Leave pass approved', 'تمت الموافقة على الإجازة'));
+    if (res.ok) { setForm(null); reload(); }
+  };
+  const markReturn = async (row) => {
+    const res = await run(() => rpc('mark_hostel_leave_return', { p_leave: row.id }), t('Return recorded', 'تم تسجيل العودة'));
+    if (res.ok) reload();
+  };
+
+  const housedOptions = (allocations || []).map((a) => ({
+    value: a.student_id,
+    label: `${a.student?.full_name || ''} · ${a.student?.index_number || ''}`,
+  }));
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        {canManage && (
+          <Button onClick={() => setForm({
+            student_id: '',
+            depart_at: `${today()}T16:00`,
+            return_by: `${today()}T20:00`,
+            reason: '',
+            destination: '',
+          })}>
+            {t('Approve overnight leave', 'الموافقة على إجازة ليلية')}
+          </Button>
+        )}
+      </div>
+      <AsyncView state={state}>
+        {(rows) => (
+          <Table rows={rows} empty={t('No leave passes.', 'لا توجد تصاريح إجازة.')} columns={[
+            { key: 'student', label: t('Student', 'الطالب'), render: (r) => r.student?.full_name || '—' },
+            { key: 'depart_at', label: t('Depart', 'المغادرة'), render: (r) => formatDate(r.depart_at) },
+            { key: 'return_by', label: t('Return by', 'العودة قبل'), render: (r) => formatDate(r.return_by) },
+            { key: 'status', label: t('Status', 'الحالة'), render: (r) => <Badge tone={r.status === 'overdue' ? 'red' : r.status === 'returned' ? 'green' : 'amber'}>{r.status}</Badge> },
+            { key: 'reason', label: t('Reason', 'السبب') },
+            {
+              key: 'act',
+              label: '',
+              render: (r) => (canManage && ['approved', 'out', 'overdue'].includes(r.status) ? (
+                <Button size="sm" disabled={busy} onClick={() => markReturn(r)}>{t('Mark returned', 'تسجيل العودة')}</Button>
+              ) : null),
+            },
+          ]} />
+        )}
+      </AsyncView>
+      <Modal open={Boolean(form)} title={t('Approve overnight leave', 'الموافقة على إجازة ليلية')} onClose={() => setForm(null)}
+        footer={<><Button variant="ghost" onClick={() => setForm(null)}>{t('Cancel', 'إلغاء')}</Button><Button disabled={busy || !form?.student_id || !form?.reason} onClick={approve}>{t('Approve', 'موافقة')}</Button></>}>
+        {form && (
+          <div className="space-y-3">
+            <Field label={t('Student', 'الطالب')}>
+              <Select value={form.student_id} onChange={(e) => setForm({ ...form, student_id: e.target.value })} placeholder={t('Select resident…', 'اختر مقيماً…')} options={housedOptions} />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={t('Depart at', 'وقت المغادرة')}><Input type="datetime-local" value={form.depart_at} onChange={(e) => setForm({ ...form, depart_at: e.target.value })} /></Field>
+              <Field label={t('Return by', 'العودة قبل')}><Input type="datetime-local" value={form.return_by} onChange={(e) => setForm({ ...form, return_by: e.target.value })} /></Field>
+            </div>
+            <Field label={t('Destination', 'الوجهة')}><Input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} /></Field>
+            <Field label={t('Reason', 'السبب')}><Textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} /></Field>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
 export default function HostelPanel() {
   const { t } = useLang();
   const auth = useAuth();
-  const canManage = auth.isHostelStaff;
+  const canManage = auth.isHostelStaff || auth.isPrincipal || auth.isVP || auth.isAdmin;
   // In the URL (?hostel=) so Back/Forward and links reach this tab.
   const [tab, setTab] = useUrlState('hostel', 'occupancy');
   const [state, reload] = useHostelData();
@@ -225,6 +309,7 @@ export default function HostelPanel() {
         actions={canManage && <Button onClick={() => setAlloc({ student_id: '', room_id: '', bed_no: '', start_date: today(), notes: '' })}>{t('Allocate student', 'تخصيص طالب')}</Button>} />
       <Tabs active={tab} onChange={setTab} tabs={[
         { id: 'occupancy', label: t('Occupancy', 'الإشغال') },
+        { id: 'leave', label: t('Overnight leave', 'إجازة ليلية') },
         { id: 'residents', label: t('Residents', 'المقيمون') },
         { id: 'setup', label: t('Hostels & rooms', 'المساكن والغرف') },
       ]} />
@@ -233,6 +318,7 @@ export default function HostelPanel() {
           <>
             {tab === 'occupancy' && <Occupancy data={d} canManage={canManage} busy={busy} onEnd={endAlloc}
               onAllocate={(roomId) => setAlloc({ student_id: '', room_id: roomId || '', bed_no: '', start_date: today(), notes: '' })} />}
+            {tab === 'leave' && <OvernightLeave allocations={d.allocations} canManage={canManage} />}
             {tab === 'residents' && <Residents canManage={canManage} onChanged={reload} />}
             {tab === 'setup' && <HostelsAndRooms data={d} reload={reload} canManage={canManage} />}
           </>

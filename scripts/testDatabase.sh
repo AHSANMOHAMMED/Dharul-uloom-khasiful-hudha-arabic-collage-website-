@@ -9,6 +9,21 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CONTAINER=""
 
+# Homebrew libpq is often unlinked; prefer it when `psql` is not on PATH.
+if ! command -v psql >/dev/null 2>&1; then
+  for candidate in /opt/homebrew/opt/libpq/bin /usr/local/opt/libpq/bin; do
+    if [[ -x "$candidate/psql" ]]; then
+      export PATH="$candidate:$PATH"
+      break
+    fi
+  done
+fi
+if ! command -v psql >/dev/null 2>&1; then
+  echo "psql not found. Install libpq (e.g. brew install libpq) or put psql on PATH." >&2
+  exit 1
+fi
+
+
 if [[ -z "${TEST_DATABASE_URL:-}" ]]; then
   CONTAINER="dukh-db-test-$$"
   docker run -d --rm --name "$CONTAINER" -e POSTGRES_PASSWORD=test -p 55439:5432 postgres:16 >/dev/null
