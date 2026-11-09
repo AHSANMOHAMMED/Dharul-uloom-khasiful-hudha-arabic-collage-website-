@@ -50,9 +50,13 @@ Only admins can change these fields (trigger `tg_profiles_guard`); admins cannot
 | Library catalog | read | read | read | read | read | read | read | read | read | ✏️ | ✏️ |
 | Audit log | — | — | — | — | read | — | — | — | — | — | read |
 | Organization branding | — | — | — | — | — | — | — | — | — | — | own org |
-| Plans, tenants, suspension | — | — | — | — | — | — | — | — | — | — | super_admin only |
+| Finance Hub (billing jobs, bills, quotations) | — | — | — | ✏️ | ✏️ | — | read/create | — | — | — | ✏️ |
+| Hard-delete voided finance docs | — | — | — | — | — | — | — | — | — | — | super_admin only |
+| Plans, tenants, suspension, communities, user ACL | — | — | — | — | — | — | — | — | — | — | super_admin only |
 
-Public (anon): website content, `verify_student_index`, `verify_certificate(code)`.
+Public (anon): website content, `verify_student_index`, `verify_certificate(code)`, finance doc tokens (`/q/:token`, `/b/:token`), fee receipts (`/r/:token`).
+
+See also [FINANCE_HUB.md](./FINANCE_HUB.md) and Super Admin `/platform` sidebar (identity, role/user feature ACL, communities, audit feed).
 
 ## Integrity rules (database-enforced)
 

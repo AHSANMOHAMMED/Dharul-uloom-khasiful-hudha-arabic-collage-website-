@@ -67,6 +67,7 @@ const ErpWorkspace = lazy(() => import('./pages/erp/ErpWorkspace'))
 const SuperAdminConsole = lazy(() => import('./pages/SuperAdminConsole'))
 const VerifyCertificate = lazy(() => import('./pages/erp/VerifyCertificate'))
 const ReceiptPublic = lazy(() => import('./pages/ReceiptPublic'))
+const FinanceDocPublic = lazy(() => import('./pages/FinanceDocPublic'))
 const AccountSecurity = lazy(() => import('./pages/AccountSecurity'))
 const Messages = lazy(() => import('./pages/Messages'))
 
@@ -186,6 +187,8 @@ function App() {
                 <Route path="/verify/:code" element={<VerifyCertificate />} />
                 <Route path="/r/:token"   element={<ReceiptPublic />} />
                 <Route path="/receipt/:id" element={<ReceiptPublic />} />
+                <Route path="/q/:token"   element={<FinanceDocPublic />} />
+                <Route path="/b/:token"   element={<FinanceDocPublic />} />
                 <Route path="*"           element={<NotFound />} />
               </Routes>
             </Suspense>

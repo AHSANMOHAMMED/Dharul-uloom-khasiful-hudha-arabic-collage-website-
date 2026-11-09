@@ -21,6 +21,7 @@ export default function StaffMore() {
       label: t(s.title) || s.title,
     })),
     ...(caps.isFinanceViewer ? [{ href: '/finance', icon: 'wallet-outline', label: t('fin.title') }] : []),
+    ...(caps.isFinanceViewer ? [{ href: '/finance-hub', icon: 'git-network-outline', label: 'Finance Hub' }] : []),
     ...(caps.isFinanceStaff ? [{ href: '/receive-payment', icon: 'cash-outline', label: t('counter.title') }] : []),
     ...(caps.isAccountant ? [{ href: '/accounting', icon: 'book-outline', label: t('finance.accounting') || 'Accounting' }] : []),
     ...(caps.isAdmissions ? [{ href: '/admissions', icon: 'people-outline', label: t('admissions.pipeline') || 'Admissions' }] : []),

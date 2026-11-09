@@ -25,6 +25,7 @@ export const DOC_KINDS = [
   ['certificate', ['Certificate', 'شهادة']],
   ['minutes', ['Meeting minutes', 'محضر اجتماع']],
   ['report', ['Report', 'تقرير']],
+  ['quotation', ['Quotation', 'عرض سعر']],
   ['other', ['Other', 'أخرى']],
 ];
 

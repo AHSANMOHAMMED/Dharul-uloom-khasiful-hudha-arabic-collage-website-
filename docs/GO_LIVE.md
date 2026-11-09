@@ -28,6 +28,8 @@ npx eas-cli@latest init
 # Copy the generated projectId into mobile/app.json.
 npx eas-cli@latest secret:create --scope project --name SUPABASE_URL --value "$VITE_SUPABASE_URL"
 npx eas-cli@latest secret:create --scope project --name SUPABASE_ANON_KEY --value "$VITE_SUPABASE_ANON_KEY"
+# Requires `eas login` (or EXPO_TOKEN). Preview APK includes Super Admin /platform
+# control plane sections and staff Finance Hub (/finance-hub).
 npx eas-cli@latest build --profile preview --platform android
 npx eas-cli@latest build --profile production --platform android
 ```

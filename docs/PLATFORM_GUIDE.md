@@ -13,8 +13,9 @@
 2. A **role-based college ERP / portal** (students, parents, tutors, finance, leadership, library, admin)  
 3. A **digital Islamic library** (catalog + in-app reading)  
 4. **Payments** (PayHere), **messaging outbox**, **CRM admissions**, **staff HRM**  
-5. An **Expo mobile app** (parent / student / tutor day-to-day)  
-6. Optional **legacy Express + MongoDB** API (not the primary path)
+5. An **Expo mobile app** (parent / student / tutor / accountant Finance Hub / Super Admin control plane)  
+6. **Super Admin control plane** (`/platform` sidebar: institutions, users, feature ACL, communities, audit) + **ERP Finance Hub** (billing jobs, multi-type bills, letterhead quotations, WA/SMS links)  
+7. Optional **legacy Express + MongoDB** API (not the primary path)
 
 **Primary live stack:** Vite React SPA → Supabase (Auth, Postgres, RLS, Storage, Edge Functions) → Vercel hosting.
 
