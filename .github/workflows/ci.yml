@@ -75,6 +75,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: mobile/package-lock.json
 
+      # Lockfile is generated with npm 11; npm 10's `npm ci` rejects peer trees
+      # that omit optional transitive packages such as @babel/preset-env.
+      - name: Match npm major used for the lockfile
+        run: npm install -g npm@11
+
       - name: Install mobile dependencies
         run: npm ci
         working-directory: mobile
