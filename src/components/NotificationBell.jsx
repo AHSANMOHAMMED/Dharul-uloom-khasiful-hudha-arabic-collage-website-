@@ -16,6 +16,7 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [items, setItems] = useState([]);
+  const [loadError, setLoadError] = useState('');
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [prefs, setPrefs] = useState({
     notify_sms: true,
@@ -26,7 +27,11 @@ export default function NotificationBell() {
 
   const load = async () => {
     if (!isAuthenticated) return;
-    setItems(await listMyNotifications(25));
+    const result = await listMyNotifications(25);
+    // Back-compat if a caller still returns a bare array.
+    const rows = Array.isArray(result) ? result : (result?.items || []);
+    setItems(rows);
+    setLoadError(Array.isArray(result) ? '' : (result?.error || ''));
   };
 
   useEffect(() => {
@@ -113,7 +118,11 @@ export default function NotificationBell() {
     // Backend notifications carry an in-app deep link (e.g. /erp?module=tasks).
     if (typeof n.link === 'string' && n.link.startsWith('/') && !n.link.startsWith('//')) {
       setOpen(false);
-      navigate(n.link);
+      // Legacy fee reminders used /fees; dashboards expect ?tab=fees.
+      const href = n.link === '/fees' || n.link.startsWith('/fees?')
+        ? '/dashboard?tab=fees'
+        : n.link;
+      navigate(href);
     }
   };
 
@@ -241,7 +250,12 @@ export default function NotificationBell() {
           )}
 
           <ul className="max-h-72 overflow-y-auto divide-y divide-[#E8E1D0]">
-            {items.length === 0 && (
+            {loadError && (
+              <li className="px-4 py-6 text-center text-xs text-feedback-danger">
+                {tx('تعذر تحميل الإشعارات', 'Could not load notifications')}: {loadError}
+              </li>
+            )}
+            {!loadError && items.length === 0 && (
               <li className="px-4 py-8 text-center text-xs text-[#4A5E56]">
                 {tx('لا توجد إشعارات جديدة', 'No new notifications')}
               </li>

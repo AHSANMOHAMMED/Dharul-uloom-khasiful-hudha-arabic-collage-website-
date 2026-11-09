@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import TutorLmsPanel from '../components/TutorLmsPanel';
@@ -172,13 +173,21 @@ const TutorDashboard = () => {
 
       if (error) throw error;
 
-      await supabase.from('notifications').insert([
-        {
-          user_id: selectedLeave.student_id,
-          title: `Leave Request ${status.toUpperCase()}`,
-          message: `Your leave request for ${selectedLeave.start_date} has been ${status}.`
+      const notifyTargets = [selectedLeave.parent_id, selectedLeave.student_id].filter(Boolean);
+      if (notifyTargets.length) {
+        const { error: notifyErr } = await supabase.from('notifications').insert(
+          notifyTargets.map((uid) => ({
+            user_id: uid,
+            title: `Leave Request ${status.toUpperCase()}`,
+            message: `Your leave request for ${selectedLeave.start_date} has been ${status}.${leaveReply ? ` Note: ${leaveReply}` : ''}`,
+            link: '/dashboard?tab=leaves',
+          })),
+        );
+        if (notifyErr) {
+          console.warn('Leave saved but notification failed', notifyErr);
+          toast.warn(tx('تم حفظ القرار لكن تعذر إرسال الإشعار', 'Decision saved but notification could not be sent'));
         }
-      ]);
+      }
 
       setLeaveReply('');
       setSelectedLeave(null);
@@ -198,6 +207,7 @@ const TutorDashboard = () => {
       setTimeout(() => setLeaveSuccess(false), 3500);
     } catch (err) {
       console.error('Error reviewing leave:', err);
+      toast.error(err.message || tx('تعذر تحديث طلب الإجازة', 'Could not update leave request'));
     } finally {
       setLeaveProcessing(false);
     }

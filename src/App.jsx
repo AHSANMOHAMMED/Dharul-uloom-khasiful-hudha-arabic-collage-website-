@@ -177,8 +177,8 @@ function App() {
                 <Route path="/library/:id" element={<BookReaderPage />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/cancel"  element={<PaymentCancel />} />
-                {/* Fee-reminder notifications (0025) link to /fees; fees live in the portal. */}
-                <Route path="/fees"       element={<Navigate to="/dashboard" replace />} />
+                {/* Fee-reminder notifications (0025) link to /fees → open fees tab in portal. */}
+                <Route path="/fees"       element={<Navigate to="/dashboard?tab=fees" replace />} />
                 <Route path="/erp"        element={<ErpWorkspace />} />
                 <Route path="/messages"   element={<Messages />} />
                 <Route path="/account/security" element={<AccountSecurity />} />

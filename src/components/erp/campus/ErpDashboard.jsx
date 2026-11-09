@@ -1,8 +1,9 @@
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { AsyncView, Button, Card, PageHeader, Stat, useAsync, useLang } from '../ui';
 import { formatMoney, rpc } from '../../../lib/erp/rpc';
 import { CRM_STAGES, labelOf } from '../../../lib/erp/campusApi';
+import { usePortalNav } from '../../../context/PortalNavContext';
 
 const BAR = '#10b981';
 const GRID = '#1f2937';
@@ -30,9 +31,19 @@ function ChartTooltip({ active, payload, label, money }) {
 
 export default function ErpDashboard() {
   const { t, ar } = useLang();
+  const navigate = useNavigate();
   const [, setParams] = useSearchParams();
+  const portalNav = usePortalNav();
   const [state, reload] = useAsync(async () => (await rpc('org_dashboard_stats')) ?? {}, []);
-  const go = (module) => setParams({ module });
+  const go = (module) => {
+    if (portalNav?.goErpModule?.(module)) return;
+    // Inside /erp workspace: module query drives the shell.
+    if (window.location.pathname.startsWith('/erp')) {
+      setParams({ module });
+      return;
+    }
+    navigate(`/erp?module=${encodeURIComponent(module)}`);
+  };
 
   return (
     <div>

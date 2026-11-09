@@ -2,14 +2,21 @@ import { lazy } from 'react';
 import RolePortalShell from '../../components/portals/RolePortalShell';
 
 const HostelPanel = lazy(() => import('../../components/erp/campus/HostelPanel'));
-const ActivitiesPanel = lazy(() => import('../../components/erp/ops/ActivitiesPanel'));
 const WelfarePanel = lazy(() => import('../../components/erp/campus/WelfarePanel'));
+
+function DisciplineEmbed() {
+  return <WelfarePanel initialTab="discipline" />;
+}
+
+function WelfareEmbed() {
+  return <WelfarePanel initialTab="welfare" />;
+}
 
 export default function WardenPortal() {
   const tabs = [
     { id: 'hostel', label_en: 'Hostel', label_ar: 'السكن', icon: 'apartment', embed: HostelPanel },
-    { id: 'discipline', label_en: 'Discipline', label_ar: 'الانضباط', icon: 'gavel', embed: ActivitiesPanel },
-    { id: 'welfare', label_en: 'Welfare', label_ar: 'الرعاية', icon: 'volunteer_activism', embed: WelfarePanel },
+    { id: 'discipline', label_en: 'Discipline', label_ar: 'الانضباط', icon: 'gavel', embed: DisciplineEmbed },
+    { id: 'welfare', label_en: 'Welfare', label_ar: 'الرعاية', icon: 'volunteer_activism', embed: WelfareEmbed },
   ];
 
   return (
@@ -26,8 +33,8 @@ export default function WardenPortal() {
       bannerProps={{
         portal_en: 'Hostel & boarding',
         portal_ar: 'السكن والإقامة',
-        hint_en: 'Hostel allocations, discipline, and welfare visibility.',
-        hint_ar: 'توزيع السكن والانضباط ومتابعة الرعاية.',
+        hint_en: 'Hostel allocations, discipline incidents, and welfare cases.',
+        hint_ar: 'توزيع السكن وحوادث الانضباط وحالات الرعاية.',
         accent: 'emerald',
       }}
     />

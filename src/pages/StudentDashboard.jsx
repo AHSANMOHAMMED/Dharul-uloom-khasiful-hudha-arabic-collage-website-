@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import PayFeeButton from '../components/PayFeeButton';
@@ -9,14 +10,36 @@ import StudentLmsPanel from '../components/StudentLmsPanel';
 import PortalTabChrome from '../components/portals/PortalTabChrome';
 import KhatamPattern from '../components/KhatamPattern';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import { openChatConversation, sendChatMessage } from '../lib/chatApi';
 import { rpc } from '../lib/erp/rpc';
 import { tx } from '../lib/tx';
+
+const STUDENT_TABS = ['overview', 'attendance', 'results', 'fees', 'lms', 'query'];
 
 export default function StudentDashboard() {
   const { user } = useAuth();
   useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    STUDENT_TABS.includes(tabParam) ? tabParam : 'overview',
+  );
+
+  useEffect(() => {
+    if (STUDENT_TABS.includes(tabParam) && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabParam]);
+
+  const selectTab = (id) => {
+    setActiveTab(id);
+    const next = new URLSearchParams(searchParams);
+    if (id === 'overview') next.delete('tab');
+    else next.set('tab', id);
+    setSearchParams(next, { replace: true });
+  };
   const [results, setResults] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [payableFee, setPayableFee] = useState(null);
@@ -73,12 +96,15 @@ export default function StudentDashboard() {
       );
       setPayableFee(unpaid || null);
 
-      let jobsQuery = supabase.from('tutor_jobs').select('*, profiles(full_name, phone)');
       if (user.classNumber != null) {
-        jobsQuery = jobsQuery.eq('class_number', user.classNumber);
+        const { data: jobsData } = await supabase
+          .from('tutor_jobs')
+          .select('*, profiles(full_name, phone)')
+          .eq('class_number', user.classNumber);
+        setTutorJobs(jobsData || []);
+      } else {
+        setTutorJobs([]);
       }
-      const { data: jobsData } = await jobsQuery;
-      if (jobsData) setTutorJobs(jobsData);
 
       const { data: annData } = await supabase
         .from('announcements')
@@ -100,17 +126,20 @@ export default function StudentDashboard() {
 
     try {
       const targetTutor = tutorJobs[0]?.tutor_id;
-      if (!targetTutor) return;
-      await supabase.from('notifications').insert({
-        user_id: targetTutor,
-        title: `Student Inquiry from ${user.username}`,
-        message: queryText,
-      });
+      if (!targetTutor) {
+        toast.error(tx('لا يوجد مشرف معيّن لصفك', 'No tutor is assigned to your class'));
+        return;
+      }
+      // Students cannot insert into notifications (RLS). Use messaging RPCs instead.
+      const conversationId = await openChatConversation(targetTutor);
+      await sendChatMessage(conversationId, queryText.trim());
       setQueryText('');
       setQuerySuccess(true);
+      toast.success(tx('تم إرسال الرسالة للمشرف', 'Message sent to your tutor'));
       setTimeout(() => setQuerySuccess(false), 3000);
     } catch (err) {
       console.error('Error submitting query:', err);
+      toast.error(err.message || tx('تعذر إرسال الرسالة', 'Could not send message'));
     }
   };
 
@@ -184,7 +213,7 @@ export default function StudentDashboard() {
       }}
       navItems={navItems}
       activeItem={activeTab}
-      onSelect={setActiveTab}
+      onSelect={selectTab}
     >
       <div className="space-y-8">
         {activeTab === 'overview' && (
@@ -288,7 +317,7 @@ export default function StudentDashboard() {
         )}
 
         {activeTab === 'attendance' && (
-          <PortalTabChrome title_en="Halaqah Attendance" title_ar="سجل الحضور" onBack={() => setActiveTab('overview')} onPrint={() => window.print()}>
+          <PortalTabChrome title_en="Halaqah Attendance" title_ar="سجل الحضور" onBack={() => selectTab('overview')} onPrint={() => window.print()}>
             <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript">
               {attendance.length === 0 ? (
                 <p className="text-xs text-ink-text-muted text-center py-8">{tx('لا توجد سجلات حضور بعد.', 'No attendance records yet.')}</p>
@@ -317,7 +346,7 @@ export default function StudentDashboard() {
         )}
 
         {activeTab === 'results' && (
-          <PortalTabChrome title_en="Assessment Marks" title_ar="الدرجات والتقييم" onBack={() => setActiveTab('overview')}>
+          <PortalTabChrome title_en="Assessment Marks" title_ar="الدرجات والتقييم" onBack={() => selectTab('overview')}>
             <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript">
               {results.length === 0 ? (
                 <p className="text-xs text-ink-text-muted py-6 text-center">{tx('لم تُنشر أي درجات لهذا الفصل حتى الآن.', 'No examination records published for this academic term yet.')}</p>
@@ -329,7 +358,7 @@ export default function StudentDashboard() {
         )}
 
         {activeTab === 'fees' && (
-          <PortalTabChrome title_en="Tuition Ledger" title_ar="الرسوم والإيصالات" onBack={() => setActiveTab('overview')}>
+          <PortalTabChrome title_en="Tuition Ledger" title_ar="الرسوم والإيصالات" onBack={() => selectTab('overview')}>
             <div className="space-y-6">
               <ReceiptsArrears studentId={user?.id} />
               {payableFee && (
@@ -342,7 +371,7 @@ export default function StudentDashboard() {
         )}
 
         {activeTab === 'lms' && (
-          <PortalTabChrome title_en="Coursework LMS" title_ar="الواجبات والتكليفات" onBack={() => setActiveTab('overview')}>
+          <PortalTabChrome title_en="Coursework LMS" title_ar="الواجبات والتكليفات" onBack={() => selectTab('overview')}>
             <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript">
               <StudentLmsPanel />
             </div>
@@ -350,7 +379,7 @@ export default function StudentDashboard() {
         )}
 
         {activeTab === 'query' && (
-          <PortalTabChrome title_en="Message Class Tutor" title_ar="مراسلة المشرف" onBack={() => setActiveTab('overview')}>
+          <PortalTabChrome title_en="Message Class Tutor" title_ar="مراسلة المشرف" onBack={() => selectTab('overview')}>
             <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-3">
               <p className="text-xs text-ink-text-muted">
                 {tutorProfile?.full_name

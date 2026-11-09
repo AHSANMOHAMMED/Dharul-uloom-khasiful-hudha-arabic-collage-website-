@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
@@ -13,11 +14,30 @@ import KhatamPattern from '../components/KhatamPattern';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
 import { tx } from '../lib/tx';
 
+const PARENT_TABS = ['overview', 'attendance', 'results', 'leaves', 'fees', 'link'];
+
 export default function ParentDashboard() {
   const { user } = useAuth();
   const { i18n } = useTranslation();
-  
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+
+  const [activeTab, setActiveTabState] = useState(
+    PARENT_TABS.includes(tabParam) ? tabParam : 'overview',
+  );
+
+  useEffect(() => {
+    if (PARENT_TABS.includes(tabParam) && tabParam !== activeTab) setActiveTabState(tabParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabParam]);
+
+  const setActiveTab = (id) => {
+    setActiveTabState(id);
+    const next = new URLSearchParams(searchParams);
+    if (id === 'overview') next.delete('tab');
+    else next.set('tab', id);
+    setSearchParams(next, { replace: true });
+  };
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState(null);
   

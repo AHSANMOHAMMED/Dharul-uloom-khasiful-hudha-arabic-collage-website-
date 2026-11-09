@@ -227,9 +227,9 @@ function WelfareCases({ students }) {
   );
 }
 
-export default function WelfarePanel() {
+export default function WelfarePanel({ initialTab = 'discipline' }) {
   const { t } = useLang();
-  const [tab, setTab] = useState('discipline');
+  const [tab, setTab] = useState(initialTab === 'welfare' ? 'welfare' : 'discipline');
   const [students] = useStudents();
   return (
     <div>

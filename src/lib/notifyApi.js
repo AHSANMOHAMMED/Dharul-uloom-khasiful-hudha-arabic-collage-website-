@@ -50,9 +50,9 @@ export async function listActivationEventsForChildren(childIds) {
 }
 
 export async function listMyNotifications(limit = 30) {
-  if (!isSupabaseConfigured) return [];
+  if (!isSupabaseConfigured) return { items: [], error: null };
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+  if (!user) return { items: [], error: null };
   const { data, error } = await supabase
     .from('notifications')
     .select('*')
@@ -61,9 +61,9 @@ export async function listMyNotifications(limit = 30) {
     .limit(limit);
   if (error) {
     console.error('[notifyApi] listMyNotifications', error);
-    return [];
+    return { items: [], error: error.message || 'Failed to load notifications' };
   }
-  return data ?? [];
+  return { items: data ?? [], error: null };
 }
 
 export async function markNotificationRead(id) {
