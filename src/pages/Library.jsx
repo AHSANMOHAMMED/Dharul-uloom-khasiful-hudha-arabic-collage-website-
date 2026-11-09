@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AdvancedSearch from '../components/library/AdvancedSearch';
 import BookCard from '../components/library/BookCard';
@@ -8,13 +8,14 @@ import { getCategories, searchBooks } from '../lib/booksApi';
 import { isSupabaseConfigured } from '../lib/supabaseClient';
 import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
+import { useAuth } from '../context/AuthContext';
 
 const PAGE_SIZE = 24;
 
 export default function Library() {
   useTranslation(); // subscribe: re-render on language change
+  const { loading: authLoading, isAuthenticated, isParent } = useAuth();
   const [searchParams] = useSearchParams();
-
   const [filters, setFilters] = useState({
     query: searchParams.get('q') || '',
     language: null,
@@ -28,6 +29,7 @@ export default function Library() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const sentinelRef = useRef(null);
+  const libraryBlocked = !authLoading && (!isAuthenticated || isParent);
 
   // ar = Arabic category name stored on the books (the filter value); en = display label
   const featuredDisciplines = [
@@ -41,10 +43,12 @@ export default function Library() {
   const resetFilters = () => setFilters({ query: '', language: null, category: null, author: null, page: 1 });
 
   useEffect(() => {
+    if (libraryBlocked) return undefined;
     getCategories().then(setCategories);
-  }, []);
+  }, [libraryBlocked]);
 
   useEffect(() => {
+    if (libraryBlocked) return undefined;
     let active = true;
     setLoading(true);
     searchBooks({ ...filters, pageSize: PAGE_SIZE }).then(({ books: rows, total: count }) => {
@@ -56,7 +60,7 @@ export default function Library() {
     return () => {
       active = false;
     };
-  }, [filters]);
+  }, [filters, libraryBlocked]);
 
   const hasMore = books.length < total;
   const loadMore = useCallback(() => {
@@ -81,6 +85,11 @@ export default function Library() {
       page: 1
     }));
   };
+
+  // Public visitors and parents do not use the digital library.
+  if (libraryBlocked) {
+    return <Navigate to={isParent ? '/dashboard' : '/login'} replace state={{ from: '/library' }} />;
+  }
 
   return (
     <div className="w-full bg-parchment-50 text-ink-text-primary min-h-screen">

@@ -9,7 +9,7 @@ const timeLabel = (value) => value ? new Date(value).toLocaleTimeString([], { ho
 const dateLabel = (value) => value ? new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
 
 export default function Messages() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, isParent } = useAuth();
   const [params, setParams] = useSearchParams();
   const selectedId = params.get('conversation');
   const [conversations, setConversations] = useState([]);
@@ -51,9 +51,12 @@ export default function Messages() {
     const timer = setTimeout(async () => {
       try {
         const rows = await searchChatContacts(search);
-        if (live) setContacts(rows);
+        if (live) {
+          setContacts(rows);
+          setError('');
+        }
       } catch (e) {
-        if (live && search.trim()) setError(e.message || tx('تعذر البحث عن المستخدمين', 'Could not search users'));
+        if (live) setError(e.message || tx('تعذر البحث عن المستخدمين', 'Could not search users'));
       }
     }, 250);
     return () => { live = false; clearTimeout(timer); };
@@ -160,7 +163,7 @@ export default function Messages() {
           </header>
           <div className="p-3">
             <label className="sr-only" htmlFor="chat-search">{tx('ابحث عن مستخدم', 'Find a user')}</label>
-            <input id="chat-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tx('ابحث عن طالب أو ولي أمر أو موظف…', 'Find a student, parent, or staff…')} className="w-full rounded-xl border border-[#E8E1D0] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#11694A]" />
+            <input id="chat-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={isParent ? tx('ابحث عن إدارة أو مدرّس أو موظف…', 'Find admin, tutor, or staff…') : tx('ابحث عن طالب أو ولي أمر أو موظف…', 'Find a student, parent, or staff…')} className="w-full rounded-xl border border-[#E8E1D0] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#11694A]" />
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
             {search.trim() ? (
@@ -229,7 +232,7 @@ export default function Messages() {
               </form>
             </>
           ) : (
-            <div className="hidden flex-1 flex-col items-center justify-center bg-[#F5F2EB] px-8 text-center md:flex"><span className="material-symbols-outlined text-6xl text-[#11694A]/50">forum</span><h1 className="mt-4 text-xl font-bold text-[#0B3B2E]">{tx('رسائل الكلية', 'College messages')}</h1><p className="mt-2 max-w-md text-sm text-[#60736C]">{tx('اختر محادثة أو ابحث عن طالب أو ولي أمر أو موظف لبدء مراسلة خاصة وآمنة.', 'Choose a chat or search for a student, parent, or staff member to start a private conversation.')}</p></div>
+            <div className="hidden flex-1 flex-col items-center justify-center bg-[#F5F2EB] px-8 text-center md:flex"><span className="material-symbols-outlined text-6xl text-[#11694A]/50">forum</span><h1 className="mt-4 text-xl font-bold text-[#0B3B2E]">{tx('رسائل الكلية', 'College messages')}</h1><p className="mt-2 max-w-md text-sm text-[#60736C]">{isParent ? tx('اختر محادثة أو ابحث عن إدارة الكلية أو مدرّس لبدء مراسلة خاصة.', 'Choose a chat or search for college admin or a tutor to start a private conversation.') : tx('اختر محادثة أو ابحث عن طالب أو ولي أمر أو موظف لبدء مراسلة خاصة وآمنة.', 'Choose a chat or search for a student, parent, or staff member to start a private conversation.')}</p></div>
           )}
         </section>
       </section>

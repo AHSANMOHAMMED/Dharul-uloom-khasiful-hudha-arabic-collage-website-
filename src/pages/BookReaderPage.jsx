@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import BookReader from '../components/library/BookReader';
 import { getBook } from '../lib/booksApi';
 import { tx } from '../lib/tx';
+import { useAuth } from '../context/AuthContext';
 
 function MetaCell({ label, value, arabic = false, accent = false }) {
   return (
@@ -23,11 +24,14 @@ function MetaCell({ label, value, arabic = false, accent = false }) {
 export default function BookReaderPage() {
   const { id } = useParams();
   const { i18n } = useTranslation();
+  const { loading: authLoading, isAuthenticated, isParent } = useAuth();
 
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
+  const libraryBlocked = !authLoading && (!isAuthenticated || isParent);
 
   useEffect(() => {
+    if (libraryBlocked) return undefined;
     let active = true;
     setLoading(true);
     (async () => {
@@ -39,7 +43,11 @@ export default function BookReaderPage() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, libraryBlocked]);
+
+  if (libraryBlocked) {
+    return <Navigate to={isParent ? '/dashboard' : '/login'} replace state={{ from: `/library/${id}` }} />;
+  }
 
   if (loading) {
     return (

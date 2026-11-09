@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { useFeatures } from '../context/FeatureFlagsContext';
 import KhatamPattern from '../components/KhatamPattern';
 import PlatformPanel from '../components/erp/campus/PlatformPanel';
-import { tx } from '../lib/tx';
 import {
   FEATURE_META,
   clearOrgFeature,
@@ -17,20 +16,23 @@ import {
 } from '../lib/platformApi';
 import { setActingOrg } from '../lib/erp/governanceApi';
 
+// Platform operator console stays English + LTR so RTL never truncates labels (e.g. "Disabled" → "bled").
+const en = (_ar, english) => english;
+
 const TABS = [
-  { id: 'overview', label: ['Overview', 'نظرة عامة'], icon: 'dashboard' },
-  { id: 'features', label: ['Global features', 'الميزات العامة'], icon: 'toggle_on' },
-  { id: 'tenants', label: ['Institutions', 'المؤسسات'], icon: 'apartment' },
-  { id: 'org-features', label: ['Per-college features', 'ميزات لكل كلية'], icon: 'tune' },
-  { id: 'users', label: ['All users', 'كل المستخدمين'], icon: 'group' },
-  { id: 'history', label: ['Control log', 'سجل التحكم'], icon: 'history' },
+  { id: 'overview', label: 'Overview', icon: 'dashboard' },
+  { id: 'features', label: 'Global features', icon: 'toggle_on' },
+  { id: 'tenants', label: 'Institutions', icon: 'apartment' },
+  { id: 'org-features', label: 'Per-college features', icon: 'tune' },
+  { id: 'users', label: 'All users', icon: 'group' },
+  { id: 'history', label: 'Control log', icon: 'history' },
 ];
 
 const GROUPS = [
-  { id: 'public', label: ['Public site', 'الموقع العام'] },
-  { id: 'access', label: ['Access & portals', 'الوصول والبوابات'] },
-  { id: 'finance', label: ['Payments', 'المدفوعات'] },
-  { id: 'erp', label: ['Campus ERP modules', 'وحدات نظام الإدارة'] },
+  { id: 'public', label: 'Public site' },
+  { id: 'access', label: 'Access & portals' },
+  { id: 'finance', label: 'Payments' },
+  { id: 'erp', label: 'Campus ERP modules' },
 ];
 
 function Toggle({ checked, disabled, onChange, label }) {
@@ -39,9 +41,10 @@ function Toggle({ checked, disabled, onChange, label }) {
       type="button"
       role="switch"
       aria-checked={checked}
-      aria-label={label}
+      aria-label={`${label}: ${checked ? 'Enabled' : 'Disabled'}`}
       disabled={disabled}
       onClick={() => onChange(!checked)}
+      dir="ltr"
       className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition ${
         checked ? 'border-emerald-700 bg-emerald-700' : 'border-sand-border bg-parchment-50'
       } ${disabled ? 'opacity-50' : ''}`}
@@ -189,19 +192,19 @@ export default function SuperAdminConsole() {
   };
 
   return (
-    <div className="min-h-screen bg-parchment-50 text-ink-text-primary relative overflow-hidden">
+    <div dir="ltr" lang="en" className="min-h-screen bg-parchment-50 text-ink-text-primary relative overflow-hidden">
       <KhatamPattern className="opacity-[0.03]" strokeColor="#0B3B2E" id="sa-console-khatam" />
       <header className="relative z-10 border-b border-sand-border bg-ink-green-900 text-paper-white">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brass-gold-500">
-              {tx('مشغل المنصة', 'Platform operator')}
+              {en('مشغل المنصة', 'Platform operator')}
             </p>
             <h1 className="font-serif text-2xl font-semibold tracking-tight">
-              {tx('لوحة المدير العام الأعلى', 'Super Admin Console')}
+              {en('لوحة المدير العام الأعلى', 'Super Admin Console')}
             </h1>
             <p className="mt-1 text-xs text-dark-text-primary/75">
-              {tx(
+              {en(
                 'تحكم كامل بالمؤسسات والميزات والمستخدمين عبر كل الكليات.',
                 'Full control of institutions, features and users across every college.'
               )}
@@ -214,20 +217,20 @@ export default function SuperAdminConsole() {
               onClick={reloadAll}
               className="rounded-[10px] border border-sand-border/30 bg-paper-white/10 px-3 py-2 text-xs font-semibold hover:bg-paper-white/20"
             >
-              {tx('تحديث', 'Refresh')}
+              {en('تحديث', 'Refresh')}
             </button>
             <Link
               to="/erp?module=dashboard"
               className="rounded-[10px] bg-[#e77835] px-3 py-2 text-xs font-semibold text-white hover:bg-[#ce6327]"
             >
-              {tx('فتح ERP كمؤسسة', 'Open ERP (acting org)')}
+              {en('فتح ERP كمؤسسة', 'Open ERP (acting org)')}
             </Link>
             <button
               type="button"
               onClick={() => auth.logout()}
               className="rounded-[10px] border border-sand-border/30 px-3 py-2 text-xs font-semibold hover:bg-paper-white/10"
             >
-              {tx('تسجيل الخروج', 'Sign out')}
+              {en('تسجيل الخروج', 'Sign out')}
             </button>
           </div>
         </div>
@@ -244,7 +247,7 @@ export default function SuperAdminConsole() {
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">{item.icon}</span>
-              {tx(...item.label)}
+              {item.label}
             </button>
           ))}
         </nav>
@@ -260,10 +263,10 @@ export default function SuperAdminConsole() {
         {tab === 'overview' && (
           <div className="grid gap-4 md:grid-cols-4">
             {[
-              [tx('المؤسسات', 'Institutions'), controls?.organizations?.length || 0],
-              [tx('نشطة', 'Active'), (controls?.organizations || []).filter((o) => ['active', 'trial'].includes(o.status)).length],
-              [tx('المستخدمون', 'Users'), users.length],
-              [tx('آخر تغييرات التحكم', 'Recent control changes'), history.length],
+              [en('المؤسسات', 'Institutions'), controls?.organizations?.length || 0],
+              [en('نشطة', 'Active'), (controls?.organizations || []).filter((o) => ['active', 'trial'].includes(o.status)).length],
+              [en('المستخدمون', 'Users'), users.length],
+              [en('آخر تغييرات التحكم', 'Recent control changes'), history.length],
             ].map(([label, value]) => (
               <div key={label} className="rounded-[14px] border border-sand-border bg-paper-white p-5 shadow-manuscript-sm">
                 <p className="text-xs font-semibold uppercase tracking-wider text-ink-text-muted">{label}</p>
@@ -272,17 +275,17 @@ export default function SuperAdminConsole() {
             ))}
             <div className="md:col-span-4 rounded-[14px] border border-sand-border bg-paper-white p-5">
               <h2 className="font-serif text-lg font-semibold text-ink-green-900 mb-3">
-                {tx('مسارات سريعة', 'Quick paths')}
+                {en('مسارات سريعة', 'Quick paths')}
               </h2>
               <div className="flex flex-wrap gap-2">
                 <button type="button" className="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white" onClick={() => setTab('features')}>
-                  {tx('تفعيل / تعطيل الميزات', 'Enable / disable features')}
+                  {en('تفعيل / تعطيل الميزات', 'Enable / disable features')}
                 </button>
                 <button type="button" className="rounded-lg border border-sand-border px-3 py-2 text-xs font-semibold" onClick={() => setTab('tenants')}>
-                  {tx('إدارة المؤسسات', 'Manage institutions')}
+                  {en('إدارة المؤسسات', 'Manage institutions')}
                 </button>
                 <button type="button" className="rounded-lg border border-sand-border px-3 py-2 text-xs font-semibold" onClick={() => setTab('users')}>
-                  {tx('اعتماد المستخدمين', 'Approve users')}
+                  {en('اعتماد المستخدمين', 'Approve users')}
                 </button>
               </div>
             </div>
@@ -292,7 +295,7 @@ export default function SuperAdminConsole() {
         {tab === 'features' && (
           <section className="space-y-5">
             <p className="text-sm text-ink-text-secondary">
-              {tx(
+              {en(
                 'التعطيل العام يغلق الميزة لكل الكليات ما لم تُفعَّل صراحة لكل كلية.',
                 'A global off switch disables the feature for every college unless that college has an explicit on override.'
               )}
@@ -300,19 +303,19 @@ export default function SuperAdminConsole() {
             {GROUPS.map((group) => (
               <div key={group.id} className="rounded-[14px] border border-sand-border bg-paper-white overflow-hidden">
                 <div className="border-b border-sand-border bg-parchment-50 px-4 py-3 font-serif font-semibold text-ink-green-900">
-                  {tx(...group.label)}
+                  {group.label}
                 </div>
                 <ul className="divide-y divide-sand-border">
                   {FEATURE_META.filter((f) => f.group === group.id).map((f) => (
                     <li key={f.key} className="flex items-center justify-between gap-3 px-4 py-3">
                       <div>
-                        <p className="text-sm font-semibold text-ink-green-900">{tx(...f.label)}</p>
+                        <p className="text-sm font-semibold text-ink-green-900">{f.label[0]}</p>
                         <p className="text-[11px] text-ink-text-muted font-mono">{f.key}</p>
                       </div>
                       <Toggle
                         checked={effectiveGlobal(f.key)}
                         disabled={busy}
-                        label={tx(...f.label)}
+                        label={f.label[0]}
                         onChange={(on) => toggleGlobal(f.key, on)}
                       />
                     </li>
@@ -333,7 +336,7 @@ export default function SuperAdminConsole() {
           <section className="space-y-4">
             <div className="flex flex-wrap items-end gap-3">
               <label className="text-sm font-semibold text-ink-green-900">
-                {tx('الكلية', 'College')}
+                {en('الكلية', 'College')}
                 <select
                   className="mt-1 block min-w-[240px] rounded-[10px] border border-sand-border bg-paper-white px-3 py-2 text-sm"
                   value={orgId}
@@ -355,14 +358,14 @@ export default function SuperAdminConsole() {
                     window.location.assign('/erp?module=dashboard');
                   }}
                 >
-                  {tx('إدارة هذه المؤسسة الآن', 'Manage this college now')}
+                  {en('إدارة هذه المؤسسة الآن', 'Manage this college now')}
                 </button>
               )}
             </div>
             {GROUPS.map((group) => (
               <div key={group.id} className="rounded-[14px] border border-sand-border bg-paper-white overflow-hidden">
                 <div className="border-b border-sand-border bg-parchment-50 px-4 py-3 font-serif font-semibold text-ink-green-900">
-                  {tx(...group.label)}
+                  {group.label}
                 </div>
                 <ul className="divide-y divide-sand-border">
                   {FEATURE_META.filter((f) => f.group === group.id).map((f) => {
@@ -370,16 +373,16 @@ export default function SuperAdminConsole() {
                     return (
                       <li key={f.key} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                         <div>
-                          <p className="text-sm font-semibold text-ink-green-900">{tx(...f.label)}</p>
+                          <p className="text-sm font-semibold text-ink-green-900">{f.label[0]}</p>
                           <p className="text-[11px] text-ink-text-muted">
                             {override === null
-                              ? tx('يتبع الإعداد العام', 'Follows global')
+                              ? en('يتبع الإعداد العام', 'Follows global')
                               : override
-                                ? tx('مفعّل لهذه الكلية', 'Forced on for this college')
-                                : tx('معطّل لهذه الكلية', 'Forced off for this college')}
+                                ? en('مفعّل لهذه الكلية', 'Forced on for this college')
+                                : en('معطّل لهذه الكلية', 'Forced off for this college')}
                             {' · '}
-                            {tx('الفعلي:', 'Effective:')}{' '}
-                            <b>{orgEffective(f.key) ? tx('تشغيل', 'On') : tx('إيقاف', 'Off')}</b>
+                            {en('الفعلي:', 'Effective:')}{' '}
+                            <b>{orgEffective(f.key) ? en('تشغيل', 'On') : en('إيقاف', 'Off')}</b>
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -390,13 +393,13 @@ export default function SuperAdminConsole() {
                               onClick={() => resetOrg(f.key)}
                               className="rounded-lg border border-sand-border px-2 py-1 text-[11px] font-semibold"
                             >
-                              {tx('إعادة للافتراضي', 'Reset')}
+                              {en('إعادة للافتراضي', 'Reset')}
                             </button>
                           )}
                           <Toggle
                             checked={orgEffective(f.key)}
                             disabled={busy || !orgId}
-                            label={tx(...f.label)}
+                            label={f.label[0]}
                             onChange={(on) => toggleOrg(f.key, on)}
                           />
                         </div>
@@ -428,21 +431,21 @@ export default function SuperAdminConsole() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={tx('بحث بالاسم أو البريد أو الكلية…', 'Search name, email or college…')}
+                placeholder={en('بحث بالاسم أو البريد أو الكلية…', 'Search name, email or college…')}
                 className="min-w-[240px] flex-1 rounded-[10px] border border-sand-border px-3 py-2 text-sm"
               />
               <button type="submit" className="rounded-[10px] bg-emerald-700 px-4 py-2 text-xs font-semibold text-white">
-                {tx('بحث', 'Search')}
+                {en('بحث', 'Search')}
               </button>
             </form>
             <div className="overflow-x-auto rounded-[14px] border border-sand-border bg-paper-white">
               <table className="min-w-full text-sm">
                 <thead className="bg-parchment-50 text-left text-xs uppercase tracking-wider text-ink-text-muted">
                   <tr>
-                    <th className="px-3 py-2">{tx('المستخدم', 'User')}</th>
-                    <th className="px-3 py-2">{tx('الدور', 'Role')}</th>
-                    <th className="px-3 py-2">{tx('الكلية', 'College')}</th>
-                    <th className="px-3 py-2">{tx('الحالة', 'Status')}</th>
+                    <th className="px-3 py-2">{en('المستخدم', 'User')}</th>
+                    <th className="px-3 py-2">{en('الدور', 'Role')}</th>
+                    <th className="px-3 py-2">{en('الكلية', 'College')}</th>
+                    <th className="px-3 py-2">{en('الحالة', 'Status')}</th>
                     <th className="px-3 py-2" />
                   </tr>
                 </thead>
@@ -461,7 +464,7 @@ export default function SuperAdminConsole() {
                       <td className="px-3 py-2 text-xs">{u.org_name || u.org_slug || '—'}</td>
                       <td className="px-3 py-2">
                         <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${u.is_approved ? 'bg-mint-wash-100 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
-                          {u.is_approved ? tx('معتمد', 'Approved') : tx('قيد الانتظار', 'Pending')}
+                          {u.is_approved ? en('معتمد', 'Approved') : en('قيد الانتظار', 'Pending')}
                         </span>
                       </td>
                       <td className="px-3 py-2 text-right">
@@ -481,7 +484,7 @@ export default function SuperAdminConsole() {
                             }
                           }}
                         >
-                          {u.is_approved ? tx('إلغاء الاعتماد', 'Revoke') : tx('اعتماد', 'Approve')}
+                          {u.is_approved ? en('إلغاء الاعتماد', 'Revoke') : en('اعتماد', 'Approve')}
                         </button>
                       </td>
                     </tr>
@@ -497,11 +500,11 @@ export default function SuperAdminConsole() {
             <table className="min-w-full text-sm">
               <thead className="bg-parchment-50 text-left text-xs uppercase tracking-wider text-ink-text-muted">
                 <tr>
-                  <th className="px-3 py-2">{tx('الوقت', 'When')}</th>
-                  <th className="px-3 py-2">{tx('النطاق', 'Scope')}</th>
-                  <th className="px-3 py-2">{tx('الميزة', 'Feature')}</th>
-                  <th className="px-3 py-2">{tx('القيمة', 'Value')}</th>
-                  <th className="px-3 py-2">{tx('ملاحظة', 'Note')}</th>
+                  <th className="px-3 py-2">{en('الوقت', 'When')}</th>
+                  <th className="px-3 py-2">{en('النطاق', 'Scope')}</th>
+                  <th className="px-3 py-2">{en('الميزة', 'Feature')}</th>
+                  <th className="px-3 py-2">{en('القيمة', 'Value')}</th>
+                  <th className="px-3 py-2">{en('ملاحظة', 'Note')}</th>
                 </tr>
               </thead>
               <tbody>

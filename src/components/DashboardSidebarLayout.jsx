@@ -32,7 +32,7 @@ export default function DashboardSidebarLayout({
   children,
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, logout, isAdmin, isEmployee, isLibrarian } = useAuth();
+  const { user, logout, isAdmin, isEmployee, isLibrarian, isParent } = useAuth();
   useTranslation();
   const location = useLocation();
 
@@ -287,13 +287,15 @@ export default function DashboardSidebarLayout({
               <span className="material-symbols-outlined text-[18px] text-[#11694A]">chat</span>
             </Link>
 
-            <Link
-              to="/library"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
-            >
-              <span className="material-symbols-outlined text-[16px] text-[#11694A]">auto_stories</span>
-              <span>{tx('المكتبة', 'Library')}</span>
-            </Link>
+            {!isParent && (
+              <Link
+                to="/library"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
+              >
+                <span className="material-symbols-outlined text-[16px] text-[#11694A]">auto_stories</span>
+                <span>{tx('المكتبة', 'Library')}</span>
+              </Link>
+            )}
 
             <button
               type="button"

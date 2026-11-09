@@ -228,10 +228,12 @@ export default function DashboardTopBar() {
             <span className="material-symbols-outlined text-[18px]">{'shield_person'}</span>
             <span>{tx('الأمان وتسجيل الدخول', 'Security & sign-in')}</span>
           </Link>
-          <Link to="/library" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-[#14201B] hover:bg-[#FBF8F0]">
-            <span className="material-symbols-outlined text-[18px]">{'menu_book'}</span>
-            <span>{tx('المكتبة الرقمية', 'Digital Library')}</span>
-          </Link>
+          {!isParent && (
+            <Link to="/library" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-[#14201B] hover:bg-[#FBF8F0]">
+              <span className="material-symbols-outlined text-[18px]">{'menu_book'}</span>
+              <span>{tx('المكتبة الرقمية', 'Digital Library')}</span>
+            </Link>
+          )}
         </nav>
       )}
     </header>

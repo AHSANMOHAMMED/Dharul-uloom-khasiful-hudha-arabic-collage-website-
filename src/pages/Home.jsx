@@ -1,12 +1,9 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { tx } from '../lib/tx';
 
 export default function Home() {
   const { i18n } = useTranslation();
-  const navigate = useNavigate();
-  const [query, setQuery] = useState('');
   const arrow = i18n.dir() === 'rtl' ? 'arrow_back' : 'arrow_forward';
   const destinations = [
     {
@@ -24,10 +21,10 @@ export default function Home() {
       tone: 'green',
     },
     {
-      title: tx('المكتبة الإسلامية', 'Islamic library'),
-      description: tx('ابحث في فهرس المكتبة الرقمية.', 'Search the digital library catalogue.'),
-      href: '/library',
-      icon: 'local_library',
+      title: tx('الأخبار والفعاليات', 'News & events'),
+      description: tx('تابع آخر أخبار الكلية والفعاليات.', 'Follow the latest college news and events.'),
+      href: '/news',
+      icon: 'newspaper',
       tone: 'blue',
     },
     {
@@ -38,12 +35,6 @@ export default function Home() {
       tone: 'gold',
     },
   ];
-
-  function searchLibrary(event) {
-    event.preventDefault();
-    const term = query.trim();
-    navigate(term ? `/library?q=${encodeURIComponent(term)}` : '/library');
-  }
 
   return (
     <main className="bg-[#fbfaf6] text-[#17231e]">
@@ -77,8 +68,8 @@ export default function Home() {
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-white/85 sm:text-lg sm:leading-8">
               {tx(
-                'كلية عربية إسلامية في مدلايبلي، كالبيتيا — برامج دراسية، قبول، ومكتبة رقمية في منصة واحدة.',
-                'An Arabic Islamic college in Mudalippalli, Kalpitiya — studies, admissions and a digital library in one place.'
+                'كلية عربية إسلامية في مدلايبلي، كالبيتيا — برامج دراسية وقبول وبوابات للطلاب وأولياء الأمور في منصة واحدة.',
+                'An Arabic Islamic college in Mudalippalli, Kalpitiya — studies, admissions, and student & parent portals in one place.'
               )}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -92,10 +83,10 @@ export default function Home() {
                 </span>
               </Link>
               <Link
-                to="/library"
+                to="/login"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/35 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
-                {tx('تصفح المكتبة', 'Explore the library')}
+                {tx('دخول البوابة', 'Portal sign-in')}
               </Link>
             </div>
             <p className="mt-6 flex flex-wrap items-center gap-2 text-sm text-white/75">
@@ -212,45 +203,6 @@ export default function Home() {
               </Link>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Library search */}
-      <section className="mx-auto max-w-[1240px] px-5 py-14 sm:px-8 lg:px-10 lg:py-16">
-        <div className="grid w-full min-w-0 gap-8 lg:grid-cols-[.9fr_1.1fr] lg:items-center">
-          <div className="min-w-0">
-            <p className="mb-2 text-xs font-bold uppercase tracking-[.16em] text-[#c36530]">{tx('المكتبة', 'The library')}</p>
-            <h2 className="font-serif text-3xl font-semibold tracking-tight text-[#173c2c]">
-              {tx('ابحث في المكتبة الإسلامية', 'Search the Islamic library')}
-            </h2>
-            <p className="mt-3 max-w-lg text-sm leading-6 text-[#687168]">
-              {tx('اكتب عنوان كتاب أو اسم مؤلف للعثور على المواد المتاحة في الفهرس.', 'Search by book title or author to find available catalogue entries.')}
-            </p>
-          </div>
-          <form
-            onSubmit={searchLibrary}
-            className="flex min-h-14 min-w-0 items-center gap-2 rounded-xl border border-[#ded8cc] bg-white p-2 shadow-sm focus-within:border-[#78947c] focus-within:ring-2 focus-within:ring-[#315c43]/15"
-          >
-            <span aria-hidden="true" className="material-symbols-outlined px-2 text-[#748077]">
-              search
-            </span>
-            <label className="sr-only" htmlFor="home-library-search">
-              {tx('البحث في المكتبة', 'Search the library')}
-            </label>
-            <input
-              id="home-library-search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={tx('عنوان الكتاب أو اسم المؤلف', 'Book title or author')}
-              className="min-w-0 flex-1 bg-transparent text-sm text-[#17231e] outline-none placeholder:text-[#8b928a]"
-            />
-            <button
-              type="submit"
-              className="min-h-10 rounded-lg bg-[#234a35] px-4 text-sm font-semibold text-white transition hover:bg-[#173c2c]"
-            >
-              {tx('بحث', 'Search')}
-            </button>
-          </form>
         </div>
       </section>
 

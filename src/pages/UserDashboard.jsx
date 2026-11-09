@@ -266,16 +266,16 @@ export default function UserDashboard() {
           </h2>
           <p className="text-sm text-ink-text-secondary leading-relaxed">
             {tx(
-              'يمكنك تقديم طلب القبول أو تصفح المكتبة. يتم تفعيل بوابات الطلاب وأولياء الأمور والموظفين من قبل الكلية.',
-              'You can apply for admission or browse the library. Student, parent and staff portals are activated by the college.',
+              'يمكنك تقديم طلب القبول أو التواصل مع الكلية. يتم تفعيل بوابات الطلاب وأولياء الأمور والموظفين من قبل الكلية.',
+              'You can apply for admission or contact the college. Student, parent and staff portals are activated by the college.',
             )}
           </p>
           <div className="flex justify-center gap-3 pt-2">
             <Link to="/admissions" className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-500 text-white rounded-[10px] text-xs font-semibold shadow-xs">
               {tx('طلب القبول', 'Apply now')}
             </Link>
-            <Link to="/library" className="px-5 py-2.5 bg-paper-white border border-sand-border hover:bg-parchment-50 text-ink-text-primary rounded-[10px] text-xs font-semibold">
-              {tx('المكتبة', 'Library')}
+            <Link to="/contact" className="px-5 py-2.5 bg-paper-white border border-sand-border hover:bg-parchment-50 text-ink-text-primary rounded-[10px] text-xs font-semibold">
+              {tx('تواصل معنا', 'Contact us')}
             </Link>
           </div>
           <button onClick={logout} className="text-xs text-ink-text-muted hover:text-feedback-danger underline pt-2">

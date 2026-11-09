@@ -12,14 +12,16 @@ export default function Navbar() {
   const [mobileExploreOpen, setMobileExploreOpen] = useState(false)
   const { t } = useTranslation()
   const location = useLocation()
-  const { isAuthenticated, isAdmin, isSuperAdmin, isLibrarian, isEmployee, logout } = useAuth()
+  const { isAuthenticated, isAdmin, isSuperAdmin, isLibrarian, isEmployee, isParent, isStudent, isTutor, logout } = useAuth()
   const canManageLibrary = isAdmin || isLibrarian
+  // E-library is for campus accounts only — not the public site, and not parents.
+  const showLibrary = isAuthenticated && !isParent && (isStudent || isTutor || isLibrarian || isAdmin || isEmployee || isSuperAdmin)
 
   // A section is active on its own page and on any detail page beneath it (/news/:id, /library/:id).
   const isActive = (path) =>
     path === '/' ? location.pathname === '/' : location.pathname === path || location.pathname.startsWith(`${path}/`)
   const academicsActive = ['/courses', '/curriculum', '/faculty'].some(isActive)
-  const exploreActive = ['/library', '/gallery', '/news'].some(isActive)
+  const exploreActive = [showLibrary ? '/library' : null, '/gallery', '/news'].filter(Boolean).some(isActive)
 
   // Close the mobile drawer on navigation (incl. browser back/forward) and on Escape.
   useEffect(() => {
@@ -134,14 +136,16 @@ export default function Navbar() {
               <span className="material-symbols-outlined text-[18px] transition-transform group-hover:rotate-180">{'expand_more'}</span>
             </button>
             <div className="absolute start-0 top-full mt-1 w-52 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-all">
-              <Link
-                to="/library"
-                className={`block px-4 py-2.5 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
-                  isActive('/library') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
-                }`}
-              >
-                {t('nav.library')}
-              </Link>
+              {showLibrary && (
+                <Link
+                  to="/library"
+                  className={`block px-4 py-2.5 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                    isActive('/library') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
+                  }`}
+                >
+                  {t('nav.library')}
+                </Link>
+              )}
               <Link
                 to="/gallery"
                 className={`block px-4 py-2.5 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
@@ -382,13 +386,15 @@ export default function Navbar() {
             </button>
             {mobileExploreOpen && (
               <div className="ps-4 space-y-1 mt-1 border-s-2 border-sand-border ms-3">
-                <Link
-                  to="/library"
-                  onClick={() => setIsOpen(false)}
-                  className="block px-3 py-1.5 text-sm text-ink-text-secondary hover:text-emerald-700"
-                >
-                  {t('nav.library')}
-                </Link>
+                {showLibrary && (
+                  <Link
+                    to="/library"
+                    onClick={() => setIsOpen(false)}
+                    className="block px-3 py-1.5 text-sm text-ink-text-secondary hover:text-emerald-700"
+                  >
+                    {t('nav.library')}
+                  </Link>
+                )}
                 <Link
                   to="/gallery"
                   onClick={() => setIsOpen(false)}

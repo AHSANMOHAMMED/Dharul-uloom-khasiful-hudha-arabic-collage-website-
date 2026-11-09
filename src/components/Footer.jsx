@@ -121,12 +121,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/library" className="hover:text-gold-wash-100 transition-colors flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px] text-brass-gold-500">{'chevron_right'}</span>
-                  <span>{tx('المكتبة الرقمية (مكتبة)', 'Maktabah Islamic Library')}</span>
-                </Link>
-              </li>
-              <li>
                 <Link to="/curriculum" className="hover:text-gold-wash-100 transition-colors flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[14px] text-brass-gold-500">{'chevron_right'}</span>
                   <span>{tx('المنهج الدراسي والسند', 'Curriculum & Sanad')}</span>
