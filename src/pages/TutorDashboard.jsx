@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabaseClient';
 import TutorLmsPanel from '../components/TutorLmsPanel';
 import { tx } from '../lib/tx';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import { ROLE_BADGE } from '../lib/roleTheme';
 
 const TUTOR_TABS = ['attendance', 'leaves', 'lms', 'salaries'];
 
@@ -244,7 +245,7 @@ const TutorDashboard = () => {
       roleBadge={{
         text_en: 'Faculty Tutor',
         text_ar: 'أستاذ ومدرس',
-        color: 'bg-[#E0F2F1] text-[#0F7C86] border-[#0F7C86]/20'
+        color: ROLE_BADGE.emerald
       }}
       navItems={navItems}
       activeItem={activeTab}
@@ -256,16 +257,16 @@ const TutorDashboard = () => {
         
         {/* Header Banner */}
         <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#0F7C86]"></div>
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#11694A]"></div>
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex items-center gap-5">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#E0F2F1] text-[#0F7C86] flex items-center justify-center font-serif text-2xl sm:text-3xl font-bold shrink-0 shadow-sm border border-[#0F7C86]/20">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center font-serif text-2xl sm:text-3xl font-bold shrink-0 shadow-sm border border-[#11694A]/20">
                 م
               </div>
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#E0F2F1] text-[#0F7C86] border border-[#0F7C86]/20 mb-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#0F7C86]"></span>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#E3F1EA] text-[#11694A] border border-[#11694A]/20 mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#11694A]"></span>
                   {tx('بوابة المعلمين والأساتذة', 'Faculty & Tutor Portal')}
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#0B3B2E]">
@@ -472,7 +473,7 @@ const TutorDashboard = () => {
                           { key: 'present', label: tx('حاضر', 'Present'), activeBg: 'bg-[#11694A] text-white' },
                           { key: 'absent', label: tx('غائب', 'Absent'), activeBg: 'bg-[#B91C1C] text-white' },
                           { key: 'late', label: tx('متأخر', 'Late'), activeBg: 'bg-[#C29A3A] text-white' },
-                          { key: 'excused', label: tx('معذور', 'Excused'), activeBg: 'bg-[#0F7C86] text-white' },
+                          { key: 'excused', label: tx('معذور', 'Excused'), activeBg: 'bg-[#11694A] text-white' },
                         ].map((stat) => (
                           <button
                             key={stat.key}

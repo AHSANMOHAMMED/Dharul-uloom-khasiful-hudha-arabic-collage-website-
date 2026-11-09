@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import RolePortalShell from '../../components/portals/RolePortalShell';
+import { ROLE_BADGE } from '../../lib/roleTheme';
 
 const Exams = lazy(() => import('../../components/erp/campus/Exams'));
 const MarksEntry = lazy(() => import('../../components/erp/campus/MarksEntry'));
@@ -25,7 +26,7 @@ export default function ExamPortal() {
       roleBadge={{
         text_en: 'Exam Officer',
         text_ar: 'مسؤول الامتحانات',
-        color: 'bg-[#FEF9EE] text-[#C29A3A] border-[#C29A3A]/30',
+        color: ROLE_BADGE.brass,
       }}
       tabs={tabs}
       defaultTab="exams"

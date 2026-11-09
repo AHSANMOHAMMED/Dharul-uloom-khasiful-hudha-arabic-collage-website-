@@ -11,6 +11,7 @@ import StudentLmsPanel from '../components/StudentLmsPanel';
 import PortalTabChrome from '../components/portals/PortalTabChrome';
 import KhatamPattern from '../components/KhatamPattern';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import { ROLE_BADGE } from '../lib/roleTheme';
 import { openChatConversation, sendChatMessage } from '../lib/chatApi';
 import { rpc } from '../lib/erp/rpc';
 import { tx } from '../lib/tx';
@@ -196,7 +197,7 @@ export default function StudentDashboard() {
       roleBadge={{
         text_en: user?.indexNumber ? `Index ${user.indexNumber}` : 'Scholar Student',
         text_ar: user?.indexNumber ? `رقم القيد ${user.indexNumber}` : 'طالب علم',
-        color: 'bg-[#E3F1EA] text-[#0B3B2E] border-[#0B3B2E]/20',
+        color: ROLE_BADGE.emerald,
       }}
       navItems={navItems}
       activeItem={activeTab}

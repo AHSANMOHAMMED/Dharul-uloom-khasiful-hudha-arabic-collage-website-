@@ -10,6 +10,7 @@ import DictionaryAdmin from '../components/library/DictionaryAdmin';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import { ROLE_BADGE } from '../lib/roleTheme';
 
 const emptyForm = {
   shamela_id: '',
@@ -181,7 +182,7 @@ const LibrarianDashboard = () => {
       roleBadge={{
         text_en: 'Librarian Custodian',
         text_ar: 'أمين المكتبة',
-        color: 'bg-[#E3F1EA] text-[#11694A] border-[#11694A]/20'
+        color: ROLE_BADGE.emerald
       }}
       navItems={navItems}
       activeItem={activeTab}

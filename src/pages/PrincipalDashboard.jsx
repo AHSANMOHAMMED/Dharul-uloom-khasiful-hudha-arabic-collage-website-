@@ -14,7 +14,7 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const CLASSES = [1, 2, 3, 4, 5, 6, 7];
 
 const PrincipalDashboard = ({ vpMode = false }) => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   useTranslation(); // re-render on language change
 
   const [activeTab, setActiveTab] = useTabParam(
@@ -374,15 +374,6 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                 </svg>
                 {tx('المكتبة الرقمية', 'Digital Library')}
               </Link>
-              <button
-                onClick={logout}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FEE2E2] hover:bg-[#FCA5A5] text-[#991B1B] font-sans font-semibold text-xs sm:text-sm rounded-xl transition"
-              >
-                <svg className="w-4 h-4 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                {tx('خروج', 'Logout')}
-              </button>
             </div>
           </div>
         </div>

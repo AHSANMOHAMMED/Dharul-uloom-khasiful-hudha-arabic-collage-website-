@@ -18,6 +18,7 @@ import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
 import { ErpEmbedProvider } from '../context/ErpEmbedContext';
 import { PortalNavProvider } from '../context/PortalNavContext';
 import { ERP_QUICK_LINK } from '../lib/portalChrome';
+import { ROLE_BADGE } from '../lib/roleTheme';
 
 // Full ERP modules — overview tiles open these (not mini previews).
 const ErpDashboard = lazy(() => import('../components/erp/campus/ErpDashboard'));
@@ -429,7 +430,7 @@ const AdminDashboard = () => {
       roleBadge={{
         text_en: user?.role === 'super_admin' ? 'Super Admin' : 'Admin Console',
         text_ar: user?.role === 'super_admin' ? 'مشرف عام' : 'إدارة الكلية',
-        color: 'bg-[#0B3B2E] text-white border-transparent'
+        color: ROLE_BADGE.admin,
       }}
       navItems={tabs}
       activeItem={activeTab}

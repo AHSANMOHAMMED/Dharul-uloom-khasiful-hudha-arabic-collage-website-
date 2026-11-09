@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import RolePortalShell from '../../components/portals/RolePortalShell';
+import { ROLE_BADGE } from '../../lib/roleTheme';
 
 const HostelPanel = lazy(() => import('../../components/erp/campus/HostelPanel'));
 const WelfarePanel = lazy(() => import('../../components/erp/campus/WelfarePanel'));
@@ -26,7 +27,7 @@ export default function WardenPortal() {
       roleBadge={{
         text_en: 'Warden',
         text_ar: 'مشرف السكن',
-        color: 'bg-[#E3F1EA] text-[#0B3B2E] border-[#0B3B2E]/20',
+        color: ROLE_BADGE.emerald,
       }}
       tabs={tabs}
       defaultTab="hostel"

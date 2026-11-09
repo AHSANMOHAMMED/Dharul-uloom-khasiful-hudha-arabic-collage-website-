@@ -247,7 +247,6 @@ export default function SuperAdminConsole() {
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">{NAV.map(navBtn)}</nav>
         <div className="border-t border-sand-border p-3 space-y-2">
           <button type="button" disabled={busy} onClick={reloadAll} className="w-full rounded-lg border border-sand-border px-3 py-2 text-xs font-semibold">Refresh</button>
-          <button type="button" onClick={() => auth.logout()} className="w-full rounded-lg border border-sand-border px-3 py-2 text-xs font-semibold text-feedback-danger">Sign out</button>
         </div>
       </aside>
 
@@ -259,14 +258,22 @@ export default function SuperAdminConsole() {
           <div className="min-w-0">
             <h2 className="font-serif text-lg font-semibold text-ink-green-900 truncate">{NAV.find((n) => n.id === section)?.label || 'Overview'}</h2>
           </div>
-          <div className="ms-auto flex flex-wrap gap-2">
+          <div className="ms-auto flex flex-wrap gap-2 items-center">
             <select className="rounded-lg border border-sand-border px-2 py-1.5 text-xs" value={orgId} onChange={(e) => setOrgId(e.target.value)}>
               {(controls?.organizations || []).map((o) => (
                 <option key={o.org_id} value={o.org_id}>{o.name_en}</option>
               ))}
             </select>
-            <button type="button" className="rounded-lg bg-[#e77835] px-3 py-1.5 text-xs font-semibold text-white" onClick={() => enterCollege('dashboard')}>
+            <button type="button" className="rounded-lg bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white" onClick={() => enterCollege('dashboard')}>
               Manage college
+            </button>
+            <button
+              type="button"
+              onClick={() => auth.logout()}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#991B1B]/20 bg-[#FEE2E2]/70 hover:bg-[#FEE2E2] px-2.5 py-1.5 text-xs font-bold text-[#991B1B]"
+            >
+              <span className="material-symbols-outlined text-[16px]">logout</span>
+              Sign out
             </button>
           </div>
         </header>

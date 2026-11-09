@@ -11,6 +11,7 @@ import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
 import { listActivationEventsForChildren } from '../lib/notifyApi';
 import KhatamPattern from '../components/KhatamPattern';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import { ROLE_BADGE } from '../lib/roleTheme';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 
@@ -288,7 +289,7 @@ export default function ParentDashboard() {
       roleBadge={{
         text_en: 'Guardian / Parent',
         text_ar: 'ولي أمر معتمد',
-        color: 'bg-[#FEF9EE] text-[#C29A3A] border-[#C29A3A]/30'
+        color: ROLE_BADGE.brass
       }}
       navItems={navItems}
       activeItem={activeTab}

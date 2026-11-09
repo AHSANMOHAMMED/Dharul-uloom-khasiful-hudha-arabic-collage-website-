@@ -5,9 +5,9 @@ import { formatMoney, rpc } from '../../../lib/erp/rpc';
 import { CRM_STAGES, labelOf } from '../../../lib/erp/campusApi';
 import { usePortalNav } from '../../../context/PortalNavContext';
 
-const BAR = '#10b981';
-const GRID = '#1f2937';
-const AXIS = '#9ca3af';
+const BAR = '#11694A';
+const GRID = '#E8E1D0';
+const AXIS = '#4A5E56';
 
 function Tile({ label, value, hint, tone, module, go }) {
   const inner = <Stat label={label} value={value} hint={hint} tone={tone} />;
@@ -22,9 +22,9 @@ function Tile({ label, value, hint, tone, module, go }) {
 function ChartTooltip({ active, payload, label, money }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg bg-gray-900 border border-gray-700 px-3 py-2 text-xs text-gray-100">
-      <div className="text-gray-400">{label}</div>
-      <div className="font-bold">{money ? formatMoney(payload[0].value) : payload[0].value}</div>
+    <div className="rounded-lg bg-paper-white border border-sand-border px-3 py-2 text-xs text-ink-text-primary shadow-manuscript-sm">
+      <div className="text-ink-text-muted">{label}</div>
+      <div className="font-bold text-ink-green-900">{money ? formatMoney(payload[0].value) : payload[0].value}</div>
     </div>
   );
 }
@@ -76,7 +76,7 @@ export default function ErpDashboard() {
           return (
             <div className="space-y-6">
               <section>
-                <h3 className="text-sm uppercase tracking-wide text-gray-400 mb-3">{t('People', 'الأشخاص')}</h3>
+                <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('People', 'الأشخاص')}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
                   <Tile go={go} module="students" label={t('Students', 'الطلاب')} value={s.students ?? 0} />
                   <Tile go={go} module="hr" label={t('Employees', 'الموظفون')} value={s.employees ?? 0} tone="blue" />
@@ -91,7 +91,7 @@ export default function ErpDashboard() {
               </section>
 
               <section>
-                <h3 className="text-sm uppercase tracking-wide text-gray-400 mb-3">{t('Finance', 'المالية')} · {fees.month}</h3>
+                <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('Finance', 'المالية')} · {fees.month}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
                   <Tile go={go} module="fees" label={t('Fees invoiced', 'الرسوم المفوترة')} value={formatMoney(fees.invoiced)} tone="gray" />
                   <Tile go={go} module="fees" label={t('Fees collected', 'الرسوم المحصلة')} value={formatMoney(fees.collected)} />
@@ -107,7 +107,7 @@ export default function ErpDashboard() {
               </section>
 
               <section>
-                <h3 className="text-sm uppercase tracking-wide text-gray-400 mb-3">{t('Campus & admissions', 'الحرم والقبول')}</h3>
+                <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('Campus & admissions', 'الحرم والقبول')}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
                   <Tile go={go} module="crm" label={t('Overdue follow-ups', 'متابعات متأخرة')} value={s.followups_overdue ?? 0} tone={s.followups_overdue ? 'red' : 'gray'} />
                   <Tile go={go} module="welfare" label={t('Open discipline cases', 'حالات انضباط مفتوحة')} value={s.discipline_open ?? 0} tone="amber" />
@@ -125,7 +125,7 @@ export default function ErpDashboard() {
                         <CartesianGrid stroke={GRID} vertical={false} />
                         <XAxis dataKey="name" stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                         <YAxis allowDecimals={false} stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                        <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} content={<ChartTooltip />} />
+                        <Tooltip cursor={{ fill: 'rgba(17,105,74,0.06)' }} content={<ChartTooltip />} />
                         <Bar dataKey="value" fill={BAR} radius={[4, 4, 0, 0]} maxBarSize={40} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -138,7 +138,7 @@ export default function ErpDashboard() {
                         <CartesianGrid stroke={GRID} vertical={false} />
                         <XAxis dataKey="name" stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                         <YAxis stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => Number(v).toLocaleString('en-LK')} />
-                        <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} content={<ChartTooltip money />} />
+                        <Tooltip cursor={{ fill: 'rgba(17,105,74,0.06)' }} content={<ChartTooltip money />} />
                         <Bar dataKey="value" fill={BAR} radius={[4, 4, 0, 0]} maxBarSize={56} />
                       </BarChart>
                     </ResponsiveContainer>

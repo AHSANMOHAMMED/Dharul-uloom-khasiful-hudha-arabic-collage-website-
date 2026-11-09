@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import RolePortalShell from '../../components/portals/RolePortalShell';
+import { ROLE_BADGE } from '../../lib/roleTheme';
 
 const WelfarePanel = lazy(() => import('../../components/erp/campus/WelfarePanel'));
 const StudentsPanel = lazy(() => import('../../components/erp/campus/StudentsPanel'));
@@ -17,7 +18,7 @@ export default function CounselorPortal() {
       roleBadge={{
         text_en: 'Counselor',
         text_ar: 'مرشد',
-        color: 'bg-[#E3F1EA] text-[#11694A] border-[#11694A]/30',
+        color: ROLE_BADGE.emerald,
       }}
       tabs={tabs}
       defaultTab="welfare"

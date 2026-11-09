@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import RolePortalShell from '../../components/portals/RolePortalShell';
+import { ROLE_BADGE } from '../../lib/roleTheme';
 
 const ErpDashboard = lazy(() => import('../../components/erp/campus/ErpDashboard'));
 const Timetable = lazy(() => import('../../components/erp/campus/Timetable'));
@@ -46,7 +47,7 @@ export default function PrincipalPortal({ vpMode = false }) {
       roleBadge={{
         text_en: vpMode ? 'Vice Principal' : 'Principal',
         text_ar: vpMode ? 'نائب المدير' : 'المدير',
-        color: 'bg-[#E3F1EA] text-[#0B3B2E] border-[#0B3B2E]/20',
+        color: ROLE_BADGE.emerald,
       }}
       tabs={tabs}
       defaultTab="overview"

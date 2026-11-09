@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import RolePortalShell from '../../components/portals/RolePortalShell';
 import { useAuth } from '../../context/AuthContext';
+import { ROLE_BADGE } from '../../lib/roleTheme';
 
 const StaffHrPanel = lazy(() => import('../../components/erp/campus/StaffHrPanel'));
 const PayrollPanel = lazy(() => import('../../components/erp/finance/PayrollPanel'));
@@ -27,7 +28,7 @@ export default function HrPortal() {
       roleBadge={{
         text_en: 'HR Manager',
         text_ar: 'مدير الموارد البشرية',
-        color: 'bg-[#E3F1EA] text-[#0B3B2E] border-[#0B3B2E]/20',
+        color: ROLE_BADGE.emerald,
       }}
       tabs={tabs}
       defaultTab="staff"

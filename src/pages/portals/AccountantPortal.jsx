@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import RolePortalShell from '../../components/portals/RolePortalShell';
+import { ROLE_BADGE } from '../../lib/roleTheme';
 
 const FinanceTodayPanel = lazy(() => import('../../components/erp/ops/FinanceTodayPanel'));
 const FeeManagement = lazy(() => import('../../components/erp/finance/FeeManagement'));
@@ -29,7 +30,7 @@ export default function AccountantPortal() {
       roleBadge={{
         text_en: 'Accountant',
         text_ar: 'محاسب',
-        color: 'bg-[#E3F1EA] text-[#11694A] border-[#11694A]/30',
+        color: ROLE_BADGE.brass,
       }}
       tabs={tabs}
       defaultTab="today"

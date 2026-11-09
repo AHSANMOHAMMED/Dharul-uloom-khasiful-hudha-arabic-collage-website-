@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import RolePortalShell from '../../components/portals/RolePortalShell';
+import { ROLE_BADGE } from '../../lib/roleTheme';
 
 const CrmPanel = lazy(() => import('../../components/erp/campus/CrmPanel'));
 const StudentEnrolment = lazy(() => import('../../components/erp/campus/StudentEnrolment'));
@@ -23,7 +24,7 @@ export default function AdmissionsPortal() {
       roleBadge={{
         text_en: 'Admissions',
         text_ar: 'القبول',
-        color: 'bg-[#FEF9EE] text-[#C29A3A] border-[#C29A3A]/30',
+        color: ROLE_BADGE.brass,
       }}
       tabs={tabs}
       defaultTab="pipeline"

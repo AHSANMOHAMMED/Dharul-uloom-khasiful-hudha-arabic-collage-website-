@@ -220,18 +220,9 @@ export default function DashboardSidebarLayout({
             </div>
           </div>
 
-          {/* Tools strip — language only here; notifications sit in the sticky header */}
-          <div className="flex items-center justify-between gap-1.5 pt-1">
-            <LanguageSelect className="text-[11px] bg-white border border-[#E8E1D0] text-[#0B3B2E] py-1 px-2 rounded-lg flex-1" />
-            <button
-              type="button"
-              onClick={logout}
-              title={tx('تسجيل الخروج', 'Sign out')}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FEE2E2]/70 hover:bg-[#FEE2E2] text-[#991B1B] text-[11px] font-bold border border-[#991B1B]/20 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[15px]">logout</span>
-              <span>{tx('خروج', 'Logout')}</span>
-            </button>
+          {/* Language only here — Sign out lives once in the sticky header (was duplicated). */}
+          <div className="pt-1">
+            <LanguageSelect className="w-full text-[11px] bg-white border border-[#E8E1D0] text-[#0B3B2E] py-1.5 px-2 rounded-lg" />
           </div>
         </div>
       </aside>
@@ -313,8 +304,8 @@ export default function DashboardSidebarLayout({
           </div>
         </header>
 
-        {/* Scrollable Content Workspace */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
+        {/* Scrollable Content Workspace — erp-theme so embedded ERP panels use the official light manuscript palette */}
+        <main className="erp-theme flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto text-ink-text-primary">
           {(() => {
             // Back / Forward / Home + "Portal › Section" on every section.
             const homeId = homeItem || navItems[0]?.id;
