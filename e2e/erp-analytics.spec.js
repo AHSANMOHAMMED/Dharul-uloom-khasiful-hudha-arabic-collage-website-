@@ -26,8 +26,7 @@ test.describe('ERP and analytics role-aware interface', () => {
     await signInAdmin(page);
     await page.getByRole('button', { name: /Analytics|التحليلات/i }).click();
 
-    await expect(page.getByRole('heading', { name: 'Analytics' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Analytics' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Analytics', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: /6 months|6 أشهر/i })).toBeVisible();
     await expect(page.getByText(/LKR 50,000/i)).toBeVisible();
     await expect(page.getByText('Outstanding now', { exact: true })).toBeVisible();
