@@ -14,6 +14,7 @@ export default function StudentMore() {
         { href: `/certificates?student=${s}`, icon: 'medal-outline', label: t('cert.title') },
         { href: `/hostel?student=${s}`, icon: 'bed-outline', label: t('hostel.title') },
         { href: `/leave-requests?student=${s}`, icon: 'airplane-outline', label: t('leave.title') },
+        { href: '/library', icon: 'library-outline', label: t('nav.library') || 'Library' },
         { href: '/dictionary', icon: 'language-outline', label: t('dict.title') },
         { href: '/announcements', icon: 'megaphone-outline', label: t('home.announcements') },
         { href: '/messages', icon: 'chatbubbles-outline', label: t('chat.title') },

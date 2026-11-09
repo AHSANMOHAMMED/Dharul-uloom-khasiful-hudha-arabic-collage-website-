@@ -16,11 +16,19 @@ export const ROLE_SHORTCUTS = {
   treasurer: [
     { href: '/receive-payment', title: 'finance.receive', icon: 'cash-outline' },
     { href: '/finance', title: 'finance.title', icon: 'wallet-outline' },
+    { href: '/finance-hub', title: 'Finance Hub', icon: 'git-network-outline' },
+    { href: '/donations', title: 'Donations', icon: 'heart-circle-outline' },
+    { href: '/expenses', title: 'Expenses', icon: 'receipt-outline' },
+    { href: '/cheques', title: 'Cheques', icon: 'card-outline' },
     { href: '/finance/outstanding', title: 'finance.outstanding', icon: 'alert-circle-outline' },
     { href: '/payslips', title: 'hr.payslips', icon: 'document-outline' },
   ],
   accountant: [
     { href: '/finance', title: 'finance.title', icon: 'wallet-outline' },
+    { href: '/finance-hub', title: 'Finance Hub', icon: 'git-network-outline' },
+    { href: '/donations', title: 'Donations', icon: 'heart-circle-outline' },
+    { href: '/expenses', title: 'Expenses', icon: 'receipt-outline' },
+    { href: '/cheques', title: 'Cheques', icon: 'card-outline' },
     { href: '/finance/outstanding', title: 'finance.outstanding', icon: 'alert-circle-outline' },
     { href: '/accounting', title: 'finance.accounting', icon: 'book-outline' },
   ],
@@ -58,9 +66,12 @@ export const ROLE_SHORTCUTS = {
   tutor: [
     { href: '/staff/attendance', title: 'tabs.attendance', icon: 'checkbox-outline' },
     { href: '/staff/leaves', title: 'tabs.leaves', icon: 'document-text-outline' },
+    { href: '/tutor-lms', title: 'lms.title', icon: 'school-outline' },
     { href: '/results', title: 'results.title', icon: 'ribbon-outline' },
+    { href: '/library', title: 'nav.library', icon: 'library-outline' },
   ],
   librarian: [
+    { href: '/library', title: 'nav.library', icon: 'library-outline' },
     { href: '/dictionary', title: 'library.dictionary', icon: 'book-outline' },
   ],
 };

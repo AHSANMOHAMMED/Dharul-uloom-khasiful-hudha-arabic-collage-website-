@@ -8,8 +8,14 @@ const StudentsPanel = lazy(() => import('../../components/erp/campus/StudentsPan
 const StaffHrPanel = lazy(() => import('../../components/erp/campus/StaffHrPanel'));
 const AcademicsPanel = lazy(() => import('../../components/erp/campus/AcademicsPanel'));
 const WelfarePanel = lazy(() => import('../../components/erp/campus/WelfarePanel'));
+const HostelPanel = lazy(() => import('../../components/erp/campus/HostelPanel'));
+const CertificatesPanel = lazy(() => import('../../components/erp/campus/CertificatesPanel'));
 const DutiesPanel = lazy(() => import('../../components/erp/governance/DutiesPanel'));
 const ReportsPanel = lazy(() => import('../../components/erp/ops/ReportsPanel'));
+const CrmPanel = lazy(() => import('../../components/erp/campus/CrmPanel'));
+const ExpensesPanel = lazy(() => import('../../components/erp/finance/ExpensesPanel'));
+const DonationsPanel = lazy(() => import('../../components/erp/finance/DonationsPanel'));
+const PayrollPanel = lazy(() => import('../../components/erp/finance/PayrollPanel'));
 
 export default function PrincipalPortal({ vpMode = false }) {
   const title_en = vpMode ? 'Vice Principal Portal' : 'Principal Portal';
@@ -22,7 +28,13 @@ export default function PrincipalPortal({ vpMode = false }) {
     { id: 'students', label_en: 'Students', label_ar: 'الطلاب', icon: 'groups', embed: StudentsPanel },
     { id: 'staff', label_en: 'Staff', label_ar: 'الموظفون', icon: 'badge', embed: StaffHrPanel },
     { id: 'fees', label_en: 'Fees', label_ar: 'الرسوم', icon: 'payments', embed: FeeManagement, embedProps: { embedded: true } },
+    { id: 'expenses', label_en: 'Expenses', label_ar: 'المصروفات', icon: 'receipt_long', embed: ExpensesPanel },
+    { id: 'donations', label_en: 'Donations', label_ar: 'التبرعات', icon: 'volunteer_activism', embed: DonationsPanel },
+    { id: 'payroll', label_en: 'Payroll', label_ar: 'الرواتب', icon: 'payments', embed: PayrollPanel },
+    { id: 'pipeline', label_en: 'Admissions CRM', label_ar: 'مسار القبول', icon: 'filter_alt', embed: CrmPanel },
+    { id: 'hostel', label_en: 'Hostel', label_ar: 'السكن', icon: 'apartment', embed: HostelPanel },
     { id: 'welfare', label_en: 'Welfare', label_ar: 'الرعاية', icon: 'volunteer_activism', embed: WelfarePanel },
+    { id: 'certificates', label_en: 'Certificates', label_ar: 'الشهادات', icon: 'workspace_premium', embed: CertificatesPanel },
     { id: 'duties', label_en: 'Duties', label_ar: 'المهام', icon: 'assignment_ind', embed: DutiesPanel },
     { id: 'reports', label_en: 'Reports', label_ar: 'التقارير', icon: 'analytics', embed: ReportsPanel },
   ];

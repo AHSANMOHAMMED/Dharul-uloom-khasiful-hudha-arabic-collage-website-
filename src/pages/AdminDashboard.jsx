@@ -1,28 +1,83 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { generateInvoicesInBatches } from '../lib/erp/rpc';
 import { adminStats, listAdmissionsByStatus, updateAdmissionStatus } from '../lib/admissionsApi';
 
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import AnalyticsPanel from '../components/erp/ops/AnalyticsPanel';
 import AdminContentCMS from '../components/AdminContentCMS';
 import { approveProfile, flushOutbound } from '../lib/notifyApi';
-import AdmissionsCrmBoard from '../components/AdmissionsCrmBoard';
-import StaffHrmPanel from '../components/StaffHrmPanel';
 import ImportJobsPanel from '../components/ImportJobsPanel';
 import OrgAdminPanel from '../components/OrgAdminPanel';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import { ErpEmbedProvider } from '../context/ErpEmbedContext';
+import { PortalNavProvider } from '../context/PortalNavContext';
+import { ERP_QUICK_LINK } from '../lib/portalChrome';
 
-const ADMIN_TABS = ['admissions', 'crm', 'hrm', 'imports', 'org', 'approvals', 'tutors', 'broadcast', 'content', 'indexes', 'analytics'];
+// Full ERP modules — overview tiles open these (not mini previews).
+const ErpDashboard = lazy(() => import('../components/erp/campus/ErpDashboard'));
+const CrmPanel = lazy(() => import('../components/erp/campus/CrmPanel'));
+const StaffHrPanel = lazy(() => import('../components/erp/campus/StaffHrPanel'));
+const AnalyticsPanel = lazy(() => import('../components/erp/ops/AnalyticsPanel'));
+const FeeManagement = lazy(() => import('../components/erp/finance/FeeManagement'));
+const FinanceHubPanel = lazy(() => import('../components/erp/finance/FinanceHubPanel'));
+const AccountingPanel = lazy(() => import('../components/erp/finance/AccountingPanel'));
+const StudentsPanel = lazy(() => import('../components/erp/campus/StudentsPanel'));
+const AcademicsPanel = lazy(() => import('../components/erp/campus/AcademicsPanel'));
+const ExpensesPanel = lazy(() => import('../components/erp/finance/ExpensesPanel'));
+const DonationsPanel = lazy(() => import('../components/erp/finance/DonationsPanel'));
+const PayrollPanel = lazy(() => import('../components/erp/finance/PayrollPanel'));
+const WelfarePanel = lazy(() => import('../components/erp/campus/WelfarePanel'));
+const HostelPanel = lazy(() => import('../components/erp/campus/HostelPanel'));
+const CertificatesPanel = lazy(() => import('../components/erp/campus/CertificatesPanel'));
 
-const COLORS = ['#11694A', '#C29A3A', '#0F7C86', '#B91C1C'];
+/** Every ErpDashboard tile module → admin tab id */
+const ERP_TILE_TO_TAB = {
+  students: 'students',
+  hr: 'hrm',
+  academics: 'academics',
+  fees: 'fees',
+  expenses: 'expenses',
+  donations: 'donations',
+  payroll: 'payroll',
+  crm: 'crm',
+  welfare: 'welfare',
+  hostel: 'hostel',
+  certificates: 'certificates',
+  accounting: 'accounting',
+  financehub: 'financehub',
+  analytics: 'analytics',
+  financetoday: 'fees',
+};
+
+const ADMIN_TABS = [
+  'overview', 'admissions', 'crm', 'students', 'academics', 'hrm',
+  'fees', 'financehub', 'accounting', 'expenses', 'donations', 'payroll',
+  'hostel', 'welfare', 'certificates',
+  'imports', 'org', 'approvals', 'tutors', 'broadcast', 'content', 'indexes', 'analytics',
+];
+
+function ErpPane({ children }) {
+  return (
+    <ErpEmbedProvider embedded>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-16 text-[#4A5E56] text-xs gap-2">
+            <span className="w-5 h-5 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin" />
+            {tx('جاري التحميل…', 'Loading…')}
+          </div>
+        }
+      >
+        {children}
+      </Suspense>
+    </ErpEmbedProvider>
+  );
+}
 
 const AdminDashboard = () => {
   const { user, isAdmin, isSuperAdmin, loading: authLoading } = useAuth();
@@ -33,7 +88,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [admissions, setAdmissions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useTabParam(ADMIN_TABS, 'admissions');
+  const [activeTab, setActiveTab] = useTabParam(ADMIN_TABS, 'overview');
   const [contentSection, setContentSection] = useState('news');
 
   // Approval queue
@@ -311,20 +366,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const admissionStatusData = stats ? [
-    { name: tx('قيد الانتظار', 'Pending'), value: stats.admissions?.pending || 0 },
-    { name: tx('تمت الموافقة', 'Approved'), value: stats.admissions?.approved || 0 },
-    { name: tx('مرفوض', 'Rejected'), value: stats.admissions?.rejected || 0 },
-  ] : [];
-
-  const contentSummaryData = stats ? [
-    { name: tx('الأخبار', 'News'), count: stats.content?.news || 0 },
-    { name: tx('الأساتذة', 'Faculty'), count: stats.content?.faculty || 0 },
-    { name: tx('الطلاب', 'Students'), count: stats.users?.students || 0 },
-    { name: tx('المعلمون', 'Tutors'), count: stats.users?.tutors || 0 },
-    { name: tx('الكتب', 'Books'), count: stats.library?.books || 0 },
-  ] : [];
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FBF8F0]">
@@ -338,10 +379,29 @@ const AdminDashboard = () => {
     );
   }
 
+  const openTab = (id) => {
+    if (!ADMIN_TABS.includes(id)) return false;
+    setActiveTab(id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return true;
+  };
+
   const tabs = [
+    { id: 'overview', label_en: 'Overview', label_ar: 'نظرة عامة', icon: 'dashboard' },
     { id: 'admissions', label_en: 'Inquiries', label_ar: 'الطلبات', icon: 'inbox', badge: admissions.length },
     { id: 'crm', label_en: 'CRM Pipeline', label_ar: 'مسار القبول', icon: 'filter_alt' },
-    { id: 'hrm', label_en: 'Staff HRM', label_ar: 'الموارد البشرية', icon: 'badge' },
+    { id: 'students', label_en: 'Students', label_ar: 'الطلاب', icon: 'groups' },
+    { id: 'academics', label_en: 'Academics', label_ar: 'الأكاديميات', icon: 'menu_book' },
+    { id: 'hrm', label_en: 'Staff HR', label_ar: 'الموارد البشرية', icon: 'badge' },
+    { id: 'fees', label_en: 'Fees', label_ar: 'الرسوم', icon: 'payments' },
+    { id: 'financehub', label_en: 'Finance Hub', label_ar: 'مركز المالية', icon: 'hub' },
+    { id: 'accounting', label_en: 'Accounting', label_ar: 'المحاسبة', icon: 'account_balance' },
+    { id: 'expenses', label_en: 'Expenses', label_ar: 'المصروفات', icon: 'receipt_long' },
+    { id: 'donations', label_en: 'Donations', label_ar: 'التبرعات', icon: 'volunteer_activism' },
+    { id: 'payroll', label_en: 'Payroll', label_ar: 'الرواتب', icon: 'payments' },
+    { id: 'hostel', label_en: 'Hostel', label_ar: 'السكن', icon: 'apartment' },
+    { id: 'welfare', label_en: 'Welfare', label_ar: 'الرعاية', icon: 'health_and_safety' },
+    { id: 'certificates', label_en: 'Certificates', label_ar: 'الشهادات', icon: 'workspace_premium' },
     { id: 'imports', label_en: 'Shamela Import', label_ar: 'استيراد الشاملة', icon: 'upload_file' },
     { id: 'org', label_en: 'Organization', label_ar: 'المؤسسة', icon: 'corporate_fare' },
     { id: 'approvals', label_en: 'Signups', label_ar: 'الموافقات', icon: 'verified_user', badge: pendingApprovals.length },
@@ -351,6 +411,16 @@ const AdminDashboard = () => {
     { id: 'indexes', label_en: 'Index Pre-seed', label_ar: 'أرقام القيد', icon: 'pin' },
     { id: 'analytics', label_en: 'Analytics', label_ar: 'التحليلات', icon: 'analytics' },
   ];
+
+  const portalNav = {
+    goTab: (id) => openTab(id),
+    goErpModule: (module) => {
+      const tab = ERP_TILE_TO_TAB[module];
+      if (tab && openTab(tab)) return true;
+      navigate(`/erp?module=${encodeURIComponent(module)}`);
+      return true;
+    },
+  };
 
   return (
     <DashboardSidebarLayout
@@ -363,7 +433,14 @@ const AdminDashboard = () => {
       }}
       navItems={tabs}
       activeItem={activeTab}
-      onSelect={setActiveTab}
+      onSelect={openTab}
+      homeItem="overview"
+      quickLinks={[
+        ERP_QUICK_LINK,
+        { to: '/erp?module=financehub', label_en: 'Finance Hub', label_ar: 'مركز المالية', icon: 'hub' },
+        { to: '/library-admin', label_en: 'Maktabah Admin', label_ar: 'إدارة المكتبة', icon: 'local_library' },
+        { to: '/messages', label_en: 'Messages', label_ar: 'الرسائل', icon: 'chat' },
+      ]}
       topActions={
         <button
           onClick={handleTriggerFeeReminder}
@@ -375,13 +452,15 @@ const AdminDashboard = () => {
         </button>
       }
     >
+      <PortalNavProvider value={portalNav}>
       <div className="space-y-6">
         <ToastContainer position="top-right" theme="light" autoClose={3000} />
 
         {/* Retain element anchor for E2E watermark assertion */}
         <div id="admin-khatam" className="hidden" aria-hidden="true"></div>
 
-        {/* Welcome Executive Header */}
+        {/* Welcome Executive Header — only on overview */}
+        {activeTab === 'overview' && (
         <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-7 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-[#11694A]"></div>
 
@@ -393,27 +472,34 @@ const AdminDashboard = () => {
               <div>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E3F1EA] text-[#11694A] border border-[#11694A]/20 mb-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#11694A]"></span>
-                  {tx('لوحة التحكم الإدارية المركزية', 'Super Administrator Console')}
+                  {tx('لوحة التحكم الإدارية', 'College Admin Console')}
                 </span>
                 <h1 className="text-xl sm:text-2xl font-serif font-bold text-[#0B3B2E]">
                   {tx('مرحباً، {name}', 'Welcome, {name}').replace('{name}', user?.username || tx('المدير', 'Administrator'))}
                 </h1>
                 <p className="text-xs text-[#4A5E56] font-sans mt-0.5">
-                  {tx('إدارة القبول، الموارد البشرية، المحتوى، والموافقات العامة', 'College operations, CRM pipeline, HRM records, content CMS & system security')}
+                  {tx('اضغط أي مؤشر لفتح الوحدة كاملة.', 'Click any tile to open that full module.')}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                to="/erp"
+                className="text-xs font-semibold text-emerald-700 border border-[#E8E1D0] rounded-lg px-3 py-1.5 bg-[#FBF8F0] hover:bg-white"
+              >
+                {tx('فتح ERP الكامل', 'Open full ERP')}
+              </Link>
               <span className="text-xs font-semibold text-[#0B3B2E] bg-[#FBF8F0] border border-[#E8E1D0] px-3 py-1.5 rounded-xl">
                 {tx('العام الأكاديمي: ٢٠٢٦', 'Academic Year: 2026')}
               </span>
             </div>
-            </div>
           </div>
         </div>
+        )}
 
-        {/* KPI Stats Strip */}
+        {/* KPI Stats Strip — clickable into real modules */}
+        {activeTab === 'overview' && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             {
@@ -423,6 +509,7 @@ const AdminDashboard = () => {
               icon: 'school',
               color: '#11694A',
               bg: '#E3F1EA',
+              tab: 'students',
             },
             {
               label_en: 'Total Tutors',
@@ -431,6 +518,7 @@ const AdminDashboard = () => {
               icon: 'person_book',
               color: '#0F7C86',
               bg: '#E0F2F1',
+              tab: 'hrm',
             },
             {
               label_en: 'Pending Approvals',
@@ -439,6 +527,7 @@ const AdminDashboard = () => {
               icon: 'pending_actions',
               color: pendingApprovals.length > 0 ? '#B91C1C' : '#11694A',
               bg: pendingApprovals.length > 0 ? '#FEE2E2' : '#E3F1EA',
+              tab: 'approvals',
             },
             {
               label_en: 'Library Books',
@@ -447,102 +536,70 @@ const AdminDashboard = () => {
               icon: 'menu_book',
               color: '#C29A3A',
               bg: '#FEF9EE',
+              href: '/library-admin',
             },
-          ].map((kpi) => (
-            <div
-              key={kpi.label_en}
-              className="bg-white rounded-2xl border border-[#E8E1D0] p-5 flex items-center gap-4 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]"
-            >
-              <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                style={{ backgroundColor: kpi.bg, color: kpi.color }}
-              >
-                <span className="material-symbols-outlined text-xl">{kpi.icon}</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-serif font-bold" style={{ color: kpi.color }}>
-                  {kpi.value}
-                </p>
-                <p className="text-[11px] text-[#4A5E56] font-sans truncate">
-                  {tx(kpi.label_ar, kpi.label_en)}
-                </p>
-              </div>
-            </div>
-          ))}
+          ].map((kpi) => {
+            const inner = (
+              <>
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: kpi.bg, color: kpi.color }}
+                >
+                  <span className="material-symbols-outlined text-xl">{kpi.icon}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-serif font-bold" style={{ color: kpi.color }}>
+                    {kpi.value}
+                  </p>
+                  <p className="text-[11px] text-[#4A5E56] font-sans truncate">
+                    {tx(kpi.label_ar, kpi.label_en)}
+                  </p>
+                </div>
+              </>
+            );
+            const cls = 'bg-white rounded-2xl border border-[#E8E1D0] p-5 flex items-center gap-4 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] text-start hover:ring-2 hover:ring-emerald-600/40 transition w-full';
+            if (kpi.href) {
+              return (
+                <Link key={kpi.label_en} to={kpi.href} className={cls}>
+                  {inner}
+                </Link>
+              );
+            }
+            return (
+              <button key={kpi.label_en} type="button" className={cls} onClick={() => openTab(kpi.tab)}>
+                {inner}
+              </button>
+            );
+          })}
         </div>
+        )}
 
-        {/* Charts & Analytics Summary */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-2xl border border-[#E8E1D0] shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E8E1D0]">
-              <h2 className="text-base font-serif font-bold text-[#0B3B2E]">
-                {tx('تحليلات طلبات القبول', 'Admissions Pipeline Funnel')}
-              </h2>
-              <span className="text-xs text-[#4A5E56]">{tx('مباشر', 'Real-time')}</span>
-            </div>
-            {admissionStatusData.every((d) => d.value === 0) ? (
-              <div className="flex flex-col items-center justify-center h-[220px] gap-3 text-center">
-                <span className="material-symbols-outlined text-4xl text-[#E8E1D0]">{'donut_large'}</span>
-                <p className="text-xs text-[#4A5E56]">{tx('لا توجد طلبات قبول بعد', 'No admissions recorded yet')}</p>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={admissionStatusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    innerRadius={50}
-                    fill="#11694A"
-                    dataKey="value"
-                    paddingAngle={4}
-                  >
-                    {admissionStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E8E1D0', color: '#0B3B2E' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
+        {/* Overview = live ERP dashboard. Tile clicks open the full module tab (not a preview). */}
+        {activeTab === 'overview' && (
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
+            <ErpPane><ErpDashboard /></ErpPane>
           </div>
+        )}
 
-          <div className="bg-white p-6 rounded-2xl border border-[#E8E1D0] shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E8E1D0]">
-              <h2 className="text-base font-serif font-bold text-[#0B3B2E]">
-                {tx('المحتوى والإحصائيات العامة', 'CMS Content Breakdown')}
-              </h2>
-              <span className="text-xs text-[#4A5E56]">{tx('إجمالي العناصر', 'Total items')}</span>
-            </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={contentSummaryData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E8E1D0" vertical={false} />
-                <XAxis dataKey="name" stroke="#4A5E56" tick={{ fill: '#4A5E56', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="#4A5E56" tick={{ fill: '#4A5E56', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E8E1D0' }} />
-                <Bar dataKey="count" fill="#11694A" radius={[6, 6, 0, 0]} maxBarSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-
-        {/* Dynamic Panels */}
+        {/* Full feature panels — replace overview when a tab is selected */}
+        {activeTab !== 'overview' && (
         <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] min-h-[480px]">
-          
-          {/* CRM Panel */}
-          {activeTab === 'crm' && <AdmissionsCrmBoard />}
 
-          {/* HRM Panel */}
-          {activeTab === 'hrm' && <StaffHrmPanel />}
+          {activeTab === 'crm' && <ErpPane><CrmPanel /></ErpPane>}
+          {activeTab === 'hrm' && <ErpPane><StaffHrPanel /></ErpPane>}
+          {activeTab === 'students' && <ErpPane><StudentsPanel /></ErpPane>}
+          {activeTab === 'academics' && <ErpPane><AcademicsPanel /></ErpPane>}
+          {activeTab === 'fees' && <ErpPane><FeeManagement embedded /></ErpPane>}
+          {activeTab === 'financehub' && <ErpPane><FinanceHubPanel /></ErpPane>}
+          {activeTab === 'accounting' && <ErpPane><AccountingPanel /></ErpPane>}
+          {activeTab === 'expenses' && <ErpPane><ExpensesPanel /></ErpPane>}
+          {activeTab === 'donations' && <ErpPane><DonationsPanel /></ErpPane>}
+          {activeTab === 'payroll' && <ErpPane><PayrollPanel /></ErpPane>}
+          {activeTab === 'hostel' && <ErpPane><HostelPanel /></ErpPane>}
+          {activeTab === 'welfare' && <ErpPane><WelfarePanel /></ErpPane>}
+          {activeTab === 'certificates' && <ErpPane><CertificatesPanel /></ErpPane>}
 
-          {/* Shamela Imports */}
           {activeTab === 'imports' && <ImportJobsPanel />}
-
-          {/* Org Panel */}
           {activeTab === 'org' && <OrgAdminPanel />}
 
           {/* Tab 1: Admissions Review */}
@@ -952,9 +1009,12 @@ const AdminDashboard = () => {
           )}
 
           {/* Tab: Analytics */}
-          {activeTab === 'analytics' && <AnalyticsPanel />}
+          {activeTab === 'analytics' && <ErpPane><AnalyticsPanel /></ErpPane>}
 
         </div>
+        )}
+      </div>
+      </PortalNavProvider>
     </DashboardSidebarLayout>
   );
 };

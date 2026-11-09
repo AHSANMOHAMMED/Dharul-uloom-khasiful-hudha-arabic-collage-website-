@@ -36,10 +36,15 @@ export default function ErpDashboard() {
   const portalNav = usePortalNav();
   const [state, reload] = useAsync(async () => (await rpc('org_dashboard_stats')) ?? {}, []);
   const go = (module) => {
-    if (portalNav?.goErpModule?.(module)) return;
-    // Inside /erp workspace: module query drives the shell.
+    // Prefer in-portal tab switch (admin / role portals) so the full module
+    // replaces overview — never leave a mini preview under the dashboard.
+    if (portalNav?.goErpModule?.(module)) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     if (window.location.pathname.startsWith('/erp')) {
       setParams({ module });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     navigate(`/erp?module=${encodeURIComponent(module)}`);

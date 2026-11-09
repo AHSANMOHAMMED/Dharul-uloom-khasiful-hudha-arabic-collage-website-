@@ -7,6 +7,7 @@ const AccountingPanel = lazy(() => import('../../components/erp/finance/Accounti
 const ChequesPanel = lazy(() => import('../../components/erp/finance/ChequesPanel'));
 const DonationsPanel = lazy(() => import('../../components/erp/finance/DonationsPanel'));
 const ExpensesPanel = lazy(() => import('../../components/erp/finance/ExpensesPanel'));
+const FinanceHubPanel = lazy(() => import('../../components/erp/finance/FinanceHubPanel'));
 const PayrollPanel = lazy(() => import('../../components/erp/finance/PayrollPanel'));
 const AuditLogPanel = lazy(() => import('../../components/erp/finance/AuditLogPanel'));
 
@@ -14,6 +15,7 @@ export default function TreasurerPortal() {
   const tabs = [
     { id: 'today', label_en: 'Today', label_ar: 'اليوم', icon: 'today', embed: FinanceTodayPanel },
     { id: 'fees', label_en: 'Fees', label_ar: 'الرسوم', icon: 'payments', embed: FeeManagement, embedProps: { embedded: true } },
+    { id: 'financehub', label_en: 'Finance Hub', label_ar: 'مركز المالية', icon: 'hub', embed: FinanceHubPanel },
     { id: 'accounting', label_en: 'Accounting', label_ar: 'المحاسبة', icon: 'account_balance', embed: AccountingPanel },
     { id: 'cheques', label_en: 'Cheques', label_ar: 'الشيكات', icon: 'receipt_long', embed: ChequesPanel },
     { id: 'donations', label_en: 'Donations', label_ar: 'التبرعات', icon: 'volunteer_activism', embed: DonationsPanel },

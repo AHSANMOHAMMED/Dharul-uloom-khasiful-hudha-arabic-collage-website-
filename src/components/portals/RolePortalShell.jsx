@@ -25,6 +25,12 @@ const ERP_MODULE_TO_TAB = {
   crm: 'pipeline',
   accounting: 'accounting',
   payroll: 'payroll',
+  financehub: 'financehub',
+  donations: 'donations',
+  expenses: 'expenses',
+  cheques: 'cheques',
+  analytics: 'analytics',
+  financetoday: 'today',
 };
 
 class EmbedErrorBoundary extends Component {
@@ -94,8 +100,10 @@ export default function RolePortalShell({
         const mapped = ERP_MODULE_TO_TAB[module];
         if (mapped && tabIds.has(mapped)) {
           setActive(mapped);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
           return true;
         }
+        // No matching portal tab — open the full ERP module (not a preview).
         navigate(`/erp?module=${encodeURIComponent(module)}`);
         return true;
       },
