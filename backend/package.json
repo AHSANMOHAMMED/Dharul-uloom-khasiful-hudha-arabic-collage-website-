@@ -1,7 +1,7 @@
 {
   "name": "kashiful-hudha-backend",
   "version": "1.0.0",
-  "description": "Backend API for Dharul Uloom Kashiful Hudha Arabic College",
+  "description": "DEPRECATED — legacy Express + Mongoose archive. Production uses Supabase. See README.md.",
   "main": "server.js",
   "type": "module",
   "scripts": {

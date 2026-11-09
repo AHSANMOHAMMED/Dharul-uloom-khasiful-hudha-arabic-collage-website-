@@ -49,13 +49,14 @@
 
 **Important:** The browser never uses the service role key. Row Level Security (RLS) enforces who can read/write. Edge Functions use the service role only on the server for webhooks, fee generation, and outbound messaging.
 
-### Legacy path (optional)
+### Legacy path (deprecated — do not use)
 
 ```
-backend/  →  Express + MongoDB models/routes
+backend/  →  Express + Mongoose/MongoDB (archived)
 ```
 
-Kept for reference / old Docker flows. Current SPA talks to **Supabase**, not Mongo.
+Hard-gated behind `LEGACY_API_ENABLED=1`. See [`backend/README.md`](../backend/README.md).  
+**Canonical backend = Supabase only.**
 
 ---
 
@@ -78,7 +79,7 @@ Kept for reference / old Docker flows. Current SPA talks to **Supabase**, not Mo
 │   ├── functions/            # Edge Functions
 │   └── config.toml
 ├── scripts/shamela/          # Bulk library import workers
-├── backend/                  # Legacy Express (optional)
+├── backend/                  # DEPRECATED Mongoose archive (not production)
 ├── docs/                     # Guides (this file + UI/go-live/RLS)
 ├── docker* · vercel.json     # Deploy helpers
 └── package.json              # Vite SPA scripts

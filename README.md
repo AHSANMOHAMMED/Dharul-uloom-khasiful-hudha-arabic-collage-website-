@@ -27,14 +27,13 @@ Nurturing faith and knowledge through quality Islamic education, serving as a fo
 ├── public/                # Static assets
 │   ├── assets/            # General assets
 │   └── images/            # Images
-├── backend/               # Backend API
-│   ├── routes/            # API routes
-│   ├── models/            # Database models
-│   ├── config/            # Configuration files
-│   └── server.js          # Main server file
+├── backend/               # DEPRECATED — Express + Mongoose archive (see backend/README.md)
+├── supabase/              # ★ Live backend: migrations, Edge Functions, RLS
+├── mobile/                # Expo app (same Supabase project)
 └── docs/                  # Documentation
 
 ```
+
 
 ## Technology Stack
 
@@ -47,9 +46,9 @@ Nurturing faith and knowledge through quality Islamic education, serving as a fo
 - **Animations**: Framer Motion
 - **SEO**: React Helmet
 
-### Backend (data & auth)
-- **Platform**: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
-- **Legacy**: Express + MongoDB in `backend/` (reference/compatibility service; use `npm run dev:legacy` only if you still need the older API)
+### Backend (data & auth) — canonical
+- **Platform**: Supabase (PostgreSQL, Auth, Storage, Edge Functions, RLS)
+- **Not used in production**: Express + Mongoose in `backend/` (archived; opt-in only with `LEGACY_API_ENABLED=1`)
 
 ## Getting Started
 
@@ -70,18 +69,12 @@ npm run dev
 
 Apply migrations: see [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md).
 
-Legacy Mongo API (optional):
-
-```bash
-npm run dev:legacy
-```
-
 ### Runtime Model
 
 - The **frontend** is the primary app surface.
-- **Auth and data access** are expected to come from Supabase.
-- The `backend/` folder remains available for legacy routes, but it is not the main path for the current SPA.
-- Most production issues will come from **Supabase schema, RLS, and edge functions**, not from React routing.
+- **Auth and data** come only from **Supabase** (not Mongo, not Express `/api`).
+- `backend/` is a **deprecated Mongoose archive** — do not deploy it beside the SPA.
+- Production issues are almost always **Supabase schema, RLS, or edge functions**.
 
 ### Environment Variables
 
@@ -92,15 +85,6 @@ VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-If you run the legacy backend, also configure `backend/.env` with:
-
-```env
-MONGO_URI=mongodb://127.0.0.1:27017/dharul-uloom
-SUPABASE_URL=https://your-project-ref.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-JWT_SECRET=your-secret
-FRONTEND_URL=http://localhost:5173
-```
 
 ## Documentation
 

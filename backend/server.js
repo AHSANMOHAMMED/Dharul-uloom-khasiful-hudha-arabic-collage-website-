@@ -91,10 +91,22 @@ const PORT = process.env.PORT || 5000;
 // Connect to the database and start the server only when run directly
 // (skipped during tests, which import `app` without a live database).
 if (process.env.NODE_ENV !== 'test') {
+  // Hard opt-in: this Mongoose/Mongo API is deprecated. Production data is Supabase.
+  if (process.env.LEGACY_API_ENABLED !== '1') {
+    console.error([
+      '',
+      'DEPRECATED: backend/ Express + Mongoose is not the live platform.',
+      'The SPA uses Supabase (Postgres + Auth + RLS). See backend/README.md.',
+      'To run this archive locally only: LEGACY_API_ENABLED=1 MONGO_URI=... JWT_SECRET=... npm run dev',
+      '',
+    ].join('\n'));
+    process.exit(1);
+  }
   if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is required to start the legacy API');
+  console.warn('[legacy-api] LEGACY_API_ENABLED=1 — starting deprecated Mongoose API (not production)');
   connectDB().then(() => {
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+      console.log(`Legacy API running on port ${PORT} (deprecated)`);
       console.log(`Environment: ${process.env.NODE_ENV}`);
     });
   }).catch((error) => {
