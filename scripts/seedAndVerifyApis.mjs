@@ -231,20 +231,21 @@ async function seedExtra(ids, orgId) {
     }
   }
 
-  // Mashoora
+  // Mashoora (meeting_type: weekly|annual|special · status: draft|finalized)
   const { data: mashExisting } = await admin.from('mashoora_meetings').select('id').eq('org_id', orgId).eq('title', 'Seed Mashoora').maybeSingle();
   if (!mashExisting) {
-    await admin.from('mashoora_meetings').insert({
+    const { error } = await admin.from('mashoora_meetings').insert({
       org_id: orgId,
       title: 'Seed Mashoora',
-      meeting_type: 'regular',
+      meeting_type: 'weekly',
       meeting_date: new Date().toISOString().slice(0, 10),
       chaired_by: principalId,
       attendees: [principalId, tutorId, treasurerId].filter(Boolean),
       agenda: 'Fees, exams, hostel',
-      status: 'scheduled',
+      status: 'draft',
       created_by: principalId || tutorId,
     });
+    if (error) console.warn('mashoora seed:', error.message);
   }
 
   // Activity
@@ -273,7 +274,7 @@ async function seedExtra(ids, orgId) {
         student_id: studentId,
         incident_date: new Date().toISOString().slice(0, 10),
         category: 'attendance',
-        severity: 'low',
+        severity: 'minor', // minor|moderate|major
         description: 'Late to morning assembly (seed).',
         action_taken: 'Verbal reminder',
         status: 'open',
@@ -352,7 +353,7 @@ async function seedExtra(ids, orgId) {
         amount: 10000,
         currency: 'LKR',
         method: 'cash',
-        status: 'posted',
+        status: 'recorded', // recorded|reversed
         received_by: treasurerId || accountantId,
         notes: 'Seed donation',
       });
@@ -443,14 +444,15 @@ async function seedExtra(ids, orgId) {
     const today = new Date().toISOString().slice(0, 10);
     const { data: sa } = await admin.from('staff_attendance').select('id').eq('profile_id', tutorId).eq('date', today).maybeSingle();
     if (!sa) {
-      await admin.from('staff_attendance').insert({
+      const { error } = await admin.from('staff_attendance').insert({
         org_id: orgId,
         profile_id: tutorId,
         date: today,
         status: 'present',
-        check_in: `${today}T07:45:00+05:30`,
+        check_in: '07:45:00', // column type is time, not timestamptz
         marked_by: tutorId,
       });
+      if (error) console.warn('staff_attendance seed:', error.message);
     }
   }
 

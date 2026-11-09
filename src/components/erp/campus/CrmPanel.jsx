@@ -7,7 +7,19 @@ import { useAction, useEmployees } from './hooks';
 import CrmLeadDetail, { FollowupsTable } from './CrmLeadDetail';
 import CrmInvitations from './CrmInvitations';
 
-const LEAD_EMPTY = { student_name: '', age: '', parent_name: '', phone: '', email: '', address: '', previous_education: '', course: 'quran', source: 'walk_in', notes: '' };
+const LEAD_EMPTY = {
+  student_name: '',
+  age: '',
+  date_of_birth: '',
+  parent_name: '',
+  phone: '',
+  email: '',
+  address: '',
+  previous_education: '',
+  course: 'quran',
+  source: 'walk_in',
+  notes: '',
+};
 
 function DashboardStrip({ state }) {
   const { t, ar } = useLang();
@@ -71,14 +83,33 @@ function Pipeline({ onChangedStats }) {
 
   const createLead = async () => {
     const age = Number(newLead.age);
-    if (!(age >= 5 && age <= 15)) {
-      window.alert(t('Age must be between 5 and 15.', 'يجب أن يكون العمر بين 5 و 15.'));
+    const address = newLead.address.trim();
+    if (!(age >= 3 && age <= 80)) {
+      window.alert(t('Age must be between 3 and 80.', 'يجب أن يكون العمر بين 3 و 80.'));
+      return;
+    }
+    if (!newLead.date_of_birth) {
+      window.alert(t('Date of birth is required.', 'تاريخ الميلاد مطلوب.'));
+      return;
+    }
+    if (!address) {
+      window.alert(t('Address is required.', 'العنوان مطلوب.'));
       return;
     }
     const row = {
-      student_name: newLead.student_name.trim(), age, parent_name: newLead.parent_name.trim(), phone: newLead.phone.trim(),
-      email: newLead.email.trim() || null, address: newLead.address.trim() || '—', previous_education: newLead.previous_education || null,
-      course: newLead.course, source: newLead.source, notes: newLead.notes || null, pipeline_stage: 'lead', status: 'lead',
+      student_name: newLead.student_name.trim(),
+      age,
+      date_of_birth: newLead.date_of_birth,
+      parent_name: newLead.parent_name.trim(),
+      phone: newLead.phone.trim(),
+      email: newLead.email.trim() || null,
+      address,
+      previous_education: newLead.previous_education || null,
+      course: newLead.course,
+      source: newLead.source,
+      notes: newLead.notes || null,
+      pipeline_stage: 'lead',
+      status: 'lead',
     };
     const res = await run(() => insertRow('admissions', row), t('Lead created', 'تم إنشاء العميل'));
     if (res.ok) {
@@ -166,11 +197,17 @@ function Pipeline({ onChangedStats }) {
       )}
       <Modal open={Boolean(newLead)} title={t('New lead', 'عميل جديد')} onClose={() => setNewLead(null)}
         footer={<><Button variant="ghost" onClick={() => setNewLead(null)}>{t('Cancel', 'إلغاء')}</Button>
-          <Button disabled={busy || !newLead?.student_name || !newLead?.parent_name || !newLead?.phone || !newLead?.age} onClick={createLead}>{t('Create', 'إنشاء')}</Button></>}>
+          <Button
+            disabled={busy || !newLead?.student_name || !newLead?.parent_name || !newLead?.phone || !newLead?.age || !newLead?.date_of_birth || !newLead?.address?.trim()}
+            onClick={createLead}
+          >
+            {t('Create', 'إنشاء')}
+          </Button></>}>
         {newLead && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label={t('Student name', 'اسم الطالب')}><Input value={newLead.student_name} onChange={(e) => setNewLead({ ...newLead, student_name: e.target.value })} /></Field>
-            <Field label={t('Age', 'العمر')}><Input type="number" min="5" max="15" value={newLead.age} onChange={(e) => setNewLead({ ...newLead, age: e.target.value })} /></Field>
+            <Field label={t('Age', 'العمر')}><Input type="number" min="3" max="80" value={newLead.age} onChange={(e) => setNewLead({ ...newLead, age: e.target.value })} /></Field>
+            <Field label={t('Date of birth', 'تاريخ الميلاد')}><Input type="date" value={newLead.date_of_birth} onChange={(e) => setNewLead({ ...newLead, date_of_birth: e.target.value })} /></Field>
             <Field label={t('Parent name', 'اسم ولي الأمر')}><Input value={newLead.parent_name} onChange={(e) => setNewLead({ ...newLead, parent_name: e.target.value })} /></Field>
             <Field label={t('Phone', 'الهاتف')}><Input type="tel" value={newLead.phone} onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })} /></Field>
             <Field label={t('E-mail', 'البريد')}><Input type="email" value={newLead.email} onChange={(e) => setNewLead({ ...newLead, email: e.target.value })} /></Field>
