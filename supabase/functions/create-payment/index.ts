@@ -77,7 +77,10 @@ Deno.serve(async (req) => {
   if (!isOwnFee && !isOrgAdmin) {
     const { data: link } = await admin
       .from('parent_children').select('child_id')
-      .eq('parent_id', user.id).eq('child_id', fee.student_id).maybeSingle();
+      .eq('parent_id', user.id)
+      .eq('child_id', fee.student_id)
+      .eq('status', 'active')
+      .maybeSingle();
     isParent = Boolean(link);
   }
   if (!isOwnFee && !isParent && !isOrgAdmin) return json({ error: 'Forbidden' }, 403);
