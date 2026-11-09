@@ -15,6 +15,30 @@ export async function registerServiceWorker() {
     return null;
   }
 
+  // After a deploy, Vite chunk hashes change. Auto-reload once when a new SW
+  // takes control so clients stop requesting deleted /assets/* files.
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+
+  // Recover from stale SW caches that served HTML for a missing JS chunk.
+  window.addEventListener('vite:preloadError', async () => {
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+    } catch {
+      /* ignore */
+    }
+    window.location.reload();
+  });
+
   try {
     const registration = await navigator.serviceWorker.register(SW_URL, {
       scope: '/',
@@ -24,10 +48,14 @@ export async function registerServiceWorker() {
       const newWorker = registration.installing;
       newWorker?.addEventListener('statechange', () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          newWorker.postMessage({ type: 'SKIP_WAITING' });
           window.dispatchEvent(new CustomEvent('sw-update-available'));
         }
       });
     });
+
+    // Force an update check on every load (helps after frequent deploys).
+    registration.update().catch(() => {});
 
     console.info('[SW] Registered successfully:', registration.scope);
     return registration;
