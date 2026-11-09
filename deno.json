@@ -1,3 +1,4 @@
 {
-  "nodeModulesDir": "auto"
+  "nodeModulesDir": "auto",
+  "minimumDependencyAge": "0"
 }

@@ -71,7 +71,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: mobile/package-lock.json
 
@@ -123,9 +123,11 @@ jobs:
           curl -fsSL https://deno.land/install.sh | sh
           echo "$HOME/.deno/bin" >> $GITHUB_PATH
       - name: Type-check functions
-        run: deno check supabase/functions/*/index.ts
+        # Deno's default 24h minimum dependency age can fail CI when a transitive
+        # npm package was published recently (seen with ws during seed tooling).
+        run: deno check --minimum-dependency-age=0 supabase/functions/*/index.ts
       - name: PayHere crypto unit tests
-        run: deno test supabase/functions/_shared/
+        run: deno test --minimum-dependency-age=0 supabase/functions/_shared/
 
   api-latency:
     name: API latency — PostgREST load test (< 10 s budget)
