@@ -285,7 +285,7 @@ function HistoryTab({ task, people }) {
   );
 }
 
-function TaskModal({ task, ctx, people, onClose, onChanged, onDeleted }) {
+function TaskModal({ task, ctx, people, onClose, onChanged, onDeleted, onMoveStatus }) {
   const { t } = useLang();
   const errText = useTaskError();
   const [tab, setTab] = useState('details');
@@ -293,6 +293,7 @@ function TaskModal({ task, ctx, people, onClose, onChanged, onDeleted }) {
   const [busy, setBusy] = useState(false);
   const canEdit = ctx.isGov || task.created_by === ctx.userId;
   const canDelete = ctx.isGov || (task.created_by === ctx.userId && task.status !== 'done');
+  const canReview = task.status === 'review' && (ctx.isGov || task.created_by === ctx.userId);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
   const save = async () => {
@@ -326,6 +327,16 @@ function TaskModal({ task, ctx, people, onClose, onChanged, onDeleted }) {
       footer={
         tab === 'details' && (
           <>
+            {canReview && (
+              <>
+                <Button variant="secondary" disabled={busy} onClick={() => onMoveStatus?.('in_progress')}>
+                  {t('Send back', 'إعادة')}
+                </Button>
+                <Button disabled={busy} onClick={() => onMoveStatus?.('done')}>
+                  {t('Approve', 'اعتماد')}
+                </Button>
+              </>
+            )}
             {canDelete && <Button variant="danger" onClick={remove}>{t('Delete', 'حذف')}</Button>}
             <Button variant="secondary" onClick={onClose}>{t('Close', 'إغلاق')}</Button>
             {canEdit && <Button onClick={save} disabled={busy || !form.title.trim()}>{t('Save', 'حفظ')}</Button>}
@@ -368,7 +379,7 @@ function TaskModal({ task, ctx, people, onClose, onChanged, onDeleted }) {
 // ---------------------------------------------------------------------------
 // Board
 // ---------------------------------------------------------------------------
-function TaskCard({ task, people, canMove, onOpen, onMove, onDragStart }) {
+function TaskCard({ task, people, canMove, canReview, onOpen, onMove, onDragStart }) {
   const { t, lang } = useLang();
   const idx = TASK_STATUSES.indexOf(task.status);
   const overdue = task.due_date && task.status !== 'done' && task.due_date < today();
@@ -390,13 +401,25 @@ function TaskCard({ task, people, canMove, onOpen, onMove, onDragStart }) {
         <span className="text-gray-400 truncate">{people[task.assignee_id]?.full_name || t('Unassigned', 'غير مسندة')}</span>
         {task.due_date && <span className={overdue ? 'text-red-400 font-semibold' : 'text-gray-500'}>{formatDate(task.due_date)}</span>}
       </div>
+      {canReview && task.status === 'review' && (
+        <div className="flex flex-wrap gap-1 justify-end">
+          <Button size="sm" variant="secondary" onClick={() => onMove(task, 'in_progress')}>
+            <span className="material-symbols-outlined text-[14px] align-middle me-0.5">undo</span>
+            {t('Send back', 'إعادة')}
+          </Button>
+          <Button size="sm" onClick={() => onMove(task, 'done')}>
+            <span className="material-symbols-outlined text-[14px] align-middle me-0.5">check_circle</span>
+            {t('Approve', 'اعتماد')}
+          </Button>
+        </div>
+      )}
       {canMove && (
         <div className="flex justify-between">
           <Button size="sm" variant="ghost" disabled={idx <= 0} onClick={() => onMove(task, TASK_STATUSES[idx - 1])} aria-label={t('Move back', 'نقل للخلف')}>
             <span className="rtl:hidden">←</span>
             <span className="hidden rtl:inline">→</span>
           </Button>
-          <Button size="sm" variant="ghost" disabled={idx >= TASK_STATUSES.length - 1} onClick={() => onMove(task, TASK_STATUSES[idx + 1])} aria-label={t('Move forward', 'نقل للأمام')}>
+          <Button size="sm" variant="ghost" disabled={idx >= TASK_STATUSES.length - 1 || (task.status === 'review' && !canReview)} onClick={() => onMove(task, TASK_STATUSES[idx + 1])} aria-label={t('Move forward', 'نقل للأمام')}>
             <span className="rtl:hidden">→</span>
             <span className="hidden rtl:inline">←</span>
           </Button>
@@ -496,6 +519,7 @@ export default function TaskBoard() {
     holdersMap: holders.data || {},
   };
   const canMove = (task) => isGov || task.assignee_id === userId || task.created_by === userId;
+  const canReview = (task) => task.status === 'review' && (isGov || task.created_by === userId);
 
   const move = async (task, status, position) => {
     if (!status) return;
@@ -638,7 +662,7 @@ export default function TaskBoard() {
               </div>
               <div className="space-y-2">
                 {columns[s].map((task) => (
-                  <TaskCard key={task.id} task={task} people={people} canMove={canMove(task)} onOpen={(x) => setOpenId(x.id)} onMove={(x, st) => move(x, st)} onDragStart={onDragStart} />
+                  <TaskCard key={task.id} task={task} people={people} canMove={canMove(task)} canReview={canReview(task)} onOpen={(x) => setOpenId(x.id)} onMove={(x, st) => move(x, st)} onDragStart={onDragStart} />
                 ))}
                 {!columns[s].length && <div className="text-xs text-gray-600 text-center py-6">{t('Drop tasks here', 'أفلت المهام هنا')}</div>}
               </div>
@@ -665,6 +689,7 @@ export default function TaskBoard() {
           people={people}
           onClose={() => setOpenId(null)}
           onChanged={(updated) => setTasks((list) => list.map((x) => (x.id === updated.id ? updated : x)))}
+          onMoveStatus={(status) => move(openTask, status)}
           onDeleted={(id) => {
             setOpenId(null);
             setTasks((list) => list.filter((x) => x.id !== id));

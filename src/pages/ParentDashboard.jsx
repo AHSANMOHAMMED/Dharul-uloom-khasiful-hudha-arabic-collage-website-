@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import PayFeeButton from '../components/PayFeeButton';
 import ReceiptsArrears from '../components/ReceiptsArrears';
-import { generateFeeReceipt } from '../lib/exportUtils';
+import PortalTabChrome from '../components/portals/PortalTabChrome';
 import { claimParentInvite } from '../lib/parentInviteApi';
+import { rpc } from '../lib/erp/rpc';
 import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
 import { listActivationEventsForChildren } from '../lib/notifyApi';
 import KhatamPattern from '../components/KhatamPattern';
@@ -23,7 +24,8 @@ export default function ParentDashboard() {
   // Data for selected child
   const [attendance, setAttendance] = useState([]);
   const [results, setResults] = useState([]);
-  const [fees, setFees] = useState(null);
+  const [feeArrears, setFeeArrears] = useState(null);
+  const [payableFee, setPayableFee] = useState(null);
   const [leaves, setLeaves] = useState([]);
   const [tutorJobs, setTutorJobs] = useState([]);
   const [lmsSubmissions, setLmsSubmissions] = useState([]);
@@ -102,22 +104,41 @@ export default function ParentDashboard() {
     try {
       setDataLoading(true);
 
-      const [resData, attData, feeData, leaveData, jobData] = await Promise.all([
+      const child = children.find((c) => c.id === childId) || selectedChild;
+      const classNum = child?.class_number;
+
+      const [resData, attData, leaveData, arrearsResult, feePayData] = await Promise.all([
         supabase.from('student_results').select('*').eq('student_id', childId).order('created_at', { ascending: false }),
         supabase.from('attendance').select('*').eq('student_id', childId).order('date', { ascending: false }),
-        supabase.from('student_fees').select('*').eq('student_id', childId).order('month', { ascending: false }),
         supabase.from('leave_requests').select('*').eq('student_id', childId).order('created_at', { ascending: false }),
-        supabase.from('tutor_jobs').select('*, profiles(full_name, phone)').limit(5)
+        rpc('student_arrears', { p_student: childId }).catch(() => null),
+        supabase
+          .from('student_fees')
+          .select('*')
+          .eq('student_id', childId)
+          .order('month', { ascending: false })
+          .limit(3),
       ]);
+
+      let jobData = { data: [] };
+      if (classNum != null) {
+        jobData = await supabase
+          .from('tutor_jobs')
+          .select('*, profiles(full_name, phone)')
+          .eq('class_number', classNum);
+      }
 
       if (resData.data) setResults(resData.data);
       if (attData.data) setAttendance(attData.data);
-      if (feeData.data && feeData.data.length > 0) setFees(feeData.data[0]);
-      else setFees(null);
+      setFeeArrears(arrearsResult);
+      const unpaid = (feePayData.data || []).find(
+        (f) => f.status !== 'completed' && Number(f.total_due || 0) - Number(f.paid_amount || 0) > 0,
+      );
+      setPayableFee(unpaid || null);
       if (leaveData.data) setLeaves(leaveData.data);
       if (jobData.data) setTutorJobs(jobData.data);
+      else setTutorJobs([]);
 
-      const child = children.find((c) => c.id === childId) || selectedChild;
       setLmsAssignments(child?.class_number ? await listAssignmentsForClass(child.class_number) : []);
       setLmsSubmissions(await getStudentSubmissions(childId));
     } catch (err) {
@@ -126,6 +147,10 @@ export default function ParentDashboard() {
       setDataLoading(false);
     }
   };
+
+  const tutorProfile = tutorJobs[0]?.profiles;
+  const tutorPhoneDigits = tutorProfile?.phone ? String(tutorProfile.phone).replace(/\D/g, '') : '';
+  const feeBalance = Number(feeArrears?.total || 0);
 
   const handleClaimInvite = async (e) => {
     e.preventDefault();
@@ -280,8 +305,8 @@ export default function ParentDashboard() {
       }
     >
       <div className="space-y-8">
-        
-        {/* 1. Header Banner */}
+
+        {activeTab === 'overview' && (
         <div className="rounded-[14px] bg-ink-green-900 text-paper-white p-6 sm:p-8 shadow-manuscript-md border border-sand-border/20 relative overflow-hidden">
           <KhatamPattern className="opacity-[0.04]" strokeColor="#FBF8F0" id="parent-header-khatam" />
 
@@ -314,15 +339,16 @@ export default function ParentDashboard() {
             </div>
           </div>
         </div>
+        )}
 
-        {linkSuccess && (
+        {activeTab === 'overview' && linkSuccess && (
           <div className="p-3.5 rounded-lg bg-mint-wash-100 border border-emerald-700/20 text-emerald-800 text-xs font-semibold flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">{'check_circle'}</span>
             <span>{linkSuccess}</span>
           </div>
         )}
 
-        {activationEvents.length > 0 && (
+        {activeTab === 'overview' && activationEvents.length > 0 && (
           <div className="p-5 rounded-[14px] bg-gold-wash-100 border border-brass-gold-500/30 shadow-xs space-y-3">
             <h2 className="text-[11px] font-semibold uppercase tracking-wider text-brass-gold-500">
               {tx('تفعيل الطلاب', 'Student activation updates')}
@@ -343,7 +369,7 @@ export default function ParentDashboard() {
           </div>
         )}
 
-        {announcements.length > 0 && (
+        {activeTab === 'overview' && announcements.length > 0 && (
           <div className="space-y-2">
             {announcements.map((ann) => (
               <div key={ann.id} className="flex items-start gap-3 p-4 rounded-[14px] bg-paper-white border border-sand-border shadow-xs">
@@ -357,8 +383,7 @@ export default function ParentDashboard() {
           </div>
         )}
 
-        {/* 2. Child Switcher Chips */}
-        {children.length > 0 ? (
+        {activeTab === 'overview' && (children.length > 0 ? (
           <div className="p-4 rounded-[14px] bg-paper-white border border-sand-border shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider mr-2">
@@ -432,18 +457,21 @@ export default function ParentDashboard() {
             </form>
             {inviteMsg && <p className="text-xs text-emerald-700 font-semibold">{inviteMsg}</p>}
           </div>
-        )}
+        ))}
 
-        {/* 3. Selected Ward Data Overview */}
-        {selectedChild && dataLoading && (
+        {selectedChild && dataLoading && activeTab !== 'link' && (
           <div className="h-40 flex items-center justify-center">
             <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
-        {selectedChild && !dataLoading && (
+        {!selectedChild && activeTab !== 'overview' && activeTab !== 'link' && (
+          <p className="text-xs text-ink-text-muted text-center py-8">
+            {tx('اختر طالباً من القائمة الجانبية لمتابعة البيانات.', 'Select a ward from the sidebar to view records.')}
+          </p>
+        )}
+
+        {selectedChild && !dataLoading && activeTab === 'overview' && (
           <div className="space-y-8">
-            
-            {/* Attendance Alert if low */}
             {showAttendanceWarning && (
               <div className="p-4 rounded-xl bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger flex items-start gap-3 text-xs">
                 <span className="material-symbols-outlined text-xl shrink-0">{'warning'}</span>
@@ -459,15 +487,12 @@ export default function ParentDashboard() {
               </div>
             )}
 
-            {/* Quick KPI Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="p-5 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
                 <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider block mb-1">
                   {tx('معدل الحضور', 'Attendance Metric')}
                 </span>
-                <span className="font-serif text-3xl font-bold text-emerald-700 tabular-nums">
-                  {attendanceRate}%
-                </span>
+                <span className="font-serif text-3xl font-bold text-emerald-700 tabular-nums">{attendanceRate}%</span>
                 <span className="text-[11px] text-ink-text-muted block mt-1">
                   {presentDays} {tx('حاضر من أصل', 'present of')} {totalDays} {tx('أيام مسجلة', 'recorded days')}
                 </span>
@@ -478,10 +503,10 @@ export default function ParentDashboard() {
                   {tx('الرصيد المستحق للرسوم', 'Tuition Balance')}
                 </span>
                 <span className="font-serif text-3xl font-bold text-brass-gold-500 tabular-nums">
-                  {tx('روبية', 'LKR')} {fees ? Math.max(0, Number(fees.total_due || 0) - Number(fees.paid_amount || 0)).toLocaleString() : '0'}
+                  {tx('روبية', 'LKR')} {feeBalance.toLocaleString()}
                 </span>
                 <span className="text-[11px] text-ink-text-muted block mt-1">
-                  {fees?.month ? `${tx('الفاتورة:', 'Billed:')} ${fees.month}` : tx('لا توجد متأخرات نشطة', 'No active arrears')}
+                  {feeBalance > 0 ? tx('متأخرات مسجلة في ERP', 'Arrears on ERP ledger') : tx('لا توجد متأخرات نشطة', 'No active arrears')}
                 </span>
               </div>
 
@@ -490,262 +515,59 @@ export default function ParentDashboard() {
                   {tx('مشرف الفصل', 'Class Mentor Contact')}
                 </span>
                 <span className="font-serif text-base font-semibold text-ink-green-900 block truncate">
-                  {tutorJobs[0]?.profiles?.full_name || 'Ustaz Abdul Hakeem'}
+                  {tutorProfile?.full_name || tx('لا يوجد مشرف معيّن', 'No tutor assigned')}
                 </span>
-                <div className="flex items-center gap-2 mt-2">
-                  <a
-                    href={`tel:${tutorJobs[0]?.profiles?.phone || '0705668463'}`}
-                    className="px-2.5 py-1 rounded bg-sand-border/40 text-[11px] text-ink-text-primary font-semibold hover:bg-emerald-700 hover:text-white transition-colors"
-                  >
-                    {tx('اتصال', 'Call Tutor')}
-                  </a>
-                  <a
-                    href="https://wa.me/94705668463"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-2.5 py-1 rounded bg-mint-wash-100 text-[11px] text-emerald-700 font-semibold hover:bg-emerald-700 hover:text-white transition-colors"
-                  >
-                    {tx('واتساب', 'WhatsApp')}
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Split Grid: Leave Requests & Tuition Statement */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              
-              {/* Leave Exeat Request Form & History */}
-              <div className="lg:col-span-7 rounded-[14px] bg-paper-white border border-sand-border p-6 sm:p-8 shadow-manuscript space-y-6">
-                <div>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 block mb-0.5">
-                    {tx('التربية والسكن', 'Residential Tarbiyyah')}
-                  </span>
-                  <h3 className="font-serif text-xl font-semibold text-ink-green-900">
-                    {tx('تقديم طلب إجازة / خروج', 'Apply for Leave / Exeat')}
-                  </h3>
-                  <p className="text-xs text-ink-text-secondary">
-                    {tx(
-                      'جميع طلبات المبيت والخروج الاضطراري تتطلب موافقة ولي الأمر وتأكيد مشرف السكن.',
-                      'All overnight and emergency leaves require parental authorization and warden verification.'
+                {tutorProfile?.phone && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <a
+                      href={`tel:${tutorProfile.phone}`}
+                      className="px-2.5 py-1 rounded bg-sand-border/40 text-[11px] text-ink-text-primary font-semibold hover:bg-emerald-700 hover:text-white transition-colors"
+                    >
+                      {tx('اتصال', 'Call Tutor')}
+                    </a>
+                    {tutorPhoneDigits && (
+                      <a
+                        href={`https://wa.me/${tutorPhoneDigits}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 rounded bg-mint-wash-100 text-[11px] text-emerald-700 font-semibold hover:bg-emerald-700 hover:text-white transition-colors"
+                      >
+                        {tx('واتساب', 'WhatsApp')}
+                      </a>
                     )}
-                  </p>
-                </div>
-
-                {leaveSuccess && (
-                  <div className="p-3.5 rounded-lg bg-mint-wash-100 border border-emerald-700/20 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">{'check_circle'}</span>
-                    <span>{tx('تم تسجيل طلب الإجازة وتحويله لمشرف الحلقة.', 'Leave request registered and routed to halaqah supervisor.')}</span>
                   </div>
                 )}
-
-                <form onSubmit={handleLeaveSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-ink-text-primary mb-1">
-                        {tx('تاريخ الخروج *', 'Departure Date *')}
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={leaveForm.startDate}
-                        onChange={(e) => setLeaveForm({ ...leaveForm, startDate: e.target.value })}
-                        className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-ink-text-primary mb-1">
-                        {tx('تاريخ العودة المتوقع *', 'Expected Return Date *')}
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={leaveForm.endDate}
-                        onChange={(e) => setLeaveForm({ ...leaveForm, endDate: e.target.value })}
-                        className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-ink-text-primary mb-1">
-                      {tx('سبب الإجازة *', 'Reason for Leave Exeat *')}
-                    </label>
-                    <textarea
-                      rows={2}
-                      required
-                      value={leaveForm.reason}
-                      onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
-                      placeholder={tx('مثال: مناسبة عائلية، مراجعة طبية...', 'e.g. Family event, medical appointment...')}
-                      className="w-full p-2.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs text-ink-text-primary"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-500 text-white rounded-[10px] text-xs font-semibold shadow-xs"
-                  >
-                    {tx('إرسال طلب الإجازة', 'Submit Leave Request')}
-                  </button>
-                  {leaveError && <p className="text-xs text-feedback-danger font-medium">{leaveError}</p>}
-                </form>
-
-                {/* History of Leaves */}
-                <div className="pt-6 border-t border-sand-border space-y-3">
-                  <h4 className="font-serif text-sm font-semibold text-ink-green-900">
-                    {tx('سجل الإجازات السابق', 'Recent Leave History')}
-                  </h4>
-
-                  {leaves.length === 0 ? (
-                    <p className="text-xs text-ink-text-muted">{tx('لا توجد طلبات إجازة سابقة.', 'No prior leave requests recorded.')}</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {leaves.slice(0, 4).map((l) => {
-                        const statusColors = {
-                          approved: 'bg-mint-wash-100 text-emerald-700 border-emerald-700/20',
-                          pending: 'bg-gold-wash-100 text-brass-gold-500 border-brass-gold-500/20',
-                          rejected: 'bg-feedback-danger/10 text-feedback-danger border-feedback-danger/20'
-                        };
-                        return (
-                          <div key={l.id} className="p-3 rounded-lg border border-sand-border text-xs flex items-center justify-between gap-4">
-                            <div>
-                              <span className="font-semibold text-ink-text-primary block">{l.reason}</span>
-                              <span className="text-[11px] text-ink-text-muted">
-                                {l.start_date} → {l.end_date}
-                              </span>
-                            </div>
-                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase border ${statusColors[l.status] || statusColors.pending}`}>
-                              {l.status}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
               </div>
-
-              {/* Tuition Fees & ERP Receipts */}
-              <div className="lg:col-span-5 space-y-6">
-                <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 sm:p-8 shadow-manuscript space-y-6">
-                  <div>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-brass-gold-500 block mb-0.5">
-                      {tx('الصندوق المالي', 'Waqf Ledger')}
-                    </span>
-                    <h3 className="font-serif text-xl font-semibold text-ink-green-900">
-                      {tx('تسوية الرسوم الدراسية', 'Term Fee Settlements')}
-                    </h3>
-                  </div>
-
-                  {fees ? (
-                    <div className="space-y-4">
-                      <div className="p-4 rounded-xl bg-parchment-50 border border-sand-border text-xs space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-ink-text-muted">{tx('شهر الفاتورة:', 'Billing Month:')}</span>
-                          <span className="font-semibold text-ink-green-900">{fees.month}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-ink-text-muted">{tx('إجمالي الرسوم:', 'Total Term Dues:')}</span>
-                          <span className="font-mono tabular-nums text-ink-text-primary">{tx('روبية', 'LKR')} {Number(fees.total_due || 0).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-ink-text-muted">{tx('المدفوع:', 'Paid to Date:')}</span>
-                          <span className="font-mono tabular-nums text-emerald-700 font-semibold">{tx('روبية', 'LKR')} {Number(fees.paid_amount || 0).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between pt-2 border-t border-sand-border">
-                          <span className="font-semibold text-ink-text-primary">{tx('المتبقي:', 'Balance Due:')}</span>
-                          <span className="font-mono tabular-nums text-brass-gold-500 font-bold text-sm">
-                            {tx('روبية', 'LKR')} {Math.max(0, Number(fees.total_due || 0) - Number(fees.paid_amount || 0)).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <PayFeeButton fee={fees} />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => generateFeeReceipt(fees, selectedChild)}
-                          className="h-10 px-3.5 rounded-[10px] border border-sand-border hover:bg-parchment-50 text-ink-text-secondary text-xs flex items-center gap-1.5"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">{'receipt'}</span>
-                          <span>{tx('إيصال', 'Receipt')}</span>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-6 rounded-xl bg-parchment-50 border border-sand-border text-center text-xs text-ink-text-muted">
-                      {tx('لا توجد فواتير رسوم نشطة حالياً لهذا الطالب.', 'No active term billings on record for this ward.')}
-                    </div>
-                  )}
-                </div>
-
-                {/* ERP Arrears & Receipts Integration */}
-                <ReceiptsArrears studentId={selectedChild?.id} />
-
-                {/* Child LMS progress */}
-                <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-3">
-                  <h3 className="font-serif text-lg font-semibold text-ink-green-900">
-                    {tx('الواجبات والتقدم', 'Assignments & Progress')}
-                  </h3>
-                  {lmsAssignments.length === 0 ? (
-                    <p className="text-xs text-ink-text-muted">{tx('لا واجبات حالياً', 'No assignments yet')}</p>
-                  ) : (
-                    <ul className="space-y-2 text-xs">
-                      {lmsAssignments.map((a) => {
-                        const sub = lmsSubmissions.find((s) => s.assignment_id === a.id);
-                        return (
-                          <li key={a.id} className="p-3 rounded-lg border border-sand-border flex justify-between gap-2">
-                            <span className="font-medium text-ink-text-primary">{a.title}</span>
-                            <span className={`text-[11px] font-semibold shrink-0 ${sub ? 'text-emerald-700' : 'text-brass-gold-500'}`}>
-                              {sub
-                                ? (sub.grade ? `${tx('الدرجة', 'Grade')} ${sub.grade}` : tx('تم التسليم', 'Submitted'))
-                                : (a.due_date ? `${tx('موعد التسليم', 'Due')} ${a.due_date}` : tx('قيد الانتظار', 'Pending'))}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </div>
-              </div>
-
             </div>
+          </div>
+        )}
 
-            {/* Exam Results Table */}
-            <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-4">
-              <h3 className="font-serif text-xl font-semibold text-ink-green-900">
-                {tx('التقييمات والدرجات الدراسية', 'Academic Appraisals & Marks')}
-              </h3>
-
-              {results.length === 0 ? (
-                <p className="text-xs text-ink-text-muted py-4 text-center">
-                  {tx('لم تُنشر أي درجات لهذا الطالب بعد.', 'No term marks published for this student yet.')}
-                </p>
+        {selectedChild && !dataLoading && activeTab === 'attendance' && (
+          <PortalTabChrome
+            title_en="Halaqah Attendance"
+            title_ar="سجل الحضور"
+            subtitle_en={`Records for ${selectedChild.full_name}`}
+            subtitle_ar={`سجل ${selectedChild.full_name}`}
+            onBack={() => setActiveTab('overview')}
+            onPrint={() => window.print()}
+          >
+            <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-4 print:shadow-none">
+              {attendance.length === 0 ? (
+                <p className="text-xs text-ink-text-muted text-center py-6">{tx('لا توجد سجلات حضور بعد.', 'No attendance records yet.')}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left">
                     <thead>
                       <tr className="border-b border-sand-border bg-parchment-50 text-ink-text-secondary uppercase text-[10px] tracking-wider">
-                        <th className="py-2.5 px-3">{tx('المادة', 'Subject')}</th>
-                        <th className="py-2.5 px-3">{tx('الفصل / الاختبار', 'Exam Term')}</th>
-                        <th className="py-2.5 px-3 text-right">{tx('الدرجة', 'Marks')}</th>
-                        <th className="py-2.5 px-3 text-center">{tx('التقدير', 'Grade')}</th>
+                        <th className="py-2.5 px-3">{tx('التاريخ', 'Date')}</th>
+                        <th className="py-2.5 px-3">{tx('الحالة', 'Status')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-sand-border/60">
-                      {results.map((r, i) => (
-                        <tr key={r.id || i} className="hover:bg-parchment-50/50">
-                          <td className="py-2.5 px-3 font-medium text-ink-text-primary">{r.subject}</td>
-                          <td className="py-2.5 px-3 text-ink-text-muted">{r.exam_name}</td>
-                          <td className="py-2.5 px-3 text-right font-mono font-semibold text-ink-green-900 tabular-nums">{r.marks ?? '-'}</td>
-                          <td className="py-2.5 px-3 text-center">
-                            <span className="px-2 py-0.5 rounded-full bg-mint-wash-100 text-emerald-700 font-semibold text-[11px]">
-                              {r.grade || tx('ناجح', 'Pass')}
-                            </span>
-                          </td>
+                      {attendance.map((a) => (
+                        <tr key={a.id || `${a.date}-${a.status}`} className="hover:bg-parchment-50/50">
+                          <td className="py-2.5 px-3 font-mono text-ink-text-primary">{a.date}</td>
+                          <td className="py-2.5 px-3 capitalize text-ink-text-secondary">{a.status}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -753,8 +575,161 @@ export default function ParentDashboard() {
                 </div>
               )}
             </div>
+          </PortalTabChrome>
+        )}
 
-          </div>
+        {selectedChild && !dataLoading && activeTab === 'results' && (
+          <PortalTabChrome
+            title_en="Academic Marksheet"
+            title_ar="الشهادات والدرجات"
+            onBack={() => setActiveTab('overview')}
+          >
+            <div className="space-y-6">
+              <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-4">
+                {results.length === 0 ? (
+                  <p className="text-xs text-ink-text-muted py-4 text-center">
+                    {tx('لم تُنشر أي درجات لهذا الطالب بعد.', 'No term marks published for this student yet.')}
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead>
+                        <tr className="border-b border-sand-border bg-parchment-50 text-ink-text-secondary uppercase text-[10px] tracking-wider">
+                          <th className="py-2.5 px-3">{tx('المادة', 'Subject')}</th>
+                          <th className="py-2.5 px-3">{tx('الفصل / الاختبار', 'Exam Term')}</th>
+                          <th className="py-2.5 px-3 text-right">{tx('الدرجة', 'Marks')}</th>
+                          <th className="py-2.5 px-3 text-center">{tx('التقدير', 'Grade')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-sand-border/60">
+                        {results.map((r, i) => (
+                          <tr key={r.id || i} className="hover:bg-parchment-50/50">
+                            <td className="py-2.5 px-3 font-medium text-ink-text-primary">{r.subject}</td>
+                            <td className="py-2.5 px-3 text-ink-text-muted">{r.exam_name}</td>
+                            <td className="py-2.5 px-3 text-right font-mono font-semibold text-ink-green-900 tabular-nums">{r.marks ?? '-'}</td>
+                            <td className="py-2.5 px-3 text-center">
+                              <span className="px-2 py-0.5 rounded-full bg-mint-wash-100 text-emerald-700 font-semibold text-[11px">
+                                {r.grade || tx('ناجح', 'Pass')}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-3">
+                <h3 className="font-serif text-lg font-semibold text-ink-green-900">
+                  {tx('الواجبات والتقدم', 'Assignments & Progress')}
+                </h3>
+                {lmsAssignments.length === 0 ? (
+                  <p className="text-xs text-ink-text-muted">{tx('لا واجبات حالياً', 'No assignments yet')}</p>
+                ) : (
+                  <ul className="space-y-2 text-xs">
+                    {lmsAssignments.map((a) => {
+                      const sub = lmsSubmissions.find((s) => s.assignment_id === a.id);
+                      return (
+                        <li key={a.id} className="p-3 rounded-lg border border-sand-border flex justify-between gap-2">
+                          <span className="font-medium text-ink-text-primary">{a.title}</span>
+                          <span className={`text-[11px] font-semibold shrink-0 ${sub ? 'text-emerald-700' : 'text-brass-gold-500'}`}>
+                            {sub
+                              ? (sub.grade ? `${tx('الدرجة', 'Grade')} ${sub.grade}` : tx('تم التسليم', 'Submitted'))
+                              : (a.due_date ? `${tx('موعد التسليم', 'Due')} ${a.due_date}` : tx('قيد الانتظار', 'Pending'))}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </PortalTabChrome>
+        )}
+
+        {selectedChild && !dataLoading && activeTab === 'leaves' && (
+          <PortalTabChrome
+            title_en="Leave Exeats"
+            title_ar="أذونات الإجازة"
+            onBack={() => setActiveTab('overview')}
+          >
+            <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 sm:p-8 shadow-manuscript space-y-6">
+              {leaveSuccess && (
+                <div className="p-3.5 rounded-lg bg-mint-wash-100 border border-emerald-700/20 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">{'check_circle'}</span>
+                  <span>{tx('تم تسجيل طلب الإجازة وتحويله لمشرف الحلقة.', 'Leave request registered and routed to halaqah supervisor.')}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleLeaveSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-ink-text-primary mb-1">{tx('تاريخ الخروج *', 'Departure Date *')}</label>
+                    <input type="date" required value={leaveForm.startDate} onChange={(e) => setLeaveForm({ ...leaveForm, startDate: e.target.value })} className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-ink-text-primary mb-1">{tx('تاريخ العودة المتوقع *', 'Expected Return Date *')}</label>
+                    <input type="date" required value={leaveForm.endDate} onChange={(e) => setLeaveForm({ ...leaveForm, endDate: e.target.value })} className="w-full h-10 px-3 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-ink-text-primary mb-1">{tx('سبب الإجازة *', 'Reason for Leave Exeat *')}</label>
+                  <textarea rows={2} required value={leaveForm.reason} onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })} className="w-full p-2.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs" />
+                </div>
+                <button type="submit" className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-500 text-white rounded-[10px] text-xs font-semibold shadow-xs">
+                  {tx('إرسال طلب الإجازة', 'Submit Leave Request')}
+                </button>
+                {leaveError && <p className="text-xs text-feedback-danger font-medium">{leaveError}</p>}
+              </form>
+
+              <div className="pt-6 border-t border-sand-border space-y-3">
+                <h4 className="font-serif text-sm font-semibold text-ink-green-900">{tx('سجل الإجازات السابق', 'Recent Leave History')}</h4>
+                {leaves.length === 0 ? (
+                  <p className="text-xs text-ink-text-muted">{tx('لا توجد طلبات إجازة سابقة.', 'No prior leave requests recorded.')}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {leaves.map((l) => {
+                      const statusColors = {
+                        approved: 'bg-mint-wash-100 text-emerald-700 border-emerald-700/20',
+                        pending: 'bg-gold-wash-100 text-brass-gold-500 border-brass-gold-500/20',
+                        rejected: 'bg-feedback-danger/10 text-feedback-danger border-feedback-danger/20',
+                      };
+                      return (
+                        <div key={l.id} className="p-3 rounded-lg border border-sand-border text-xs flex items-center justify-between gap-4">
+                          <div>
+                            <span className="font-semibold text-ink-text-primary block">{l.reason}</span>
+                            <span className="text-[11px] text-ink-text-muted">{l.start_date} → {l.end_date}</span>
+                          </div>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase border ${statusColors[l.status] || statusColors.pending}`}>
+                            {l.status}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </PortalTabChrome>
+        )}
+
+        {selectedChild && !dataLoading && activeTab === 'fees' && (
+          <PortalTabChrome
+            title_en="Tuition Ledgers"
+            title_ar="الرسوم المدرسية"
+            onBack={() => setActiveTab('overview')}
+          >
+            <div className="space-y-6">
+              <ReceiptsArrears studentId={selectedChild.id} />
+              {payableFee && (
+                <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript">
+                  <p className="text-xs text-ink-text-muted mb-3">{tx('دفع عبر الإنترنت (إن وُجدت فاتورة نشطة)', 'Online payment when an active bill exists')}</p>
+                  <PayFeeButton fee={payableFee} />
+                </div>
+              )}
+            </div>
+          </PortalTabChrome>
         )}
 
       </div>

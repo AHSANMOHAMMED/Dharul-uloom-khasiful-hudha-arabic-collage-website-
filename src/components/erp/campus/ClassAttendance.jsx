@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { AsyncView, Button, Card, Field, Input, Stat, Table, useAsync, useLang } from '../ui';
 import { query, rpc, today } from '../../../lib/erp/rpc';
+import { printTable } from '../../../lib/printReport';
 import { ClassSelect } from './common';
 import { useAction } from './hooks';
 
@@ -13,7 +14,7 @@ const STATUSES = [
 ];
 
 export default function ClassAttendance() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const auth = useAuth();
   const [busy, run] = useAction();
   const [cls, setCls] = useState(auth.user?.classNumber ? String(auth.user.classNumber) : '1');
@@ -50,8 +51,51 @@ export default function ClassAttendance() {
     if (res.ok) reload();
   };
 
+  const statusLabel = (id) => {
+    const s = marks[id]?.status;
+    if (!s) return '—';
+    const hit = STATUSES.find((x) => x.value === s);
+    return hit ? t(hit.en, hit.ar) : s;
+  };
+
+  const printRegister = () => {
+    const sheet = state.data || [];
+    if (!sheet.length) return;
+    printTable({
+      title: t('Class attendance register', 'سجل حضور الصف'),
+      columns: [
+        { key: 'date', label: t('Date', 'التاريخ'), type: 'date' },
+        { key: 'index_number', label: t('Index', 'الرقم') },
+        { key: 'full_name', label: t('Student', 'الطالب') },
+        { key: 'status', label: t('Status', 'الحالة') },
+        { key: 'excuse_note', label: t('Note', 'ملاحظة') },
+      ],
+      rows: sheet.map((r) => ({
+        date,
+        index_number: r.index_number,
+        full_name: r.full_name,
+        status: statusLabel(r.student_id),
+        excuse_note: marks[r.student_id]?.excuse_note || '',
+      })),
+      filters: [
+        [t('Class', 'الصف'), cls],
+        [t('Date', 'التاريخ'), date],
+      ],
+      dir: document.documentElement.dir || 'ltr',
+      lang,
+    });
+  };
+
   return (
-    <Card title={t('Class attendance', 'حضور الصف')}>
+    <Card
+      title={t('Class attendance', 'حضور الصف')}
+      actions={
+        <Button size="sm" variant="secondary" disabled={!state.data?.length} onClick={printRegister}>
+          <span className="material-symbols-outlined text-[16px] align-middle me-1">print</span>
+          {t('Print', 'طباعة')}
+        </Button>
+      }
+    >
       <div className="flex flex-wrap gap-3 items-end mb-4">
         <div className="w-40"><Field label={t('Class', 'الصف')}><ClassSelect value={cls} onChange={(v) => setCls(v || '1')} /></Field></div>
         <div className="w-48"><Field label={t('Date', 'التاريخ')}><Input type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value || today())} /></Field></div>

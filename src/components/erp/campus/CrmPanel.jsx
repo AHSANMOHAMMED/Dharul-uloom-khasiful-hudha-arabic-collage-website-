@@ -186,7 +186,21 @@ function Pipeline({ onChangedStats }) {
             { key: 'phone', label: t('Phone', 'الهاتف') },
             { key: 'course', label: t('Course', 'البرنامج'), render: (r) => labelOf(COURSES, r.course, ar) },
             { key: 'source', label: t('Source', 'المصدر'), render: (r) => labelOf(LEAD_SOURCES, r.source, ar) },
-            { key: 'stage', label: t('Stage', 'المرحلة'), render: (r) => labelOf(CRM_STAGES, r.pipeline_stage || 'submitted', ar) },
+            {
+              key: 'stage',
+              label: t('Stage', 'المرحلة'),
+              render: (r) => (r.pipeline_stage === 'enrolled' ? labelOf(CRM_STAGES, r.pipeline_stage, ar) : (
+                <select
+                  className="rounded-lg bg-gray-900 border border-gray-700 px-2 py-1 text-xs text-gray-300 max-w-[9rem]"
+                  value={r.pipeline_stage || 'submitted'}
+                  disabled={busy}
+                  onChange={(e) => quickMove(r, e.target.value)}
+                  aria-label={t('Move stage', 'نقل المرحلة')}
+                >
+                  {CRM_STAGES.filter((s) => s.value !== 'enrolled').map((s) => <option key={s.value} value={s.value}>{t(s.en, s.ar)}</option>)}
+                </select>
+              )),
+            },
             { key: 'follow_up_at', label: t('Follow-up', 'المتابعة'), render: (r) => (r.follow_up_at ? <span className={new Date(r.follow_up_at).getTime() < now ? 'text-red-400' : ''}>{formatDate(r.follow_up_at)}</span> : '—') },
             { key: 'created_at', label: t('Received', 'الاستلام'), render: (r) => formatDate(r.created_at) },
           ]} />
@@ -244,11 +258,19 @@ function AllFollowups({ onChangedStats }) {
       onChangedStats();
     }
   };
+  const remove = async (r) => {
+    if (!window.confirm(t('Delete this follow-up?', 'حذف هذه المتابعة؟'))) return;
+    const res = await run(() => query('crm_followups', (q) => q.delete().eq('id', r.id)), t('Deleted', 'تم الحذف'));
+    if (res.ok) {
+      reload();
+      onChangedStats();
+    }
+  };
   return (
     <Card title={t('Follow-ups', 'المتابعات')} actions={
       <label className="text-sm text-gray-300 flex items-center gap-2"><input type="checkbox" className="accent-emerald-600" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} />{t('Show completed', 'إظهار المكتملة')}</label>
     }>
-      <AsyncView state={state}>{(rows) => <FollowupsTable rows={rows} busy={busy} onDone={done} showLead t={t} />}</AsyncView>
+      <AsyncView state={state}>{(rows) => <FollowupsTable rows={rows} busy={busy} onDone={done} onDelete={remove} showLead t={t} />}</AsyncView>
     </Card>
   );
 }

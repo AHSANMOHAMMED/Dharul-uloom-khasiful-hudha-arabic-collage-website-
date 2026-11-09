@@ -710,6 +710,26 @@ async function verifyRole(session, ids) {
     await check(role, 'READ', 'activities', await rest(token, 'GET', 'activities?select=*&limit=3'));
     await check(role, 'READ', 'documents', await rest(token, 'GET', 'documents?select=id,title,status&limit=5'));
   }
+
+  // Portal-specific matrices (branded role homes)
+  if (role === 'admissions' || role === 'admin') {
+    await check(role, 'READ', 'admissions(pipeline)', await rest(token, 'GET', 'admissions?select=id,student_name,pipeline_stage&limit=5'));
+    await check(role, 'READ', 'crm_followups', await rest(token, 'GET', 'crm_followups?select=id&limit=5'));
+  }
+  if (role === 'warden' || role === 'counselor' || role === 'admin') {
+    await check(role, 'READ', 'welfare_cases', await rest(token, 'GET', 'welfare_cases?select=id,status,case_type&limit=5'));
+    await check(role, 'READ', 'hostel_allocations', await rest(token, 'GET', 'hostel_allocations?select=id&limit=5'));
+  }
+  if (role === 'exam' || role === 'admin') {
+    await check(role, 'READ', 'exams', await rest(token, 'GET', 'exams?select=id,name,status&limit=5'));
+    await check(role, 'READ', 'student_results', await rest(token, 'GET', 'student_results?select=id&limit=5'));
+  }
+  if (role === 'hr' || role === 'admin') {
+    await check(role, 'READ', 'staff_attendance', await rest(token, 'GET', 'staff_attendance?select=id&limit=5'));
+  }
+  if (role === 'accountant' || role === 'treasurer' || role === 'admin') {
+    await check(role, 'READ', 'journal_entries', await rest(token, 'GET', 'journal_entries?select=id,status&limit=5'));
+  }
 }
 
 async function main() {

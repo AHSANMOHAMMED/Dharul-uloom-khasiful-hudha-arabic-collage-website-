@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AsyncView, Badge, Button, Card, Field, Input, Select, Table, useAsync, useLang } from '../ui';
 import { query } from '../../../lib/erp/rpc';
+import { printTable } from '../../../lib/printReport';
 import { ClassSelect } from './common';
 import { useAction } from './hooks';
 
@@ -13,7 +14,7 @@ import { useAction } from './hooks';
  * upserted by primary key and new rows are inserted.
  */
 export default function MarksEntry() {
-  const { t } = useLang();
+  const { t, lang, ar } = useLang();
   const [busy, run] = useAction();
   const [examId, setExamId] = useState('');
   const [paperId, setPaperId] = useState('');
@@ -80,8 +81,47 @@ export default function MarksEntry() {
     return { n: vals.length, avg: (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1), high: Math.max(...vals), pass };
   }, [grid, paper]);
 
+  const printMarksheet = () => {
+    const students = sheet.data?.students || [];
+    if (!students.length || !paper) return;
+    const subj = paper.subjects;
+    const subjectName = subj ? `${subj.code} · ${t(subj.name_en, subj.name_ar)}` : '';
+    printTable({
+      title: t('Exam marksheet', 'كشف درجات الامتحان'),
+      columns: [
+        { key: 'index_number', label: t('Index', 'الرقم') },
+        { key: 'full_name', label: t('Student', 'الطالب') },
+        { key: 'marks', label: `${t('Marks', 'الدرجة')} / ${max}`, type: 'number' },
+        { key: 'grade', label: t('Grade', 'التقدير') },
+        { key: 'remarks', label: t('Remarks', 'ملاحظات') },
+      ],
+      rows: students.map((s) => ({
+        index_number: s.index_number,
+        full_name: s.full_name,
+        marks: grid[s.id]?.marks !== '' ? grid[s.id].marks : '—',
+        grade: resultsBy[s.id]?.grade || '—',
+        remarks: grid[s.id]?.remarks || '',
+      })),
+      filters: [
+        [t('Exam', 'الامتحان'), exam?.name || ''],
+        [t('Paper', 'الورقة'), subjectName],
+        [t('Class', 'الصف'), classNo],
+      ],
+      dir: document.documentElement.dir || 'ltr',
+      lang: ar ? 'ar' : lang,
+    });
+  };
+
   return (
-    <Card title={t('Marks entry', 'إدخال الدرجات')}>
+    <Card
+      title={t('Marks entry', 'إدخال الدرجات')}
+      actions={
+        <Button size="sm" variant="secondary" disabled={!sheet.data?.students?.length || !paper} onClick={printMarksheet}>
+          <span className="material-symbols-outlined text-[16px] align-middle me-1">print</span>
+          {t('Print marksheet', 'طباعة كشف الدرجات')}
+        </Button>
+      }
+    >
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
         <Field label={t('Exam', 'الامتحان')}>
           <Select value={examId} onChange={(e) => { setExamId(e.target.value); setPaperId(''); }} placeholder={t('Select exam…', 'اختر الامتحان…')}

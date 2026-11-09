@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
@@ -15,7 +15,7 @@ const TutorDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [salaries, setSalaries] = useState([]);
   const [students, setStudents] = useState([]);
-  const [selectedClass, setSelectedClass] = useState(5); // Default class 5
+  const [selectedClass, setSelectedClass] = useState(null);
   
   // Attendance tracking state
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
@@ -37,8 +37,19 @@ const TutorDashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  const assignedClasses = useMemo(
+    () => [...new Set(jobs.map((j) => j.class_number).filter((n) => n != null))].sort((a, b) => a - b),
+    [jobs],
+  );
+
   useEffect(() => {
-    fetchClassStudents(selectedClass);
+    if (assignedClasses.length > 0 && (selectedClass == null || !assignedClasses.includes(selectedClass))) {
+      setSelectedClass(assignedClasses[0]);
+    }
+  }, [assignedClasses, selectedClass]);
+
+  useEffect(() => {
+    if (selectedClass != null) fetchClassStudents(selectedClass);
   }, [selectedClass]);
 
   const fetchTutorData = async () => {
@@ -51,7 +62,9 @@ const TutorDashboard = () => {
         .from('tutor_jobs')
         .select('*')
         .eq('tutor_id', user.id);
-      setJobs(jobsData || []);
+      const tutorJobs = jobsData || [];
+      setJobs(tutorJobs);
+      const classNums = [...new Set(tutorJobs.map((j) => j.class_number).filter((n) => n != null))];
 
       // 2. Fetch salaries log
       const { data: salariesData } = await supabase
@@ -61,13 +74,17 @@ const TutorDashboard = () => {
         .order('month', { ascending: false });
       setSalaries(salariesData || []);
 
-      // 3. Fetch pending leave requests
+      // 3. Fetch pending leave requests (scoped to assigned classes)
       const { data: leavesData } = await supabase
         .from('leave_requests')
         .select('*, profiles!leave_requests_student_id_fkey(full_name, class_number)')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
-      setLeaves(leavesData || []);
+      setLeaves(
+        (leavesData || []).filter((lv) =>
+          classNums.length === 0 ? false : classNums.includes(lv.profiles?.class_number),
+        ),
+      );
 
     } catch (err) {
       console.error('Error fetching tutor details:', err);
@@ -173,7 +190,10 @@ const TutorDashboard = () => {
         .select('*, profiles!leave_requests_student_id_fkey(full_name, class_number)')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
-      setLeaves(leavesData || []);
+      const classNums = [...new Set(jobs.map((j) => j.class_number).filter((n) => n != null))];
+      setLeaves(
+        (leavesData || []).filter((lv) => classNums.includes(lv.profiles?.class_number)),
+      );
 
       setTimeout(() => setLeaveSuccess(false), 3500);
     } catch (err) {
@@ -254,6 +274,13 @@ const TutorDashboard = () => {
                 </Link>
               )}
               <Link
+                to="/erp?module=academics"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#E3F1EA] hover:bg-[#D4E8DF] border border-[#11694A]/30 text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[18px] text-[#11694A]">menu_book</span>
+                <span>{tx('الشؤون الأكاديمية ERP', 'ERP Academics')}</span>
+              </Link>
+              <Link
                 to="/library"
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
               >
@@ -264,10 +291,10 @@ const TutorDashboard = () => {
           </div>
         </div>
 
-        {/* Info & Jobs Panel */}
+        {(activeTab === 'attendance' || activeTab === 'salaries') && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          {/* Annual Jobs Card */}
+          {activeTab === 'attendance' && (
           <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
             <div className="flex items-center gap-3 pb-3 border-b border-[#E8E1D0]">
               <div className="w-9 h-9 rounded-xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
@@ -298,9 +325,10 @@ const TutorDashboard = () => {
               </div>
             )}
           </div>
+          )}
 
-          {/* Salary card */}
-          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
+          {activeTab === 'salaries' && (
+          <div className="md:col-span-2 bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
             <div className="flex items-center gap-3 pb-3 border-b border-[#E8E1D0]">
               <div className="w-9 h-9 rounded-xl bg-[#F7EDD2] text-[#C29A3A] flex items-center justify-center">
                 <svg className="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -337,8 +365,9 @@ const TutorDashboard = () => {
               </div>
             )}
           </div>
+          )}
 
-          {/* Attendance controller header */}
+          {activeTab === 'attendance' && (
           <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
             <div className="flex items-center gap-3 pb-3 border-b border-[#E8E1D0]">
               <div className="w-9 h-9 rounded-xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
@@ -357,13 +386,17 @@ const TutorDashboard = () => {
                   {tx('اختر الصف الدراسي', 'Select Class')}
                 </label>
                 <select
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(parseInt(e.target.value))}
+                  value={selectedClass ?? ''}
+                  onChange={(e) => setSelectedClass(parseInt(e.target.value, 10))}
                   className="w-full bg-[#FBF8F0] border border-[#E8E1D0] text-sm text-[#14201B] rounded-xl p-2.5 focus:outline-none focus:ring-1 focus:ring-[#11694A]"
                 >
-                  {[1, 2, 3, 4, 5, 6, 7].map(num => (
-                    <option key={num} value={num}>{tx('صف {n}', 'Class {n}').replace('{n}', num)}</option>
-                  ))}
+                  {assignedClasses.length === 0 ? (
+                    <option value="">{tx('لا صفوف معيّنة', 'No classes assigned')}</option>
+                  ) : (
+                    assignedClasses.map((num) => (
+                      <option key={num} value={num}>{tx('صف {n}', 'Class {n}').replace('{n}', num)}</option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -380,14 +413,14 @@ const TutorDashboard = () => {
               </div>
             </div>
           </div>
+          )}
 
         </div>
+        )}
 
-        {/* Mark Attendance & Review Leaves */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Mark Attendance Roster */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-6">
+        {activeTab === 'attendance' && (
+        <div className="grid grid-cols-1 gap-6">
+          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-6">
             <div className="flex justify-between items-center pb-4 border-b border-[#E8E1D0]">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
@@ -397,7 +430,7 @@ const TutorDashboard = () => {
                 </div>
                 <div>
                   <h2 className="text-lg font-serif font-bold text-[#0B3B2E]">
-                    {tx('تسجيل حضور طلاب الصف {n}', 'Class {n} Attendance Roster').replace('{n}', selectedClass)}
+                    {tx('تسجيل حضور طلاب الصف {n}', 'Class {n} Attendance Roster').replace('{n}', selectedClass ?? '—')}
                   </h2>
                   <p className="text-xs text-[#4A5E56]">{attendanceDate}</p>
                 </div>
@@ -475,8 +508,10 @@ const TutorDashboard = () => {
               </form>
             )}
           </div>
+        </div>
+        )}
 
-          {/* Manage Leave Requests */}
+        {activeTab === 'leaves' && (
           <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#E8E1D0]">
               <div className="flex items-center gap-2.5">
@@ -567,13 +602,13 @@ const TutorDashboard = () => {
               </p>
             )}
           </div>
+        )}
 
-        </div>
-
-        {/* LMS Module */}
+        {activeTab === 'lms' && (
         <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
           <TutorLmsPanel />
         </div>
+        )}
 
       </div>
     </DashboardSidebarLayout>

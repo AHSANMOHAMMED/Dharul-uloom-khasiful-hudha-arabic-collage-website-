@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 import { AsyncView, Badge, Button, Card, Field, Input, PageHeader, Select, useAsync, useLang } from '../ui';
-import { query } from '../../../lib/erp/rpc';
+import { downloadCsv, query } from '../../../lib/erp/rpc';
 import { profilesMap } from '../../../lib/erp/financeApi';
 import { DateRange, FilterBar } from './shared';
 
@@ -84,6 +84,24 @@ export default function AuditLogPanel() {
     return { list, hasMore, people };
   }, [filters.table, filters.action, filters.from, filters.to, filters.record, page]);
 
+  const exportPageCsv = () => {
+    const { list, people } = state.data || {};
+    if (!list?.length) return;
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadCsv(
+      `audit-log-page-${page + 1}-${stamp}.csv`,
+      list.map((log) => ({
+        created_at: log.created_at,
+        table_name: log.table_name,
+        record_id: log.record_id,
+        action: log.action,
+        actor: people?.[log.actor_id]?.full_name || log.actor_id || t('System', 'النظام'),
+        actor_role: log.actor_role,
+        changed_fields: (log.changed_fields || []).join('; '),
+      })),
+    );
+  };
+
   return (
     <div>
       <PageHeader
@@ -92,9 +110,15 @@ export default function AuditLogPanel() {
       />
       <Card
         actions={
-          <Button size="sm" variant="secondary" onClick={reload}>
-            {t('Refresh', 'تحديث')}
-          </Button>
+          <>
+            <Button size="sm" variant="secondary" disabled={!state.data?.list?.length} onClick={exportPageCsv}>
+              <span className="material-symbols-outlined text-[16px] align-middle me-1">download</span>
+              {t('Export CSV', 'تصدير CSV')}
+            </Button>
+            <Button size="sm" variant="secondary" onClick={reload}>
+              {t('Refresh', 'تحديث')}
+            </Button>
+          </>
         }
       >
         <FilterBar>

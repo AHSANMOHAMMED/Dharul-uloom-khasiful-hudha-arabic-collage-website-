@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 import { AsyncView, Badge, Button, Card, Field, Input, Select, Stat, Table, useAsync, useLang } from '../ui';
 import { rpc, formatMoney, formatDate, today, downloadCsv } from '../../../lib/erp/rpc';
+import { printTable } from '../../../lib/printReport';
 import { CLASS_OPTIONS, num } from '../../../lib/erp/financeApi';
 import { FilterBar, Num } from './shared';
 
 export default function FeeOutstanding() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [cls, setCls] = useState('');
   const [asOf, setAsOf] = useState(today());
   const [state, reload] = useAsync(
@@ -13,17 +15,67 @@ export default function FeeOutstanding() {
     [cls, asOf],
   );
 
+  const printRows = (rows) =>
+    (rows || []).map((r) => ({
+      full_name: `${r.full_name}${r.index_number ? ` (${r.index_number})` : ''}`,
+      class_number: r.class_number,
+      open_invoices: r.open_invoices,
+      total_due: r.total_due,
+      paid: r.paid,
+      balance: r.balance,
+      oldest_due_date: r.oldest_due_date,
+      days_overdue: r.days_overdue > 0 ? r.days_overdue : '',
+    }));
+
+  const printColumns = [
+    { key: 'full_name', label: t('Student', 'الطالب') },
+    { key: 'class_number', label: t('Class', 'الصف') },
+    { key: 'open_invoices', label: t('Open invoices', 'فواتير مفتوحة'), type: 'number' },
+    { key: 'total_due', label: t('Total due', 'الإجمالي'), type: 'money' },
+    { key: 'paid', label: t('Paid', 'المدفوع'), type: 'money' },
+    { key: 'balance', label: t('Balance', 'الرصيد'), type: 'money' },
+    { key: 'oldest_due_date', label: t('Oldest due', 'أقدم استحقاق'), type: 'date' },
+    { key: 'days_overdue', label: t('Days overdue', 'أيام التأخير'), type: 'number' },
+  ];
+
+  const onPrint = () => {
+    const rows = state.data || [];
+    if (!rows.length) return;
+    try {
+      const total = rows.reduce((s, r) => s + num(r.balance), 0);
+      printTable({
+        title: t('Outstanding fee balances', 'أرصدة الرسوم المستحقة'),
+        columns: printColumns,
+        rows: printRows(rows),
+        filters: [
+          [t('Class', 'الصف'), cls ? t(`Class ${cls}`, `الصف ${cls}`) : t('All classes', 'كل الصفوف')],
+          [t('As of', 'حتى تاريخ'), asOf],
+        ],
+        totals: { balance: total },
+        dir: document.documentElement.dir || 'ltr',
+        lang,
+      });
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
   return (
     <Card
       title={t('Outstanding balances', 'الأرصدة المستحقة')}
       actions={
         <>
+          <Button size="sm" variant="secondary" disabled={!state.data?.length} onClick={onPrint}>
+            <span className="material-symbols-outlined text-[16px] align-middle me-1">print</span>
+            {t('PDF / Print', 'PDF / طباعة')}
+          </Button>
           <Button
             size="sm"
             variant="secondary"
             disabled={!state.data?.length}
             onClick={() => downloadCsv(`fee-outstanding-${cls || 'all'}-${asOf}.csv`, state.data)}
           >
+            <span className="material-symbols-outlined text-[16px] align-middle me-1">download</span>
             {t('Export CSV', 'تصدير CSV')}
           </Button>
           <Button size="sm" variant="secondary" onClick={reload}>

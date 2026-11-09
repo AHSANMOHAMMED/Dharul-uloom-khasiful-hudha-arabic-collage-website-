@@ -10,7 +10,7 @@ import FeeSetup from './FeeSetup';
 import FeeConcessions from './FeeConcessions';
 import FeeOutstanding from './FeeOutstanding';
 
-export default function FeeManagement() {
+export default function FeeManagement({ embedded = false }) {
   const { t } = useLang();
   const { isFinanceStaff } = useAuth();
   // Deep link from a student record: ?module=fees&student=<profile id>
@@ -34,14 +34,16 @@ export default function FeeManagement() {
   ];
 
   return (
-    <div>
-      <PageHeader
-        title={t('Student Fees', 'رسوم الطلاب')}
-        subtitle={t(
-          'Invoices, receipts, concessions and collections — every change is posted to the ledger.',
-          'الفواتير والإيصالات والإعفاءات والتحصيل — كل عملية تُرحَّل إلى دفتر الأستاذ.',
-        )}
-      />
+    <div className={embedded ? 'erp-embed' : undefined}>
+      {!embedded && (
+        <PageHeader
+          title={t('Student Fees', 'رسوم الطلاب')}
+          subtitle={t(
+            'Invoices, receipts, concessions and collections — every change is posted to the ledger.',
+            'الفواتير والإيصالات والإعفاءات والتحصيل — كل عملية تُرحَّل إلى دفتر الأستاذ.',
+          )}
+        />
+      )}
       <Tabs tabs={tabs} active={tab} onChange={setTab} />
       {tab === 'receive' && <FeeReceive />}
       {tab === 'overview' && <FeeOverview />}

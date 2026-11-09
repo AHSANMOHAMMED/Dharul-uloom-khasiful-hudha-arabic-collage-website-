@@ -69,7 +69,7 @@ function Notes({ lead }) {
   );
 }
 
-export function FollowupsTable({ rows, busy, onDone, showLead, t }) {
+export function FollowupsTable({ rows, busy, onDone, onDelete, showLead, t }) {
   const now = Date.now();
   return (
     <Table rows={rows} empty={t('No follow-ups.', 'لا توجد متابعات.')} columns={[
@@ -85,6 +85,7 @@ export function FollowupsTable({ rows, busy, onDone, showLead, t }) {
       { key: 'act', label: '', render: (r) => (!r.done_at ? (
         <div className="flex gap-2">
           <Button size="sm" disabled={busy} onClick={() => onDone(r)}>{t('Mark done', 'تم')}</Button>
+          {onDelete && <Button size="sm" variant="ghost" disabled={busy} onClick={() => onDelete(r)}>{t('Delete', 'حذف')}</Button>}
         </div>
       ) : null) },
     ]} />
