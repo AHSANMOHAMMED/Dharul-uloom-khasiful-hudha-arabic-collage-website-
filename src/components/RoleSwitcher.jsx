@@ -5,14 +5,17 @@ import { tx } from '../lib/tx';
 
 export default function RoleSwitcher() {
   useTranslation(); // re-render on language change
-  const { isTreasurer, isPrincipal, isVP, isTutor } = useAuth();
+  const { isTreasurer, isPrincipal, isVP, isTutor, isLibrarian } = useAuth();
   const [searchParams] = useSearchParams();
-  const view = searchParams.get('view') || (isTreasurer ? 'treasurer' : isPrincipal ? 'principal' : isVP ? 'vp' : 'tutor');
+  const view =
+    searchParams.get('view') ||
+    (isTreasurer ? 'treasurer' : isPrincipal ? 'principal' : isVP ? 'vp' : isLibrarian ? 'librarian' : 'tutor');
 
   const roles = [];
   if (isTreasurer) roles.push({ key: 'treasurer', label: tx('أمين الصندوق', 'Treasurer'), color: 'bg-gold-wash-100 text-brass-gold-500 border-brass-gold-500/40' });
   if (isPrincipal) roles.push({ key: 'principal', label: tx('المدير', 'Principal'), color: 'bg-mint-wash-100 text-ink-green-900 border-ink-green-900/30' });
   if (isVP) roles.push({ key: 'vp', label: tx('نائب المدير', 'Vice Principal'), color: 'bg-indigo-50 text-indigo-800 border-indigo-200' });
+  if (isLibrarian) roles.push({ key: 'librarian', label: tx('أمين المكتبة', 'Librarian'), color: 'bg-sky-50 text-sky-800 border-sky-200' });
   if (isTutor) roles.push({ key: 'tutor', label: tx('المعلم', 'Class Tutor'), color: 'bg-mint-wash-100 text-emerald-700 border-emerald-700/30' });
 
   if (roles.length <= 1) return null;

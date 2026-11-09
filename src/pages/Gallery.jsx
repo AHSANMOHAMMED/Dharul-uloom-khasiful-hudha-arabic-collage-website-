@@ -6,50 +6,29 @@ import KhatamPattern from '../components/KhatamPattern'
 import { localized } from '../lib/localized';
 import { tx } from '../lib/tx';
 
-/** Sample photos shown until the CMS has gallery items (built at render so text follows the UI language). */
+/** Real campus photos until the CMS has gallery items (drop more files in public/images/campus/). */
 const fallbackGallery = () => [
   {
     id: 'g1',
     category: 'campus',
-    title: tx('باحة الكلية والأروقة المعمارية', 'Collegiate Courtyard & Arched Colonnades'),
-    caption: tx('أجواء صباحية هادئة في الباحة المركزية حيث يجتمع الطلاب بين الحلقات.', 'Serene morning atmosphere in the central courtyard where students gather between halaqat.'),
-    imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80'
+    title: tx('المبنى الرئيسي للكلية', 'Main college building'),
+    caption: tx('واجهة دار العلوم كاشف الهدى في مدلايبلي، كالبيتيا، بأقواسها البيضاء وشعار الكلية.', 'The white arched façade of Dharul Uloom Kashiful Hudha in Mudalippalli, Kalpitiya.'),
+    imageUrl: '/images/campus/building.jpg',
   },
   {
     id: 'g2',
-    category: 'classes',
-    title: tx('حلقة الحفظ الصباحية', 'Morning Hifz Recitation Circle'),
-    caption: tx('طلاب يحفظون القرآن الكريم على يد كبار القراء في المصلى الرئيسي.', 'Students memorizing the Holy Quran under senior Qaris in the main prayer hall.'),
-    imageUrl: 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&w=1200&q=80'
+    category: 'campus',
+    title: tx('بوابة الحرم الجامعي', 'Campus entrance gate'),
+    caption: tx('البوابة الرئيسية للكلية في مدلايبلي — مدخل يرحب بالطلاب والزوار.', 'The main gate welcoming students and visitors to the campus grounds.'),
+    imageUrl: '/images/campus/gate.jpg',
   },
   {
     id: 'g3',
-    category: 'graduation',
-    title: tx('المجلس السنوي لختم صحيح البخاري', 'Annual Khatm al-Bukhari & Sanad Conferment'),
-    caption: tx('الاحتفال بتخريج العلماء ومنحهم الأسانيد المتصلة الموثقة.', 'Celebration of graduating Alim scholars receiving authenticated sanad chains.'),
-    imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'g4',
-    category: 'campus',
-    title: tx('قاعة المطالعة في المكتبة التراثية', 'Maktabah Archival Reading Room'),
-    caption: tx('طلاب يطالعون الشروح التراثية ومراجع الحديث في هدوء.', 'Students consulting classical commentary folios and hadith references in quiet study.'),
-    imageUrl: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
-    id: 'g5',
     category: 'events',
-    title: tx('إفطار رمضاني وصلاة التراويح', 'Community Iftar & Taraweeh Gathering'),
-    caption: tx('لقاء رمضاني سنوي يجمع الأساتذة والطلاب ووجهاء المجتمع المحلي.', 'Annual Ramadan gathering bringing together faculty, students, and local community elders.'),
-    imageUrl: 'https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&w=1200&q=80'
+    title: tx('شعار دار العلوم كاشف الهدى', 'College emblem'),
+    caption: tx('الشعار الرسمي للكلية — دار العلوم كاشف الهدى، كالبيتيا، سريلانكا (Regd. MRCA).', 'Official emblem of Dharul Uloom Kashiful Hudha, Kalpitiya, Sri Lanka (Regd. MRCA).'),
+    imageUrl: '/images/campus/emblem.png',
   },
-  {
-    id: 'g6',
-    category: 'classes',
-    title: tx('مناظرة طلابية في علم النحو', 'Classical Arabic Grammar Debate Session'),
-    caption: tx('طلاب المرحلة المتوسطة يعربون الجمل ويتناظرون في مسائل النحو.', 'Intermediate students parsing sentences and engaging in classical Nahw disputations.'),
-    imageUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1200&q=80'
-  }
 ]
 
 export default function Gallery() {
@@ -107,6 +86,8 @@ export default function Gallery() {
       
       {/* 1. Header & Breadcrumb */}
       <section className="relative w-full bg-ink-green-900 text-paper-white py-16 overflow-hidden border-b border-sand-border/20">
+        <img src="/images/campus/building.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-30" />
+        <div className="absolute inset-0 bg-ink-green-900/85" aria-hidden="true" />
         <KhatamPattern className="opacity-[0.04]" strokeColor="#FBF8F0" id="gallery-khatam" />
         <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           

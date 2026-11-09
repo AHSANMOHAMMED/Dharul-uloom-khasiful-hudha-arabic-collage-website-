@@ -52,7 +52,10 @@ export default function DashboardTopBar() {
 
   // Workspace shortcuts available to the current user
   const shortcuts = [];
-  if (isAdmin) {
+  if (isSuperAdmin) {
+    shortcuts.push({ to: '/platform', label: tx('لوحة المدير العام', 'Super Admin'), icon: 'admin_panel_settings' });
+    shortcuts.push({ to: '/erp', label: tx('نظام ERP', 'Campus ERP'), icon: 'domain' });
+  } else if (isAdmin) {
     shortcuts.push({ to: '/admin', label: tx('لوحة الإدارة', 'Admin Console'), icon: 'admin_panel_settings' });
     shortcuts.push({ to: '/erp', label: tx('نظام ERP', 'Campus ERP'), icon: 'domain' });
     shortcuts.push({ to: '/library-admin', label: tx('إدارة المكتبة', 'Maktabah Admin'), icon: 'local_library' });
@@ -75,7 +78,7 @@ export default function DashboardTopBar() {
         {/* Left: Brand Identity + Current Portal Pill */}
         <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <Link
-            to={isAdmin ? '/admin' : '/dashboard'}
+            to={isSuperAdmin ? '/platform' : isAdmin ? '/admin' : '/dashboard'}
             className="flex items-center gap-2.5 sm:gap-3 group"
             title={tx('العودة إلى لوحة التحكم', 'Back to dashboard')}
           >

@@ -54,6 +54,16 @@ vi.mock('../context/AuthContext', () => {
   return { useAuth: () => all, AuthProvider: ({ children }) => children }
 })
 
+vi.mock('../context/FeatureFlagsContext', () => ({
+  useFeatures: () => ({
+    features: {},
+    loading: false,
+    enabled: () => true,
+    refreshFeatures: async () => {},
+  }),
+  FeatureFlagsProvider: ({ children }) => children,
+}))
+
 const MODULES = {
   'governance/DutiesPanel': () => import('../components/erp/governance/DutiesPanel'),
   'governance/PettyCashPanel': () => import('../components/erp/governance/PettyCashPanel'),

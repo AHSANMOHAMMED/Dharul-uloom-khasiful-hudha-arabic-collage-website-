@@ -136,6 +136,28 @@ export function assignDuty({ duty, assignee, start, meeting, academicYear, notes
   });
 }
 
+/**
+ * Map duty_role_id → preferred active holder (lead first).
+ * Used so Mashoora / Kanban task forms can auto-assign to the staff who currently holds that duty.
+ */
+export async function activeHoldersByDuty() {
+  const rows = (await listAssignments({ status: 'active' })) || [];
+  const map = {};
+  for (const a of rows) {
+    if (!a.duty_role_id || !a.assignee_id) continue;
+    const prev = map[a.duty_role_id];
+    if (!prev || (a.is_lead && !prev.is_lead)) {
+      map[a.duty_role_id] = { assignee_id: a.assignee_id, is_lead: Boolean(a.is_lead), assignment_id: a.id };
+    }
+  }
+  return map;
+}
+
+export function holderIdForDuty(holdersMap, dutyRoleId) {
+  if (!dutyRoleId || !holdersMap) return null;
+  return holdersMap[dutyRoleId]?.assignee_id || null;
+}
+
 export function endDuty(assignment, end, reason) {
   return rpc('end_duty', { p_assignment: assignment, p_end: end || null, p_reason: reason?.trim() || null });
 }
@@ -243,6 +265,14 @@ export function createTask(row) {
 
 export function updateTask(id, patch) {
   return query('tasks', (q) => q.update(patch).eq('id', id).select(TASK_SELECT).single());
+}
+
+/** Persist Kanban column order after a drop (status + position). */
+export function reorderTask(id, { status, position }) {
+  const patch = {};
+  if (status) patch.status = status;
+  if (position != null) patch.position = position;
+  return updateTask(id, patch);
 }
 
 export function deleteTask(id) {

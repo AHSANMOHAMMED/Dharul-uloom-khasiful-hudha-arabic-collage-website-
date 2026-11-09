@@ -19,9 +19,9 @@ export default function Footer() {
           <div className="lg:col-span-2 space-y-4">
             <Link to="/" className="inline-flex items-center gap-3">
               <img 
-                src="/images/logo.svg" 
+                src="/images/logo.png" 
                 alt={tx('شعار دار العلوم كاشف الهدى', 'D.U. Kashiful Hudha Arabic College Emblem')}
-                className="w-12 h-12 object-contain rounded-lg border border-sand-border/30 bg-paper-white/10"
+                className="w-12 h-12 object-contain rounded-full border border-sand-border/30 bg-paper-white"
               />
               <div className="flex flex-col">
                 <span className="font-serif text-xl sm:text-2xl font-semibold text-paper-white tracking-tight">

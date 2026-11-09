@@ -38,10 +38,19 @@ export default function StudentDashboard() {
       // 1. Fetch results
       const { data: resultsData } = await supabase
         .from('student_results')
-        .select('*')
+        .select('*, exams(published_at, status, name)')
         .eq('student_id', user.id)
         .order('created_at', { ascending: false });
-      if (resultsData) setResults(resultsData);
+      // Prefer published exams in the UI; RLS remains the authority.
+      if (resultsData) {
+        setResults(
+          resultsData.filter((row) => {
+            const exam = row.exams;
+            if (!exam) return true;
+            return Boolean(exam.published_at) || exam.status === 'published';
+          })
+        );
+      }
 
       // 2. Fetch attendance
       const { data: attendanceData } = await supabase

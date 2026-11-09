@@ -21,7 +21,7 @@ const fallbackNews = () => [
       'احتفلت دار العلوم بتخريج دفعة جديدة من طلاب العلم بعد إتمام قراءة وشرح أواخر كتاب التوحيد من صحيح الإمام البخاري.',
       'Conferring authentic sanad chains upon 34 graduating scholars completing the final chapters of Sahih al-Bukhari with guest scholars from across the region.'
     ),
-    imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80'
+    imageUrl: '/images/campus/building.jpg'
   },
   {
     id: 'n2',
@@ -36,7 +36,7 @@ const fallbackNews = () => [
       'تعلن إدارة القبول والتسجيل عن بدء استقبال طلبات الالتحاق لبرامج حفظ القرآن الكريم ودراسة العلوم الشرعية والعربية.',
       'Registrations are formally open for Kulliyyah entrance interviews, Arabic oral assessment, and Quranic recitation testing across Kalpitiya.'
     ),
-    imageUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80'
+    imageUrl: '/images/campus/gate.jpg'
   },
   {
     id: 'n3',
@@ -51,7 +51,7 @@ const fallbackNews = () => [
       'أتاح مركز المخطوطات والتراث بالكلية نسخاً عالية الدقة لشروح فقهية نادرة تيسيراً للباحثين وطلاب العلم.',
       'The Manuscript Preservation Wing has released digital high-resolution scans of three historically significant commentaries on Minhaj at-Talibin.'
     ),
-    imageUrl: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=800&q=80'
+    imageUrl: '/images/campus/emblem.png'
   },
   {
     id: 'n4',
@@ -66,7 +66,7 @@ const fallbackNews = () => [
       'أقامت الكلية مسابقتها السنوية في الخطابة والشعر العربي الفصيح لإبراز كفاءات الطلاب اللغوية.',
       'Students exhibited classical rhetorical prowess in extemporaneous declamation, classical poetry recitation, and syntax analysis.'
     ),
-    imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80'
+    imageUrl: '/images/campus/building.jpg'
   }
 ]
 
@@ -97,6 +97,8 @@ export default function News() {
       
       {/* 1. Header & Breadcrumb */}
       <section className="relative w-full bg-ink-green-900 text-paper-white py-16 overflow-hidden border-b border-sand-border/20">
+        <img src="/images/campus/building.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-30" />
+        <div className="absolute inset-0 bg-ink-green-900/85" aria-hidden="true" />
         <KhatamPattern className="opacity-[0.04]" strokeColor="#FBF8F0" id="news-khatam" />
         <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           

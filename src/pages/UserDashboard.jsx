@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams, Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useFeatures } from '../context/FeatureFlagsContext';
 import RoleSwitcher from '../components/RoleSwitcher';
 import StudentDashboard from './StudentDashboard';
 import ParentDashboard from './ParentDashboard';
@@ -16,12 +17,27 @@ export default function UserDashboard() {
   const {
     isAuthenticated, isApproved,
     isStudent, isParent, isTutor, isTreasurer,
-    isPrincipal, isVP, isLibrarian, isAdmin, isNonTeachingStaff,
+    isPrincipal, isVP, isLibrarian, isAdmin, isSuperAdmin, isNonTeachingStaff,
     logout, loading: authLoading
   } = useAuth();
+  const { enabled } = useFeatures();
   useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  const featureBlocked = (key) => (
+    <div className="min-h-screen bg-parchment-50 flex items-center justify-center p-6">
+      <div className="max-w-md w-full rounded-[14px] border border-sand-border bg-paper-white p-8 text-center shadow-manuscript-md space-y-3">
+        <h2 className="font-serif text-xl font-semibold text-ink-green-900">
+          {tx('هذه البوابة غير مفعّلة حالياً', 'This portal is currently disabled')}
+        </h2>
+        <p className="text-sm text-ink-text-secondary">
+          {tx('عطّل مدير المنصة هذه الميزة. تواصل مع إدارة الكلية.', 'The platform operator turned this feature off. Contact college administration.')}
+        </p>
+        <p className="text-[11px] font-mono text-ink-text-muted">{key}</p>
+      </div>
+    </div>
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -29,10 +45,14 @@ export default function UserDashboard() {
       navigate('/login', { replace: true, state: { from: `/dashboard${window.location.search}` } });
       return;
     }
+    if (isSuperAdmin) {
+      navigate('/platform', { replace: true });
+      return;
+    }
     if (isAdmin) {
       navigate('/admin', { replace: true });
     }
-  }, [authLoading, isAuthenticated, isAdmin, navigate]);
+  }, [authLoading, isAuthenticated, isAdmin, isSuperAdmin, navigate]);
 
   if (authLoading) {
     return (
@@ -94,27 +114,56 @@ export default function UserDashboard() {
     </div>
   );
 
-  if (isLibrarian) return <LibrarianDashboard />;
+  // Multi-hat staff (tutor + treasurer/principal/VP/librarian) share one switcher.
+  const multiHat =
+    isTutor && (isTreasurer || isPrincipal || isVP || isLibrarian);
 
-  if (isTutor && (isTreasurer || isPrincipal || isVP)) {
+  if (multiHat) {
     if (activeView === 'treasurer' && isTreasurer) return wrapWithSwitcher(<TreasurerDashboard />);
     if (activeView === 'principal' && isPrincipal) return wrapWithSwitcher(<PrincipalDashboard vpMode={false} />);
     if (activeView === 'vp' && isVP) return wrapWithSwitcher(<PrincipalDashboard vpMode={true} />);
+    if (activeView === 'librarian' && isLibrarian) return wrapWithSwitcher(<LibrarianDashboard />);
     if (activeView === 'tutor') return wrapWithSwitcher(<TutorDashboard />);
     if (isTreasurer) return wrapWithSwitcher(<TreasurerDashboard />);
     if (isPrincipal) return wrapWithSwitcher(<PrincipalDashboard vpMode={false} />);
     if (isVP) return wrapWithSwitcher(<PrincipalDashboard vpMode={true} />);
+    if (isLibrarian) return wrapWithSwitcher(<LibrarianDashboard />);
   }
 
-  if (isPrincipal) return <PrincipalDashboard vpMode={false} />;
-  if (isVP) return <PrincipalDashboard vpMode={true} />;
-  if (isTreasurer) return <TreasurerDashboard />;
-  if (isTutor) return <TutorDashboard />;
-  if (isStudent) return <StudentDashboard />;
-  if (isParent) return <ParentDashboard />;
+  if (isLibrarian) {
+    if (!enabled('library')) return featureBlocked('library');
+    return <LibrarianDashboard />;
+  }
+  if (isPrincipal) {
+    if (!enabled('staff_portal')) return featureBlocked('staff_portal');
+    return <PrincipalDashboard vpMode={false} />;
+  }
+  if (isVP) {
+    if (!enabled('staff_portal')) return featureBlocked('staff_portal');
+    return <PrincipalDashboard vpMode={true} />;
+  }
+  if (isTreasurer) {
+    if (!enabled('staff_portal')) return featureBlocked('staff_portal');
+    return <TreasurerDashboard />;
+  }
+  if (isTutor) {
+    if (!enabled('staff_portal')) return featureBlocked('staff_portal');
+    return <TutorDashboard />;
+  }
+  if (isStudent) {
+    if (!enabled('student_portal')) return featureBlocked('student_portal');
+    return <StudentDashboard />;
+  }
+  if (isParent) {
+    if (!enabled('parent_portal')) return featureBlocked('parent_portal');
+    return <ParentDashboard />;
+  }
 
   // Non-teaching employees (accountant, HR, admissions, warden…) work in the ERP.
-  if (isNonTeachingStaff) return <Navigate to="/erp" replace />;
+  if (isNonTeachingStaff) {
+    if (!enabled('erp') || !enabled('staff_portal')) return featureBlocked('erp');
+    return <Navigate to="/erp" replace />;
+  }
 
   if (isAuthenticated) {
     return (

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useFeatures } from '../context/FeatureFlagsContext';
 import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
 import { passwordProblem } from '../lib/passwordPolicy';
@@ -9,6 +10,7 @@ import { passwordProblem } from '../lib/passwordPolicy';
 export default function Register() {
   useTranslation();
   const { register } = useAuth();
+  const { enabled, loading: featuresLoading } = useFeatures();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -41,6 +43,24 @@ export default function Register() {
     setFormData((prev) => ({ ...prev, role: roleId }));
     setError('');
   };
+
+  if (!featuresLoading && !enabled('registrations')) {
+    return (
+      <div className="min-h-screen bg-parchment-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full rounded-[14px] border border-sand-border bg-paper-white p-8 text-center space-y-3 shadow-manuscript-md">
+          <h1 className="font-serif text-2xl font-semibold text-ink-green-900">
+            {tx('التسجيل مغلق حالياً', 'Registration is closed')}
+          </h1>
+          <p className="text-sm text-ink-text-secondary">
+            {tx('عطّل مدير المنصة التسجيلات الجديدة مؤقتاً.', 'The platform operator has temporarily disabled new sign-ups.')}
+          </p>
+          <Link to="/login" className="inline-flex text-sm font-semibold text-emerald-700 underline">
+            {tx('العودة لتسجيل الدخول', 'Back to login')}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -100,7 +120,7 @@ export default function Register() {
         <div className="relative z-10 space-y-4">
           <Link to="/" className="inline-flex items-center gap-3">
             <img 
-              src="/images/logo.svg" 
+              src="/images/logo.png" 
               alt={tx('شعار دار العلوم كاشف الهدى', 'D.U. Kashiful Hudha Arabic College Emblem')}
               className="w-11 h-11 object-contain rounded-lg border border-sand-border/30 bg-paper-white/10"
             />

@@ -83,30 +83,32 @@ export default function NewsDetail() {
   return (
     <div className="w-full bg-parchment-50 text-ink-text-primary min-h-screen">
       
-      {/* 1. Header with Breadcrumb */}
-      <section className="w-full bg-paper-white border-b border-sand-border py-8">
-        <div className="max-w-[720px] mx-auto px-4 sm:px-6">
-          <nav className="flex items-center gap-2 text-xs text-ink-text-muted mb-6" aria-label={tx('مسار التنقل', 'Breadcrumb')}>
-            <Link to="/" className="hover:text-emerald-700 transition-colors">{tx('الرئيسية', 'Home')}</Link>
+      {/* 1. Campus header with breadcrumb */}
+      <section className="relative w-full overflow-hidden border-b border-sand-border bg-ink-green-900 py-10 text-paper-white">
+        <img src="/images/campus/building.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-25" />
+        <div className="absolute inset-0 bg-ink-green-900/85" aria-hidden="true" />
+        <div className="relative z-10 mx-auto max-w-[720px] px-4 sm:px-6">
+          <nav className="mb-6 flex items-center gap-2 text-xs text-dark-text-primary/70" aria-label={tx('مسار التنقل', 'Breadcrumb')}>
+            <Link to="/" className="transition-colors hover:text-gold-wash-100">{tx('الرئيسية', 'Home')}</Link>
             <span>/</span>
-            <Link to="/news" className="hover:text-emerald-700 transition-colors">{tx('الأخبار', 'News')}</Link>
+            <Link to="/news" className="transition-colors hover:text-gold-wash-100">{tx('الأخبار', 'News')}</Link>
             <span>/</span>
-            <span className="text-ink-green-900 font-semibold truncate">{tx('الخبر', 'Dispatch')}</span>
+            <span className="truncate font-semibold text-brass-gold-500">{tx('الخبر', 'Dispatch')}</span>
           </nav>
 
-          <div className="flex items-center gap-2 mb-4">
-            <span className="px-2.5 py-0.5 rounded-full bg-mint-wash-100 text-emerald-700 text-xs font-semibold">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-paper-white/10 px-2.5 py-0.5 text-xs font-semibold text-brass-gold-500">
               {category}
             </span>
-            <span className="text-xs text-ink-text-muted">{date}</span>
+            <span className="text-xs text-dark-text-primary/70">{date}</span>
           </div>
 
-          <h1 className="font-serif text-2xl sm:text-4xl font-semibold text-ink-green-900 leading-tight mb-4">
+          <h1 className="mb-4 font-serif text-2xl font-semibold leading-tight tracking-tight text-paper-white sm:text-4xl">
             {title}
           </h1>
 
-          <div className="flex items-center gap-3 pt-3 border-t border-sand-border text-xs text-ink-text-muted">
-            <span className="font-semibold text-ink-text-primary">{tx('مكتب التحرير بكاشف الهدى', 'Kashiful Hudha Editorial Office')}</span>
+          <div className="flex flex-wrap items-center gap-3 border-t border-sand-border/30 pt-3 text-xs text-dark-text-primary/80">
+            <span className="font-semibold text-paper-white">{tx('مكتب التحرير بكاشف الهدى', 'Kashiful Hudha Editorial Office')}</span>
             <span>·</span>
             <span>{tx('مدلپلّي، كالبيتيا', 'Mudalippalli, Kalpitiya')}</span>
           </div>

@@ -48,6 +48,8 @@ export default function About() {
       
       {/* 1. Slim Editorial Header & Breadcrumb */}
       <section className="relative w-full bg-ink-green-900 text-paper-white py-16 overflow-hidden border-b border-sand-border/20">
+        <img src="/images/campus/building.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-35" />
+        <div className="absolute inset-0 bg-ink-green-900/80" aria-hidden="true" />
         <KhatamPattern className="opacity-[0.04]" strokeColor="#FBF8F0" id="about-khatam" />
         <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           
@@ -105,10 +107,13 @@ export default function About() {
             {/* Campus Archival Card */}
             <div className="lg:col-span-5">
               <div className="p-4 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
-                <div className="min-h-64 rounded-lg bg-[#f4f1e9] px-6 py-8 flex flex-col items-center justify-center text-center">
-                  <img src="/images/logo.svg" alt={tx('شعار دار العلوم كاشف الهدى', 'Dharul Uloom Kashiful Hudha emblem')} className="mb-5 h-44 w-44 object-contain" />
-                  <span className="font-serif font-semibold text-ink-green-900">{tx('مُدلايبالي، كالبيتيا', 'Mudalippalli, Kalpitiya')}</span>
-                  <span className="mt-1 text-xs text-ink-text-muted">{tx('مقاطعة بوتالام · سريلانكا', 'Puttalam District · Sri Lanka')}</span>
+                <div className="min-h-64 overflow-hidden rounded-lg bg-[#f4f1e9]">
+                  <img src="/images/campus/building.jpg" alt={tx('مبنى الكلية', 'College building')} className="h-48 w-full object-cover" />
+                  <div className="flex flex-col items-center px-6 py-5 text-center">
+                    <img src="/images/logo.png" alt={tx('شعار دار العلوم كاشف الهدى', 'Dharul Uloom Kashiful Hudha emblem')} className="mb-3 h-20 w-20 rounded-full object-contain border border-sand-border bg-white" />
+                    <span className="font-serif font-semibold text-ink-green-900">{tx('مُدلايبالي، كالبيتيا', 'Mudalippalli, Kalpitiya')}</span>
+                    <span className="mt-1 text-xs text-ink-text-muted">{tx('مقاطعة بوتالام · سريلانكا', 'Puttalam District · Sri Lanka')}</span>
+                  </div>
                 </div>
               </div>
             </div>

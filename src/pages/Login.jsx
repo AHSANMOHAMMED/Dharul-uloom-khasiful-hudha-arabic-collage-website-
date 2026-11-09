@@ -27,7 +27,8 @@ export default function Login() {
   const goToWorkspace = (u) => {
     const back = safeRedirectPath(location.state?.from);
     if (back) navigate(back, { replace: true });
-    else if (u?.role === 'admin' || u?.role === 'super_admin') navigate('/admin');
+    else if (u?.role === 'super_admin') navigate('/platform');
+    else if (u?.role === 'admin') navigate('/admin');
     else if (u?.role === 'librarian') navigate('/library-admin');
     else navigate('/dashboard');
   };
@@ -117,7 +118,7 @@ export default function Login() {
         <div className="relative z-10 space-y-4">
           <Link to="/" className="inline-flex items-center gap-3">
             <img 
-              src="/images/logo.svg" 
+              src="/images/logo.png" 
               alt={tx('شعار دار العلوم كاشف الهدى', 'D.U. Kashiful Hudha Arabic College Emblem')}
               className="w-11 h-11 object-contain rounded-lg border border-sand-border/30 bg-paper-white/10"
             />

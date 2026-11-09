@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Badge, Button, ErrorNote, Field, Input, Loading, PageHeader, Select, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { FilterBar } from '../finance/shared';
@@ -9,11 +10,13 @@ import {
   TASK_PRIORITIES,
   TASK_STATUSES,
   TASK_STATUS_LABELS,
+  activeHoldersByDuty,
   addTaskComment,
   createTask,
   dbMessage,
   deleteTask,
   dutyName,
+  holderIdForDuty,
   listDutyRoles,
   listMeetings,
   listTaskComments,
@@ -21,6 +24,7 @@ import {
   listTasks,
   pairLabel,
   pairOptions,
+  reorderTask,
   subscribeTable,
   updateTask,
   weekStartOf,
@@ -58,9 +62,21 @@ function sortTasks(list) {
 // ---------------------------------------------------------------------------
 // Task form (new + edit details)
 // ---------------------------------------------------------------------------
-function TaskFields({ form, set, canAssignOthers, userId, staff, duties, meetings, readOnly }) {
+function TaskFields({ form, set, canAssignOthers, userId, staff, duties, meetings, holdersMap, readOnly }) {
   const { t, lang } = useLang();
   const assigneeOptions = canAssignOthers ? staff.options : staff.options.filter((o) => o.value === userId);
+  const holder = holderIdForDuty(holdersMap, form.duty_role_id);
+  const holderName = holder ? staff.options.find((o) => o.value === holder)?.label : null;
+
+  const onDutyChange = (dutyRoleId) => {
+    const patch = { duty_role_id: dutyRoleId };
+    if (canAssignOthers) {
+      const nextHolder = holderIdForDuty(holdersMap, dutyRoleId);
+      if (nextHolder) patch.assignee_id = nextHolder;
+    }
+    set(patch);
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div className="sm:col-span-2">
@@ -73,7 +89,16 @@ function TaskFields({ form, set, canAssignOthers, userId, staff, duties, meeting
           <Textarea rows={3} value={form.description} disabled={readOnly} onChange={(e) => set({ description: e.target.value })} />
         </Field>
       </div>
-      <Field label={t('Assignee', 'المكلف')} hint={canAssignOthers ? undefined : t('You can only create tasks for yourself', 'يمكنك إنشاء مهام لنفسك فقط')}>
+      <Field label={t('Duty', 'المسؤولية')} hint={holderName ? `${t('Current holder', 'الحامل الحالي')}: ${holderName}` : undefined}>
+        <Select
+          value={form.duty_role_id}
+          disabled={readOnly}
+          onChange={(e) => onDutyChange(e.target.value)}
+          placeholder={t('— None —', '— لا شيء —')}
+          options={(duties || []).map((d) => ({ value: d.id, label: dutyName(d, lang) }))}
+        />
+      </Field>
+      <Field label={t('Assignee', 'المكلف')} hint={canAssignOthers ? t('Auto-fills from duty holder when you pick a duty', 'يُملأ تلقائياً من حامل المسؤولية') : t('You can only create tasks for yourself', 'يمكنك إنشاء مهام لنفسك فقط')}>
         <Select
           value={form.assignee_id}
           disabled={readOnly || !canAssignOthers}
@@ -90,9 +115,6 @@ function TaskFields({ form, set, canAssignOthers, userId, staff, duties, meeting
       </Field>
       <Field label={t('Week', 'الأسبوع')} hint={form.week_start ? `${t('Week of', 'أسبوع')} ${formatDate(form.week_start)}` : undefined}>
         <Input type="date" value={form.week_start} disabled={readOnly} onChange={(e) => set({ week_start: e.target.value ? weekStartOf(e.target.value) : '' })} />
-      </Field>
-      <Field label={t('Duty', 'المسؤولية')}>
-        <Select value={form.duty_role_id} disabled={readOnly} onChange={(e) => set({ duty_role_id: e.target.value })} placeholder={t('— None —', '— لا شيء —')} options={(duties || []).map((d) => ({ value: d.id, label: dutyName(d, lang) }))} />
       </Field>
       <Field label={t('Mashoora', 'الشورى')}>
         <Select value={form.meeting_id} disabled={readOnly} onChange={(e) => set({ meeting_id: e.target.value })} placeholder={t('— None —', '— لا شيء —')} options={(meetings || []).map((m) => ({ value: m.id, label: `${m.title} · ${formatDate(m.meeting_date)}` }))} />
@@ -127,10 +149,10 @@ function fromForm(form) {
   };
 }
 
-function NewTaskModal({ ctx, onClose, onSaved }) {
+function NewTaskModal({ ctx, onClose, onSaved, defaults }) {
   const { t } = useLang();
   const errText = useTaskError();
-  const [form, setForm] = useState(toForm(null, ctx.userId));
+  const [form, setForm] = useState(() => ({ ...toForm(null, ctx.userId), ...(defaults || {}) }));
   const [busy, setBusy] = useState(false);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const save = async () => {
@@ -138,7 +160,7 @@ function NewTaskModal({ ctx, onClose, onSaved }) {
     try {
       const row = fromForm(form);
       if (!ctx.isGov) row.assignee_id = ctx.userId;
-      const created = await createTask({ ...row, status: 'todo' });
+      const created = await createTask({ ...row, status: 'todo', position: 0 });
       toast.success(t('Task created', 'تم إنشاء المهمة'));
       onSaved(created);
     } catch (e) {
@@ -159,7 +181,16 @@ function NewTaskModal({ ctx, onClose, onSaved }) {
         </>
       }
     >
-      <TaskFields form={form} set={set} canAssignOthers={ctx.isGov} userId={ctx.userId} staff={ctx.staff} duties={ctx.duties} meetings={ctx.meetings} />
+      <TaskFields
+        form={form}
+        set={set}
+        canAssignOthers={ctx.isGov}
+        userId={ctx.userId}
+        staff={ctx.staff}
+        duties={ctx.duties}
+        meetings={ctx.meetings}
+        holdersMap={ctx.holdersMap}
+      />
     </WideModal>
   );
 }
@@ -325,7 +356,7 @@ function TaskModal({ task, ctx, people, onClose, onChanged, onDeleted }) {
       {tab === 'details' && (
         <>
           {!canEdit && <p className="text-xs text-gray-500">{t('Only the person who created this task can edit its details. You can move it on the board.', 'تعديل التفاصيل لمن أنشأ المهمة فقط. يمكنك تحريكها على اللوحة.')}</p>}
-          <TaskFields form={form} set={set} canAssignOthers={ctx.isGov} userId={ctx.userId} staff={ctx.staff} duties={ctx.duties} meetings={ctx.meetings} readOnly={!canEdit} />
+          <TaskFields form={form} set={set} canAssignOthers={ctx.isGov} userId={ctx.userId} staff={ctx.staff} duties={ctx.duties} meetings={ctx.meetings} holdersMap={ctx.holdersMap} readOnly={!canEdit} />
         </>
       )}
       {tab === 'comments' && <CommentsTab task={task} people={people} />}
@@ -353,6 +384,7 @@ function TaskCard({ task, people, canMove, onOpen, onMove, onDragStart }) {
       <div className="flex flex-wrap gap-1 items-center">
         <Badge tone={PRIORITY_TONE[task.priority]}>{pairLabel(TASK_PRIORITIES, task.priority, t)}</Badge>
         {task.duty && <Badge>{dutyName(task.duty, lang)}</Badge>}
+        {task.meeting && <Badge tone="blue">{task.meeting.title}</Badge>}
       </div>
       <div className="flex justify-between gap-2 text-xs">
         <span className="text-gray-400 truncate">{people[task.assignee_id]?.full_name || t('Unassigned', 'غير مسندة')}</span>
@@ -376,14 +408,18 @@ function TaskCard({ task, people, canMove, onOpen, onMove, onDragStart }) {
 
 export default function TaskBoard() {
   const { t, lang } = useLang();
+  const [params, setParams] = useSearchParams();
   const { user, isGov } = useGovernance();
   const userId = user?.id;
   const staff = useStaff();
   const errText = useTaskError();
   const [duties] = useAsync(() => listDutyRoles(), []);
   const [meetings] = useAsync(() => listMeetings({ limit: 100 }), []);
-  const [scope, setScope] = useState(isGov ? 'all' : 'mine');
-  const [filters, setFilters] = useState({ assignee: '', duty: '', week: '', meeting: '', priority: '' });
+  const [holders] = useAsync(() => activeHoldersByDuty(), []);
+  const meetingFromUrl = params.get('meeting') || '';
+  const scopeFromUrl = params.get('scope');
+  const [scope, setScope] = useState(scopeFromUrl === 'mine' || scopeFromUrl === 'all' ? scopeFromUrl : isGov ? 'all' : 'mine');
+  const [filters, setFilters] = useState({ assignee: '', duty: '', week: '', meeting: meetingFromUrl, priority: '' });
   const [tasks, setTasks] = useState([]);
   const [people, setPeople] = useState({});
   const [loading, setLoading] = useState(true);
@@ -392,6 +428,24 @@ export default function TaskBoard() {
   const [openId, setOpenId] = useState(null);
   const [dragOver, setDragOver] = useState(null);
   const dragId = useRef(null);
+
+  // Keep board filters in sync when navigating from Mashoora ("Open on task board").
+  useEffect(() => {
+    if (meetingFromUrl && filters.meeting !== meetingFromUrl) {
+      setFilters((f) => ({ ...f, meeting: meetingFromUrl }));
+      setScope('all');
+    }
+  }, [meetingFromUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const syncUrl = useCallback(
+    (nextScope, nextMeeting) => {
+      const next = { module: 'tasks' };
+      if (nextScope) next.scope = nextScope;
+      if (nextMeeting) next.meeting = nextMeeting;
+      setParams(next, { replace: true });
+    },
+    [setParams],
+  );
 
   const load = useCallback(async () => {
     try {
@@ -433,15 +487,24 @@ export default function TaskBoard() {
     };
   }, []);
 
-  const ctx = { isGov, userId, staff, duties: duties.data || [], meetings: meetings.data || [] };
+  const ctx = {
+    isGov,
+    userId,
+    staff,
+    duties: duties.data || [],
+    meetings: meetings.data || [],
+    holdersMap: holders.data || {},
+  };
   const canMove = (task) => isGov || task.assignee_id === userId || task.created_by === userId;
 
-  const move = async (task, status) => {
-    if (!status || task.status === status) return;
+  const move = async (task, status, position) => {
+    if (!status) return;
+    if (task.status === status && (position == null || task.position === position)) return;
     const before = tasks;
-    setTasks((list) => list.map((x) => (x.id === task.id ? { ...x, status } : x)));
+    const optimistic = { ...task, status, ...(position != null ? { position } : {}) };
+    setTasks((list) => list.map((x) => (x.id === task.id ? optimistic : x)));
     try {
-      const updated = await updateTask(task.id, { status });
+      const updated = await reorderTask(task.id, { status, position });
       setTasks((list) => list.map((x) => (x.id === task.id ? updated : x)));
     } catch (e) {
       setTasks(before);
@@ -469,20 +532,41 @@ export default function TaskBoard() {
     }
     dragId.current = null;
     const task = tasks.find((x) => x.id === id);
-    if (task) move(task, status);
+    if (!task) return;
+    const column = tasks.filter((x) => x.status === status && x.id !== task.id);
+    const maxPos = column.reduce((m, x) => Math.max(m, Number(x.position) || 0), -1);
+    move(task, status, maxPos + 1);
   };
 
   const columns = useMemo(() => Object.fromEntries(TASK_STATUSES.map((s) => [s, sortTasks(tasks.filter((x) => x.status === s))])), [tasks]);
   const openTask = tasks.find((x) => x.id === openId);
   const thisWeek = weekStartOf(today());
+  const meetingFilterLabel = filters.meeting
+    ? (meetings.data || []).find((m) => m.id === filters.meeting)?.title
+    : null;
 
   return (
     <div>
       <PageHeader
         title={t('Task board', 'لوحة المهام')}
-        subtitle={t('Tasks from the mashoora and managers: To do → In progress → Review → Done.', 'مهام من الشورى والإدارة: للتنفيذ ← قيد التنفيذ ← للمراجعة ← منجز.')}
+        subtitle={
+          meetingFilterLabel
+            ? `${t('Filtered by mashoora', 'مصفّاة حسب الشورى')}: ${meetingFilterLabel}`
+            : t('Tasks from the mashoora and managers: To do → In progress → Review → Done.', 'مهام من الشورى والإدارة: للتنفيذ ← قيد التنفيذ ← للمراجعة ← منجز.')
+        }
         actions={
           <>
+            {filters.meeting && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setFilters((f) => ({ ...f, meeting: '' }));
+                  syncUrl(scope, '');
+                }}
+              >
+                {t('Clear mashoora filter', 'إزالة تصفية الشورى')}
+              </Button>
+            )}
             <Button variant="secondary" onClick={load}>{t('Refresh', 'تحديث')}</Button>
             <Button onClick={() => setCreating(true)}>+ {t('New task', 'مهمة جديدة')}</Button>
           </>
@@ -490,7 +574,10 @@ export default function TaskBoard() {
       />
       <Tabs
         active={scope}
-        onChange={setScope}
+        onChange={(s) => {
+          setScope(s);
+          syncUrl(s, filters.meeting);
+        }}
         tabs={[
           { id: 'mine', label: t('My tasks', 'مهامي') },
           { id: 'all', label: t('All tasks', 'كل المهام') },
@@ -514,7 +601,16 @@ export default function TaskBoard() {
           </div>
         </Field>
         <Field label={t('Mashoora', 'الشورى')}>
-          <Select value={filters.meeting} onChange={(e) => setFilters((f) => ({ ...f, meeting: e.target.value }))} placeholder={t('All', 'الكل')} options={(meetings.data || []).map((m) => ({ value: m.id, label: `${m.title} · ${formatDate(m.meeting_date)}` }))} />
+          <Select
+            value={filters.meeting}
+            onChange={(e) => {
+              const meeting = e.target.value;
+              setFilters((f) => ({ ...f, meeting }));
+              syncUrl(scope, meeting);
+            }}
+            placeholder={t('All', 'الكل')}
+            options={(meetings.data || []).map((m) => ({ value: m.id, label: `${m.title} · ${formatDate(m.meeting_date)}` }))}
+          />
         </Field>
         <Field label={t('Priority', 'الأولوية')}>
           <Select value={filters.priority} onChange={(e) => setFilters((f) => ({ ...f, priority: e.target.value }))} placeholder={t('All', 'الكل')} options={pairOptions(TASK_PRIORITIES, t)} />
@@ -542,7 +638,7 @@ export default function TaskBoard() {
               </div>
               <div className="space-y-2">
                 {columns[s].map((task) => (
-                  <TaskCard key={task.id} task={task} people={people} canMove={canMove(task)} onOpen={(x) => setOpenId(x.id)} onMove={move} onDragStart={onDragStart} />
+                  <TaskCard key={task.id} task={task} people={people} canMove={canMove(task)} onOpen={(x) => setOpenId(x.id)} onMove={(x, st) => move(x, st)} onDragStart={onDragStart} />
                 ))}
                 {!columns[s].length && <div className="text-xs text-gray-600 text-center py-6">{t('Drop tasks here', 'أفلت المهام هنا')}</div>}
               </div>
@@ -553,6 +649,7 @@ export default function TaskBoard() {
       {creating && (
         <NewTaskModal
           ctx={ctx}
+          defaults={filters.meeting ? { meeting_id: filters.meeting } : undefined}
           onClose={() => setCreating(false)}
           onSaved={() => {
             setCreating(false);

@@ -136,9 +136,15 @@ npm run import:shamela -- --concurrency 4
 
 ```bash
 cd mobile
-# EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY
+cp .env.example .env   # fill EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY
 npm install
 npx expo start
+```
+
+Seed every portal / duty-role demo account plus sample fees, timetable, results, LMS and hostel data (service role only; no DIRECT_URL needed):
+
+```bash
+npm run setup:production-demo
 ```
 
 ## 5. Smoke checklist

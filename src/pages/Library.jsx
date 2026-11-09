@@ -92,8 +92,10 @@ export default function Library() {
         />
       </Helmet>
 
-      {/* 1. Compact Ink-Green Header with Khatam Pattern */}
+      {/* 1. Compact Ink-Green Header with campus crop */}
       <section className="relative w-full bg-ink-green-900 text-paper-white py-14 overflow-hidden border-b border-sand-border/20">
+        <img src="/images/campus/building.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-25" />
+        <div className="absolute inset-0 bg-ink-green-900/85" aria-hidden="true" />
         <KhatamPattern className="opacity-[0.05]" strokeColor="#FBF8F0" id="library-header-khatam" />
         
         <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">

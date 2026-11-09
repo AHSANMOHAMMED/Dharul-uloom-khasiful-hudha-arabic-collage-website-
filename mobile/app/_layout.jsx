@@ -70,6 +70,7 @@ function RootStack() {
         <Stack.Screen name="parent" options={{ headerShown: false }} />
         <Stack.Screen name="staff" options={{ headerShown: false }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
+        <Stack.Screen name="platform" options={{ title: t('role.super_admin') }} />
         <Stack.Screen name="payment-success" options={{ title: t('payment.successTitle') }} />
         <Stack.Screen name="payment-cancel" options={{ title: t('payment.cancelTitle') }} />
         <Stack.Screen name="notifications" options={{ title: t('notif.title') }} />

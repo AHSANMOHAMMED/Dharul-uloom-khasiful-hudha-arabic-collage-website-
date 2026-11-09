@@ -1,9 +1,14 @@
+import Constants from 'expo-constants';
 import { createClient } from '@supabase/supabase-js';
 import { storage } from './storage';
 
-export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
-export const WEB_URL = (process.env.EXPO_PUBLIC_WEB_URL || 'https://kashifulhudha.lk').replace(/\/$/, '');
+const extra = Constants.expoConfig?.extra || Constants.manifest?.extra || {};
+
+export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || extra.supabaseUrl || '';
+export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || extra.supabaseAnonKey || '';
+export const WEB_URL = (
+  process.env.EXPO_PUBLIC_WEB_URL || extra.webUrl || 'https://kashifulhudha.lk'
+).replace(/\/$/, '');
 
 export const isConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 

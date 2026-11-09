@@ -109,6 +109,8 @@ export default function Curriculum() {
       
       {/* 1. Header & Breadcrumb */}
       <section className="relative w-full bg-ink-green-900 text-paper-white py-16 overflow-hidden border-b border-sand-border/20">
+        <img src="/images/campus/building.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-30" />
+        <div className="absolute inset-0 bg-ink-green-900/85" aria-hidden="true" />
         <KhatamPattern className="opacity-[0.04]" strokeColor="#FBF8F0" id="curriculum-khatam" />
         <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           

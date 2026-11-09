@@ -19,6 +19,8 @@ mobile/node_modules/
 # Production
 /build
 /dist
+/releases/
+/reports/
 
 # Misc
 .DS_Store
@@ -66,3 +68,4 @@ scripts/shamela/*.json
 .env.*
 !.env.example
 !backend/.env.example
+!mobile/.env.example

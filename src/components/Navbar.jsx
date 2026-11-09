@@ -12,7 +12,7 @@ export default function Navbar() {
   const [mobileExploreOpen, setMobileExploreOpen] = useState(false)
   const { t } = useTranslation()
   const location = useLocation()
-  const { isAuthenticated, isAdmin, isLibrarian, isEmployee, logout } = useAuth()
+  const { isAuthenticated, isAdmin, isSuperAdmin, isLibrarian, isEmployee, logout } = useAuth()
   const canManageLibrary = isAdmin || isLibrarian
 
   // A section is active on its own page and on any detail page beneath it (/news/:id, /library/:id).
@@ -36,66 +36,35 @@ export default function Navbar() {
   }, [isOpen])
 
   return (
-    <header className="sticky top-0 z-50 bg-paper-white/95 backdrop-blur-md border-b border-sand-border shadow-[0_2px_12px_rgba(11,59,46,0.04)]">
-      {/* Top Institutional Utility Ribbon */}
-      <div className="hidden lg:block bg-ink-green-950 text-sand-wash/90 text-xs border-b border-white/10 py-1.5">
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-sand-wash/85 font-serif">
-              <span className="material-symbols-outlined text-[14px] text-brass-gold-400">verified</span>
-              <span>{tx('دار العلوم كاشف الهدى العربية · مدلايبلي، سريلانكا · تأسست عام ١٩٩٦م', 'D.U. Kashiful Hudha Arabic College · Mudalaippali, Sri Lanka · Est. 1996')}</span>
-            </span>
-            <span className="text-sand-wash/30">|</span>
-            <span className="flex items-center gap-1 text-sand-wash/80" dir="ltr">
-              <span className="material-symbols-outlined text-[14px] text-brass-gold-400">call</span>
-              <span>032-5612355</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-4 text-[11px] font-medium">
-            <Link to="/library" className="hover:text-brass-gold-300 transition-colors flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">local_library</span>
-              <span>{tx('المكتبة الرقمية', 'Digital Maktabah')}</span>
-            </Link>
-            <span className="text-sand-wash/30">·</span>
-            <Link to="/admissions" className="text-brass-gold-400 hover:text-brass-gold-300 font-semibold transition-colors flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">school</span>
-              <span>{tx('باب القبول مفتوح ٢٠٢٦', 'Admissions 2026 Open')}</span>
-            </Link>
-            <span className="text-sand-wash/30">·</span>
-            <a href="mailto:info@kashifulhudha.edu.lk" className="hover:text-sand-wash transition-colors text-sand-wash/70" dir="ltr">
-              {tx('info@kashifulhudha.edu.lk', 'info@kashifulhudha.edu.lk')}
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-50 bg-[#fffefa]/95 backdrop-blur-md border-b border-[#e5dfd3] shadow-[0_2px_12px_rgba(14,42,30,0.05)]">
+      {/* Single-line sticky bar — no utility ribbon */}
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 min-h-[4.25rem] flex items-center justify-between gap-2 sm:gap-3">
         
         {/* Brand Logo & Name */}
-        <Link to="/" className="flex items-center gap-3 shrink-0 group">
+        <Link to="/" className="flex items-center gap-2.5 shrink-0 group py-1 min-w-0">
           <img 
-            src="/images/logo.svg" 
+            src="/images/logo.png" 
             alt={tx('شعار دار العلوم كاشف الهدى', 'D.U. Kashiful Hudha Arabic College Emblem')}
-            className="w-10 h-10 object-contain rounded-lg border border-sand-border shadow-xs group-hover:border-emerald-700 transition-colors"
+            className="w-10 h-10 sm:w-11 sm:h-11 object-contain rounded-full border border-sand-border shadow-xs group-hover:border-emerald-700 transition-colors bg-white shrink-0"
           />
-          <div className="hidden min-[380px]:flex max-w-[200px] flex-col">
-            <span className="font-serif text-base sm:text-lg font-semibold text-ink-green-900 leading-tight tracking-tight">
-              {tx('دار العلوم كاشف الهدى', 'Dharul Uloom Kashiful Hudha')}
+          <div className="flex flex-col min-w-0">
+            <span className="font-serif text-sm sm:text-base lg:text-lg font-bold text-ink-green-900 leading-tight tracking-tight truncate">
+              {tx('كاشف الهدى', 'Kashiful Hudha')}
             </span>
-            <span className="text-xs text-ink-text-muted leading-none hidden sm:inline font-arabic" dir="rtl">
-              كاشف الهدى العربية
+            <span className="hidden sm:block text-[10px] lg:text-xs text-ink-text-muted leading-tight font-sans tracking-wide truncate">
+              {tx('الكلية العربية · كالبيتيا', 'Arabic College · Kalpitiya')}
             </span>
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden xl:flex items-center gap-3" aria-label={tx('التنقل الرئيسي', 'Main navigation')}>
+        {/* Desktop Navigation Links (Visible on Laptops & Desktops) */}
+        <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5" aria-label={tx('التنقل الرئيسي', 'Main navigation')}>
           <Link
             to="/"
-            className={`text-sm transition-colors ${
+            className={`px-3 py-2 rounded-lg text-sm transition-all ${
               location.pathname === '/' 
-                ? 'text-emerald-700 font-semibold' 
-                : 'text-ink-text-secondary hover:text-ink-green-900 font-medium'
+                ? 'text-emerald-700 font-semibold bg-[#eaf1e9]' 
+                : 'text-ink-text-secondary hover:text-ink-green-900 hover:bg-[#f4f2ec] font-medium'
             }`}
           >
             {t('nav.home')}
@@ -103,10 +72,10 @@ export default function Navbar() {
 
           <Link
             to="/about"
-            className={`text-sm transition-colors ${
+            className={`px-3 py-2 rounded-lg text-sm transition-all ${
               isActive('/about') 
-                ? 'text-emerald-700 font-semibold' 
-                : 'text-ink-text-secondary hover:text-ink-green-900 font-medium'
+                ? 'text-emerald-700 font-semibold bg-[#eaf1e9]' 
+                : 'text-ink-text-secondary hover:text-ink-green-900 hover:bg-[#f4f2ec] font-medium'
             }`}
           >
             {t('nav.about')}
@@ -117,17 +86,17 @@ export default function Navbar() {
             <button
               type="button"
               aria-haspopup="true"
-              className={`flex items-center gap-1 text-sm font-medium transition-colors ${
-                academicsActive ? 'text-emerald-700 font-semibold' : 'text-ink-text-secondary hover:text-ink-green-900'
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                academicsActive ? 'text-emerald-700 font-semibold bg-[#eaf1e9]' : 'text-ink-text-secondary hover:text-ink-green-900 hover:bg-[#f4f2ec]'
               }`}
             >
               <span>{t('nav.academics')}</span>
               <span className="material-symbols-outlined text-[18px] transition-transform group-hover:rotate-180">{'expand_more'}</span>
             </button>
-            <div className="absolute start-0 top-full mt-1 w-48 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-all">
+            <div className="absolute start-0 top-full mt-1 w-52 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-all">
               <Link
                 to="/courses"
-                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                className={`block px-4 py-2.5 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
                   isActive('/courses') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
@@ -135,7 +104,7 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/curriculum"
-                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                className={`block px-4 py-2.5 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
                   isActive('/curriculum') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
@@ -143,7 +112,7 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/faculty"
-                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                className={`block px-4 py-2.5 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
                   isActive('/faculty') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
@@ -157,17 +126,17 @@ export default function Navbar() {
             <button
               type="button"
               aria-haspopup="true"
-              className={`flex items-center gap-1 text-sm font-medium transition-colors ${
-                exploreActive ? 'text-emerald-700 font-semibold' : 'text-ink-text-secondary hover:text-ink-green-900'
+              className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                exploreActive ? 'text-emerald-700 font-semibold bg-[#eaf1e9]' : 'text-ink-text-secondary hover:text-ink-green-900 hover:bg-[#f4f2ec]'
               }`}
             >
               <span>{t('nav.explore')}</span>
               <span className="material-symbols-outlined text-[18px] transition-transform group-hover:rotate-180">{'expand_more'}</span>
             </button>
-            <div className="absolute start-0 top-full mt-1 w-48 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-all">
+            <div className="absolute start-0 top-full mt-1 w-52 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-all">
               <Link
                 to="/library"
-                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                className={`block px-4 py-2.5 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
                   isActive('/library') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
@@ -175,7 +144,7 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/gallery"
-                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                className={`block px-4 py-2.5 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
                   isActive('/gallery') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
@@ -183,7 +152,7 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/news"
-                className={`block px-4 py-2 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
+                className={`block px-4 py-2.5 text-sm transition-colors hover:bg-mint-wash-100 hover:text-emerald-700 ${
                   isActive('/news') ? 'text-emerald-700 bg-mint-wash-100/60 font-semibold' : 'text-ink-text-primary'
                 }`}
               >
@@ -194,10 +163,10 @@ export default function Navbar() {
 
           <Link
             to="/admissions"
-            className={`text-sm transition-colors ${
+            className={`px-3 py-2 rounded-lg text-sm transition-all ${
               isActive('/admissions') 
-                ? 'text-emerald-700 font-semibold' 
-                : 'text-ink-text-secondary hover:text-ink-green-900 font-medium'
+                ? 'text-emerald-700 font-semibold bg-[#eaf1e9]' 
+                : 'text-ink-text-secondary hover:text-ink-green-900 hover:bg-[#f4f2ec] font-medium'
             }`}
           >
             {t('nav.admissions')}
@@ -205,10 +174,10 @@ export default function Navbar() {
 
           <Link
             to="/contact"
-            className={`text-sm transition-colors ${
+            className={`px-3 py-2 rounded-lg text-sm transition-all ${
               isActive('/contact') 
-                ? 'text-emerald-700 font-semibold' 
-                : 'text-ink-text-secondary hover:text-ink-green-900 font-medium'
+                ? 'text-emerald-700 font-semibold bg-[#eaf1e9]' 
+                : 'text-ink-text-secondary hover:text-ink-green-900 hover:bg-[#f4f2ec] font-medium'
             }`}
           >
             {t('nav.contact')}
@@ -217,10 +186,10 @@ export default function Navbar() {
           {isEmployee && (
             <Link
               to="/erp"
-              className={`text-sm transition-colors font-semibold ${
+              className={`px-3 py-2 rounded-lg text-sm transition-all font-semibold ${
                 isActive('/erp')
-                  ? 'text-brass-gold-500 font-bold'
-                  : 'text-emerald-700 hover:text-ink-green-900'
+                  ? 'text-brass-gold-500 font-bold bg-gold-wash-100/60'
+                  : 'text-emerald-700 hover:text-ink-green-900 hover:bg-mint-wash-100'
               }`}
             >
               {tx('نظام الإدارة (ERP)', 'College ERP')}
@@ -232,13 +201,13 @@ export default function Navbar() {
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           
           {/* Trilingual Language Selector */}
-          <div className="hidden sm:block">
-            <LanguageSelect className="text-xs bg-paper-white border border-sand-border text-ink-green-900 py-1 px-2 rounded-lg" />
+          <div className="flex items-center">
+            <LanguageSelect className="text-xs bg-paper-white border border-sand-border text-ink-green-900 py-1.5 px-2.5 rounded-lg shadow-2xs hover:border-emerald-700 transition-colors" />
           </div>
 
           {/* Authenticated State vs Public CTA */}
           {isAuthenticated ? (
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-2.5">
               <Link
                 to="/messages"
                 aria-label={tx('الرسائل', 'Messages')}
@@ -246,22 +215,30 @@ export default function Navbar() {
                 className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-sand-border px-2.5 text-xs font-semibold text-ink-green-900 hover:bg-mint-wash-100"
               >
                 <span className="material-symbols-outlined text-[18px]">forum</span>
-                <span className="hidden sm:inline">{tx('الرسائل', 'Messages')}</span>
+                <span className="hidden xl:inline">{tx('الرسائل', 'Messages')}</span>
               </Link>
               <NotificationBell />
 
-              {isAdmin ? (
+              {isSuperAdmin ? (
                 <Link
-                  to="/admin"
-                  className="hidden sm:inline-flex items-center h-9 px-3.5 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
+                  to="/platform"
+                  className="hidden sm:inline-flex items-center h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
                 >
                   <span className="material-symbols-outlined text-[16px] mr-1.5">{'admin_panel_settings'}</span>
-                  <span>{tx('لوحة الإدارة', 'Admin Console')}</span>
+                  <span>{tx('المدير العام', 'Super Admin')}</span>
+                </Link>
+              ) : isAdmin ? (
+                <Link
+                  to="/admin"
+                  className="hidden sm:inline-flex items-center h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[16px] mr-1.5">{'admin_panel_settings'}</span>
+                  <span>{tx('لوحة الإدارة', 'Admin')}</span>
                 </Link>
               ) : (
                 <Link
                   to="/dashboard"
-                  className="hidden sm:inline-flex items-center h-9 px-3.5 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
+                  className="hidden sm:inline-flex items-center h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
                 >
                   <span className="material-symbols-outlined text-[16px] mr-1.5">{'dashboard'}</span>
                   <span>{tx('البوابة', 'My Portal')}</span>
@@ -271,7 +248,7 @@ export default function Navbar() {
               {isEmployee && (
                 <Link
                   to="/erp"
-                  className="hidden lg:inline-flex items-center h-9 px-3 rounded-[10px] bg-sand-border/30 text-ink-green-900 text-xs font-semibold border border-sand-border hover:bg-mint-wash-100 transition-colors"
+                  className="hidden xl:inline-flex items-center h-9 px-3 rounded-[10px] bg-sand-border/30 text-ink-green-900 text-xs font-semibold border border-sand-border hover:bg-mint-wash-100 transition-colors"
                 >
                   <span>{tx('نظام الإدارة', 'ERP')}</span>
                 </Link>
@@ -280,7 +257,7 @@ export default function Navbar() {
               {canManageLibrary && (
                 <Link
                   to="/library-admin"
-                  className="hidden md:inline-flex items-center h-9 px-3 rounded-[10px] bg-gold-wash-100 text-brass-gold-500 text-xs font-semibold border border-brass-gold-500/20 hover:bg-brass-gold-500 hover:text-white transition-colors"
+                  className="hidden xl:inline-flex items-center h-9 px-3 rounded-[10px] bg-gold-wash-100 text-brass-gold-500 text-xs font-semibold border border-brass-gold-500/20 hover:bg-brass-gold-500 hover:text-white transition-colors"
                 >
                   <span>{tx('إدارة المكتبة', 'Maktabah')}</span>
                 </Link>
@@ -296,19 +273,20 @@ export default function Navbar() {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-2.5">
               <Link
                 to="/login"
-                className="hidden md:inline-flex items-center h-9 px-3 rounded-[10px] text-xs font-medium text-ink-text-secondary hover:text-ink-green-900 hover:bg-sand-border/30 transition-colors"
+                className="hidden sm:inline-flex items-center h-9 px-3 rounded-lg text-xs font-semibold text-ink-text-secondary hover:text-ink-green-900 hover:bg-sand-border/30 transition-colors"
               >
                 <span>{tx('دخول', 'Sign in')}</span>
               </Link>
 
               <Link
                 to="/admissions"
-                className="hidden md:inline-flex items-center justify-center h-9 px-3.5 sm:px-4 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 active:bg-ink-green-900 text-white text-xs font-medium shadow-xs transition-colors"
+                className="inline-flex items-center justify-center gap-1.5 h-9 sm:h-10 px-3.5 sm:px-4 rounded-lg bg-[#e77835] hover:bg-[#ce6327] text-white text-xs font-semibold shadow-xs transition-colors"
               >
-                <span>{tx('التقديم للقبول', 'Apply')}</span>
+                <span className="material-symbols-outlined text-[16px] hidden min-[400px]:inline">edit_document</span>
+                <span>{tx('التقديم للقبول', 'Apply for Admission')}</span>
               </Link>
             </div>
           )}
@@ -318,7 +296,7 @@ export default function Navbar() {
             type="button"
             onClick={() => setIsOpen(!isOpen)}
             aria-expanded={isOpen}
-            className="xl:hidden inline-flex items-center justify-center w-9 h-9 rounded-[10px] border border-sand-border text-ink-text-primary hover:bg-sand-border/30 focus:outline-none"
+            className="lg:hidden inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-sand-border text-ink-text-primary hover:bg-sand-border/30 focus:outline-none transition-colors"
             aria-label={tx('فتح/إغلاق القائمة', 'Toggle navigation menu')}
           >
             <span className="material-symbols-outlined text-[22px]">
@@ -330,7 +308,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer Navigation */}
       {isOpen && (
-        <div className="xl:hidden bg-paper-white border-b border-sand-border px-4 pt-3 pb-6 space-y-2 shadow-manuscript-lg">
+        <div className="lg:hidden bg-paper-white border-b border-sand-border px-4 pt-3 pb-6 space-y-2 shadow-manuscript-lg">
           <Link
             to="/"
             onClick={() => setIsOpen(false)}
@@ -468,7 +446,7 @@ export default function Navbar() {
             {isAuthenticated ? (
               <>
                 <Link
-                  to={isAdmin ? "/admin" : "/dashboard"}
+                  to={isSuperAdmin ? "/platform" : isAdmin ? "/admin" : "/dashboard"}
                   onClick={() => setIsOpen(false)}
                   className="flex items-center justify-center h-10 rounded-[10px] bg-emerald-700 text-white font-medium text-sm"
                 >
@@ -517,7 +495,7 @@ export default function Navbar() {
                 <Link
                   to="/admissions"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center h-10 rounded-[10px] bg-emerald-700 text-white font-medium text-sm"
+                  className="flex items-center justify-center h-10 rounded-[10px] bg-[#e77835] hover:bg-[#ce6327] text-white font-medium text-sm"
                 >
                   {tx('التقديم للقبول', 'Apply for Admission')}
                 </Link>

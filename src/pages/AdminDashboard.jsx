@@ -25,7 +25,7 @@ const ADMIN_TABS = ['admissions', 'crm', 'hrm', 'imports', 'org', 'approvals', '
 const COLORS = ['#11694A', '#C29A3A', '#0F7C86', '#B91C1C'];
 
 const AdminDashboard = () => {
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, isAdmin, isSuperAdmin, loading: authLoading } = useAuth();
   useTranslation();
   const navigate = useNavigate();
   
@@ -67,12 +67,17 @@ const AdminDashboard = () => {
       navigate('/login', { replace: true, state: { from: '/admin' } });
       return;
     }
+    // Platform operators use the separate Super Admin console — not the college admin desk.
+    if (isSuperAdmin) {
+      navigate('/platform', { replace: true });
+      return;
+    }
     if (!isAdmin) {
       navigate('/dashboard', { replace: true });
       return;
     }
     fetchData();
-  }, [authLoading, isAdmin, user, navigate]);
+  }, [authLoading, isAdmin, isSuperAdmin, user, navigate]);
 
   const fetchData = async () => {
     try {

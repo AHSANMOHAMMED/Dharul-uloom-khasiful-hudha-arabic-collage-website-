@@ -1,9 +1,11 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useFeatures } from '../../context/FeatureFlagsContext';
 import { Loading, useLang } from '../../components/erp/ui';
 import KhatamPattern from '../../components/KhatamPattern';
 import { fetchActingOrg, setActingOrg } from '../../lib/erp/governanceApi';
+import { ERP_MODULE_FEATURES } from '../../lib/platformApi';
 
 /**
  * ERP workspace shell: Modern Manuscript design system.
@@ -88,9 +90,7 @@ const MODULES = [
   { id: 'audit', label: (t) => t('Audit Log', 'سجل التدقيق'), icon: 'history_edu', group: 'admin',
     show: (a) => a.isAdmin || a.isAccountant,
     load: () => import('../../components/erp/finance/AuditLogPanel') },
-  { id: 'platform', label: (t) => t('SaaS Platform', 'المنصة'), icon: 'public', group: 'admin',
-    show: (a) => a.isSuperAdmin,
-    load: () => import('../../components/erp/campus/PlatformPanel') },
+  // SaaS / feature control lives on /platform (separate Super Admin console).
 ];
 
 const GROUPS = {
@@ -149,11 +149,21 @@ function ActingOrgBanner({ userId }) {
 
 export default function ErpWorkspace() {
   const auth = useAuth();
+  const { enabled, loading: featuresLoading } = useFeatures();
   const { t, lang } = useLang();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
 
-  const visible = useMemo(() => MODULES.filter((m) => m.show(auth)), [auth]);
+  const visible = useMemo(() => {
+    const erpMasterOn = enabled('erp');
+    return MODULES.filter((m) => {
+      if (!m.show(auth)) return false;
+      if (!erpMasterOn) return false;
+      const featureKey = ERP_MODULE_FEATURES[m.id];
+      if (!featureKey) return true;
+      return enabled(featureKey);
+    });
+  }, [auth, enabled]);
   const activeId = params.get('module');
   const active = visible.find((m) => m.id === activeId) || visible[0];
 
@@ -164,7 +174,7 @@ export default function ErpWorkspace() {
     }
   }, [auth.loading, auth.isAuthenticated, navigate]);
 
-  if (auth.loading || !auth.isAuthenticated) {
+  if (auth.loading || featuresLoading || !auth.isAuthenticated) {
     return (
       <div className="min-h-screen bg-parchment-50 flex items-center justify-center">
         <Loading />
@@ -177,10 +187,12 @@ export default function ErpWorkspace() {
       <div className="min-h-screen bg-parchment-50 flex items-center justify-center px-4">
         <div className="rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript-md p-8 text-center max-w-md space-y-4">
           <p className="text-ink-text-secondary text-sm">
-            {t('The ERP workspace is available to approved staff accounts.', 'مساحة الإدارة متاحة لحسابات الموظفين المعتمدة.')}
+            {auth.isSuperAdmin
+              ? t('No ERP modules are enabled. Open the Super Admin console to turn features on.', 'لا توجد وحدات مفعّلة. افتح لوحة المدير العام لتفعيل الميزات.')
+              : t('The ERP workspace is available to approved staff accounts.', 'مساحة الإدارة متاحة لحسابات الموظفين المعتمدة.')}
           </p>
-          <Link to="/dashboard" className="text-emerald-700 font-semibold underline text-sm">
-            {t('Go to my portal', 'الذهاب إلى بوابتي')}
+          <Link to={auth.isSuperAdmin ? '/platform' : '/dashboard'} className="text-emerald-700 font-semibold underline text-sm">
+            {auth.isSuperAdmin ? t('Super Admin console', 'لوحة المدير العام') : t('Go to my portal', 'الذهاب إلى بوابتي')}
           </Link>
         </div>
       </div>
@@ -219,7 +231,11 @@ export default function ErpWorkspace() {
                         type="button"
                         aria-current={isSelected ? 'page' : undefined}
                         onClick={() => {
-                          setParams({ module: m.id });
+                          // Preserve deep-link filters only when staying on the same module family.
+                          const next = { module: m.id };
+                          if (m.id === 'tasks' && params.get('meeting')) next.meeting = params.get('meeting');
+                          if (m.id === 'tasks' && params.get('scope')) next.scope = params.get('scope');
+                          setParams(next);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                         className={`flex items-center gap-2.5 whitespace-nowrap rounded-[10px] px-3 py-2 text-xs text-start transition font-medium ${

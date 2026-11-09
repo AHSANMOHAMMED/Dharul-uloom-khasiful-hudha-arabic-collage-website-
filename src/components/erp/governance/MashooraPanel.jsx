@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AsyncView, Badge, Button, Card, Field, Input, PageHeader, Select, Table, Textarea, useAsync, useLang } from '../ui';
 import { FilterBar } from '../finance/shared';
 import { WideModal } from '../campus/common';
@@ -8,8 +9,10 @@ import {
   MEETING_TYPES,
   TASK_PRIORITIES,
   TASK_STATUS_LABELS,
+  activeHoldersByDuty,
   createMeetingTasks,
   dutyName,
+  holderIdForDuty,
   listAcademicYears,
   listAssignments,
   listDutyRoles,
@@ -121,9 +124,25 @@ function MeetingTasksModal({ meeting, onClose, onSaved }) {
   const { t, lang } = useLang();
   const staff = useStaff();
   const [duties] = useAsync(() => listDutyRoles({ activeOnly: true }), []);
+  const [holders] = useAsync(() => activeHoldersByDuty(), []);
   const [rows, setRows] = useState([{ ...EMPTY_TASK }]);
   const [busy, setBusy] = useState(false);
-  const setRow = (i, patch) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  const holdersMap = holders.data || {};
+
+  const setRow = (i, patch) => {
+    setRows((rs) =>
+      rs.map((r, j) => {
+        if (j !== i) return r;
+        const next = { ...r, ...patch };
+        // Choosing a duty auto-fills the current staff holder (lead preferred).
+        if (Object.prototype.hasOwnProperty.call(patch, 'duty_role_id')) {
+          const holder = holderIdForDuty(holdersMap, patch.duty_role_id);
+          if (holder) next.assignee_id = holder;
+        }
+        return next;
+      }),
+    );
+  };
   const valid = rows.filter((r) => r.title.trim());
 
   const save = async () => {
@@ -155,36 +174,51 @@ function MeetingTasksModal({ meeting, onClose, onSaved }) {
         </>
       }
     >
+      <p className="text-xs text-gray-400 mb-3">
+        {t(
+          'Pick a duty to assign the task to the staff member who currently holds it. You can still override the assignee.',
+          'اختر مسؤولية لإسناد المهمة للموظف الذي يحملها حالياً. يمكنك تغيير المكلف يدوياً.',
+        )}
+      </p>
       <div className="space-y-3">
-        {rows.map((r, i) => (
-          <div key={i} className="rounded-xl border border-gray-800 p-3 grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
-            <div className="md:col-span-2">
-              <Field label={t('Task', 'المهمة')}>
-                <Input value={r.title} onChange={(e) => setRow(i, { title: e.target.value })} />
+        {rows.map((r, i) => {
+          const holder = holderIdForDuty(holdersMap, r.duty_role_id);
+          const holderName = holder ? staff.options.find((o) => o.value === holder)?.label : null;
+          return (
+            <div key={i} className="rounded-xl border border-gray-800 p-3 grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
+              <div className="md:col-span-2">
+                <Field label={t('Task', 'المهمة')}>
+                  <Input value={r.title} onChange={(e) => setRow(i, { title: e.target.value })} />
+                </Field>
+              </div>
+              <Field label={t('Duty', 'المسؤولية')} hint={holderName ? `${t('Holder', 'الحامل')}: ${holderName}` : undefined}>
+                <Select
+                  value={r.duty_role_id}
+                  onChange={(e) => setRow(i, { duty_role_id: e.target.value })}
+                  placeholder={t('— None —', '— لا شيء —')}
+                  options={(duties.data || []).map((d) => ({ value: d.id, label: dutyName(d, lang) }))}
+                />
               </Field>
+              <Field label={t('Assignee', 'المكلف')}>
+                <Select value={r.assignee_id} onChange={(e) => setRow(i, { assignee_id: e.target.value })} placeholder={t('— None —', '— لا شيء —')} options={staff.options} />
+              </Field>
+              <Field label={t('Due date', 'تاريخ الاستحقاق')}>
+                <Input type="date" value={r.due_date} onChange={(e) => setRow(i, { due_date: e.target.value })} />
+              </Field>
+              <Field label={t('Priority', 'الأولوية')}>
+                <Select value={r.priority} onChange={(e) => setRow(i, { priority: e.target.value })} options={pairOptions(TASK_PRIORITIES, t)} />
+              </Field>
+              <div className="md:col-span-5">
+                <Input value={r.description} onChange={(e) => setRow(i, { description: e.target.value })} placeholder={t('Details (optional)', 'تفاصيل (اختياري)')} />
+              </div>
+              <div className="flex justify-end">
+                <Button size="sm" variant="ghost" disabled={rows.length === 1} onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}>
+                  {t('Remove', 'إزالة')}
+                </Button>
+              </div>
             </div>
-            <Field label={t('Assignee', 'المكلف')}>
-              <Select value={r.assignee_id} onChange={(e) => setRow(i, { assignee_id: e.target.value })} placeholder={t('— None —', '— لا شيء —')} options={staff.options} />
-            </Field>
-            <Field label={t('Due date', 'تاريخ الاستحقاق')}>
-              <Input type="date" value={r.due_date} onChange={(e) => setRow(i, { due_date: e.target.value })} />
-            </Field>
-            <Field label={t('Priority', 'الأولوية')}>
-              <Select value={r.priority} onChange={(e) => setRow(i, { priority: e.target.value })} options={pairOptions(TASK_PRIORITIES, t)} />
-            </Field>
-            <Field label={t('Duty', 'المسؤولية')}>
-              <Select value={r.duty_role_id} onChange={(e) => setRow(i, { duty_role_id: e.target.value })} placeholder={t('— None —', '— لا شيء —')} options={(duties.data || []).map((d) => ({ value: d.id, label: dutyName(d, lang) }))} />
-            </Field>
-            <div className="md:col-span-5">
-              <Input value={r.description} onChange={(e) => setRow(i, { description: e.target.value })} placeholder={t('Details (optional)', 'تفاصيل (اختياري)')} />
-            </div>
-            <div className="flex justify-end">
-              <Button size="sm" variant="ghost" disabled={rows.length === 1} onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}>
-                {t('Remove', 'إزالة')}
-              </Button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
         <Button size="sm" variant="secondary" onClick={() => setRows((rs) => [...rs, { ...EMPTY_TASK }])}>+ {t('Add row', 'إضافة صف')}</Button>
       </div>
     </WideModal>
@@ -193,6 +227,7 @@ function MeetingTasksModal({ meeting, onClose, onSaved }) {
 
 function MeetingDetail({ meeting, isGov, onClose, onEdit, onChanged }) {
   const { t } = useLang();
+  const [, setParams] = useSearchParams();
   const [modal, setModal] = useState(null);
   const [state, reload] = useAsync(async () => {
     const [assignments, tasks] = await Promise.all([listAssignments({ status: null, meetingId: meeting.id }), listTasks({ meetingId: meeting.id })]);
@@ -200,6 +235,11 @@ function MeetingDetail({ meeting, isGov, onClose, onEdit, onChanged }) {
     return { assignments, tasks, people };
   }, [meeting.id]);
   const finalized = meeting.status === 'finalized';
+
+  const openOnBoard = () => {
+    setParams({ module: 'tasks', meeting: meeting.id, scope: 'all' });
+    onClose();
+  };
 
   const setStatus = async (status) => {
     if (status === 'finalized' && !window.confirm(t('Finalize these minutes? They become read-only until reopened.', 'اعتماد هذا المحضر؟ يصبح للقراءة فقط حتى إعادة فتحه.'))) return;
@@ -221,18 +261,21 @@ function MeetingDetail({ meeting, isGov, onClose, onEdit, onChanged }) {
       title={meeting.title}
       onClose={onClose}
       footer={
-        isGov && (
-          <>
-            {!finalized && <Button variant="secondary" onClick={onEdit}>{t('Edit', 'تعديل')}</Button>}
-            <Button variant="secondary" onClick={() => setModal('duty')}>{t('Assign duties', 'إسناد مسؤوليات')}</Button>
-            <Button variant="secondary" onClick={() => setModal('tasks')}>{t('Assign tasks', 'إسناد مهام')}</Button>
-            {finalized ? (
-              <Button variant="ghost" onClick={() => setStatus('draft')}>{t('Reopen', 'إعادة فتح')}</Button>
-            ) : (
-              <Button onClick={() => setStatus('finalized')}>{t('Finalize', 'اعتماد')}</Button>
-            )}
-          </>
-        )
+        <>
+          <Button variant="secondary" onClick={openOnBoard}>{t('Open on task board', 'فتح في لوحة المهام')}</Button>
+          {isGov && (
+            <>
+              {!finalized && <Button variant="secondary" onClick={onEdit}>{t('Edit', 'تعديل')}</Button>}
+              <Button variant="secondary" onClick={() => setModal('duty')}>{t('Assign duties', 'إسناد مسؤوليات')}</Button>
+              <Button variant="secondary" onClick={() => setModal('tasks')}>{t('Assign tasks', 'إسناد مهام')}</Button>
+              {finalized ? (
+                <Button variant="ghost" onClick={() => setStatus('draft')}>{t('Reopen', 'إعادة فتح')}</Button>
+              ) : (
+                <Button onClick={() => setStatus('finalized')}>{t('Finalize', 'اعتماد')}</Button>
+              )}
+            </>
+          )}
+        </>
       }
     >
       <AsyncView state={state}>

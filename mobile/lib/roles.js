@@ -56,7 +56,9 @@ export function getCaps(profile) {
 // Which portal a profile lands on.
 export function homeRouteFor(profile) {
   if (!profile) return '/login';
-  if (profile.role === 'admin' || profile.role === 'super_admin') return '/admin';
+  // Platform operator uses a dedicated console (web /platform; mobile lite screen).
+  if (profile.role === 'super_admin') return '/platform';
+  if (profile.role === 'admin') return '/admin';
   const type = profile.account_type;
   if (type === 'student' || type === 'parent' || type === 'tutor' || type === 'staff') {
     if (!profile.is_approved) return '/pending';

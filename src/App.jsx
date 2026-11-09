@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavig
 import { useTranslation } from 'react-i18next'
 import { useEffect, useRef, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { FeatureFlagsProvider } from './context/FeatureFlagsContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import OfflineIndicator from './components/OfflineIndicator'
@@ -18,6 +19,7 @@ import MfaGate from './components/security/MfaGate';
  */
 const DASHBOARD_ROUTES = [
   '/admin',
+  '/platform',
   '/dashboard',
   '/library-admin',
   '/erp',
@@ -31,7 +33,7 @@ const DASHBOARD_ROUTES = [
 ];
 
 /** Routes that require a signed-in user (public receipt/verify links excluded). */
-const PROTECTED_ROUTES = ['/admin', '/dashboard', '/library-admin', '/erp', '/messages', '/account'];
+const PROTECTED_ROUTES = ['/admin', '/platform', '/dashboard', '/library-admin', '/erp', '/messages', '/account'];
 
 function isDashboardPath(pathname) {
   return DASHBOARD_ROUTES.some((r) => pathname === r || pathname.startsWith(r));
@@ -62,6 +64,7 @@ const NotFound = lazy(() => import('./pages/NotFound'))
 
 // Keep public pages and authenticated workspaces out of the initial bundle.
 const ErpWorkspace = lazy(() => import('./pages/erp/ErpWorkspace'))
+const SuperAdminConsole = lazy(() => import('./pages/SuperAdminConsole'))
 const VerifyCertificate = lazy(() => import('./pages/erp/VerifyCertificate'))
 const ReceiptPublic = lazy(() => import('./pages/ReceiptPublic'))
 const AccountSecurity = lazy(() => import('./pages/AccountSecurity'))
@@ -147,45 +150,48 @@ function App() {
 
   return (
     <AuthProvider>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AppShell>
-          <Suspense fallback={<div className="min-h-[50vh]" />}>
-            <Routes>
-              <Route path="/"           element={<Home />} />
-              <Route path="/about"      element={<About />} />
-              <Route path="/courses"    element={<Courses />} />
-              <Route path="/admissions" element={<Admissions />} />
-              <Route path="/faculty"    element={<Faculty />} />
-              <Route path="/gallery"    element={<Gallery />} />
-              <Route path="/news"       element={<News />} />
-              <Route path="/contact"    element={<Contact />} />
-              <Route path="/login"            element={<Login />} />
-              <Route path="/register"         element={<Register />} />
-              <Route path="/forgot-password"  element={<ForgotPassword />} />
-              <Route path="/reset-password"   element={<ResetPassword />} />
-              <Route path="/news/:id"         element={<NewsDetail />} />
-              <Route path="/dashboard"  element={<UserDashboard />} />
-              <Route path="/admin"      element={<AdminDashboard />} />
-              <Route path="/library-admin" element={<LibrarianDashboard />} />
-              <Route path="/curriculum" element={<Curriculum />} />
-              <Route path="/library"    element={<Library />} />
-              <Route path="/library/:id" element={<BookReaderPage />} />
-              <Route path="/payment/success" element={<PaymentSuccess />} />
-              <Route path="/payment/cancel"  element={<PaymentCancel />} />
-              {/* Fee-reminder notifications (0025) link to /fees; fees live in the portal. */}
-              <Route path="/fees"       element={<Navigate to="/dashboard" replace />} />
-              <Route path="/erp"        element={<ErpWorkspace />} />
-              <Route path="/messages"   element={<Messages />} />
-              <Route path="/account/security" element={<AccountSecurity />} />
-              <Route path="/verify"     element={<VerifyCertificate />} />
-              <Route path="/verify/:code" element={<VerifyCertificate />} />
-              <Route path="/r/:token"   element={<ReceiptPublic />} />
-              <Route path="/receipt/:id" element={<ReceiptPublic />} />
-              <Route path="*"           element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </AppShell>
-      </Router>
+      <FeatureFlagsProvider>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <AppShell>
+            <Suspense fallback={<div className="min-h-[50vh]" />}>
+              <Routes>
+                <Route path="/"           element={<Home />} />
+                <Route path="/about"      element={<About />} />
+                <Route path="/courses"    element={<Courses />} />
+                <Route path="/admissions" element={<Admissions />} />
+                <Route path="/faculty"    element={<Faculty />} />
+                <Route path="/gallery"    element={<Gallery />} />
+                <Route path="/news"       element={<News />} />
+                <Route path="/contact"    element={<Contact />} />
+                <Route path="/login"            element={<Login />} />
+                <Route path="/register"         element={<Register />} />
+                <Route path="/forgot-password"  element={<ForgotPassword />} />
+                <Route path="/reset-password"   element={<ResetPassword />} />
+                <Route path="/news/:id"         element={<NewsDetail />} />
+                <Route path="/dashboard"  element={<UserDashboard />} />
+                <Route path="/admin"      element={<AdminDashboard />} />
+                <Route path="/platform"   element={<SuperAdminConsole />} />
+                <Route path="/library-admin" element={<LibrarianDashboard />} />
+                <Route path="/curriculum" element={<Curriculum />} />
+                <Route path="/library"    element={<Library />} />
+                <Route path="/library/:id" element={<BookReaderPage />} />
+                <Route path="/payment/success" element={<PaymentSuccess />} />
+                <Route path="/payment/cancel"  element={<PaymentCancel />} />
+                {/* Fee-reminder notifications (0025) link to /fees; fees live in the portal. */}
+                <Route path="/fees"       element={<Navigate to="/dashboard" replace />} />
+                <Route path="/erp"        element={<ErpWorkspace />} />
+                <Route path="/messages"   element={<Messages />} />
+                <Route path="/account/security" element={<AccountSecurity />} />
+                <Route path="/verify"     element={<VerifyCertificate />} />
+                <Route path="/verify/:code" element={<VerifyCertificate />} />
+                <Route path="/r/:token"   element={<ReceiptPublic />} />
+                <Route path="/receipt/:id" element={<ReceiptPublic />} />
+                <Route path="*"           element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </AppShell>
+        </Router>
+      </FeatureFlagsProvider>
     </AuthProvider>
   )
 }

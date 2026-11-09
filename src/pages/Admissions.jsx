@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import * as yup from 'yup'
 import { useAuth } from '../context/AuthContext'
+import { useFeatures } from '../context/FeatureFlagsContext'
 import {
   DEFAULT_AGE_LIMITS,
   ageFromDob,
@@ -99,6 +100,7 @@ const labelCls = 'block text-xs font-semibold text-ink-text-primary mb-1.5'
 export default function Admissions() {
   useTranslation() // subscribe: re-render on language change
   const { isAuthenticated } = useAuth()
+  const { enabled, loading: featuresLoading } = useFeatures()
 
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -241,29 +243,49 @@ export default function Admissions() {
     <p className="text-xs text-feedback-danger mt-1" role="alert">{errors[field]}</p>
   )
 
+  if (!featuresLoading && !enabled('admissions_form')) {
+    return (
+      <div className="min-h-screen bg-parchment-50 flex items-center justify-center p-6">
+        <div className="max-w-md w-full rounded-[14px] border border-sand-border bg-paper-white p-8 text-center space-y-3 shadow-manuscript-md">
+          <h1 className="font-serif text-2xl font-semibold text-ink-green-900">
+            {tx('القبول مغلق حالياً', 'Admissions are closed')}
+          </h1>
+          <p className="text-sm text-ink-text-secondary">
+            {tx('عطّل مدير المنصة استقبال طلبات القبول مؤقتاً.', 'The platform operator has temporarily disabled admissions applications.')}
+          </p>
+          <Link to="/" className="inline-flex text-sm font-semibold text-emerald-700 underline">
+            {tx('العودة للرئيسية', 'Back to home')}
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full bg-parchment-50 text-ink-text-primary min-h-screen">
 
-      {/* 1. Slim Header */}
-      <section className="w-full bg-paper-white border-b border-sand-border py-8">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex items-center gap-2 text-xs text-ink-text-muted mb-3" aria-label={tx('مسار التنقل', 'Breadcrumb')}>
-            <Link to="/" className="hover:text-emerald-700 transition-colors">{tx('الرئيسية', 'Home')}</Link>
+      {/* 1. Slim Header with campus brand */}
+      <section className="relative w-full overflow-hidden border-b border-sand-border bg-ink-green-900 py-10 text-paper-white">
+        <img src="/images/campus/gate.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-25" />
+        <div className="absolute inset-0 bg-ink-green-900/80" aria-hidden="true" />
+        <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="mb-3 flex items-center gap-2 text-xs text-white/70" aria-label={tx('مسار التنقل', 'Breadcrumb')}>
+            <Link to="/" className="transition-colors hover:text-white">{tx('الرئيسية', 'Home')}</Link>
             <span>/</span>
-            <span className="text-ink-green-900 font-semibold">{tx('القبول', 'Admissions')}</span>
+            <span className="font-semibold text-[#e77835]">{tx('القبول', 'Admissions')}</span>
           </nav>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <span className="text-xs uppercase font-semibold tracking-wider text-brass-gold-500 block mb-1">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[#e77835]">
                 {fill(tx('دورة القبول {year}', 'Intake Cycle {year}'), { year: intakeYear })}
               </span>
-              <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-ink-green-900">
+              <h1 className="font-serif text-2xl font-semibold tracking-tight text-paper-white sm:text-3xl">
                 {tx('طلب الالتحاق بدار العلوم كاشف الهدى', 'Admission Application Form')}
               </h1>
             </div>
-            <div className="flex items-center gap-2 text-xs text-ink-text-muted">
-              <span className="w-2 h-2 rounded-full bg-emerald-700 animate-pulse"></span>
+            <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-white/90">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[#e77835]" />
               <span>{tx('بوابة القبول مفتوحة', 'Intake Portal Active')}</span>
             </div>
           </div>
