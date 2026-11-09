@@ -6,6 +6,7 @@ import NotificationBell from './NotificationBell';
 import LanguageSelect from './LanguageSelect';
 import KhatamPattern from './KhatamPattern';
 import { tx } from '../lib/tx';
+import PageNavBar from './PageNavBar';
 
 /**
  * DashboardSidebarLayout
@@ -29,10 +30,11 @@ export default function DashboardSidebarLayout({
   roleSwitcher = null,
   quickLinks = [],
   topActions = null,
+  homeItem,
   children,
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, logout, isAdmin, isEmployee, isLibrarian, isParent } = useAuth();
+  const { user, logout, isAdmin, isSuperAdmin, isEmployee, isLibrarian, isParent } = useAuth();
   useTranslation();
   const location = useLocation();
 
@@ -278,14 +280,16 @@ export default function DashboardSidebarLayout({
 
             <NotificationBell />
 
-            <Link
-              to="/messages"
-              className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[#E8E1D0] bg-white text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
-              title={tx('الرسائل', 'Messages')}
-              aria-label={tx('الرسائل', 'Messages')}
-            >
-              <span className="material-symbols-outlined text-[18px] text-[#11694A]">chat</span>
-            </Link>
+            {!isSuperAdmin && (
+              <Link
+                to="/messages"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[#E8E1D0] bg-white text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
+                title={tx('الرسائل', 'Messages')}
+                aria-label={tx('الرسائل', 'Messages')}
+              >
+                <span className="material-symbols-outlined text-[18px] text-[#11694A]">chat</span>
+              </Link>
+            )}
 
             {!isParent && (
               <Link
@@ -311,6 +315,14 @@ export default function DashboardSidebarLayout({
 
         {/* Scrollable Content Workspace */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
+          {(() => {
+            // Back / Forward / Home + "Portal › Section" on every section.
+            const homeId = homeItem || navItems[0]?.id;
+            const goHome = () => onSelect && homeId && onSelect(homeId);
+            const crumbs = [{ label: tx(title_ar, title_en), onClick: goHome }];
+            if (currentNav && currentNav.id !== homeId) crumbs.push({ label: tx(currentNav.label_ar, currentNav.label_en) });
+            return <PageNavBar crumbs={crumbs} home={onSelect && homeId ? { onClick: goHome, label: tx('الرئيسية', 'Overview') } : undefined} />;
+          })()}
           {children}
         </main>
 

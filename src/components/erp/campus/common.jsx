@@ -1,19 +1,15 @@
 import { useMemo, useState } from 'react';
-import { Input, Select, useLang } from '../ui';
+import { DialogHeader, Input, Select, useEscapeToClose, useLang } from '../ui';
 import { classOptions, studentLabel } from '../../../lib/erp/campusApi';
 
 /** Wider modal / drawer for detail views (ui.jsx Modal is max-w-lg). */
 export function WideModal({ open, title, onClose, children, footer }) {
+  useEscapeToClose(open, onClose);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink-green-900/50 backdrop-blur-xs p-4 overflow-y-auto" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink-green-900/50 backdrop-blur-xs p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined}>
       <div className="w-full max-w-4xl my-8 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript-lg p-6 space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <h3 className="text-lg font-serif font-semibold text-ink-green-900">{title}</h3>
-          <button type="button" onClick={onClose} className="text-ink-text-muted hover:text-ink-green-900 flex items-center justify-center" aria-label="Close">
-            <span className="material-symbols-outlined text-[18px]">close</span>
-          </button>
-        </div>
+        <DialogHeader title={title} onClose={onClose} />
         {children}
         {footer && <div className="flex flex-wrap justify-end gap-2 pt-2">{footer}</div>}
       </div>

@@ -106,3 +106,36 @@ The shared ERP UI kit (`src/components/erp/ui.jsx`) uses the light Modern Manusc
 theme. Older modules still contain dark-theme utility classes. A CSS bridge scoped to
 `.erp-theme` in `src/index.css` maps them to readable light colours. Use theme tokens
 in new code; the bridge stops matching a module once its classes are migrated.
+
+## Navigation (all portals)
+
+Every portal section, ERP module and module tab now has its own address:
+`/dashboard?tab=fees`, `/erp?module=fees&fees=invoices`, `/platform?tab=health`.
+
+- The browser's **Back / Forward**, a page refresh and shared links return to the same place.
+- Each page shows a **Back / Forward / Home** bar with a breadcrumb (e.g. *Treasurer portal › Fees*).
+  Home goes to the portal's overview; with no earlier page, Back goes there too.
+- Pop-up records and forms have a **Back** button and close with **Escape**.
+
+## Super Admin console (`/platform`)
+
+The console (0035 control plane) covers institutions, users & roles, feature ACL, communities, the ERP
+and Finance hub, the audit feed and the control log. Added on top (0038 + `platform-user-admin`):
+
+| Where | What it does |
+|---|---|
+| Institutions → **Details** | Name, code, contacts, country/currency, time zone, custom domain, admission ages |
+| Institutions → **Admins** | Invite more admins (sign-up link to copy), see invitation status, revoke |
+| Users & roles → edit user → **Sign-in & security** | Send password reset, reset two-step verification, disable / enable sign-in |
+| **Health** | Message delivery per channel (7 days), stuck queue, recent failures, per-college pending approvals / failed messages / open invitations |
+| **Broadcast** | Notice to college admins, all staff, or everyone, in all colleges or selected ones (replaces the old Messages link — institution chat is per college and the database refuses it for super admins) |
+
+Every action above is written to `audit_logs`, so it appears in **Audit & deletes**. Sections are in the
+URL (`/platform?section=health`), so browser Back / Forward move between them.
+
+0038 also applies the two-step-verification policy to every RLS table that was missing it (the
+communities, feature-ACL and finance tables from 0035/0036).
+
+**Deploy:** `npm run db:apply` (adds 0037–0039) and `npm run deploy:functions`. The function list now
+includes `platform-user-admin`, plus `send-email`, `translate-word` and `payment-checkout`, which were
+previously missing from the deploy script.

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTabParam } from '../lib/useTabParam';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -8,11 +9,14 @@ import TutorLmsPanel from '../components/TutorLmsPanel';
 import { tx } from '../lib/tx';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
 
+const TUTOR_TABS = ['attendance', 'leaves', 'lms', 'salaries'];
+
 const TutorDashboard = () => {
   const { user, isTreasurer } = useAuth();
   useTranslation(); // re-render on language change
   
-  const [activeTab, setActiveTab] = useState('attendance');
+  // Section lives in ?tab= so Back/Forward, refresh and links work.
+  const [activeTab, setActiveTab] = useTabParam(TUTOR_TABS, 'attendance');
   const [jobs, setJobs] = useState([]);
   const [salaries, setSalaries] = useState([]);
   const [students, setStudents] = useState([]);

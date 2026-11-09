@@ -1,14 +1,15 @@
-import { useState } from 'react';
 import { PageHeader, Tabs, useLang } from '../ui';
 import AcctAccounts from './AcctAccounts';
 import AcctJournals from './AcctJournals';
 import AcctLedger from './AcctLedger';
 import AcctReports from './AcctReports';
 import AcctPeriodLock from './AcctPeriodLock';
+import { useUrlState } from '../../../lib/useTabParam';
 
 export default function AccountingPanel() {
   const { t } = useLang();
-  const [tab, setTab] = useState('accounts');
+  // In the URL (?acct=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('acct', 'accounts');
   const tabs = [
     { id: 'accounts', label: t('Chart of accounts', 'دليل الحسابات') },
     { id: 'journals', label: t('Journals', 'القيود') },

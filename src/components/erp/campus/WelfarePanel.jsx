@@ -5,6 +5,7 @@ import { deleteRow, formatDate, insertRow, query, today, updateRow } from '../..
 import { studentLabel } from '../../../lib/erp/campusApi';
 import { StudentPicker, WideModal } from './common';
 import { useAction, useEmployees, useStudents } from './hooks';
+import { useUrlState } from '../../../lib/useTabParam';
 
 const CATEGORIES = ['behaviour', 'attendance', 'uniform', 'academic_dishonesty', 'bullying', 'property', 'other'];
 const SEVERITY_TONE = { minor: 'gray', moderate: 'amber', major: 'red' };
@@ -229,7 +230,8 @@ function WelfareCases({ students }) {
 
 export default function WelfarePanel({ initialTab = 'discipline' }) {
   const { t } = useLang();
-  const [tab, setTab] = useState(initialTab === 'welfare' ? 'welfare' : 'discipline');
+  // In the URL (?welfare=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('welfare', initialTab === 'welfare' ? 'welfare' : 'discipline');
   const [students] = useStudents();
   return (
     <div>

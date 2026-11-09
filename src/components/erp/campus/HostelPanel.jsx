@@ -5,6 +5,7 @@ import { deleteRow, formatDate, formatMoney, insertRow, query, today, updateRow 
 import { studentLabel } from '../../../lib/erp/campusApi';
 import { StudentPicker } from './common';
 import { useAction, useEmployees, useStudents } from './hooks';
+import { useUrlState } from '../../../lib/useTabParam';
 
 function useHostelData() {
   return useAsync(async () => {
@@ -188,7 +189,8 @@ export default function HostelPanel() {
   const { t } = useLang();
   const auth = useAuth();
   const canManage = auth.isHostelStaff;
-  const [tab, setTab] = useState('occupancy');
+  // In the URL (?hostel=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('hostel', 'occupancy');
   const [state, reload] = useHostelData();
   const [students] = useStudents();
   const [busy, run] = useAction();

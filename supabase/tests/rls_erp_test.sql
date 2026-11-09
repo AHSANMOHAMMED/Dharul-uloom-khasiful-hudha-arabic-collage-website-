@@ -894,6 +894,9 @@ select tst.login('00000000-0000-0000-0000-000000000006');
 select tst.succeeds($$insert into public.documents (id, title, kind, body_html) values
   ('0e000000-0000-0000-0000-000000000001', 'Letter to parents', 'letter', '<p>Assalamu alaikum</p>')$$, 'docs: tutor creates a letter');
 select tst.ok((select ref_no like 'DUKH/%' and version = 1 from public.documents where id = '0e000000-0000-0000-0000-000000000001'), 'docs: reference number assigned');
+-- The app inserts with RETURNING (PostgREST select=id); that must pass the read policy too (0037).
+select tst.succeeds($$insert into public.documents (title, kind, body_html) values ('Returning check', 'notice', '<p>x</p>') returning id$$,
+                    'docs: insert … returning works for the creator');
 select tst.fails($$insert into public.documents (title, kind) values ('Sneaky paper', 'exam_paper')$$, 'docs: exam papers cannot be created directly');
 update public.documents set body_html = '<p>Assalamu alaikum, dear parents</p>', owner_id = '00000000-0000-0000-0000-000000000001'
   where id = '0e000000-0000-0000-0000-000000000001';
@@ -1028,6 +1031,58 @@ select tst.ok((select count(*) >= 1 from public.notifications where user_id = '0
               'reminders: creator notified of overdue task');
 select tst.ok((select count(*) >= 1 from public.notifications where user_id = '00000000-0000-0000-0000-000000000003' and title = 'Issued cheque maturing'),
               'reminders: treasurer warned about maturing issued cheque');
+
+-- ---------------------------------------------------------------------------
+-- 17. Library compatibility + class tutors (0035)
+-- ---------------------------------------------------------------------------
+select tst.login('00000000-0000-0000-0000-000000000012'); -- librarian
+select tst.succeeds($$insert into public.books (shamela_id, title_ar, author, categories, cover_url, drive_preview_url, language)
+  values (880001, 'كتاب التجربة', 'الإمام النووي', array['حديث'], 'covers/x.jpg', 'https://drive.google.com/file/d/x/preview', 'ar')$$,
+  'library: librarian saves a book with author/categories/cover');
+select tst.as_anon();
+select tst.ok((select count(*) = 1 and bool_and(author = 'الإمام النووي' and 'حديث' = any (categories) and cover_url = 'covers/x.jpg')
+               from public.search_books('', null, 'حديث', null, 10, 0) where title_ar = 'كتاب التجربة'),
+              'library: search filters by category name and returns author/cover');
+select tst.ok((select count(*) >= 1 from public.search_books('', null, null, 'النووي', 10, 0)), 'library: search filters by author name');
+select tst.ok((select count(*) = 0 from public.search_books('', null, 'no-such-category', null, 10, 0)), 'library: unknown category returns nothing');
+
+select tst.login('00000000-0000-0000-0000-000000000008'); -- student, class 3
+select tst.ok((select count(*) >= 1 from public.my_class_tutors()), 'class tutors: student sees their class tutors');
+select tst.login('00000000-0000-0000-0000-000000000010'); -- parent of student 8
+select tst.ok((select count(*) >= 1 from public.my_class_tutors('00000000-0000-0000-0000-000000000008')), 'class tutors: linked parent sees child''s tutors');
+select tst.login('00000000-0000-0000-0000-000000000011'); -- unlinked parent
+select tst.fails($$select * from public.my_class_tutors('00000000-0000-0000-0000-000000000008')$$, 'class tutors: unlinked parent refused');
+
+-- ---------------------------------------------------------------------------
+-- 18. Platform operator tools (0035 user control + 0038 institutions/health/broadcast)
+-- ---------------------------------------------------------------------------
+select tst.ok((select count(*) = 0 from pg_class c join pg_namespace n on n.oid = c.relnamespace
+               where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity
+                 and not exists (select 1 from pg_policies p where p.schemaname = 'public' and p.tablename = c.relname and p.policyname = 'mfa: enforced')),
+              'mfa: every RLS table carries the two-step-verification policy');
+select tst.login('00000000-0000-0000-0000-000000000001'); -- college admin
+select tst.fails($$select public.platform_update_user('00000000-0000-0000-0000-000000000006', p_assigned_tutor_role => 'treasurer')$$, 'platform: college admin cannot use platform tools');
+select tst.fails($$select public.platform_health()$$, 'platform: college admin cannot read platform health');
+select tst.fails($$select public.platform_broadcast('x', 'y', 'admins')$$, 'platform: college admin cannot broadcast platform-wide');
+select tst.fails($$select public.platform_update_org(public.default_org_id(), '{"name_en":"x"}')$$, 'platform: college admin cannot edit institutions');
+
+select tst.login('00000000-0000-0000-0000-000000000099'); -- super admin
+select tst.succeeds($$select public.platform_update_user('00000000-0000-0000-0000-000000000006', p_assigned_tutor_role => 'exam_officer')$$, 'platform: super admin changes a staff role');
+select tst.ok((select assigned_tutor_role = 'exam_officer' from public.profiles where id = '00000000-0000-0000-0000-000000000006'), 'platform: role change applied');
+select tst.succeeds($$select public.platform_update_org('0b000000-0000-0000-0000-000000000000', '{"contact_phone":"0321234567","timezone":"Asia/Colombo","admission_min_age":5}')$$, 'platform: super admin edits institution details');
+select tst.ok((select contact_phone = '0321234567' and settings ->> 'admission_min_age' = '5' from public.organizations where id = '0b000000-0000-0000-0000-000000000000'), 'platform: institution details saved');
+select tst.fails($$select public.platform_update_org('0b000000-0000-0000-0000-000000000000', '{"slug":"hijack"}')$$, 'platform: non-editable org field rejected');
+select tst.fails($$select public.platform_update_org('0b000000-0000-0000-0000-000000000000', '{"timezone":"Mars/Base"}')$$, 'platform: invalid time zone rejected');
+select tst.succeeds($$select public.platform_invite_admin('0b000000-0000-0000-0000-000000000000', 'second.admin@oc.lk', 'Second Admin')$$, 'platform: invite an institution admin');
+select tst.ok((select count(*) = 1 from public.platform_org_invitations('0b000000-0000-0000-0000-000000000000') where email = 'second.admin@oc.lk' and role = 'admin'), 'platform: invitation listed');
+select tst.fails($$select public.platform_invite_admin('0b000000-0000-0000-0000-000000000000', 'admin@t.lk')$$, 'platform: existing account cannot be re-invited');
+select tst.succeeds($$select public.platform_revoke_invitation((select id from public.platform_org_invitations('0b000000-0000-0000-0000-000000000000') where email = 'second.admin@oc.lk'))$$, 'platform: revoke invitation');
+select tst.ok((select (public.platform_health() -> 'colleges') is not null), 'platform: health report');
+select tst.ok((select public.platform_broadcast('Maintenance', 'Sunday 2am', 'admins') >= 1), 'platform: broadcast to college admins');
+select tst.ok((select count(*) >= 3 from public.platform_audit_feed(null, null, 200)
+               where new_data ->> 'source' in ('platform_update_org', 'invite_admin', 'revoke_invitation', 'platform_broadcast')),
+              'platform: operator actions appear in the audit feed');
+select tst.succeeds($$select public.platform_update_user('00000000-0000-0000-0000-000000000006', p_assigned_tutor_role => 'none')$$, 'platform: restore staff role');
 
 -- ---------------------------------------------------------------------------
 select tst.logout();

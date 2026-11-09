@@ -183,11 +183,11 @@ export default function FinanceHubPanel() {
             <table className="min-w-full text-sm">
               <thead className="text-xs uppercase text-ink-text-muted">
                 <tr>
-                  <th className="py-2 text-start">When</th>
-                  <th className="py-2 text-start">Kind</th>
-                  <th className="py-2 text-start">Month</th>
-                  <th className="py-2 text-start">Status</th>
-                  <th className="py-2 text-start">Summary</th>
+                  <th className="py-2 text-start">{t('When', 'الوقت')}</th>
+                  <th className="py-2 text-start">{t('Kind', 'النوع')}</th>
+                  <th className="py-2 text-start">{t('Month', 'الشهر')}</th>
+                  <th className="py-2 text-start">{t('Status', 'الحالة')}</th>
+                  <th className="py-2 text-start">{t('Summary', 'الملخص')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -218,14 +218,14 @@ export default function FinanceHubPanel() {
       {tab === 'create' && (
         <Card title={t('Create bill / quotation / donation', 'إنشاء فاتورة أو عرض سعر أو تبرع')}>
           <div className="grid sm:grid-cols-2 gap-3">
-            <Field label="Document type">
+            <Field label={t('Document type', 'نوع المستند')}>
               <Select
                 value={form.docType}
                 onChange={(e) => setForm((f) => ({ ...f, docType: e.target.value }))}
                 options={DOC_TYPES}
               />
             </Field>
-            <Field label="Party type">
+            <Field label={t('Party type', 'نوع الطرف')}>
               <Select
                 value={form.partyType}
                 onChange={(e) => setForm((f) => ({ ...f, partyType: e.target.value }))}
@@ -238,13 +238,13 @@ export default function FinanceHubPanel() {
                 ]}
               />
             </Field>
-            <Field label="Party name">
+            <Field label={t('Party name', 'اسم الطرف')}>
               <Input value={form.partyName} onChange={(e) => setForm((f) => ({ ...f, partyName: e.target.value }))} />
             </Field>
-            <Field label="Phone (for WhatsApp / SMS)">
+            <Field label={t('Phone (for WhatsApp / SMS)', 'الهاتف (لواتساب / الرسائل)')}>
               <Input value={form.partyPhone} onChange={(e) => setForm((f) => ({ ...f, partyPhone: e.target.value }))} />
             </Field>
-            <Field label="Letterhead (A4)">
+            <Field label={t('Letterhead (A4)', 'الترويسة (A4)')}>
               <Select
                 value={form.letterheadId}
                 onChange={(e) => setForm((f) => ({ ...f, letterheadId: e.target.value }))}
@@ -371,13 +371,13 @@ export default function FinanceHubPanel() {
                   </button>
                 </li>
               ))}
-              {!docs.length && <li className="py-8 text-center text-xs text-ink-text-muted">No documents yet.</li>}
+              {!docs.length && <li className="py-8 text-center text-xs text-ink-text-muted">{t('No documents yet.', 'لا توجد مستندات بعد.')}</li>}
             </ul>
           </Card>
 
           <Card title={selected ? `${selected.doc_type} detail` : t('Select a document', 'اختر مستنداً')}>
             {!selected ? (
-              <p className="text-sm text-ink-text-muted">Choose a document to issue, amend, share, or convert.</p>
+              <p className="text-sm text-ink-text-muted">{t('Choose a document to issue, amend, share, or convert.', 'اختر مستنداً لإصداره أو تعديله أو مشاركته أو تحويله.')}</p>
             ) : (
               <div className="space-y-3">
                 <div className="rounded-xl border border-sand-border bg-parchment-50 p-3 text-sm">
@@ -387,7 +387,7 @@ export default function FinanceHubPanel() {
                   </p>
                   {selected.public_token && (
                     <p className="mt-2 text-xs break-all">
-                      Link: <a className="text-emerald-700 underline" href={financePublicUrl(selected)} target="_blank" rel="noreferrer">{financePublicUrl(selected)}</a>
+                      {t('Link:', 'الرابط:')} <a className="text-emerald-700 underline" href={financePublicUrl(selected)} target="_blank" rel="noreferrer">{financePublicUrl(selected)}</a>
                     </p>
                   )}
                 </div>
@@ -418,7 +418,7 @@ export default function FinanceHubPanel() {
                         }
                       }}
                     >
-                      Issue
+                      {t('Issue', 'إصدار')}
                     </Button>
                   )}
                   {selected.doc_type === 'quotation' && selected.status !== 'void' && (
@@ -438,7 +438,7 @@ export default function FinanceHubPanel() {
                         }
                       }}
                     >
-                      Convert to bill
+                      {t('Convert to bill', 'تحويل إلى فاتورة')}
                     </Button>
                   )}
                   {selected.status !== 'draft' && (
@@ -449,13 +449,13 @@ export default function FinanceHubPanel() {
                         target="_blank"
                         rel="noreferrer"
                       >
-                        WhatsApp
+                        {t('WhatsApp', 'واتساب')}
                       </a>
                       <a
                         className="rounded-lg border border-sand-border px-3 py-2 text-xs font-semibold"
                         href={smsShareUrl(selected.party_phone, selected)}
                       >
-                        SMS
+                        {t('SMS', 'رسالة نصية')}
                       </a>
                       <Button
                         variant="ghost"
@@ -467,7 +467,7 @@ export default function FinanceHubPanel() {
                           }
                         }}
                       >
-                        Copy link
+                        {t('Copy link', 'نسخ الرابط')}
                       </Button>
                     </>
                   )}
@@ -490,7 +490,7 @@ export default function FinanceHubPanel() {
                         }
                       }}
                     >
-                      Void (reason required)
+                      {t('Void (reason required)', 'إلغاء (السبب مطلوب)')}
                     </Button>
                   )}
                   {auth.isSuperAdmin && selected.status === 'void' && (
@@ -511,13 +511,13 @@ export default function FinanceHubPanel() {
                         }
                       }}
                     >
-                      Hard delete (SA)
+                      {t('Hard delete (SA)', 'حذف نهائي (المدير العام)')}
                     </Button>
                   )}
                 </div>
 
-                <Field label="Amend / void reason">
-                  <Input value={amendReason} onChange={(e) => setAmendReason(e.target.value)} placeholder="Required for amend or void" />
+                <Field label={t('Amend / void reason', 'سبب التعديل / الإلغاء')}>
+                  <Input value={amendReason} onChange={(e) => setAmendReason(e.target.value)} placeholder={t('Required for amend or void', 'مطلوب للتعديل أو الإلغاء')} />
                 </Field>
                 {selected.status !== 'void' && (
                   <Button
@@ -541,12 +541,12 @@ export default function FinanceHubPanel() {
                       }
                     }}
                   >
-                    Amend with reason
+                    {t('Amend with reason', 'تعديل مع ذكر السبب')}
                   </Button>
                 )}
 
                 <p className="text-[11px] text-ink-text-muted">
-                  Quotations print on A4 with the selected letterhead. Public links work without login for issued documents.
+                  {t('Quotations print on A4 with the selected letterhead. Public links work without login for issued documents.', 'تُطبع عروض الأسعار على ورق A4 بالترويسة المختارة. تعمل الروابط العامة دون تسجيل دخول للمستندات المصدرة.')}
                 </p>
               </div>
             )}

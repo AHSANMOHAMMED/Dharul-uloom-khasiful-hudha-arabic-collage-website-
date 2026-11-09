@@ -12,6 +12,7 @@ import {
   academicAnalytics, ageingRows, financeAnalytics, methodRows, monthRows, n, pct, sendFeeReminder, shortMonth, sumBy,
 } from '../../../lib/erp/opsApi';
 import { AXIS, CURSOR, ChartCard, ChartTooltip, GRID, Legend, RateBar, SERIES, TotalLine, axisProps, compact, moneyTooltip } from './common';
+import { useUrlState } from '../../../lib/useTabParam';
 
 const TOTAL = '__total';
 /** Append a bold totals row to a Table's rows. */
@@ -498,7 +499,8 @@ export default function AnalyticsPanel() {
   const auth = useAuth();
   const canFinance = Boolean(auth.isFinanceViewer);
   const canAcademic = Boolean(auth.isAdmin || auth.isAcademicAdmin || auth.isAdmissionsStaff || auth.isHrStaff);
-  const [tab, setTab] = useState(canFinance ? 'finance' : 'academic');
+  // In the URL (?an=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('an', canFinance ? 'finance' : 'academic');
   const [months, setMonths] = useState(12);
   const [days, setDays] = useState(180);
   const [fin, reloadFin] = useAsync(() => (canFinance ? financeAnalytics(months) : Promise.resolve(null)), [canFinance, months]);

@@ -21,12 +21,19 @@ const PROJECT_REF = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL |
   .replace('https://', '')
   .replace('.supabase.co', '');
 
+// Every function the apps call. send-email (contact form), translate-word
+// (dictionary) and payment-checkout (mobile PayHere page) were missing, so
+// those features never reached production through this script.
 const FUNCTIONS = [
   'create-payment',
   'payhere-notify',
+  'payment-checkout',
   'generate-monthly-fees',
   'receipt-pdf',
   'send-outbound',
+  'send-email',
+  'translate-word',
+  'platform-user-admin',
 ];
 
 const SECRET_KEYS = [

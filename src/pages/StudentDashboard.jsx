@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useTabParam } from '../lib/useTabParam';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -19,27 +20,8 @@ const STUDENT_TABS = ['overview', 'attendance', 'results', 'fees', 'lms', 'query
 export default function StudentDashboard() {
   const { user } = useAuth();
   useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const tabParam = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState(
-    STUDENT_TABS.includes(tabParam) ? tabParam : 'overview',
-  );
-
-  useEffect(() => {
-    if (STUDENT_TABS.includes(tabParam) && tabParam !== activeTab) {
-      setActiveTab(tabParam);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabParam]);
-
-  const selectTab = (id) => {
-    setActiveTab(id);
-    const next = new URLSearchParams(searchParams);
-    if (id === 'overview') next.delete('tab');
-    else next.set('tab', id);
-    setSearchParams(next, { replace: true });
-  };
+  // Section lives in ?tab= so Back/Forward, refresh and links work.
+  const [activeTab, selectTab] = useTabParam(STUDENT_TABS, 'overview');
   const [results, setResults] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [payableFee, setPayableFee] = useState(null);
@@ -97,11 +79,16 @@ export default function StudentDashboard() {
       setPayableFee(unpaid || null);
 
       if (user.classNumber != null) {
-        const { data: jobsData } = await supabase
-          .from('tutor_jobs')
-          .select('*, profiles(full_name, phone)')
-          .eq('class_number', user.classNumber);
-        setTutorJobs(jobsData || []);
+        // Who teaches this student's class (name, phone, subject) — narrow RPC
+        // instead of opening the staff directory to students.
+        const { data: tutorsData } = await supabase.rpc('my_class_tutors');
+        setTutorJobs(
+          (tutorsData || []).map((r) => ({
+            tutor_id: r.tutor_id,
+            title: r.subject,
+            profiles: { full_name: r.full_name, phone: r.phone },
+          }))
+        );
       } else {
         setTutorJobs([]);
       }

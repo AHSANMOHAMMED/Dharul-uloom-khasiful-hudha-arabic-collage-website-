@@ -137,3 +137,47 @@ export async function fetchPlatformControlHistory(limit = 40) {
     p_limit: limit,
   }));
 }
+
+// ---------------------------------------------------------------------------
+// Platform operator tools (0036_platform_admin.sql + platform-user-admin fn)
+// ---------------------------------------------------------------------------
+
+/** reset_mfa | send_password_reset | set_sign_in({ enabled }) via the Auth admin API. */
+export async function platformUserAction(action, userId, extra = {}) {
+  const { data, error } = await supabase.functions.invoke('platform-user-admin', {
+    body: { action, user_id: userId, ...extra },
+  });
+  if (error) {
+    let message = error.message;
+    try {
+      const body = await error.context?.json?.();
+      if (body?.error) message = body.error;
+    } catch {
+      /* keep the generic message */
+    }
+    throw new Error(message || `${action} failed`);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+export async function updatePlatformOrg(orgId, patch) {
+  return unwrap('platform_update_org', await supabase.rpc('platform_update_org', { p_org: orgId, p_patch: patch }));
+}
+export async function fetchOrgInvitations(orgId) {
+  return unwrap('platform_org_invitations', await supabase.rpc('platform_org_invitations', { p_org: orgId }));
+}
+export async function inviteOrgAdmin(orgId, email, fullName = null) {
+  return unwrap('platform_invite_admin', await supabase.rpc('platform_invite_admin', { p_org: orgId, p_email: email, p_full_name: fullName }));
+}
+export async function revokeInvitation(invitationId) {
+  return unwrap('platform_revoke_invitation', await supabase.rpc('platform_revoke_invitation', { p_invitation: invitationId }));
+}
+export async function fetchPlatformHealth() {
+  return unwrap('platform_health', await supabase.rpc('platform_health'));
+}
+export async function platformBroadcast(title, message, audience, orgIds = null) {
+  return unwrap('platform_broadcast', await supabase.rpc('platform_broadcast', {
+    p_title: title, p_message: message, p_audience: audience, p_orgs: orgIds && orgIds.length ? orgIds : null,
+  }));
+}

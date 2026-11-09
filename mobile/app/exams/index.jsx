@@ -1,11 +1,10 @@
-import { useState } from 'react';
-import { Alert, Pressable } from 'react-native';
+import { Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { supabase, must } from '../../lib/supabase';
 import { useAsync } from '../../lib/useAsync';
 import { useI18n } from '../../lib/i18n';
 import { formatDate } from '../../lib/format';
-import { Screen, Card, Txt, EmptyState, StatusBadge, Row, Button, Field, Input } from '../../components';
+import { Screen, Card, Txt, EmptyState, StatusBadge, Row } from '../../components';
 
 export default function ExamsList() {
   const { t } = useI18n();

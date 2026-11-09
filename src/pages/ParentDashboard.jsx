@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
@@ -13,31 +12,15 @@ import { listActivationEventsForChildren } from '../lib/notifyApi';
 import KhatamPattern from '../components/KhatamPattern';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
 import { tx } from '../lib/tx';
+import { useTabParam } from '../lib/useTabParam';
 
 const PARENT_TABS = ['overview', 'attendance', 'results', 'leaves', 'fees', 'link'];
 
 export default function ParentDashboard() {
   const { user } = useAuth();
   const { i18n } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tabParam = searchParams.get('tab');
-
-  const [activeTab, setActiveTabState] = useState(
-    PARENT_TABS.includes(tabParam) ? tabParam : 'overview',
-  );
-
-  useEffect(() => {
-    if (PARENT_TABS.includes(tabParam) && tabParam !== activeTab) setActiveTabState(tabParam);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabParam]);
-
-  const setActiveTab = (id) => {
-    setActiveTabState(id);
-    const next = new URLSearchParams(searchParams);
-    if (id === 'overview') next.delete('tab');
-    else next.set('tab', id);
-    setSearchParams(next, { replace: true });
-  };
+  // Section lives in ?tab= so Back/Forward, refresh and links work.
+  const [activeTab, setActiveTab] = useTabParam(PARENT_TABS, 'overview');
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState(null);
   
@@ -141,10 +124,14 @@ export default function ParentDashboard() {
 
       let jobData = { data: [] };
       if (classNum != null) {
-        jobData = await supabase
-          .from('tutor_jobs')
-          .select('*, profiles(full_name, phone)')
-          .eq('class_number', classNum);
+        const { data: tutorsData } = await supabase.rpc('my_class_tutors', { p_student: childId });
+        jobData = {
+          data: (tutorsData || []).map((r) => ({
+            tutor_id: r.tutor_id,
+            title: r.subject,
+            profiles: { full_name: r.full_name, phone: r.phone },
+          })),
+        };
       }
 
       if (resData.data) setResults(resData.data);

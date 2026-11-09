@@ -16,6 +16,7 @@ import {
 } from '../../../lib/erp/financeApi';
 import { ConfirmModal, DateRange, FilterBar, Num } from './shared';
 import { dutyName, listAssignments, listDutyRoles } from '../../../lib/erp/governanceApi';
+import { useUrlState } from '../../../lib/useTabParam';
 
 const STATUS_TONE = { submitted: 'amber', draft: 'amber', approved: 'blue', paid: 'green', rejected: 'red', void: 'red' };
 
@@ -188,7 +189,8 @@ export default function ExpensesPanel() {
   const { t, ar, lang } = useLang();
   const { user, isAdmin, isAccountant, isPrincipal, isFinanceStaff, isFinanceViewer } = useAuth();
   const canApprove = isAccountant || isPrincipal;
-  const [scope, setScope] = useState(isFinanceViewer ? 'all' : 'mine');
+  // In the URL (?scope=) so Back/Forward and links reach this tab.
+  const [scope, setScope] = useUrlState('scope', isFinanceViewer ? 'all' : 'mine');
   const [filters, setFilters] = useState({ status: '', from: '', to: '' });
   const [creating, setCreating] = useState(false);
   const [paying, setPaying] = useState(null);

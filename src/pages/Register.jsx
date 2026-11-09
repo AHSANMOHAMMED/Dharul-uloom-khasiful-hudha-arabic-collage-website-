@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useFeatures } from '../context/FeatureFlagsContext';
@@ -13,9 +13,13 @@ export default function Register() {
   const { enabled, loading: featuresLoading } = useFeatures();
   const navigate = useNavigate();
 
+  // Invitation links (/register?email=…) prefill the invited address: the
+  // invitation is matched by e-mail when the account is created.
+  const [searchParams] = useSearchParams();
+  const invitedEmail = (searchParams.get('email') || '').trim().toLowerCase();
   const [formData, setFormData] = useState({
     username: '',
-    email: '',
+    email: invitedEmail,
     password: '',
     confirmPassword: '',
     role: 'parent',

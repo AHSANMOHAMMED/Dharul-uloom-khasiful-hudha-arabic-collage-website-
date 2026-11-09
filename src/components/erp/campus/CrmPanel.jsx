@@ -6,6 +6,7 @@ import { COURSES, CRM_STAGES, LEAD_SOURCES, STAGE_STATUS, labelOf, toOptions } f
 import { useAction, useEmployees } from './hooks';
 import CrmLeadDetail, { FollowupsTable } from './CrmLeadDetail';
 import CrmInvitations from './CrmInvitations';
+import { useUrlState } from '../../../lib/useTabParam';
 
 const LEAD_EMPTY = {
   student_name: '',
@@ -278,7 +279,8 @@ function AllFollowups({ onChangedStats }) {
 export default function CrmPanel() {
   const { t } = useLang();
   const auth = useAuth();
-  const [tab, setTab] = useState('pipeline');
+  // In the URL (?crm=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('crm', 'pipeline');
   const [stats, reloadStats] = useAsync(async () => (await rpc('crm_dashboard')) ?? {}, []);
   const tabs = [
     { id: 'pipeline', label: t('Pipeline', 'المسار') },

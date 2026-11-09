@@ -6,6 +6,7 @@ import { formatDate, query, rpc, updateRow } from '../../../lib/erp/rpc';
 import { CERTIFICATE_TYPES, errMsg, escapeHtml, fetchMyOrg, labelOf, openPrintWindow, studentLabel, toOptions } from '../../../lib/erp/campusApi';
 import { StudentPicker } from './common';
 import { useAction, useStudents } from './hooks';
+import { useUrlState } from '../../../lib/useTabParam';
 
 const CERT_CSS = `
   .cert { border: 10px double #1a5c38; padding: 40px 48px; text-align: center; min-height: 640px; position: relative; }
@@ -205,7 +206,8 @@ function Requests({ canIssue, students }) {
 export default function CertificatesPanel() {
   const { t } = useLang();
   const auth = useAuth();
-  const [tab, setTab] = useState('issued');
+  // In the URL (?cert=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('cert', 'issued');
   const [students] = useStudents();
   const [org] = useAsync(() => fetchMyOrg(auth.user?.orgId), [auth.user?.orgId]);
   const orgPromise = async () => org.data;

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { PageHeader, Tabs, useLang } from '../ui';
 import AcademicYears from './AcademicYears';
@@ -8,12 +7,14 @@ import ClassAttendance from './ClassAttendance';
 import Exams from './Exams';
 import MarksEntry from './MarksEntry';
 import ReportCards from './ReportCards';
+import { useUrlState } from '../../../lib/useTabParam';
 
 export default function AcademicsPanel() {
   const { t } = useLang();
   const auth = useAuth();
   const canEdit = auth.isAcademicAdmin;
-  const [tab, setTab] = useState(auth.isTutor && !canEdit ? 'attendance' : 'years');
+  // In the URL (?acad=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('acad', auth.isTutor && !canEdit ? 'attendance' : 'years');
   const tabs = [
     { id: 'years', label: t('Years & terms', 'الأعوام والفصول') },
     { id: 'subjects', label: t('Subjects', 'المواد') },

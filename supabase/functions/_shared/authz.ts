@@ -16,6 +16,9 @@ async function rpcBool(token: string, fn: string): Promise<boolean> {
   return !error && data === true;
 }
 
+/** Platform super admin whose session satisfies 2FA. */
+export const callerIsSuperAdmin = (token: string) => rpcBool(token, 'is_super_admin');
+
 /** Admin (or super admin) whose session satisfies 2FA. */
 export const callerIsAdmin = (token: string) => rpcBool(token, 'is_admin');
 /** Approved employee, with the database's MFA policy enforced. */

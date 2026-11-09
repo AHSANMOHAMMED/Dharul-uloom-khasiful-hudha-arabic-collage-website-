@@ -11,6 +11,8 @@ const EXCLUDED = new Set([
   'src/components/erp/campus/PlatformPanel.jsx',
   'src/components/erp/finance/ExpensesPanel.jsx',
   'src/components/erp/campus/MySelfServicePanel.jsx',
+  // Platform operator console is English + LTR by design (see the file header).
+  'src/pages/SuperAdminConsole.jsx',
 ])
 
 describe('every UI string can be shown in English, Arabic and Tamil', () => {

@@ -20,6 +20,7 @@ import {
   updateFund,
 } from '../../../lib/erp/governanceApi';
 import { Checkbox, useGovernance, GovStatus } from './common';
+import { useUrlState } from '../../../lib/useTabParam';
 
 async function loadFunds() {
   const funds = await listFunds();
@@ -457,7 +458,8 @@ export default function PettyCashPanel() {
   const { t } = useLang();
   const { user, isAdmin, isAccountant, isFinanceStaff, isFinanceViewer, isGov } = useGovernance();
   const seesAll = isFinanceViewer || isGov;
-  const [tab, setTab] = useState(seesAll ? 'funds' : 'mine');
+  // In the URL (?petty=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('petty', seesAll ? 'funds' : 'mine');
   const [state, reload] = useAsync(loadFunds, []);
   const [action, setAction] = useState(null);
   const [ledgerFund, setLedgerFund] = useState('');
@@ -475,7 +477,7 @@ export default function PettyCashPanel() {
       setTab('mine');
       setAction({ kind: 'spend', fund });
     }
-  }, [params, state.data]);
+  }, [params, state.data, setTab]);
 
   const onAction = (kind, fund) => {
     if (kind === 'ledger') {

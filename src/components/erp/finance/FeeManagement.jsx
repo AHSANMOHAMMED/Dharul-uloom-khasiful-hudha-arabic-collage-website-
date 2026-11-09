@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PageHeader, Tabs, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
@@ -9,6 +8,7 @@ import FeeGenerate from './FeeGenerate';
 import FeeSetup from './FeeSetup';
 import FeeConcessions from './FeeConcessions';
 import FeeOutstanding from './FeeOutstanding';
+import { useUrlState } from '../../../lib/useTabParam';
 
 export default function FeeManagement({ embedded = false }) {
   const { t } = useLang();
@@ -16,7 +16,8 @@ export default function FeeManagement({ embedded = false }) {
   // Deep link from a student record: ?module=fees&student=<profile id>
   const [params, setParams] = useSearchParams();
   const studentFilter = params.get('student');
-  const [tab, setTab] = useState(studentFilter ? 'invoices' : isFinanceStaff ? 'receive' : 'overview');
+  // In the URL (?fees=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('fees', studentFilter ? 'invoices' : isFinanceStaff ? 'receive' : 'overview');
   const clearStudent = () => {
     const next = new URLSearchParams(params);
     next.delete('student');

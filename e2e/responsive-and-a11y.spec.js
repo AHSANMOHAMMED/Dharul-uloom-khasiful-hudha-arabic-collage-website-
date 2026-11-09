@@ -18,7 +18,7 @@ test.describe('Responsive Layouts, Mobile Drawers & Arabic RTL', () => {
     await hamburger.click();
 
     // Mobile drawer links
-    const mobileDrawer = page.locator('div.xl\\:hidden.bg-paper-white');
+    const mobileDrawer = page.locator('div.lg\\:hidden.bg-paper-white');
     await expect(mobileDrawer).toBeVisible();
 
     // Close hamburger

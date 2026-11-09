@@ -36,3 +36,25 @@ export function safeRedirectPath(path) {
   if (path.startsWith('/login') || path.startsWith('/register')) return null;
   return path;
 }
+
+/**
+ * Like useState, but kept in the URL under `key` (pushes a history entry on
+ * change) so tabs inside a module work with Back/Forward and links. Use a key
+ * unique to the module so nested modules do not collide.
+ */
+export function useUrlState(key, initial) {
+  const [params, setParams] = useSearchParams();
+  const value = params.get(key) ?? initial;
+  const setValue = useCallback(
+    (next) => {
+      setParams((prev) => {
+        const n = new URLSearchParams(prev);
+        if (next === initial || next == null || next === '') n.delete(key);
+        else n.set(key, next);
+        return n;
+      });
+    },
+    [setParams, key, initial]
+  );
+  return [value, setValue];
+}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useFeatures } from '../context/FeatureFlagsContext';
 import KhatamPattern from '../components/KhatamPattern';
@@ -34,6 +34,8 @@ import {
   clearUserFeature,
 } from '../lib/platformControlApi';
 import { setActingOrg } from '../lib/erp/governanceApi';
+import PageNavBar from '../components/PageNavBar';
+import { BroadcastTab, HealthTab, UserAuthActions } from '../components/platform/PlatformOps';
 
 const NAV = [
   { id: 'overview', label: 'Overview', icon: 'dashboard' },
@@ -45,7 +47,10 @@ const NAV = [
   { id: 'finance', label: 'Finance hub', icon: 'account_balance' },
   { id: 'audit', label: 'Audit & deletes', icon: 'history_edu' },
   { id: 'history', label: 'Control log', icon: 'history' },
-  { id: 'messages', label: 'Messages', icon: 'forum' },
+  { id: 'health', label: 'Health', icon: 'monitor_heart' },
+  // Institution chat is per college (the database refuses it for super admins);
+  // platform-wide notices go out through Broadcast.
+  { id: 'broadcast', label: 'Broadcast', icon: 'campaign' },
 ];
 
 const GROUPS = [
@@ -79,8 +84,10 @@ export default function SuperAdminConsole() {
   const { refreshFeatures } = useFeatures();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const section = params.get('section') || params.get('tab') || 'overview';
-  const setSection = (id) => setParams({ section: id }, { replace: true });
+  const requested = params.get('section') || params.get('tab') || 'overview';
+  const section = requested === 'messages' ? 'broadcast' : NAV.some((n) => n.id === requested) ? requested : 'overview';
+  // Push (not replace) so browser Back/Forward move between console sections.
+  const setSection = (id) => setParams(id === 'overview' ? {} : { section: id });
 
   const [controls, setControls] = useState(null);
   const [users, setUsers] = useState([]);
@@ -265,6 +272,13 @@ export default function SuperAdminConsole() {
         </header>
 
         <main className="p-4 sm:p-6 space-y-6 max-w-[1400px]">
+          <PageNavBar
+            home={{ onClick: () => setSection('overview'), label: 'Overview' }}
+            crumbs={[
+              { label: 'Super Admin', onClick: () => setSection('overview') },
+              ...(section === 'overview' ? [] : [{ label: NAV.find((n) => n.id === section)?.label || section }]),
+            ]}
+          />
           {error && <div className="rounded-[12px] border border-feedback-danger/30 bg-feedback-danger/5 px-4 py-3 text-sm text-feedback-danger">{error}</div>}
 
           {section === 'overview' && (
@@ -403,6 +417,7 @@ export default function SuperAdminConsole() {
                     <h3 className="font-serif font-semibold">Edit {editUser.full_name || editUser.email}</h3>
                     <button type="button" className="text-xs underline" onClick={() => setEditUser(null)}>Close</button>
                   </div>
+                  <UserAuthActions userId={editUser.id} />
                   <div className="grid sm:grid-cols-3 gap-2">
                     <select className="rounded-lg border border-sand-border px-3 py-2 text-sm" value={editUser.org_id || ''} onChange={(e) => setEditUser((u) => ({ ...u, org_id: e.target.value }))}>
                       {(controls?.organizations || []).map((o) => <option key={o.org_id} value={o.org_id}>{o.name_en}</option>)}
@@ -683,12 +698,8 @@ export default function SuperAdminConsole() {
             </div>
           )}
 
-          {section === 'messages' && (
-            <div className="rounded-[14px] border border-sand-border bg-paper-white p-6 space-y-3">
-              <p className="text-sm text-ink-text-secondary">Institution messaging uses the shared College Messages app. Super admins typically message after entering a college context.</p>
-              <Link to="/messages" className="inline-flex rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white">Open Messages</Link>
-            </div>
-          )}
+          {section === 'health' && <HealthTab />}
+          {section === 'broadcast' && <BroadcastTab organizations={controls?.organizations || []} />}
         </main>
       </div>
     </div>

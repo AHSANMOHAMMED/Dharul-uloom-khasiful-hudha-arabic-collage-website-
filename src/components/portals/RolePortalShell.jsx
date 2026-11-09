@@ -1,4 +1,4 @@
-import { useMemo, useState, Suspense, Component } from 'react';
+import { useMemo, Suspense, Component } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import DashboardSidebarLayout from '../DashboardSidebarLayout';
 import RoleSwitcher from '../RoleSwitcher';
@@ -8,6 +8,7 @@ import { ERP_QUICK_LINK } from '../../lib/portalChrome';
 import { ErpEmbedProvider } from '../../context/ErpEmbedContext';
 import { PortalNavProvider } from '../../context/PortalNavContext';
 import { tx } from '../../lib/tx';
+import { useTabParam } from '../../lib/useTabParam';
 
 /** Map ErpDashboard tile modules → portal tab ids (when present). */
 const ERP_MODULE_TO_TAB = {
@@ -73,7 +74,8 @@ export default function RolePortalShell({
 }) {
   const navigate = useNavigate();
   const homeId = defaultTab || tabs[0]?.id;
-  const [active, setActive] = useState(homeId);
+  // The section lives in ?tab= so browser Back/Forward, refresh and shared links work.
+  const [active, setActive] = useTabParam(tabs.map((t) => t.id), homeId);
   const tab = tabs.find((t) => t.id === active) || tabs[0];
   const Embed = tab?.embed;
   const isHome = active === homeId;
@@ -98,7 +100,7 @@ export default function RolePortalShell({
         return true;
       },
     }),
-    [tabIds, navigate],
+    [tabIds, navigate, setActive],
   );
 
   const navItems = tabs.map((t) => ({
@@ -123,6 +125,7 @@ export default function RolePortalShell({
       navItems={navItems}
       activeItem={active}
       onSelect={setActive}
+      homeItem={homeId}
       roleSwitcher={showRoleSwitcher ? <RoleSwitcher compact /> : null}
       quickLinks={links}
     >
@@ -135,8 +138,7 @@ export default function RolePortalShell({
             title_ar={tab?.chrome?.title_ar || tab?.label_ar || title_ar}
             subtitle_en={tab?.chrome?.subtitle_en}
             subtitle_ar={tab?.chrome?.subtitle_ar}
-            showBack={!isHome}
-            onBack={() => setActive(homeId)}
+            showBack={false}
             onPrint={tab?.chrome?.onPrint}
             onExport={tab?.chrome?.onExport}
           >

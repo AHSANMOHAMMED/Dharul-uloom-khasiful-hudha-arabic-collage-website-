@@ -4,12 +4,17 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { listChatConversations, listChatMessages, markChatRead, openChatConversation, searchChatContacts, sendChatMessage, subscribeToChat } from '../lib/chatApi';
 import { tx } from '../lib/tx';
+import PageNavBar from '../components/PageNavBar';
+import { portalHomeFor } from '../lib/useHistoryNav';
 
 const timeLabel = (value) => value ? new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 const dateLabel = (value) => value ? new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
 
 export default function Messages() {
-  const { user, isAuthenticated, loading, isParent } = useAuth();
+  const auth = useAuth();
+  const { user, isAuthenticated, loading, isParent, isSuperAdmin } = auth;
+  // Institution chat is per-college; the database refuses it for platform operators.
+  const chatAllowed = isAuthenticated && !isSuperAdmin;
   const [params, setParams] = useSearchParams();
   const selectedId = params.get('conversation');
   const [conversations, setConversations] = useState([]);
@@ -39,14 +44,14 @@ export default function Messages() {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) return undefined;
+    if (!chatAllowed) return undefined;
     refreshConversations();
     const timer = setInterval(refreshConversations, 45000);
     return () => clearInterval(timer);
-  }, [isAuthenticated, refreshConversations]);
+  }, [chatAllowed, refreshConversations]);
 
   useEffect(() => {
-    if (!isAuthenticated) return undefined;
+    if (!chatAllowed) return undefined;
     let live = true;
     const timer = setTimeout(async () => {
       try {
@@ -60,7 +65,7 @@ export default function Messages() {
       }
     }, 250);
     return () => { live = false; clearTimeout(timer); };
-  }, [isAuthenticated, search]);
+  }, [chatAllowed, search]);
 
   const refreshMessages = useCallback(async (conversationId) => {
     if (!conversationId) return;
@@ -82,7 +87,7 @@ export default function Messages() {
   useEffect(() => {
     setMessages([]);
     setHasOlder(false);
-    if (!selectedId || !isAuthenticated) return undefined;
+    if (!selectedId || !chatAllowed) return undefined;
     refreshMessages(selectedId);
     const stop = subscribeToChat(selectedId, (incoming, eventType) => {
       if (eventType === 'UPDATE') {
@@ -94,21 +99,36 @@ export default function Messages() {
       refreshConversations();
     });
     return () => stop();
-  }, [selectedId, isAuthenticated, user?.id, refreshMessages, refreshConversations]);
+  }, [selectedId, chatAllowed, user?.id, refreshMessages, refreshConversations]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages]);
 
   useEffect(() => {
-    if (!isAuthenticated || !user?.id) return undefined;
+    if (!chatAllowed || !user?.id) return undefined;
     const channel = supabase.channel(`chat-list:${user.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_conversations' }, refreshConversations)
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [isAuthenticated, user?.id, refreshConversations]);
+  }, [chatAllowed, user?.id, refreshConversations]);
 
   if (!loading && !isAuthenticated) return <Navigate to="/login" replace />;
+  if (!loading && isSuperAdmin) {
+    return (
+      <div className="min-h-[60vh] bg-parchment-50 flex flex-col items-center justify-center gap-4 p-6">
+        <PageNavBar home={{ to: '/platform', label: tx('لوحة المنصة', 'Super Admin console') }} crumbs={[{ label: tx('لوحة المنصة', 'Super Admin console'), to: '/platform' }, { label: tx('الرسائل', 'Messages') }]} />
+        <div className="max-w-md rounded-[14px] border border-sand-border bg-paper-white p-6 text-center space-y-3 shadow-manuscript-sm">
+          <span className="material-symbols-outlined text-[32px] text-emerald-700" aria-hidden>{'forum'}</span>
+          <h1 className="font-serif text-xl font-semibold text-ink-green-900">{tx('المراسلة خاصة بكل مؤسسة', 'Messaging is per institution')}</h1>
+          <p className="text-sm text-ink-text-secondary">
+            {tx('لا يشارك مشرف المنصة في محادثات الكليات. لإرسال إشعار إلى المؤسسات استخدم البث في لوحة المنصة.', 'Platform operators are not part of college conversations. To reach institutions, use the broadcast in the Super Admin console.')}
+          </p>
+          <a href="/platform?tab=broadcast" className="inline-flex h-10 items-center px-4 rounded-[10px] bg-emerald-700 text-white text-sm font-semibold">{tx('فتح لوحة المنصة', 'Open Super Admin console')}</a>
+        </div>
+      </div>
+    );
+  }
 
   const chooseContact = async (contact) => {
     setBusy(true);
@@ -150,7 +170,12 @@ export default function Messages() {
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-[#F4F1E9] px-2 py-3 sm:p-6">
-      <section className="mx-auto flex h-[calc(100vh-6rem)] min-h-[520px] max-w-7xl overflow-hidden rounded-2xl border border-[#E8E1D0] bg-white shadow-xl">
+      <PageNavBar
+        className="mx-auto max-w-7xl mb-3"
+        home={{ to: portalHomeFor(auth), label: tx('بوابتي', 'My portal') }}
+        crumbs={[{ label: tx('بوابتي', 'My portal'), to: portalHomeFor(auth) }, { label: tx('الرسائل', 'Messages') }]}
+      />
+      <section className="mx-auto flex h-[calc(100vh-9rem)] min-h-[520px] max-w-7xl overflow-hidden rounded-2xl border border-[#E8E1D0] bg-white shadow-xl">
         <aside className={`${mobileListOpen ? 'flex' : 'hidden'} w-full shrink-0 flex-col border-e border-[#E8E1D0] bg-[#FBF8F0] md:flex md:w-[340px]`}>
           <header className="bg-[#0B3B2E] px-4 py-4 text-white">
             <div className="flex items-center justify-between">

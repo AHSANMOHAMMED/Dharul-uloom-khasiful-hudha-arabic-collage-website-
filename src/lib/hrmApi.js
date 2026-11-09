@@ -43,7 +43,7 @@ export async function listSalariesForMonth(month) {
     .from('tutor_salaries')
     .select('*, profiles:tutor_id(full_name, index_number)')
     .eq('month', month)
-    .order('created_at', { ascending: false });
+    .order('updated_at', { ascending: false });
   if (error) return [];
   return data ?? [];
 }

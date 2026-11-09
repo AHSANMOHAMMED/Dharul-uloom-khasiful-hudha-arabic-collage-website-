@@ -21,6 +21,7 @@ import {
 } from '../../../lib/erp/governanceApi';
 import AssignDutyModal from './AssignDutyModal';
 import { Checkbox, DutyLabel, useGovernance, useStaff, GovStatus } from './common';
+import { useUrlState } from '../../../lib/useTabParam';
 
 async function loadCurrent() {
   const [duties, assignments] = await Promise.all([listDutyRoles({ activeOnly: true }), listAssignments({ status: 'active' })]);
@@ -585,7 +586,8 @@ function CatalogTab({ isGov }) {
 export default function DutiesPanel() {
   const { t } = useLang();
   const { isGov } = useGovernance();
-  const [tab, setTab] = useState('current');
+  // In the URL (?duty=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('duty', 'current');
   const tabs = [
     { id: 'current', label: t('Current responsibilities', 'المسؤوليات الحالية') },
     ...(isGov ? [{ id: 'rotation', label: t('Year-end rotation', 'التدوير السنوي') }] : []),

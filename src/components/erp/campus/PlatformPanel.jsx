@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Stat, Table, useAsync, useLang } from '../ui';
-import { formatDate, formatMoney, rpc, updateRow } from '../../../lib/erp/rpc';
+import { formatDate, formatMoney, rpc } from '../../../lib/erp/rpc';
+import { updatePlatformOrg } from '../../../lib/platformApi';
+import { OrgAdminsDialog, OrgDetailsDialog } from '../../platform/PlatformOps';
 import { setActingOrg } from '../../../lib/erp/governanceApi';
 import { useAction } from './hooks';
 
@@ -16,6 +18,8 @@ export default function PlatformPanel() {
   const [create, setCreate] = useState(null);
   const [created, setCreated] = useState(null);
   const [edit, setEdit] = useState(null);
+  const [details, setDetails] = useState(null);
+  const [admins, setAdmins] = useState(null);
   const statusLabel = (s) => ({
     trial: t('Trial', 'تجريبي'),
     active: t('Active', 'نشطة'),
@@ -66,7 +70,8 @@ export default function PlatformPanel() {
     if (res.ok) window.location.assign('/erp?module=dashboard');
   };
   const saveEdit = async () => {
-    const res = await run(() => updateRow('organizations', edit.org_id, { plan: edit.plan, max_students: edit.max_students ? Number(edit.max_students) : null }), t('Plan updated', 'تم تحديث الخطة'));
+    // Through the audited platform function (0036) rather than a direct table write.
+    const res = await run(() => updatePlatformOrg(edit.org_id, { plan: edit.plan, max_students: edit.max_students === '' ? '' : String(Number(edit.max_students)) }), t('Plan updated', 'تم تحديث الخطة'));
     if (res.ok) { setEdit(null); reload(); }
   };
 
@@ -114,6 +119,8 @@ export default function PlatformPanel() {
                   <div className="flex flex-wrap gap-1 justify-end">
                     <Button size="sm" disabled={busy} onClick={() => manage(o)}>{t('Manage this institution', 'إدارة هذه المؤسسة')}</Button>
                     <Button size="sm" variant="secondary" onClick={() => setEdit({ org_id: o.org_id, name_en: o.name_en, plan: o.plan, max_students: o.max_students ?? '' })}>{t('Plan', 'الخطة')}</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setDetails(o)}>{t('Details', 'التفاصيل')}</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setAdmins(o)}>{t('Admins', 'المسؤولون')}</Button>
                   </div>
                 ) },
               ]} />
@@ -145,6 +152,8 @@ export default function PlatformPanel() {
           </div>
         )}
       </Modal>
+      {details && <OrgDetailsDialog org={details} onClose={() => setDetails(null)} onSaved={reload} />}
+      {admins && <OrgAdminsDialog org={admins} onClose={() => setAdmins(null)} />}
     </div>
   );
 }

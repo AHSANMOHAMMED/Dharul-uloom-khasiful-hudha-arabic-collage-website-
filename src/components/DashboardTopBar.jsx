@@ -138,9 +138,11 @@ export default function DashboardTopBar() {
         {/* Right: Trilingual Switcher, Notifications, User Badge & Logout */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <LanguageSelect className="text-xs bg-white border border-[#E8E1D0] text-[#0B3B2E] py-1 px-2 rounded-lg" />
-          <Link to="/messages" aria-label={tx('الرسائل', 'Messages')} title={tx('الرسائل', 'Messages')} className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]">
-            <span className="material-symbols-outlined text-[18px]">forum</span>
-          </Link>
+          {!isSuperAdmin && (
+            <Link to="/messages" aria-label={tx('الرسائل', 'Messages')} title={tx('الرسائل', 'Messages')} className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]">
+              <span className="material-symbols-outlined text-[18px]">forum</span>
+            </Link>
+          )}
           
           <NotificationBell />
 

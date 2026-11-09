@@ -212,15 +212,17 @@ export default function Navbar() {
           {/* Authenticated State vs Public CTA */}
           {isAuthenticated ? (
             <div className="flex items-center gap-2 sm:gap-2.5">
-              <Link
-                to="/messages"
-                aria-label={tx('الرسائل', 'Messages')}
-                title={tx('الرسائل', 'Messages')}
-                className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-sand-border px-2.5 text-xs font-semibold text-ink-green-900 hover:bg-mint-wash-100"
-              >
-                <span className="material-symbols-outlined text-[18px]">forum</span>
-                <span className="hidden xl:inline">{tx('الرسائل', 'Messages')}</span>
-              </Link>
+              {!isSuperAdmin && (
+                <Link
+                  to="/messages"
+                  aria-label={tx('الرسائل', 'Messages')}
+                  title={tx('الرسائل', 'Messages')}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-sand-border px-2.5 text-xs font-semibold text-ink-green-900 hover:bg-mint-wash-100"
+                >
+                  <span className="material-symbols-outlined text-[18px]">forum</span>
+                  <span className="hidden xl:inline">{tx('الرسائل', 'Messages')}</span>
+                </Link>
+              )}
               <NotificationBell />
 
               {isSuperAdmin ? (
@@ -289,8 +291,10 @@ export default function Navbar() {
                 to="/admissions"
                 className="inline-flex items-center justify-center gap-1.5 h-9 sm:h-10 px-3.5 sm:px-4 rounded-lg bg-[#e77835] hover:bg-[#ce6327] text-white text-xs font-semibold shadow-xs transition-colors"
               >
-                <span className="material-symbols-outlined text-[16px] hidden min-[400px]:inline">edit_document</span>
-                <span>{tx('التقديم للقبول', 'Apply for Admission')}</span>
+                <span className="material-symbols-outlined text-[16px] hidden sm:inline">edit_document</span>
+                {/* Short label on phones so the menu button stays on screen. */}
+                <span className="sm:hidden">{tx('تقديم', 'Apply')}</span>
+                <span className="hidden sm:inline">{tx('التقديم للقبول', 'Apply for Admission')}</span>
               </Link>
             </div>
           )}

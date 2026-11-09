@@ -14,7 +14,7 @@ import { useAction } from './hooks';
  * upserted by primary key and new rows are inserted.
  */
 export default function MarksEntry() {
-  const { t, lang, ar } = useLang();
+  const { t, lang } = useLang();
   const [busy, run] = useAction();
   const [examId, setExamId] = useState('');
   const [paperId, setPaperId] = useState('');
@@ -108,7 +108,7 @@ export default function MarksEntry() {
         [t('Class', 'الصف'), classNo],
       ],
       dir: document.documentElement.dir || 'ltr',
-      lang: ar ? 'ar' : lang,
+      lang,
     });
   };
 

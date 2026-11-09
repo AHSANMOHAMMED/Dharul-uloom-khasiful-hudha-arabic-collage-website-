@@ -1,13 +1,14 @@
-import { useState } from 'react';
 import { PageHeader, Tabs, useLang } from '../ui';
 import PaySalaryProfiles from './PaySalaryProfiles';
 import PayRuns from './PayRuns';
 import PayAdvances from './PayAdvances';
 import PayPayslips from './PayPayslips';
+import { useUrlState } from '../../../lib/useTabParam';
 
 export default function PayrollPanel() {
   const { t } = useLang();
-  const [tab, setTab] = useState('runs');
+  // In the URL (?pay=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('pay', 'runs');
   const tabs = [
     { id: 'runs', label: t('Payroll runs', 'مسيرات الرواتب') },
     { id: 'profiles', label: t('Salary profiles', 'ملفات الرواتب') },

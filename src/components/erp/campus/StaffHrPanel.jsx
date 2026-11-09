@@ -4,6 +4,7 @@ import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select
 import { deleteRow, downloadCsv, formatDate, insertRow, query, queryAll, rpc, today, updateRow } from '../../../lib/erp/rpc';
 import { useAction } from './hooks';
 import StaffRecord from './StaffRecord';
+import { useUrlState } from '../../../lib/useTabParam';
 
 const ATT = ['present', 'half_day', 'leave', 'absent', 'holiday'];
 const ATT_LABEL = { present: ['Present', 'حاضر'], half_day: ['Half day', 'نصف يوم'], leave: ['Leave', 'إجازة'], absent: ['Absent', 'غائب'], holiday: ['Holiday', 'عطلة'] };
@@ -221,7 +222,8 @@ function LeaveTypes({ canEdit }) {
 export default function StaffHrPanel() {
   const { t } = useLang();
   const auth = useAuth();
-  const [tab, setTab] = useState('directory');
+  // In the URL (?staff=) so Back/Forward and links reach this tab.
+  const [tab, setTab] = useUrlState('staff', 'directory');
   return (
     <div>
       <PageHeader title={t('HR & staff', 'الموارد البشرية')} subtitle={t('Employee records, roles, attendance and leave.', 'سجلات الموظفين والأدوار والحضور والإجازات.')} />

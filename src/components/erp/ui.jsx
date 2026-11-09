@@ -204,17 +204,49 @@ export function AsyncView({ state, children }) {
   return children(state.data);
 }
 
+/** Close a dialog with the Escape key while it is open. */
+export function useEscapeToClose(open, onClose) {
+  useEffect(() => {
+    if (!open || !onClose) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+}
+
+/** Dialog title row: a labelled Back button (closes) + title + close icon. */
+export function DialogHeader({ title, onClose }) {
+  const { t } = useLang();
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex items-center gap-1 h-8 px-2.5 rounded-[10px] border border-sand-border text-xs font-semibold text-ink-green-900 hover:bg-mint-wash-100 shrink-0"
+          aria-label={t('Back', 'رجوع')}
+        >
+          <span className="material-symbols-outlined text-[16px] rtl:rotate-180" aria-hidden>arrow_back</span>
+          {t('Back', 'رجوع')}
+        </button>
+        <h3 className="text-lg font-serif font-semibold text-ink-green-900 truncate">{title}</h3>
+      </div>
+      <button type="button" onClick={onClose} className="text-ink-text-muted hover:text-ink-green-900 flex items-center justify-center" aria-label={t('Close', 'إغلاق')}>
+        <span className="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+  );
+}
+
 export function Modal({ open, title, onClose, children, footer }) {
+  useEscapeToClose(open, onClose);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-green-900/50 backdrop-blur-xs p-4" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-green-900/50 backdrop-blur-xs p-4" role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined}>
       <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript-lg p-6 space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <h3 className="text-lg font-serif font-semibold text-ink-green-900">{title}</h3>
-          <button type="button" onClick={onClose} className="text-ink-text-muted hover:text-ink-green-900 flex items-center justify-center" aria-label="Close">
-            <span className="material-symbols-outlined text-[18px]">close</span>
-          </button>
-        </div>
+        <DialogHeader title={title} onClose={onClose} />
         {children}
         {footer && <div className="flex justify-end gap-2 pt-2">{footer}</div>}
       </div>

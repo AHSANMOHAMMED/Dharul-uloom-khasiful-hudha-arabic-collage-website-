@@ -10,6 +10,7 @@ export function PortalNavProvider({ value, children }) {
   return <PortalNavContext.Provider value={value}>{children}</PortalNavContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePortalNav() {
   return useContext(PortalNavContext);
 }

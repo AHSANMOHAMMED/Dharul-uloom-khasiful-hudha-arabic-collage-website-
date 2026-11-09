@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useFeatures } from '../../context/FeatureFlagsContext';
 import { Loading, useLang } from '../../components/erp/ui';
 import KhatamPattern from '../../components/KhatamPattern';
+import PageNavBar from '../../components/PageNavBar';
+import { portalHomeFor } from '../../lib/useHistoryNav';
 import { fetchActingOrg, setActingOrg } from '../../lib/erp/governanceApi';
 import { ERP_MODULE_FEATURES } from '../../lib/platformApi';
 
@@ -187,7 +189,8 @@ export default function ErpWorkspace() {
 
   if (!visible.length) {
     return (
-      <div className="min-h-screen bg-parchment-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-parchment-50 flex flex-col items-center justify-center gap-4 px-4">
+        <PageNavBar home={{ to: portalHomeFor(auth), label: t('My portal', 'بوابتي') }} crumbs={[{ label: t('My portal', 'بوابتي'), to: portalHomeFor(auth) }, { label: t('College ERP', 'نظام إدارة الكلية') }]} />
         <div className="rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript-md p-8 text-center max-w-md space-y-4">
           <p className="text-ink-text-secondary text-sm">
             {auth.isSuperAdmin
@@ -268,6 +271,14 @@ export default function ErpWorkspace() {
         </aside>
 
         <main className="flex-1 min-w-0">
+          <PageNavBar
+            className="mb-4"
+            home={{ onClick: () => setParams({ module: visible[0].id }), label: t('ERP overview', 'نظرة عامة على النظام') }}
+            crumbs={[
+              { label: t('College ERP', 'نظام إدارة الكلية'), onClick: () => setParams({ module: visible[0].id }) },
+              ...(active.id === visible[0].id ? [] : [{ label: active.label(t) }]),
+            ]}
+          />
           {auth.isSuperAdmin && <ActingOrgBanner userId={auth.user?.id} />}
           <Suspense fallback={<Loading />}>
             <ActiveModule key={active.id} />

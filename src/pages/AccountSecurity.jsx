@@ -7,11 +7,14 @@ import { getOrgSecurity, listTotpFactors, removeFactor, setOrgRequiresMfa } from
 import MfaEnroll from '../components/security/MfaEnroll';
 import KhatamPattern from '../components/KhatamPattern';
 import { tx } from '../lib/tx';
+import PageNavBar from '../components/PageNavBar';
+import { portalHomeFor } from '../lib/useHistoryNav';
 
 /** /account/security — manage two-step verification (and the org policy for admins). */
 export default function AccountSecurity() {
   useTranslation();
-  const { user, loading, isAdmin, mfa, refreshUser } = useAuth();
+  const auth = useAuth();
+  const { user, loading, isAdmin, mfa, refreshUser } = auth;
   const [factors, setFactors] = useState([]);
   const [enrolling, setEnrolling] = useState(false);
   const [org, setOrg] = useState(null);
@@ -88,6 +91,10 @@ export default function AccountSecurity() {
     <div className="min-h-screen bg-parchment-50 relative overflow-hidden py-8 sm:py-12">
       <KhatamPattern className="opacity-[0.04]" strokeColor="#0B3B2E" id="security-khatam" />
       <div className="relative z-10 max-w-2xl mx-auto px-4 space-y-6">
+        <PageNavBar
+          home={{ to: portalHomeFor(auth), label: tx('بوابتي', 'My portal') }}
+          crumbs={[{ label: tx('بوابتي', 'My portal'), to: portalHomeFor(auth) }, { label: tx('الأمان وتسجيل الدخول', 'Security & sign-in') }]}
+        />
         <header>
           <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">{tx('الحساب', 'Account')}</span>
           <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-ink-green-900">{tx('الأمان وتسجيل الدخول', 'Security & sign-in')}</h1>
