@@ -28,9 +28,20 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Body parser middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Stricter limit for credential endpoints (brute force / reset-email abuse)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many attempts, please try again later.' },
+});
+app.use(['/api/auth/login', '/api/auth/register', '/api/auth/forgot-password', '/api/auth/reset-password', '/api/auth/verify-email'], authLimiter);
+
+// Body parser middleware (bounded payloads)
+app.disable('x-powered-by');
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
 // CORS
 // Allow a comma-separated list in FRONTEND_URL (e.g. http://localhost:5173,https://example.com)
@@ -80,7 +91,9 @@ app.use((err, req, res, _next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
     error: {
-      message: err.message || 'Internal Server Error',
+      message: (err.status && err.status < 500) || process.env.NODE_ENV === 'development'
+        ? (err.message || 'Request failed')
+        : 'Internal Server Error',
       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     }
   });

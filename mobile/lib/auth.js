@@ -1,6 +1,7 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase, isConfigured } from './supabase';
 import { getCaps } from './roles';
+import { unregisterPush } from './push';
 
 const PROFILE_COLUMNS =
   'id, email, full_name, phone, role, account_type, is_approved, index_number, class_number, assigned_tutor_role, extra_roles, org_id';
@@ -89,7 +90,18 @@ export function AuthProvider({ children }) {
       refreshAal: loadAal,
       refreshProfile: () => loadProfile(session?.user?.id),
       signOut: async () => {
-        if (supabase) await supabase.auth.signOut();
+        if (supabase) {
+          // Stop this device receiving the previous user's pushes (needs the session).
+          await unregisterPush();
+          // Always drop the on-device session (works offline), then best-effort
+          // revoke refresh tokens server-side.
+          try {
+            await supabase.auth.signOut({ scope: 'global' });
+          } catch {
+            /* network failure: fall through to local sign-out */
+          }
+          await supabase.auth.signOut({ scope: 'local' });
+        }
         setProfile(null);
         setSession(null);
       },

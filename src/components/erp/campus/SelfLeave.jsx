@@ -7,7 +7,7 @@ import { useAction, useForm } from './hooks';
 export default function SelfLeave({ user }) {
   const { t } = useLang();
   const [busy, run] = useAction();
-  const [balance, reloadBalance] = useAsync(() => rpc('staff_leave_balance', {}), []);
+  const [balance, reloadBalance] = useAsync(() => rpc('staff_leave_balance', { p_year: new Date().getFullYear() }), []);
   const [types] = useAsync(
     () => query('staff_leave_types', (q) => q.select('id, code, name, is_paid').eq('is_active', true).order('code')),
     []

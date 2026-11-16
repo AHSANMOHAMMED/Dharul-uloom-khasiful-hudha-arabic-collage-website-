@@ -7,7 +7,7 @@
 // Only `pending` transactions are rendered; the amount comes from the DB row.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { checkoutHash, checkoutSignature, checkoutUrl, escapeHtml } from '../_shared/payhere.ts';
+import { checkoutHash, checkoutSignature, checkoutUrl, escapeHtml, safeEqual } from '../_shared/payhere.ts';
 
 const html = (body: string, status = 200) =>
   new Response(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Kashiful Hudha – Payment</title>
@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
   const siteUrl = (Deno.env.get('SITE_URL') || 'http://localhost:3000').replace(/\/$/, '');
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 
-  if (!orderId || !merchantSecret || sig !== await checkoutSignature(orderId, merchantSecret)) {
+  if (!orderId || !merchantSecret || !safeEqual(sig, await checkoutSignature(orderId, merchantSecret))) {
     return html('<div class="card"><h2>Invalid payment link</h2><p>Please start the payment again from the app.</p></div>', 400);
   }
 

@@ -5,9 +5,10 @@ import { supabase, must } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useAsync } from '../lib/useAsync';
 import { useI18n } from '../lib/i18n';
-import { formatDate } from '../lib/format';
+import { formatDate, toISODate } from '../lib/format';
 import { colors } from '../lib/theme';
 import { Screen, Card, Txt, EmptyState, StatusBadge, Row, Button, SectionHeader } from '../components';
+import { parseAmount } from '../lib/finance';
 
 const FUNDS = ['general', 'zakat', 'sadaqah', 'waqf', 'sponsorship', 'building'];
 const METHODS = ['cash', 'bank_transfer', 'cheque', 'online', 'other'];
@@ -52,7 +53,7 @@ export default function DonationsScreen() {
   if (!canView) return <Redirect href="/" />;
 
   const save = async () => {
-    const amt = Number(amount);
+    const amt = parseAmount(amount) ?? 0; // rejects negative, Infinity, >2 decimals
     if (!(amt > 0) || (!donor.trim() && fund !== 'zakat')) {
       Alert.alert('Donation', 'Enter amount and donor name.');
       return;
@@ -71,7 +72,7 @@ export default function DonationsScreen() {
           p_reference: reference.trim() || null,
           p_notes: notes.trim() || null,
           p_sponsored_student: null,
-          p_date: new Date().toISOString().slice(0, 10),
+          p_date: toISODate(), // local day (UTC lags Sri Lanka until 05:30)
         }),
       );
       setDonor('');

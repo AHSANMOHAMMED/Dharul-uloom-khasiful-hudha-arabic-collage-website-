@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import { today } from '../lib/erp/rpc';
 import TutorLmsPanel from '../components/TutorLmsPanel';
 import { tx } from '../lib/tx';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
@@ -24,7 +25,7 @@ const TutorDashboard = () => {
   const [selectedClass, setSelectedClass] = useState(null);
   
   // Attendance tracking state
-  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [attendanceDate, setAttendanceDate] = useState(today());
   const [attendanceRecords, setAttendanceRecords] = useState({}); // studentId -> status
   const [attendanceSuccess, setAttendanceSuccess] = useState(false);
   const [attendanceSaving, setAttendanceSaving] = useState(false);
@@ -111,17 +112,33 @@ const TutorDashboard = () => {
         .order('full_name', { ascending: true });
 
       setStudents(studentsData || []);
-      
-      // Initialize attendance values
-      const initialRecords = {};
-      studentsData?.forEach(s => {
-        initialRecords[s.id] = 'present';
-      });
-      setAttendanceRecords(initialRecords);
     } catch (err) {
       console.error('Error fetching class students:', err);
     }
   };
+
+  // Initialise the register for the chosen date: default "present", but keep
+  // marks already saved for that day (otherwise saving overwrote real absences).
+  useEffect(() => {
+    let alive = true;
+    const ids = students.map((s) => s.id);
+    const initial = Object.fromEntries(ids.map((id) => [id, 'present']));
+    setAttendanceRecords(initial);
+    if (!ids.length || !attendanceDate) return undefined;
+    supabase
+      .from('attendance')
+      .select('student_id, status')
+      .eq('date', attendanceDate)
+      .in('student_id', ids)
+      .then(({ data, error }) => {
+        if (!alive || error) return;
+        const saved = Object.fromEntries((data || []).map((r) => [r.student_id, r.status]));
+        setAttendanceRecords({ ...initial, ...saved });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [students, attendanceDate]);
 
   const handleAttendanceChange = (studentId, status) => {
     setAttendanceRecords(prev => ({
@@ -144,17 +161,19 @@ const TutorDashboard = () => {
         marked_by: user.id
       }));
 
-      // Insert or update attendance idempotently
-      for (const row of rows) {
-        await supabase
+      // Insert or update attendance idempotently (one round trip; surface errors)
+      if (rows.length) {
+        const { error } = await supabase
           .from('attendance')
-          .upsert(row, { onConflict: 'student_id, date' });
+          .upsert(rows, { onConflict: 'student_id,date' });
+        if (error) throw error;
       }
 
       setAttendanceSuccess(true);
       setTimeout(() => setAttendanceSuccess(false), 3500);
     } catch (err) {
       console.error('Error saving attendance records:', err);
+      toast.error(err.message || tx('تعذر حفظ الحضور', 'Could not save attendance'));
     } finally {
       setAttendanceSaving(false);
     }

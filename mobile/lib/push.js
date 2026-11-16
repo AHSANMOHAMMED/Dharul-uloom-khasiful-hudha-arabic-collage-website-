@@ -16,7 +16,8 @@ import { supabase } from './supabase';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
@@ -26,6 +27,9 @@ function projectId() {
   const id = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
   return id && !String(id).startsWith('replace-') ? id : null;
 }
+
+// Token registered for the signed-in user on this device (cleared on sign-out).
+let registeredToken = null;
 
 export async function registerForPush() {
   try {
@@ -45,10 +49,27 @@ export async function registerForPush() {
     if (!token) return null;
     const { error } = await supabase.rpc('register_push_token', { p_token: token, p_platform: Platform.OS });
     if (error) console.warn('[push] register failed', error.message);
+    else registeredToken = token;
     return token;
   } catch (e) {
     console.warn('[push] unavailable', e?.message || e);
     return null;
+  }
+}
+
+/**
+ * Stop pushes for the signed-out user on this device. Must run while the
+ * session is still valid (RLS: users delete only their own tokens).
+ */
+export async function unregisterPush() {
+  const token = registeredToken;
+  registeredToken = null;
+  if (!supabase || !token) return;
+  try {
+    const { error } = await supabase.from('device_push_tokens').delete().eq('token', token);
+    if (error) console.warn('[push] unregister failed', error.message);
+  } catch (e) {
+    console.warn('[push] unregister failed', e?.message || e);
   }
 }
 

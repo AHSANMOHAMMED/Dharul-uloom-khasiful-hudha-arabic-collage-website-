@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AsyncView, Button, Card, EmptyState, Field, Select, Stat, Table, useAsync, useLang } from '../ui';
-import { rpc, formatMoney, formatDate, downloadCsv } from '../../../lib/erp/rpc';
+import { formatMoney, formatDate, downloadCsv } from '../../../lib/erp/rpc';
+import { rpcAll } from '../../../lib/erp/reportsApi';
 import { accountLabel, listAccounts, num } from '../../../lib/erp/financeApi';
 import { DateRange, FilterBar, Num } from './shared';
 
@@ -10,7 +11,9 @@ export default function AcctLedger() {
   const [range, setRange] = useState({ from: '', to: '' });
   const [accounts] = useAsync(() => listAccounts(), []);
   const [state, reload] = useAsync(
-    () => (accountId ? rpc('account_ledger', { p_account: accountId, p_from: range.from || null, p_to: range.to || null }) : Promise.resolve(null)),
+    // rpcAll pages past PostgREST's 1,000-row cap; a busy cash account has more
+    // lines than that, and the closing balance is the last row's running balance.
+    () => (accountId ? rpcAll('account_ledger', { p_account: accountId, p_from: range.from || null, p_to: range.to || null }) : Promise.resolve(null)),
     [accountId, range.from, range.to],
   );
   const account = (accounts.data || []).find((a) => a.id === accountId);
@@ -47,7 +50,7 @@ export default function AcctLedger() {
       </FilterBar>
       {range.from && (
         <p className="text-xs text-amber-300 mb-3">
-          {t('Running balance starts from zero at the “From” date (opening balance is not carried in).', 'يبدأ الرصيد الجاري من الصفر عند تاريخ "من" (دون رصيد افتتاحي).')}
+          {t('The first row is the opening balance brought forward to the “From” date.', 'السطر الأول هو الرصيد الافتتاحي المرحَّل حتى تاريخ "من".')}
         </p>
       )}
       {!accountId ? (

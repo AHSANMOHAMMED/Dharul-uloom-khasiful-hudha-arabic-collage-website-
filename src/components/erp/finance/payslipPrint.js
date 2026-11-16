@@ -1,4 +1,10 @@
 import { esc, money, printDocument, printGrid, printTable } from '../../../lib/erp/financeApi';
+import { getSlipSettings } from '../../../lib/slip/slipSettings';
+import { printSlip } from '../../../lib/slip/slipRender';
+import { payslipSlip } from '../../../lib/slip/slipModels';
+
+/** Dot-matrix counters print payslips as slips (one per form); laser keeps the A4 layout. */
+const onSlipPrinter = () => getSlipSettings().mode !== 'laser';
 
 function payslipBody(ps) {
   const earnings = [['Basic salary', money(ps.basic)], ...(ps.earnings || []).map((e) => [esc(e.name || e.code), money(e.amount)])];
@@ -25,10 +31,12 @@ function payslipBody(ps) {
 }
 
 export function printPayslip(org, ps) {
+  if (onSlipPrinter()) return printSlip(payslipSlip(org, ps));
   printDocument({ title: `Payslip ${ps.period}`, org, body: payslipBody(ps) });
 }
 
 export function printPayslips(org, slips) {
+  if (onSlipPrinter()) return printSlip(slips.map((ps) => payslipSlip(org, ps)));
   const body = slips.map((ps, i) => `<div style="${i ? 'page-break-before:always;padding-top:12px;' : ''}">${payslipBody(ps)}</div>`).join('');
   printDocument({ title: `Payslips ${slips[0]?.period || ''}`, org, body });
 }

@@ -6,42 +6,23 @@ import { query, rpc, formatMoney, formatDate, today, downloadCsv } from '../../.
 import {
   FUND_TYPES,
   PAYMENT_METHODS,
-  esc,
-  date,
-  money,
   firstOfMonth,
   labelOf,
   num,
-  printDocument,
-  printGrid,
   profilesMap,
   runAction,
   toOptions,
   useOrg,
 } from '../../../lib/erp/financeApi';
 import { ConfirmModal, DateRange, FilterBar, Num, StudentPicker } from './shared';
+import { SlipPrinterButton } from './SlipPrinter';
+import { printSlip } from '../../../lib/slip/slipRender';
+import { donationSlip } from '../../../lib/slip/slipModels';
 
 const METHODS = ['cash', 'bank_transfer', 'cheque', 'online', 'other'];
 
 function printDonationReceipt(org, d, student) {
-  const body = `
-    ${printGrid([
-      ['Receipt No.', esc(d.receipt_no)],
-      ['Date', date(d.donation_date)],
-      ['Donor', esc(d.is_anonymous ? 'Anonymous donor' : d.donor_name || '—')],
-      ['Contact', esc(d.is_anonymous ? '—' : [d.donor_phone, d.donor_email].filter(Boolean).join(' · ') || '—')],
-      ['Fund', esc(FUND_TYPES[d.fund_type]?.[0] || d.fund_type)],
-      ['Method', esc(PAYMENT_METHODS[d.method]?.[0] || d.method)],
-      ['Reference', esc(d.reference || '—')],
-      ['Sponsored student', esc(student?.full_name || '—')],
-    ])}
-    ${d.status === 'reversed' ? '<p class="badge" style="background:#fee2e2;color:#991b1b;margin-bottom:12px;">REVERSED</p>' : ''}
-    <p class="lbl">Amount received with thanks</p>
-    <p class="big" style="margin-bottom:12px;">${money(d.amount)}</p>
-    ${d.notes ? `<p class="muted">${esc(d.notes)}</p>` : ''}
-    <p style="margin-top:18px;">جزاكم الله خيرًا — May Allah reward you abundantly.</p>
-    <div class="sig">Received by</div>`;
-  printDocument({ title: 'Donation Receipt', org, body });
+  printSlip(donationSlip(org, d, student));
 }
 
 function DonationForm({ onClose, onSaved }) {
@@ -172,7 +153,12 @@ export default function DonationsPanel() {
       <PageHeader
         title={t('Donations', 'التبرعات')}
         subtitle={t('Zakat, sadaqah, waqf, sponsorship and building-fund receipts — each posted to its own income account.', 'الزكاة والصدقة والوقف والكفالة وصندوق البناء — كلٌّ يُرحَّل إلى حساب إيراد مستقل.')}
-        actions={isFinanceStaff && <Button onClick={() => setCreating(true)}>+ {t('Record donation', 'تسجيل تبرع')}</Button>}
+        actions={isFinanceStaff && (
+          <>
+            <SlipPrinterButton org={org} />
+            <Button onClick={() => setCreating(true)}>+ {t('Record donation', 'تسجيل تبرع')}</Button>
+          </>
+        )}
       />
       <Card
         actions={

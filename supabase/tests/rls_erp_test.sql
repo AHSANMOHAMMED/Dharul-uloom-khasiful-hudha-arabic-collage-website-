@@ -130,8 +130,27 @@ select tst.fails($$insert into auth.users (id, email, raw_user_meta_data) values
 insert into public.org_invitations (org_id, email, account_type, role, assigned_tutor_role)
 values (public.default_org_id(), 'invited@t.lk', 'staff', 'user', 'accountant');
 insert into auth.users (id, email, raw_user_meta_data) values ('00000000-0000-0000-0000-000000000020', 'Invited@t.lk', '{"account_type":"guest"}');
+select tst.ok((select account_type = 'guest' and assigned_tutor_role = 'none' from public.profiles where id = '00000000-0000-0000-0000-000000000020'),
+              'org invitation NOT applied before e-mail is confirmed');
+update auth.users set email_confirmed_at = now() where id = '00000000-0000-0000-0000-000000000020';
 select tst.ok((select account_type = 'staff' and assigned_tutor_role = 'accountant' and is_approved from public.profiles where id = '00000000-0000-0000-0000-000000000020'),
-              'org invitation applies role + approval on signup');
+              'org invitation applies role + approval once e-mail is confirmed');
+
+-- invitation hijack: auto-confirmed signup with the invited e-mail but no token
+insert into public.org_invitations (org_id, email, account_type, role)
+values (public.default_org_id(), 'principal@t.lk', 'staff', 'admin');
+insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at)
+values ('00000000-0000-0000-0000-000000000040', 'principal@t.lk', '{"account_type":"guest"}', now());
+select tst.ok((select role = 'user' from public.profiles where id = '00000000-0000-0000-0000-000000000040'),
+              'org invitation cannot be hijacked by signing up first without the token');
+delete from public.profiles where id = '00000000-0000-0000-0000-000000000040';
+delete from auth.users where id = '00000000-0000-0000-0000-000000000040';
+insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at)
+values ('00000000-0000-0000-0000-000000000041', 'principal@t.lk',
+        jsonb_build_object('account_type', 'guest', 'invite_token',
+          (select token from public.org_invitations where email = 'principal@t.lk')), now());
+select tst.ok((select role = 'admin' and is_approved from public.profiles where id = '00000000-0000-0000-0000-000000000041'),
+              'org invitation applies on signup with the matching invite token');
 
 -- ---------------------------------------------------------------------------
 -- 2. Privilege escalation
@@ -198,8 +217,16 @@ select tst.logout();
 insert into public.admissions (student_name, date_of_birth, age, parent_name, phone, address, course, enrolled_index, pipeline_stage, status)
 values ('Student One', current_date - interval '10 years', 10, 'Parent One', '077-123-4567', 'Kalpitiya', 'quran', 'T-S1', 'enrolled', 'enrolled');
 delete from public.parent_children where parent_id = '00000000-0000-0000-0000-000000000010';
+-- profile phone alone (user-editable, unverified) must not auto-link
+update public.profiles set phone = '0771234567' where id = '00000000-0000-0000-0000-000000000010';
+update auth.users set phone = '0771234567', phone_confirmed_at = null where id = '00000000-0000-0000-0000-000000000010';
 select tst.login('00000000-0000-0000-0000-000000000010');
-select tst.ok((select (public.request_child_link('T-S1') ->> 'status') = 'linked'), 'parent with matching admission phone is auto-linked');
+select tst.ok((select (public.request_child_link('T-S1') ->> 'status') = 'pending'), 'unverified phone does not auto-link a child');
+select tst.logout();
+delete from public.parent_link_requests where parent_id = '00000000-0000-0000-0000-000000000010' and child_index = 'T-S1';
+update auth.users set phone_confirmed_at = now() where id = '00000000-0000-0000-0000-000000000010';
+select tst.login('00000000-0000-0000-0000-000000000010');
+select tst.ok((select (public.request_child_link('T-S1') ->> 'status') = 'linked'), 'parent with verified matching admission phone is auto-linked');
 
 -- ---------------------------------------------------------------------------
 -- 5. LMS grading guard
@@ -840,6 +867,7 @@ select tst.ok((select account_type = 'tutor' and details ->> 'department' = 'Hif
               'import staff: invitation created for new staff');
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-000000000031', 'new.teacher@t.lk', '{"account_type":"guest","full_name":"New Teacher"}');
+update auth.users set email_confirmed_at = now() where id = '00000000-0000-0000-0000-000000000031';
 select tst.ok((select h.department = 'Hifz' and h.employee_no = 'E-100' and p.account_type = 'tutor' and p.is_approved
                from public.staff_hr h join public.profiles p on p.id = h.profile_id
                where h.profile_id = '00000000-0000-0000-0000-000000000031'),
@@ -1172,6 +1200,28 @@ select tst.succeeds($$
     true)
 $$, 'results: audited correction applied');
 
+-- 0052: 0028 safeguards still apply after 0042 (subject must be an exam paper; tutors cannot touch published exams).
+select tst.as_service();
+insert into public.subjects (org_id, code, name_en, category) values (public.default_org_id(), 'HAD', 'Hadith', 'arabic') on conflict do nothing;
+select tst.login('00000000-0000-0000-0000-000000000002');
+do $$ begin
+  insert into public.student_results (student_id, exam_id, subject_id, marks_obtained, max_marks)
+  values ('00000000-0000-0000-0000-000000000008', 'e0000000-0000-0000-0000-000000000001',
+          (select id from public.subjects where code = 'HAD' and org_id = public.default_org_id()), 10, 100);
+  perform tst.ok(false, 'results: subject outside the exam papers rejected', 'insert succeeded');
+exception when others then
+  perform tst.ok(sqlerrm like '%not part of this exam%', 'results: subject outside the exam papers rejected', sqlerrm);
+end $$;
+select tst.login('00000000-0000-0000-0000-000000000006'); -- tutor
+do $$ begin
+  insert into public.student_results (student_id, exam_id, subject_id, marks_obtained, max_marks)
+  values ('00000000-0000-0000-0000-000000000009', 'e0000000-0000-0000-0000-000000000001',
+          (select id from public.subjects where code = 'QRN' and org_id = public.current_org_id()), 10, 100);
+  perform tst.ok(false, 'results: tutor cannot add marks to a published exam', 'insert succeeded');
+exception when others then
+  perform tst.ok(sqlerrm like '%academic administrator%' or sqlerrm like '%not enrolled%', 'results: tutor cannot add marks to a published exam', sqlerrm);
+end $$;
+
 -- Fee credit adjustment (credit the same invoice that received the new charge).
 select tst.login('00000000-0000-0000-0000-000000000004'); -- accountant
 select tst.succeeds($$
@@ -1207,6 +1257,99 @@ select tst.succeeds($$
   select public.mark_hostel_leave_return(
     (select id from public.hostel_leave_passes where student_id = '00000000-0000-0000-0000-000000000008' order by created_at desc limit 1))
 $$, 'hostel: mark leave returned');
+
+select tst.logout();
+-- ---------------------------------------------------------------------------
+-- 20. Finance Hub document logic (0040_finance_hub_logic) + later local sections
+-- ---------------------------------------------------------------------------
+select tst.login('00000000-0000-0000-0000-000000000003'); -- treasurer
+select tst.fails($$select public.create_finance_document('bill', 'external', null, '  ', null, null, null, '[{"description":"Hall","qty":1,"unit_amount":100}]')$$, 'fhub: party name required');
+select tst.fails($$select public.create_finance_document('bill', 'external', null, 'X', null, null, null, '[{"description":"Hall","qty":0,"unit_amount":100}]')$$, 'fhub: zero quantity rejected');
+select tst.fails($$select public.create_finance_document('bill', 'external', null, 'X', null, null, null, '[{"description":"Hall","qty":1,"unit_amount":-5}]')$$, 'fhub: negative amount rejected');
+create temp table fh_bill as select (public.create_finance_document('bill', 'external', null, 'Hall Hire Co', '0771234567', null, null,
+  '[{"line_type":"item","description":"Hall hire","qty":2,"unit_amount":1500},{"line_type":"food","description":"Lunch","qty":10,"unit_amount":250},{"description":"  "}]')).id;
+select tst.ok((select total = 5500 and status = 'draft' from public.finance_documents where id = (select id from fh_bill)), 'fhub: draft totals lines, blank lines skipped');
+select tst.fails($$select public.record_finance_document_payment((select id from fh_bill), 100)$$, 'fhub: no payment on a draft');
+select tst.succeeds($$select public.issue_finance_document((select id from fh_bill))$$, 'fhub: issue bill');
+select tst.ok((select doc_number ~ '-BIL-\d{4}-\d{6}$' and status = 'issued' from public.finance_documents where id = (select id from fh_bill)), 'fhub: bill numbered from the document sequence');
+select tst.fails($$select public.record_finance_document_payment((select id from fh_bill), 6000)$$, 'fhub: overpayment rejected');
+select tst.fails($$select public.record_finance_document_payment((select id from fh_bill), 500, 'cheque')$$, 'fhub: cheque needs a number');
+create temp table fh_pay as select public.record_finance_document_payment((select id from fh_bill), 2000, 'cash') r;
+select tst.ok((select (r ->> 'balance')::numeric = 3500 and r ->> 'status' = 'issued' and r ->> 'receipt_no' ~ '-FRC-' from fh_pay), 'fhub: part payment leaves balance');
+select tst.ok((select sum(debit) = 2000 and sum(credit) = 2000 from public.journal_lines where entry_id = (select (r ->> 'journal_entry_id')::uuid from fh_pay)), 'fhub: payment journal balances');
+select tst.ok((select count(*) = 2 from public.journal_lines jl join public.accounts a on a.id = jl.account_id
+               where jl.entry_id = (select (r ->> 'journal_entry_id')::uuid from fh_pay) and a.code in ('4900', '4140') and jl.credit > 0), 'fhub: income split by line type');
+select tst.fails($$select public.amend_finance_document((select id from fh_bill), null, null, '[{"description":"Hall","qty":1,"unit_amount":1000}]', 'discount')$$, 'fhub: amend cannot go below amount paid');
+select tst.fails($$select public.void_finance_document((select id from fh_bill), 'mistake')$$, 'fhub: cannot void with payments standing');
+select tst.succeeds($$select public.record_finance_document_payment((select id from fh_bill), 3500, 'bank_transfer', 'TRX-1')$$, 'fhub: settle balance');
+select tst.ok((select status = 'paid' and paid_amount = 5500 from public.finance_documents where id = (select id from fh_bill)), 'fhub: fully paid bill marked paid');
+select tst.succeeds($$select public.reverse_finance_document_payment((select id from public.finance_document_payments where reference = 'TRX-1'), 'bounced')$$, 'fhub: reverse a payment');
+select tst.ok((select status = 'issued' and paid_amount = 2000 from public.finance_documents where id = (select id from fh_bill)), 'fhub: reversal restores balance');
+select tst.ok((select count(*) = 1 from public.journal_entries where reversal_of = (select journal_entry_id from public.finance_document_payments where reference = 'TRX-1')), 'fhub: reversal posts a reversing journal');
+
+create temp table fh_q as select (public.create_finance_document('quotation', 'external', null, 'Visitor', null, null, null,
+  '[{"description":"Books","qty":3,"unit_amount":400}]', current_date + 14)).id;
+select tst.fails($$select public.convert_quotation_to_bill((select id from fh_q))$$, 'fhub: draft quotation cannot be converted');
+select tst.succeeds($$select public.issue_finance_document((select id from fh_q))$$, 'fhub: issue quotation');
+select tst.succeeds($$select public.convert_quotation_to_bill((select id from fh_q))$$, 'fhub: convert quotation');
+select tst.fails($$select public.convert_quotation_to_bill((select id from fh_q))$$, 'fhub: quotation converted only once');
+select tst.ok((select (public.finance_document_by_token(public_token) -> 'organization' ->> 'name_en') is not null
+                      and public.finance_document_by_token(public_token) ->> 'valid_until' is not null
+               from public.finance_documents where id = (select id from fh_q)), 'fhub: public view has organisation and validity');
+
+create temp table fh_d as select (public.create_finance_document('sadaqah', 'donor', null, 'Brother A', null, null, null,
+  '[{"line_type":"sadaqah","description":"Sadaqah","qty":1,"unit_amount":750}]')).id;
+select tst.succeeds($$select public.issue_finance_document((select id from fh_d), 'bank_transfer', 'DEP-9')$$, 'fhub: issue sadaqah');
+select tst.ok((select f.status = 'paid' and dn.amount = 750 and dn.method = 'bank_transfer' and dn.fund_type = 'sadaqah' and f.doc_number = dn.receipt_no
+               from public.finance_documents f join public.donations dn on dn.id = f.donation_id where f.id = (select id from fh_d)), 'fhub: sadaqah recorded in donations ledger with method');
+select tst.fails($$select public.amend_finance_document((select id from fh_d), null, null, '[{"description":"Sadaqah","qty":1,"unit_amount":10}]', 'typo')$$, 'fhub: recorded donation amount locked');
+select tst.succeeds($$select public.void_finance_document((select id from fh_d), 'duplicate')$$, 'fhub: void donation document');
+select tst.ok((select dn.status = 'reversed' from public.donations dn join public.finance_documents f on f.donation_id = dn.id where f.id = (select id from fh_d)), 'fhub: void reverses the donation');
+select tst.fails($$select public.amend_finance_document((select id from fh_d), 'New name', null, null, 'x')$$, 'fhub: void document cannot be amended');
+
+select tst.fails($$select public.queue_finance_doc_share((select id from fh_bill), 'sms', '12')$$, 'fhub: share needs a valid phone');
+create temp table fh_share as select public.queue_finance_doc_share((select id from fh_bill), 'sms', '077 123 4567', null, 'https://college.example/') id;
+select tst.logout();
+select tst.ok((select body like '%https://college.example/b/%' and to_address = '0771234567' from public.message_outbox
+               where id = (select id from fh_share)), 'fhub: share message has an absolute link');
+select tst.login('00000000-0000-0000-0000-000000000003'); -- treasurer
+select tst.fails($$select public.create_billing_job('donation_drive')$$, 'fhub: unsupported billing job rejected');
+select tst.fails($$select public.create_billing_job('monthly_fees', '2999-01')$$, 'fhub: billing far ahead rejected');
+
+select tst.login('00000000-0000-0000-0000-000000000006'); -- tutor
+select tst.ok((select count(*) = 0 from public.finance_document_payments), 'fhub: tutors see no finance payments');
+select tst.fails($$select public.record_finance_document_payment((select id from fh_bill), 1)$$, 'fhub: tutor cannot take payments');
+
+-- ---------------------------------------------------------------------------
+-- Security hardening 0042: tenant storage, index lookup, chat claim, AI quota
+-- ---------------------------------------------------------------------------
+select tst.logout();
+insert into storage.objects (bucket_id, name, owner) values
+  ('staff-docs', '00000000-0000-0000-0000-000000000006/contract.pdf', '00000000-0000-0000-0000-000000000001'),
+  ('petty-cash', '00000000-0000-0000-0000-000000000006/receipt.jpg',  '00000000-0000-0000-0000-000000000006'),
+  ('gallery',    'college-a-photo.jpg',                               '00000000-0000-0000-0000-000000000001');
+select tst.login('00000000-0000-0000-0000-000000000001'); -- college A admin
+select tst.ok((select count(*) = 1 from storage.objects where bucket_id = 'staff-docs'), 'storage: own-org admin reads staff docs');
+select tst.login('00000000-0000-0000-0000-000000000013'); -- other-org admin
+select tst.ok((select count(*) = 0 from storage.objects where bucket_id = 'staff-docs'), 'storage: other org cannot read staff docs');
+select tst.ok((select count(*) = 0 from storage.objects where bucket_id = 'petty-cash'), 'storage: other org cannot read petty-cash receipts');
+with d as (delete from storage.objects where bucket_id = 'gallery' and name = 'college-a-photo.jpg' returning 1)
+select tst.ok((select count(*) = 0 from d), 'storage: other org cannot delete college A gallery files');
+select tst.login('00000000-0000-0000-0000-000000000003'); -- treasurer (finance viewer, college A)
+select tst.ok((select count(*) = 1 from storage.objects where bucket_id = 'petty-cash'), 'storage: own-org finance reads petty-cash receipts');
+
+select tst.as_anon();
+select tst.ok((select public.verify_student_index('T-S1') ->> 'name') is null, 'index check does not reveal student name');
+select tst.ok((select (public.verify_student_index('NO-SUCH') ->> 'valid')::boolean = false), 'index check rejects unknown index');
+
+select tst.login('00000000-0000-0000-0000-000000000008'); -- student
+select tst.fails($$select * from public.claim_chat_outbox(gen_random_uuid(), auth.uid())$$, 'chat outbox claim not callable by end users');
+select tst.fails($$select public.consume_ai_quota(auth.uid(), 'translate-word')$$, 'AI quota RPC not callable by end users');
+select tst.logout();
+select tst.ok((select public.consume_ai_quota('00000000-0000-0000-0000-000000000006', 'translate-word', 2, 10)), 'AI quota: first call allowed');
+select tst.ok((select public.consume_ai_quota('00000000-0000-0000-0000-000000000006', 'translate-word', 2, 10)), 'AI quota: second call allowed');
+select tst.ok((select not public.consume_ai_quota('00000000-0000-0000-0000-000000000006', 'translate-word', 2, 10)), 'AI quota: over the hourly limit is refused');
+select tst.ok((select not public.consume_ai_quota('00000000-0000-0000-0000-000000000007', 'translate-word')), 'AI quota: unapproved account refused');
 
 -- ---------------------------------------------------------------------------
 select tst.logout();

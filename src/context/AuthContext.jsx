@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }) => {
       email: authUser.email ?? profile?.email ?? '',
       username: profile?.full_name || authUser.user_metadata?.full_name || authUser.email,
       role: profile?.role || 'user',
-      accountType: profile?.account_type || authUser.user_metadata?.account_type || 'guest',
+      accountType: profile?.account_type || 'guest',
       isVerified: Boolean(authUser.email_confirmed_at || authUser.confirmed_at),
       // No profile row means the account is not provisioned yet: never treat it as approved.
       isApproved: profile ? profile.is_approved : false,
@@ -169,6 +169,10 @@ export const AuthProvider = ({ children }) => {
           // SaaS tenant: ?org=<slug> on the sign-up link, else the deployment default.
           // The DB validates it (and invitations/index records take precedence).
           org_slug: await getSiteOrgSlug(),
+          // ?invite=<token> on an invitation link proves the invite reached this
+          // person; without it the invitation applies only after e-mail confirmation.
+          invite_token: (typeof window !== 'undefined'
+            && new URLSearchParams(window.location.search).get('invite')) || null,
         }
       },
     });

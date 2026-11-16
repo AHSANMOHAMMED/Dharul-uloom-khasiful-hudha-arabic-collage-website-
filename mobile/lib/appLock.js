@@ -48,12 +48,17 @@ export function AppLockProvider({ signedIn, onTooManyAttempts, children }) {
   useEffect(() => {
     let live = true;
     (async () => {
-      const [on, pin] = await Promise.all([storage.getItem(KEY_ENABLED), storage.getItem(KEY_PIN)]);
-      if (!live) return;
-      setEnabled(on === '1');
-      setHasPin(Boolean(pin));
-      setLocked(on === '1');
-      setReady(true);
+      try {
+        const [on, pin] = await Promise.all([storage.getItem(KEY_ENABLED), storage.getItem(KEY_PIN)]);
+        if (!live) return;
+        setEnabled(on === '1');
+        setHasPin(Boolean(pin));
+        setLocked(on === '1');
+      } catch {
+        /* unreadable secure storage: the session (same store) cannot load either */
+      } finally {
+        if (live) setReady(true);
+      }
     })();
     return () => {
       live = false;
@@ -100,8 +105,10 @@ export function AppLockProvider({ signedIn, onTooManyAttempts, children }) {
       await storage.setItem(KEY_FAILS, String(fails));
       const remaining = Math.max(0, MAX_ATTEMPTS - fails);
       if (remaining === 0) {
+        // Sign out first so the stored session is gone even if disabling the
+        // lock succeeds and sign-out would otherwise fail (e.g. offline).
+        await onTooManyAttempts?.();
         await disableLock();
-        onTooManyAttempts?.();
       }
       return { ok: false, remaining };
     },
@@ -150,7 +157,9 @@ export function AppLockProvider({ signedIn, onTooManyAttempts, children }) {
     [ready, enabled, hasPin, locked, signedIn, unlockWithBiometrics, unlockWithPin, setPin, enableLock],
   );
 
-  return createElement(LockContext.Provider, { value }, children);
+  // Render nothing for a signed-in user until the lock state is known, so
+  // protected screens never flash (or start fetching) before the lock appears.
+  return createElement(LockContext.Provider, { value }, ready || !signedIn ? children : null);
 }
 
 export function useAppLock() {

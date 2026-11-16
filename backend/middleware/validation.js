@@ -48,7 +48,9 @@ export const validateLogin = [
     .normalizeEmail(),
   
   body('password')
-    .notEmpty().withMessage('Password is required'),
+    .isString().withMessage('Password is required')
+    .notEmpty().withMessage('Password is required')
+    .isLength({ max: 128 }).withMessage('Password is too long'),
   
   handleValidationErrors
 ];
@@ -67,7 +69,8 @@ export const validateEmail = [
 // Password reset validation
 export const validatePasswordReset = [
   body('token')
-    .notEmpty().withMessage('Reset token is required'),
+    .isString().withMessage('Reset token is required')
+    .isLength({ min: 64, max: 64 }).isHexadecimal().withMessage('Invalid reset token'),
   
   body('password')
     .notEmpty().withMessage('Password is required')

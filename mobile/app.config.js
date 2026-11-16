@@ -34,6 +34,9 @@ module.exports = ({ config }) => ({
     webUrl: process.env.EXPO_PUBLIC_WEB_URL || 'https://kashifulhudha.lk',
     eas: {
       ...(appJson.expo.extra?.eas || {}),
+      // Native push needs the EAS project id (lib/push.js); without it no
+      // device token is ever registered. `eas init` prints it.
+      ...(process.env.EXPO_PUBLIC_EAS_PROJECT_ID ? { projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID } : {}),
     },
   },
 });

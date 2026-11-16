@@ -5,6 +5,7 @@ import { query, currentMonth, formatMoney } from '../../../lib/erp/rpc';
 import { useOrg } from '../../../lib/erp/financeApi';
 import { FilterBar, Num } from './shared';
 import { printPayslip, printPayslips } from './payslipPrint';
+import { SlipPrinterButton } from './SlipPrinter';
 
 /** Payslip lookup + printable payslip view (earnings, deductions, employer EPF/ETF, net). */
 export default function PayPayslips() {
@@ -30,9 +31,12 @@ export default function PayPayslips() {
     <Card
       title={t('Payslips', 'قسائم الرواتب')}
       actions={
-        <Button size="sm" variant="secondary" disabled={!rows.length} onClick={() => printPayslips(org, rows)}>
-          {t('Print all', 'طباعة الكل')}
-        </Button>
+        <>
+          <SlipPrinterButton org={org} />
+          <Button size="sm" variant="secondary" disabled={!rows.length} onClick={() => printPayslips(org, rows)}>
+            {t('Print all', 'طباعة الكل')}
+          </Button>
+        </>
       }
     >
       <FilterBar>

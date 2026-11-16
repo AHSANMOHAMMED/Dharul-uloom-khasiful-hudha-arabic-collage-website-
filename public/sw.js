@@ -144,7 +144,14 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   if (event.action === 'dismiss') return;
 
-  const targetUrl = event.notification.data?.url || '/';
+  // Only navigate within this site — never to an off-origin URL from a push payload.
+  let targetUrl = '/';
+  try {
+    const u = new URL(event.notification.data?.url || '/', self.location.origin);
+    if (u.origin === self.location.origin) targetUrl = u.pathname + u.search + u.hash;
+  } catch {
+    /* malformed URL: fall back to home */
+  }
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {

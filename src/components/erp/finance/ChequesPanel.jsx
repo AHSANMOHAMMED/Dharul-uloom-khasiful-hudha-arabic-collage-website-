@@ -2,12 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../context/AuthContext';
 import { Badge, Button, ErrorNote, Field, Input, Loading, Modal, PageHeader, Select, Stat, Table, Textarea, useLang } from '../ui';
-import { query, rpc, formatMoney } from '../../../lib/erp/rpc';
+import { query, rpc, formatMoney, localIsoDate } from '../../../lib/erp/rpc';
 import { exportXlsx } from '../../../lib/spreadsheet';
 import { printTable } from '../../../lib/printReport';
 
 const STATUS_TONE = { pending: 'amber', deposited: 'blue', cleared: 'green', bounced: 'red', cancelled: 'gray' };
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localIsoDate(); // local day (toISOString() is UTC: still yesterday before 05:30 in Sri Lanka)
 
 /** Cheque register: received (fees, donations) and issued (expenses, salaries). */
 export default function ChequesPanel() {
@@ -170,7 +170,7 @@ export default function ChequesPanel() {
                     {canWrite && ['pending', 'deposited'].includes(r.status) && <Button size="sm" onClick={() => act(r, 'cleared')}>{t('Cleared', 'صُرف')}</Button>}
                     {canWrite && ['pending', 'deposited'].includes(r.status) && <Button size="sm" variant="danger" onClick={() => act(r, 'bounced')}>{t('Bounced', 'مرتجع')}</Button>}
                     {canWrite && r.status === 'bounced' && <Button size="sm" variant="secondary" onClick={() => act(r, 'deposited')}>{t('Re-present', 'إعادة تقديم')}</Button>}
-                    {canWrite && r.status === 'pending' && <Button size="sm" variant="ghost" onClick={() => act(r, 'cancelled')}>{t('Cancel', 'إلغاء')}</Button>}
+                    {canWrite && ['pending', 'bounced'].includes(r.status) && <Button size="sm" variant="ghost" onClick={() => act(r, 'cancelled')}>{t('Cancel', 'إلغاء')}</Button>}
                     {canWrite && !['cleared', 'cancelled'].includes(r.status) && <Button size="sm" variant="ghost" onClick={() => setEditing(r)}>{t('Edit', 'تعديل')}</Button>}
                     <Button size="sm" variant="ghost" onClick={() => setHistory(r)}>{t('History', 'السجل')}</Button>
                   </div>

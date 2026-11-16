@@ -8,6 +8,7 @@ import { ConfirmModal, Num } from './shared';
 import FeeChargeForm from './FeeChargeForm';
 import { printFeeInvoice, printFeeReceipt } from './feePrint';
 import { openReceiptPdf, printReceiptById } from './receiptActions';
+import { flushOutbound } from '../../../lib/notifyApi';
 
 const MANUAL_METHODS = ['cash', 'bank_transfer', 'cheque', 'online', 'other'];
 
@@ -36,7 +37,11 @@ function PaymentForm({ invoice, onDone, onCancel }) {
       }),
     );
     setBusy(false);
-    if (res) onDone(res);
+    if (res) {
+      // Deliver the receipt SMS / e-mail / push now instead of waiting for the scheduler.
+      void flushOutbound(20);
+      onDone(res);
+    }
   };
 
   return (

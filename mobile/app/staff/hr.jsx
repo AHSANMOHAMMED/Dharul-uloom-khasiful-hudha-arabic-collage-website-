@@ -12,7 +12,7 @@ export default function MyHr() {
   const q = useAsync(async () => {
     const [balance, payslips] = await Promise.all([
       must(supabase.rpc('staff_leave_balance', { p_profile: null, p_year: new Date().getFullYear() })),
-      must(supabase.from('payslips').select('id, period, net, status').eq('staff_id', user.id).order('period', { ascending: false }).limit(3)),
+      must(supabase.from('payslips').select('id, period, net, status').eq('staff_id', user.id).in('status', ['approved', 'paid']).order('period', { ascending: false }).limit(3)),
     ]);
     return { balance, payslips };
   }, [user?.id]);

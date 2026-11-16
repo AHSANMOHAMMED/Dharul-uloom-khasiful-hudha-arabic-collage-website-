@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
       .limit(limit).maxTimeMS(7000).lean(), News.countDocuments(query).maxTimeMS(7000)]);
     res.json({ success: true, data: news, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    (console.error(error), res.status(500).json({ success: false, error: 'Internal server error' }));
   }
 });
 
@@ -30,7 +30,7 @@ router.get('/:id', async (req, res) => {
     }
     res.json({ success: true, data: news });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    (console.error(error), res.status(500).json({ success: false, error: 'Internal server error' }));
   }
 });
 

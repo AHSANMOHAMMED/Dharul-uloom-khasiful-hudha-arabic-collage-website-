@@ -43,7 +43,7 @@ ${ps.payment_reference ? `<p class="muted">Payment reference: ${escapeHtml(ps.pa
 export default function SelfPayslips({ user }) {
   const { t } = useLang();
   const [state] = useAsync(
-    () => query('payslips', (q) => q.select('*').eq('staff_id', user.id).order('period', { ascending: false })),
+    () => query('payslips', (q) => q.select('*').eq('staff_id', user.id).in('status', ['approved', 'paid']).order('period', { ascending: false })),
     [user.id]
   );
   const onPrint = async (ps) => {

@@ -40,7 +40,10 @@ export async function createPaymentCheckout(feeId) {
 }
 
 /** Submit hidden form to PayHere checkout. */
+const PAYHERE_URL = /^https:\/\/(sandbox\.)?payhere\.lk\//;
+
 export function redirectToPayHere(checkoutUrl, params) {
+  if (!PAYHERE_URL.test(String(checkoutUrl))) throw new Error('Invalid payment checkout URL');
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = checkoutUrl;

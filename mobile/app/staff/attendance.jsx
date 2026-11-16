@@ -74,9 +74,20 @@ export default function MarkAttendance() {
           onChange={(c) => {
             setCls(c);
             setSheet(null);
+            setMarks({});
           }}
         />
-        <Field label={t('common.date')} value={date} onChangeText={setDate} placeholder={t('common.dateHint')} autoCapitalize="none" />
+        <Field
+          label={t('common.date')}
+          value={date}
+          onChangeText={(d) => {
+            // a typed date must reload the register; otherwise the previous day's
+            // marks would be saved onto the new date
+            setDate(d);
+            setSheet(null);
+            setMarks({});
+          }}
+          placeholder={t('common.dateHint')} autoCapitalize="none" />
         <Row>
           <Button small variant="outline" icon="chevron-back" title={t('attendance.prevDay')} onPress={() => shiftDay(-1)} />
           <Button small variant="outline" title={t('common.today')} onPress={() => { setDate(toISODate()); if (sheet) load(cls, toISODate()); }} />

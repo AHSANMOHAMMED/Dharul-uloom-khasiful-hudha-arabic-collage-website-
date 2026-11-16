@@ -5,7 +5,8 @@ import { rpc, query } from '../lib/erp/rpc';
 import { useAuth } from '../context/AuthContext';
 import { tx } from '../lib/tx';
 import { printReceipt, receiptPdfUrl } from '../lib/receiptPrint';
-import { printReceiptDotMatrix } from '../lib/receiptText';
+import { printSlip } from '../lib/slip/slipRender';
+import { feeReceiptSlip } from '../lib/slip/slipModels';
 import ReceiptSlip from '../components/ReceiptSlip';
 import KhatamPattern from '../components/KhatamPattern';
 
@@ -87,9 +88,10 @@ export default function ReceiptPublic() {
               </button>
               <button
                 type="button"
-                onClick={() => printReceiptDotMatrix(r)}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                onClick={() => printSlip(feeReceiptSlip(r), { mode: 'lq310' })}
+                className="rounded-[10px] border border-sand-border bg-paper-white px-4 py-2 text-xs font-semibold text-ink-text-primary hover:bg-parchment-50 transition-colors flex items-center gap-1.5"
               >
+                <span className="material-symbols-outlined text-[16px]">{'receipt_long'}</span>
                 {tx('طباعة نقطية (LQ-310)', 'Dot-matrix (LQ-310)')}
               </button>
             </div>

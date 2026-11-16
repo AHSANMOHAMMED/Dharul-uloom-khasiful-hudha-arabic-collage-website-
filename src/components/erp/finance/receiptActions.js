@@ -3,7 +3,9 @@ import { tx } from '../../../lib/tx';
 import { rpc } from '../../../lib/erp/rpc';
 import { num, runAction } from '../../../lib/erp/financeApi';
 import { printReceipt, receiptPdfUrl, receiptPublicUrl } from '../../../lib/receiptPrint';
-import { downloadReceiptPrn, printReceiptDotMatrix } from '../../../lib/receiptText';
+import { getSlipSettings } from '../../../lib/slip/slipSettings';
+import { printSlip } from '../../../lib/slip/slipRender';
+import { feeReceiptSlip } from '../../../lib/slip/slipModels';
 
 const cents = (v) => Math.round(num(v) * 100);
 
@@ -48,41 +50,21 @@ export async function printReceiptById(id, extra = {}, opts = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Counter printer preference (per browser): 'a5' (laser/inkjet, A5 slip),
-// 'a4x2' (office + parent copy on A4) or 'lq310' (Epson LQ-310 dot-matrix).
+// Printing follows this counter's slip printer settings (Printer settings
+// dialog): Epson LQ-310 driver slip, raw ESC/P (.prn) or laser / inkjet.
 // ---------------------------------------------------------------------------
-export const PRINTERS = [
-  { value: 'a5', en: 'A5 slip (laser / inkjet)', ar: 'إيصال A5 (ليزر / حبر)' },
-  { value: 'a4x2', en: '2 copies on A4 (office + parent)', ar: 'نسختان على A4 (المكتب + ولي الأمر)' },
-  { value: 'lq310', en: 'Epson LQ-310 dot-matrix (A5)', ar: 'طابعة نقطية Epson LQ-310 (A5)' },
-];
-const PRINTER_KEY = 'kh_receipt_printer';
-
-export function getPrinterPref() {
-  try {
-    const v = localStorage.getItem(PRINTER_KEY);
-    return PRINTERS.some((p) => p.value === v) ? v : 'a5';
-  } catch {
-    return 'a5';
+/** Print with the counter settings, or force a mode: 'lq310' | 'raw' | 'laser'. */
+export function printWithPrinter(receipt, mode, opts = {}) {
+  if (!receipt) return;
+  const s = getSlipSettings();
+  const m = ['lq310', 'raw', 'laser'].includes(mode) ? mode : s.mode;
+  if (m === 'laser') {
+    return printReceipt(receipt, { ...opts, copies: s.copies, paper: s.paper === 'a4' ? 'A4' : 'A5' });
   }
+  return printSlip(feeReceiptSlip(receipt), { mode: m });
 }
 
-export function setPrinterPref(value) {
-  try {
-    localStorage.setItem(PRINTER_KEY, value);
-  } catch {
-    /* storage blocked — preference lasts for this page only */
-  }
-}
-
-/** Print with the chosen (or remembered) printer profile. */
-export function printWithPrinter(receipt, printer = getPrinterPref(), opts = {}) {
-  if (printer === 'lq310') return printReceiptDotMatrix(receipt);
-  if (printer === 'a4x2') return printReceipt(receipt, { ...opts, copies: 2 });
-  return printReceipt(receipt, { ...opts, copies: 1 });
-}
-
-/** Raw ESC/P job for the Epson LQ-310 (fastest, printer fonts). */
+/** Raw ESC/P job for the Epson LQ-310 (printer fonts, fastest). */
 export function downloadPrn(receipt) {
-  downloadReceiptPrn(receipt);
+  printSlip(feeReceiptSlip(receipt), { mode: 'raw' });
 }

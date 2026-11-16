@@ -18,7 +18,7 @@ router.get('/admissions', async (req, res) => {
       data: admissions 
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    (console.error(error), res.status(500).json({ success: false, error: 'Internal server error' }));
   }
 });
 
@@ -39,7 +39,7 @@ router.get('/admissions/:id', async (req, res) => {
     
     res.json({ success: true, data: admission });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    (console.error(error), res.status(500).json({ success: false, error: 'Internal server error' }));
   }
 });
 
@@ -86,7 +86,7 @@ router.get('/stats', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    (console.error(error), res.status(500).json({ success: false, error: 'Internal server error' }));
   }
 });
 

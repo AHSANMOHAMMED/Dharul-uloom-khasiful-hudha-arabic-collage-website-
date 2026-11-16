@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     gateway_order_id: orderId,
     metadata: { month: fee.month, invoice_no: fee.invoice_no, client },
   }).select('id').single();
-  if (txnErr) return json({ error: txnErr.message }, 500);
+  if (txnErr) { console.error('[create-payment]', txnErr); return json({ error: 'Could not start payment' }, 500); }
 
   const appFlag = client === 'mobile' ? '&app=1' : '';
   const fullName = (student?.full_name || 'Student Fee').trim();

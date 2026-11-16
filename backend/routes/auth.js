@@ -13,6 +13,16 @@ import {
 
 const router = express.Router();
 
+const BCRYPT_ROUNDS = 12;
+// Tokens are emailed in plain form but only their SHA-256 digest is stored,
+// so a database leak does not expose usable reset/verification links.
+const hashToken = (value) => crypto.createHash('sha256').update(value).digest('hex');
+const isValidToken = (value) => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+const serverError = (res, error) => {
+  console.error(error);
+  return res.status(500).json({ success: false, error: 'Internal server error' });
+};
+
 // Create transporter for sending emails
 const createTransporter = () => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
@@ -65,7 +75,7 @@ router.post('/register', validateRegister, async (req, res) => {
     }
 
     // Hash password
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Generate verification token
@@ -79,7 +89,7 @@ router.post('/register', validateRegister, async (req, res) => {
       // Public registration can never choose a privileged role.
       role: 'guest',
       isVerified: false,
-      verificationToken
+      verificationToken: hashToken(verificationToken)
     });
 
     // Send verification email
@@ -125,7 +135,7 @@ router.post('/register', validateRegister, async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    serverError(res, error);
   }
 });
 
@@ -182,7 +192,7 @@ router.post('/login', validateLogin, async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    serverError(res, error);
   }
 });
 
@@ -191,14 +201,14 @@ router.post('/verify-email', async (req, res) => {
   try {
     const { token } = req.body;
 
-    if (!token) {
+    if (!isValidToken(token)) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Verification token is required' 
+        error: 'Invalid or expired verification token' 
       });
     }
 
-    const user = await User.findOne({ verificationToken: token });
+    const user = await User.findOne({ verificationToken: hashToken(token) });
     if (!user) {
       return res.status(400).json({ 
         success: false, 
@@ -215,7 +225,7 @@ router.post('/verify-email', async (req, res) => {
       message: 'Email verified successfully'
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    serverError(res, error);
   }
 });
 
@@ -244,7 +254,7 @@ router.post('/forgot-password', validateEmail, async (req, res) => {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = Date.now() + 3600000; // 1 hour
 
-    user.resetPasswordToken = resetToken;
+    user.resetPasswordToken = hashToken(resetToken);
     user.resetPasswordExpiry = resetTokenExpiry;
     await user.save();
 
@@ -275,7 +285,7 @@ router.post('/forgot-password', validateEmail, async (req, res) => {
       message: 'If an account with that email exists, a password reset link has been sent.'
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    serverError(res, error);
   }
 });
 
@@ -284,10 +294,10 @@ router.post('/reset-password', validatePasswordReset, async (req, res) => {
   try {
     const { token, password } = req.body;
 
-    if (!token || !password) {
+    if (!isValidToken(token) || typeof password !== 'string') {
       return res.status(400).json({ 
         success: false, 
-        error: 'Token and new password are required' 
+        error: 'Invalid or expired reset token' 
       });
     }
 
@@ -299,7 +309,7 @@ router.post('/reset-password', validatePasswordReset, async (req, res) => {
     }
 
     const user = await User.findOne({
-      resetPasswordToken: token,
+      resetPasswordToken: hashToken(token),
       resetPasswordExpiry: { $gt: Date.now() }
     });
 
@@ -311,7 +321,7 @@ router.post('/reset-password', validatePasswordReset, async (req, res) => {
     }
 
     // Hash new password
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     user.password = hashedPassword;
@@ -324,7 +334,7 @@ router.post('/reset-password', validatePasswordReset, async (req, res) => {
       message: 'Password reset successful'
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    serverError(res, error);
   }
 });
 

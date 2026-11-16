@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
     const faculty = await Faculty.find().sort({ order: 1 });
     res.json({ success: true, data: faculty });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    (console.error(error), res.status(500).json({ success: false, error: 'Internal server error' }));
   }
 });
 
@@ -23,7 +23,7 @@ router.get('/:id', async (req, res) => {
     }
     res.json({ success: true, data: faculty });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    (console.error(error), res.status(500).json({ success: false, error: 'Internal server error' }));
   }
 });
 

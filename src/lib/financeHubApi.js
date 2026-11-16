@@ -33,11 +33,45 @@ export async function createFinanceDocument(payload) {
     p_notes: payload.notes || null,
     p_letterhead_id: payload.letterheadId || null,
     p_lines: payload.lines || [],
+    p_valid_until: payload.validUntil || null,
   }));
 }
 
-export async function issueFinanceDocument(id) {
-  return unwrap('issue_finance_document', await supabase.rpc('issue_finance_document', { p_id: id }));
+/** Donation / sadaqah documents are recorded in the donations ledger on issue, with this method. */
+export async function issueFinanceDocument(id, { method = null, reference = null, fundType = null } = {}) {
+  return unwrap('issue_finance_document', await supabase.rpc('issue_finance_document', {
+    p_id: id,
+    p_method: method || 'cash',
+    p_reference: reference || null,
+    p_fund_type: fundType || null,
+  }));
+}
+
+export async function recordFinanceDocPayment(id, { amount, method = 'cash', reference = null, date = null }) {
+  return unwrap('record_finance_document_payment', await supabase.rpc('record_finance_document_payment', {
+    p_id: id,
+    p_amount: Number(amount),
+    p_method: method,
+    p_reference: reference || null,
+    p_date: date || undefined,
+  }));
+}
+
+export async function reverseFinanceDocPayment(paymentId, reason) {
+  return unwrap('reverse_finance_document_payment', await supabase.rpc('reverse_finance_document_payment', {
+    p_payment: paymentId,
+    p_reason: reason,
+  }));
+}
+
+export async function listFinanceDocPayments(docId) {
+  const { data, error } = await supabase
+    .from('finance_document_payments')
+    .select('*')
+    .eq('doc_id', docId)
+    .order('created_at');
+  if (error) throw new Error(error.message);
+  return data || [];
 }
 
 export async function amendFinanceDocument(id, { partyName, notes, lines, reason }) {
@@ -71,6 +105,7 @@ export async function queueFinanceDocShare(id, channel, to, message = null) {
     p_channel: channel,
     p_to: to,
     p_message: message,
+    p_base_url: typeof window !== 'undefined' ? window.location.origin : null,
   }));
 }
 
@@ -101,8 +136,8 @@ export async function fetchFinanceDocumentByToken(token) {
 
 export function financePublicPath(doc) {
   if (!doc?.public_token) return null;
+  // /r/ is the fee receipt page; every other finance document opens on /b/
   if (doc.doc_type === 'quotation') return `/q/${doc.public_token}`;
-  if (doc.doc_type === 'receipt') return `/r/${doc.public_token}`;
   return `/b/${doc.public_token}`;
 }
 

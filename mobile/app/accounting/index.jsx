@@ -5,8 +5,10 @@ import { useAsync } from '../../lib/useAsync';
 import { useI18n } from '../../lib/i18n';
 import { formatDate } from '../../lib/format';
 import { Screen, Card, Txt, EmptyState, StatusBadge, Row, Button } from '../../components';
+import { useAuth } from '../../lib/auth';
+import { Redirect } from 'expo-router';
 
-export default function AccountingJournals() {
+function AccountingJournals() {
   const { t } = useI18n();
   const [busyId, setBusyId] = useState(null);
   const q = useAsync(
@@ -76,4 +78,13 @@ export default function AccountingJournals() {
       ))}
     </Screen>
   );
+}
+
+// Role gate: deep links (kashifulhudha://...) must not open this screen for
+// users without the matching role. RLS still enforces access server-side.
+export default function GuardedAccountingJournals() {
+  const { profile, caps } = useAuth();
+  if (!profile) return null;
+  if (!(caps?.isFinanceViewer || profile.role === 'super_admin')) return <Redirect href="/" />;
+  return <AccountingJournals />;
 }

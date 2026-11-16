@@ -20,6 +20,14 @@ Deno.serve(async (req) => {
   const from = Deno.env.get('MAIL_FROM') || 'noreply@kashifulhudha.lk';
   const notifyTo = Deno.env.get('MAIL_NOTIFY_TO') || from;
 
+  // Reject oversized payloads before parsing (public endpoint).
+  if (Number(req.headers.get('content-length') || 0) > 64 * 1024) {
+    return new Response(JSON.stringify({ error: 'Payload too large' }), {
+      status: 413,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   let body: { to?: string; subject?: string; text?: string; html?: string; type?: string } = {};
   try {
     body = await req.json();
@@ -50,25 +58,29 @@ Deno.serve(async (req) => {
   const to = trusted && body.to ? body.to : notifyTo;
   if (!trusted) body.html = undefined;
 
-  // Always record in outbox for audit when Supabase is available
-  try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const admin = createClient(supabaseUrl, serviceKey);
-    await admin.from('message_outbox').insert({
-      channel: 'email',
-      to_address: to,
-      subject,
-      body: text,
-      status: apiKey ? 'pending' : 'skipped',
-      metadata: { type: body.type || 'manual' },
-      error: apiKey ? null : 'RESEND_API_KEY not configured',
-    });
-  } catch (e) {
-    console.error('[send-email] outbox', e);
-  }
+  // Record in the outbox for audit *after* the attempt, with its final status, so
+  // the row is never left 'pending' (which the outbox worker would deliver again).
+  const logOutbox = async (status: 'sent' | 'failed' | 'skipped', error: string | null) => {
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const admin = createClient(supabaseUrl, serviceKey);
+      await admin.from('message_outbox').insert({
+        channel: 'email',
+        to_address: to,
+        subject,
+        body: text,
+        status,
+        metadata: { type: body.type || 'manual' },
+        error,
+      });
+    } catch (e) {
+      console.error('[send-email] outbox', e);
+    }
+  };
 
   if (!apiKey) {
+    await logOutbox('skipped', 'RESEND_API_KEY not configured');
     return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'RESEND_API_KEY missing' }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -91,12 +103,14 @@ Deno.serve(async (req) => {
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
-    return new Response(JSON.stringify({ error: json.message || 'send failed' }), {
+    await logOutbox('failed', String(json.message || 'send failed').slice(0, 500));
+    return new Response(JSON.stringify({ error: 'send failed' }), {
       status: 502,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
+  await logOutbox('sent', null);
   return new Response(JSON.stringify({ ok: true, id: json.id }), {
     status: 200,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },

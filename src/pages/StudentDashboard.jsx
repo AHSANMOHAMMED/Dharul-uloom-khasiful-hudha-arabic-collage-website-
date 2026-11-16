@@ -72,7 +72,10 @@ export default function StudentDashboard() {
         .from('student_fees')
         .select('*')
         .eq('student_id', user.id)
-        .order('month', { ascending: false })
+        // online payment targets the OLDEST open month (arrears first), as the counter does;
+        // newest-first over the last 3 months paid the latest month and hid older arrears.
+        .in('status', ['unpaid', 'partial'])
+        .order('month', { ascending: true })
         .limit(3);
       const unpaid = (feesData || []).find(
         (f) => f.status !== 'completed' && Number(f.total_due || 0) - Number(f.paid_amount || 0) > 0,

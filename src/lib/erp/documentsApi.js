@@ -55,6 +55,10 @@ function ensureHook() {
     if (data.attrName === 'style' && /url\s*\(|image-set|expression\s*\(|@import/i.test(data.attrValue)) {
       data.keepAttr = false;
     }
+    // Block page-covering overlays (fake login boxes etc.) inside shared documents.
+    if (data.attrName === 'style' && /position\s*:\s*(fixed|absolute|sticky)|z-index/i.test(data.attrValue)) {
+      data.keepAttr = false;
+    }
     if (data.attrName === 'src' && !/^data:image\//i.test(data.attrValue)) {
       // Images must be embedded (pasted/inserted), not hot-linked.
       data.keepAttr = false;

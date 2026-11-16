@@ -24,7 +24,11 @@ const TutorLmsPanel = () => {
   const [asgForm, setAsgForm] = useState({ subject: '', title: '', description: '', due_date: '' });
   const [gradingId, setGradingId] = useState(null);
   const [submissions, setSubmissions] = useState([]);
-  const [gradeForm, setGradeForm] = useState({ grade: '', feedback: '' });
+  // Per-submission drafts: one shared form showed the same text in every row and
+  // saved an empty grade (clearing it) when another row was being edited.
+  const [gradeForms, setGradeForms] = useState({});
+  const formFor = (s) => gradeForms[s.id] || { grade: s.grade || '', feedback: s.feedback || '' };
+  const setFormFor = (s, patch) => setGradeForms((m) => ({ ...m, [s.id]: { ...formFor(s), ...patch } }));
 
   const load = async () => {
     setMaterials(await listMaterialsForClass(classNumber));
@@ -55,9 +59,15 @@ const TutorLmsPanel = () => {
     setSubmissions(await listSubmissionsForAssignment(assignmentId));
   };
 
-  const submitGrade = async (submissionId) => {
-    await gradeSubmission(submissionId, gradeForm.grade, gradeForm.feedback);
-    setGradeForm({ grade: '', feedback: '' });
+  const submitGrade = async (sub) => {
+    const f = formFor(sub);
+    if (!f.grade.trim()) return;
+    await gradeSubmission(sub.id, f.grade.trim(), f.feedback.trim() || null);
+    setGradeForms((m) => {
+      const next = { ...m };
+      delete next[sub.id];
+      return next;
+    });
     if (gradingId) setSubmissions(await listSubmissionsForAssignment(gradingId));
   };
 
@@ -94,7 +104,7 @@ const TutorLmsPanel = () => {
           </div>
           <input className={inputCls} placeholder={tx('المادة (مثل: الفقه، التفسير)', 'Subject (e.g., Fiqh, Tafsir)')} value={matForm.subject} onChange={(e) => setMatForm({ ...matForm, subject: e.target.value })} required />
           <input className={inputCls} placeholder={tx('عنوان المادة', 'Title')} value={matForm.title} onChange={(e) => setMatForm({ ...matForm, title: e.target.value })} required />
-          <input className={inputCls} placeholder={tx('رابط الملف أو المرجع (Google Drive / URL)', 'Reference URL or File Link')} value={matForm.link_url} onChange={(e) => setMatForm({ ...matForm, link_url: e.target.value })} />
+          <input type="url" pattern="https?://.*" className={inputCls} placeholder={tx('رابط الملف أو المرجع (Google Drive / URL)', 'Reference URL or File Link')} value={matForm.link_url} onChange={(e) => setMatForm({ ...matForm, link_url: e.target.value })} />
           <button type="submit" className="py-2 px-5 bg-[#11694A] hover:bg-[#0B3B2E] rounded-xl text-white text-xs font-bold transition shadow-sm">
             {tx('نشر المادة', 'Publish Material')}
           </button>
@@ -140,7 +150,7 @@ const TutorLmsPanel = () => {
                     <div className="font-semibold text-[#0B3B2E] text-xs sm:text-sm">{m.title}</div>
                     <span className="text-[10px] text-[#4A5E56]">{m.subject}</span>
                   </div>
-                  {m.link_url && (
+                  {/^https?:\/\//i.test(m.link_url || '') && (
                     <a
                       href={m.link_url}
                       target="_blank"
@@ -218,9 +228,9 @@ const TutorLmsPanel = () => {
                 </p>
               )}
               <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                <input className={inputCls} placeholder={tx('الدرجة (مثال: A، 90)', 'Grade (e.g. A, 90)')} value={gradeForm.grade} onChange={(e) => setGradeForm({ ...gradeForm, grade: e.target.value })} />
-                <input className={inputCls} placeholder={tx('ملاحظة التقييم', 'Feedback note')} value={gradeForm.feedback} onChange={(e) => setGradeForm({ ...gradeForm, feedback: e.target.value })} />
-                <button type="button" onClick={() => submitGrade(s.id)} className="px-4 py-2 bg-[#11694A] hover:bg-[#0B3B2E] rounded-xl text-white font-bold shrink-0">
+                <input className={inputCls} placeholder={tx('الدرجة (مثال: A، 90)', 'Grade (e.g. A, 90)')} value={formFor(s).grade} onChange={(e) => setFormFor(s, { grade: e.target.value })} />
+                <input className={inputCls} placeholder={tx('ملاحظة التقييم', 'Feedback note')} value={formFor(s).feedback} onChange={(e) => setFormFor(s, { feedback: e.target.value })} />
+                <button type="button" onClick={() => submitGrade(s)} className="px-4 py-2 bg-[#11694A] hover:bg-[#0B3B2E] rounded-xl text-white font-bold shrink-0">
                   {tx('حفظ الدرجة', 'Save Grade')}
                 </button>
               </div>

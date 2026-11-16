@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { tx } from '../tx';
-import { query, queryAll, formatMoney, formatDate } from './rpc';
+import { query, queryAll, formatMoney, formatDate, currentMonth } from './rpc';
 
 /**
  * Finance-module helpers (lookups, labels, printable documents). All data
@@ -83,7 +83,7 @@ export function labelOf(map, key, t) {
 }
 
 export function firstOfMonth() {
-  return `${new Date().toISOString().slice(0, 7)}-01`;
+  return `${currentMonth()}-01`; // local month (toISOString() is UTC)
 }
 
 export function num(v) {
@@ -158,7 +158,7 @@ export function fetchOrg(orgId) {
   if (!orgCache.has(orgId)) {
     orgCache.set(
       orgId,
-      query('organizations', (q) => q.select('id, name_en, name_ar, books_locked_until, currency').eq('id', orgId).maybeSingle()).catch(
+      query('organizations', (q) => q.select('id, code, name_en, name_ar, books_locked_until, currency, address, contact_phone, contact_email, branding, settings').eq('id', orgId).maybeSingle()).catch(
         (e) => {
           orgCache.delete(orgId);
           throw e;

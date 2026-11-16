@@ -59,4 +59,25 @@ rc=$?
 set -e
 printf '%s\n' "$out" | grep -E 'FAIL|passed|failed|ERROR|^ +[0-9]+ \|' || true
 [[ $rc -eq 0 ]] || { echo "DB test script aborted (exit $rc)" >&2; exit 1; }
-"${PSQL[@]}" -At -c "select count(*) from tst.results where not ok" | grep -qx 0 && echo "DB TESTS PASSED" || { echo "DB TESTS FAILED" >&2; exit 1; }
+"${PSQL[@]}" -At -c "select count(*) from tst.results where not ok" | grep -qx 0 || { echo "DB TESTS FAILED" >&2; exit 1; }
+
+# Business-logic regression suites (fees, payroll, accounting, messaging,
+# academics). Each runs in its own transaction and rolls back, and ends by
+# printing "passed|failed".
+for f in "$ROOT"/supabase/tests/logic_*_test.sql; do
+  [[ -e "$f" ]] || continue
+  name="$(basename "$f" .sql)"
+  set +e
+  out="$(psql "$TEST_DATABASE_URL" -X -q -A -t -F'|' -f "$f" 2>&1)"
+  rc=$?
+  set -e
+  counts="$(printf '%s\n' "$out" | grep -E '^[0-9]+\|[0-9]+$' | tail -1)"
+  failed="${counts#*|}"
+  if [[ $rc -ne 0 || -z "$counts" || "$failed" != "0" ]]; then
+    printf '%s\n' "$out" | grep -E 'FAIL|ERROR' | head -20
+    echo "$name: FAILED (${counts:-no summary}, exit $rc)" >&2
+    exit 1
+  fi
+  echo "$name: ${counts%|*} passed"
+done
+echo "DB TESTS PASSED"

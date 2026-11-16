@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 const connectDB = async () => {
   try {
     mongoose.set('bufferCommands', false);
+    // Strip $-operators from user-supplied filter values (NoSQL injection guard).
+    mongoose.set('sanitizeFilter', true);
     if (!process.env.MONGO_URI) {
       throw new Error('MONGO_URI is required to start the legacy API');
     }

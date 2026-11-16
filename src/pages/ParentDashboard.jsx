@@ -120,7 +120,10 @@ export default function ParentDashboard() {
           .from('student_fees')
           .select('*')
           .eq('student_id', childId)
-          .order('month', { ascending: false })
+          // online payment targets the OLDEST open month (arrears first), as the counter does;
+          // newest-first over the last 3 months paid the latest month and hid older arrears.
+          .in('status', ['unpaid', 'partial'])
+          .order('month', { ascending: true })
           .limit(3),
       ]);
 

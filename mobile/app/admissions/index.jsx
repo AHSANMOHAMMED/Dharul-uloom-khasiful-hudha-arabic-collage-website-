@@ -6,10 +6,12 @@ import { useI18n } from '../../lib/i18n';
 import { formatDate } from '../../lib/format';
 import { Screen, Card, Txt, EmptyState, StatusBadge, Row, Button } from '../../components';
 import { useState } from 'react';
+import { useAuth } from '../../lib/auth';
+import { Redirect } from 'expo-router';
 
 const STAGES = ['lead', 'submitted', 'interview', 'accepted', 'enrolled', 'rejected'];
 
-export default function AdmissionsPipeline() {
+function AdmissionsPipeline() {
   const { t } = useI18n();
   const [stage, setStage] = useState('');
   const q = useAsync(
@@ -52,4 +54,13 @@ export default function AdmissionsPipeline() {
       ))}
     </Screen>
   );
+}
+
+// Role gate: deep links (kashifulhudha://...) must not open this screen for
+// users without the matching role. RLS still enforces access server-side.
+export default function GuardedAdmissionsPipeline() {
+  const { profile, caps } = useAuth();
+  if (!profile) return null;
+  if (!(caps?.isAdmissions || profile.role === 'super_admin')) return <Redirect href="/" />;
+  return <AdmissionsPipeline />;
 }

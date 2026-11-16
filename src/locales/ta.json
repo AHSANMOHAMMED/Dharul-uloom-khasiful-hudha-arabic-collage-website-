@@ -1167,6 +1167,7 @@
  "Run promotion": "வகுப்பேற்றத்தை இயக்கு",
  "Run the worker on DigitalOcean or a local machine with npm run import:shamela": "npm run import:shamela மூலம் worker-ஐ DigitalOcean அல்லது உள்ளூர் கணினியில் இயக்கவும்",
  "Running balance starts from zero at the “From” date (opening balance is not carried in).": "தொடர் மீதி “From” திகதியில் பூச்சியத்திலிருந்து தொடங்கும் (ஆரம்ப மீதி முன்கொண்டுவரப்படுவதில்லை).",
+ "The first row is the opening balance brought forward to the “From” date.": "முதல் வரி “From” திகதி வரை முன்கொண்டுவரப்பட்ட ஆரம்ப மீதியாகும்.",
  "SEUSL (Sri Lankan university) alignment": "SEUSL (இலங்கைப் பல்கலைக்கழகம்) உடனான இசைவு",
  "SaaS platform": "SaaS தளம்",
  "Salary Amount (LKR)": "சம்பளத் தொகை (LKR)",

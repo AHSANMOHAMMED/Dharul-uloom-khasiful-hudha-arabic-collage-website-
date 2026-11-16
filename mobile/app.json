@@ -26,14 +26,22 @@
         {
           "faceIDPermission": "Allow Kashiful Hudha to use Face ID to unlock the app."
         }
-      ]
+      ],
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": false
     },
     "android": {
       "package": "lk.kashifulhudha.portal",
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "pan",
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "ios": {
       "bundleIdentifier": "lk.kashifulhudha.portal",

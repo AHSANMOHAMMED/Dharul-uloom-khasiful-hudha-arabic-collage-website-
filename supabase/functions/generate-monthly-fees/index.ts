@@ -41,8 +41,10 @@ Deno.serve(async (req) => {
 
   let body: { month?: string; default_fee?: number } = {};
   try { body = await req.json(); } catch { /* defaults */ }
-  const now = new Date();
-  const month = body.month ?? `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  // Billing month in the institution's time zone (Asia/Colombo, UTC+5:30): a run
+  // at 00:00–05:30 on the 1st must bill the new month, not the previous one.
+  const colombo = new Date(Date.now() + 330 * 60 * 1000);
+  const month = body.month ?? `${colombo.getUTCFullYear()}-${String(colombo.getUTCMonth() + 1).padStart(2, '0')}`;
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return json({ error: 'month must be YYYY-MM' }, 400);
   const defaultFee = typeof body.default_fee === 'number' ? body.default_fee : null;
 

@@ -3,7 +3,10 @@ import { useSearchParams } from 'react-router-dom';
 import { AsyncView, Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { ConfirmModal, DateRange, FilterBar, Num } from '../finance/shared';
 import { downloadCsv, formatDate, formatMoney, today } from '../../../lib/erp/rpc';
-import { accountLabel, listAccounts, listCashBankAccounts, num, profilesMap, runAction } from '../../../lib/erp/financeApi';
+import { accountLabel, listAccounts, listCashBankAccounts, num, profilesMap, runAction, useOrg } from '../../../lib/erp/financeApi';
+import { SlipPrinterButton } from '../finance/SlipPrinter';
+import { printSlip } from '../../../lib/slip/slipRender';
+import { pettyVoucherSlip } from '../../../lib/slip/slipModels';
 import {
   PETTY_ENTRY_TYPES,
   createFund,
@@ -363,6 +366,8 @@ function ReviewTab({ funds, userId, isAdmin, onChanged }) {
 // Ledger
 // ---------------------------------------------------------------------------
 function LedgerTab({ funds, initialFund }) {
+  const { user } = useGovernance();
+  const org = useOrg(user?.orgId);
   const { t, ar, lang } = useLang();
   const [filters, setFilters] = useState({ fund: initialFund || '', holder: '', type: '', from: '', to: '' });
   const [state] = useAsync(async () => {
@@ -399,7 +404,7 @@ function LedgerTab({ funds, initialFund }) {
     );
 
   return (
-    <Card title={t('Petty cash ledger', 'دفتر النثرية')} actions={<Button size="sm" variant="secondary" disabled={!rows.length} onClick={exportCsv}>{t('Export CSV', 'تصدير CSV')}</Button>}>
+    <Card title={t('Petty cash ledger', 'دفتر النثرية')} actions={<><SlipPrinterButton org={org} /><Button size="sm" variant="secondary" disabled={!rows.length} onClick={exportCsv}>{t('Export CSV', 'تصدير CSV')}</Button></>}>
       <FilterBar>
         <Field label={t('Fund', 'الصندوق')}>
           <Select value={filters.fund} onChange={(e) => setFilters((f) => ({ ...f, fund: e.target.value }))} placeholder={t('All', 'الكل')} options={funds.map((f) => ({ value: f.id, label: fundTitle(f, lang) }))} />
@@ -446,6 +451,18 @@ function LedgerTab({ funds, initialFund }) {
               },
               { key: 'amount', label: t('Amount', 'المبلغ'), render: (r) => <Num className={r.entry_type === 'topup' ? 'text-emerald-300' : ''}>{r.entry_type === 'topup' ? '+' : '−'} {formatMoney(r.amount)}</Num> },
               { key: 'status', label: t('Status', 'الحالة'), render: (r) => <GovStatus status={r.status} /> },
+              {
+                key: 'voucher',
+                label: '',
+                render: (r) =>
+                  ['rejected', 'void'].includes(r.status) ? null : (
+                    <Button size="sm" variant="ghost" onClick={() => printSlip(pettyVoucherSlip(org, r, {
+                      fundTitle: fundTitle(fundMap[r.fund_id], 'en'), holder: people[r.holder_id]?.full_name || '', account: r.account,
+                    }))}>
+                      {t('Voucher', 'سند')}
+                    </Button>
+                  ),
+              },
             ]}
           />
         )}

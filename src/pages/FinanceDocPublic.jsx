@@ -51,12 +51,19 @@ export default function FinanceDocPublic() {
       <div className="mx-auto max-w-[210mm] px-4 py-8 print:py-0">
         <article className="min-h-[297mm] rounded-xl border border-[#E8E1D0] bg-white p-8 shadow-sm print:border-0 print:shadow-none print:rounded-none">
           <header className="border-b border-[#E8E1D0] pb-4 mb-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#C29A3A]">{tx('دار العلوم كاشف الهدى العربية', 'D.U. Kashiful Hudha Arabic College')}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#C29A3A]">{doc.organization?.name_en || tx('دار العلوم كاشف الهدى العربية', 'D.U. Kashiful Hudha Arabic College')}</p>
+            {(doc.organization?.address || doc.organization?.phone) && (
+              <p className="text-xs text-[#60736C]">{[doc.organization.address, doc.organization.phone].filter(Boolean).join(' · ')}</p>
+            )}
             <h1 className="font-serif text-2xl font-semibold text-[#0B3B2E] mt-1 capitalize">{title}</h1>
             <p className="text-sm text-[#60736C] mt-1">
               {tx('الحالة:', 'Status:')} {doc.status}
               {doc.issued_at ? ` · ${tx('صدر في', 'Issued')} ${new Date(doc.issued_at).toLocaleDateString()}` : ''}
+              {doc.valid_until ? ` · ${tx('صالح حتى', 'Valid until')} ${doc.valid_until}` : ''}
             </p>
+            {doc.status === 'void' && (
+              <p className="mt-2 inline-block rounded border-2 border-red-700 px-3 py-1 text-sm font-bold uppercase tracking-widest text-red-700">{tx('ملغى', 'Void')}</p>
+            )}
           </header>
           <div className="grid sm:grid-cols-2 gap-4 text-sm mb-6">
             <div>
@@ -67,6 +74,18 @@ export default function FinanceDocPublic() {
               <p className="text-xs uppercase text-[#60736C]">{tx('الإجمالي', 'Total')}</p>
               <p className="font-semibold">{Number(doc.total || 0).toFixed(2)} {doc.currency || 'LKR'}</p>
             </div>
+            {['bill', 'sale', 'fee_invoice'].includes(doc.doc_type) && (
+              <>
+                <div>
+                  <p className="text-xs uppercase text-[#60736C]">{tx('المدفوع', 'Paid')}</p>
+                  <p className="font-semibold">{Number(doc.paid_amount || 0).toFixed(2)} {doc.currency || 'LKR'}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-[#60736C]">{tx('الرصيد المستحق', 'Balance due')}</p>
+                  <p className="font-semibold">{Number(doc.balance ?? 0).toFixed(2)} {doc.currency || 'LKR'}</p>
+                </div>
+              </>
+            )}
           </div>
           <table className="w-full text-sm mb-6">
             <thead>

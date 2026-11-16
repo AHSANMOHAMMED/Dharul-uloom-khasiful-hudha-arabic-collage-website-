@@ -8,6 +8,7 @@ import { useI18n } from '../../lib/i18n';
 import { formatDate } from '../../lib/format';
 import { colors } from '../../lib/theme';
 import { Screen, Card, Txt, EmptyState, StatusBadge, Row, Button, SectionHeader } from '../../components';
+import { cleanTerm } from '../../lib/finance';
 
 const CASE_TYPES = ['counselling', 'medical', 'financial_aid', 'family', 'other'];
 const STATUSES = ['', 'open', 'in_progress', 'closed'];
@@ -60,7 +61,7 @@ export default function WelfareList() {
           .from('profiles')
           .select('id, full_name, index_number, class_number')
           .eq('account_type', 'student')
-          .or(`full_name.ilike.%${studentSearch.trim()}%,index_number.ilike.%${studentSearch.trim()}%`)
+          .or(`full_name.ilike.%${cleanTerm(studentSearch)}%,index_number.ilike.%${cleanTerm(studentSearch)}%`)
           .limit(15),
       );
       setStudents(data || []);

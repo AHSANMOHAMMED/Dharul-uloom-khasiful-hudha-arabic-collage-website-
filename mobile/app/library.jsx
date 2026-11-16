@@ -8,6 +8,7 @@ import { useAsync } from '../lib/useAsync';
 import { useI18n } from '../lib/i18n';
 import { colors } from '../lib/theme';
 import { Screen, Card, Txt, EmptyState, Row, Button } from '../components';
+import { cleanTerm } from '../lib/finance';
 
 const WEB = process.env.EXPO_PUBLIC_WEB_URL || 'https://dharul-uloom-kashiful-hudha.vercel.app';
 
@@ -56,7 +57,7 @@ export default function LibraryScreen() {
       const { data, error } = await supabase
         .from('books')
         .select('id, title_ar, title_en, language, year, pages, file_path')
-        .or(`title_ar.ilike.%${query.trim()}%,title_en.ilike.%${query.trim()}%`)
+        .or(`title_ar.ilike.%${cleanTerm(query)}%,title_en.ilike.%${cleanTerm(query)}%`)
         .limit(40);
       if (error) throw error;
       return data || [];
@@ -70,7 +71,8 @@ export default function LibraryScreen() {
 
   const openBook = async (b) => {
     if (b.file_path) {
-      const url = b.file_path.startsWith('http') ? b.file_path : `${WEB}/library/${b.id}`;
+      // Only open HTTPS links stored in the DB; anything else goes via the site viewer.
+      const url = /^https:\/\//i.test(b.file_path) ? b.file_path : `${WEB}/library/${b.id}`;
       try {
         await WebBrowser.openBrowserAsync(url);
       } catch {

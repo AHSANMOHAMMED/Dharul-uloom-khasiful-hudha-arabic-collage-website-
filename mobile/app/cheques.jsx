@@ -5,9 +5,10 @@ import { supabase, must } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useAsync } from '../lib/useAsync';
 import { useI18n } from '../lib/i18n';
-import { formatDate } from '../lib/format';
+import { formatDate, toISODate } from '../lib/format';
 import { colors } from '../lib/theme';
 import { Screen, Card, Txt, EmptyState, StatusBadge, Row, Button, SectionHeader } from '../components';
+import { parseAmount } from '../lib/finance';
 
 const inputStyle = {
   borderWidth: 1,
@@ -30,7 +31,7 @@ export default function ChequesScreen() {
   const [bank, setBank] = useState('');
   const [amount, setAmount] = useState('');
   const [party, setParty] = useState('');
-  const [chequeDate, setChequeDate] = useState(new Date().toISOString().slice(0, 10));
+  const [chequeDate, setChequeDate] = useState(toISODate());
   const [purpose, setPurpose] = useState('');
   const [note, setNote] = useState('');
 
@@ -52,7 +53,7 @@ export default function ChequesScreen() {
   const rows = q.data || [];
 
   const save = async () => {
-    const amt = Number(amount);
+    const amt = parseAmount(amount) ?? 0; // rejects negative, Infinity, >2 decimals
     if (!chequeNo.trim() || !party.trim() || !(amt > 0) || !chequeDate) {
       Alert.alert('Cheque', 'Fill cheque no, party, amount and date.');
       return;
@@ -92,7 +93,7 @@ export default function ChequesScreen() {
         supabase.rpc('update_cheque_status', {
           p_cheque: id,
           p_status: status,
-          p_on: new Date().toISOString().slice(0, 10),
+          p_on: toISODate(), // local day; UTC is still yesterday before 05:30 in Sri Lanka
           p_note: note.trim() || null,
         }),
       );
@@ -158,6 +159,10 @@ export default function ChequesScreen() {
                   ) : null}
                   {r.status === 'bounced' ? (
                     <Button title="Re-present" small variant="muted" disabled={busy} onPress={() => setStatus(r.id, 'deposited')} />
+                  ) : null}
+                  {/* A bounced fee cheque whose receipts were reversed is closed here, then the fee is received again. Needs the note as reason. */}
+                  {['pending', 'bounced'].includes(r.status) ? (
+                    <Button title="Cancel" small variant="muted" disabled={busy || !note.trim()} onPress={() => setStatus(r.id, 'cancelled')} />
                   ) : null}
                 </View>
               ) : null}

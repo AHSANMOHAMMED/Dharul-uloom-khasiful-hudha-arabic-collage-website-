@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { generateInvoicesInBatches } from '../lib/erp/rpc';
+import { generateInvoicesInBatches, queryAll } from '../lib/erp/rpc';
 import { toast } from 'react-toastify';
 import KhatamPattern from '../components/KhatamPattern';
 
 import { generateFeeReceipt, exportFeesCSV } from '../lib/exportUtils';
 import { tx } from '../lib/tx';
+import { flushOutbound } from '../lib/notifyApi';
 
 const TreasurerDashboard = () => {
   const { user } = useAuth();
@@ -85,9 +86,10 @@ const TreasurerDashboard = () => {
       setTutors(tutorsData || []);
 
       // Fetch reports summary
-      const { data: feesData } = await supabase
-        .from('student_fees')
-        .select('*, profiles!student_fees_student_id_fkey(full_name, index_number, class_number)');
+      // paged: an unpaged list is cut at the API row cap (1000) → wrong totals
+      const feesData = await queryAll('student_fees', (q) =>
+        q.select('*, profiles!student_fees_student_id_fkey(full_name, index_number, class_number)').order('month').order('id'),
+      );
       
       setAllFeeRows(feesData || []);
       let collected = 0;
@@ -114,6 +116,7 @@ const TreasurerDashboard = () => {
         .select('*')
         .eq('student_id', studentId)
         .eq('month', month)
+        .is('cancelled_at', null) // a cancelled + re-issued month has two rows; maybeSingle() errored
         .maybeSingle();
       
       setSelectedStudentFee(data || null);
@@ -183,6 +186,8 @@ const TreasurerDashboard = () => {
         p_notes: paymentNote || 'Monthly fee payment',
       });
       if (payErr) throw payErr;
+      // Deliver the receipt SMS / e-mail / push now instead of waiting for the scheduler.
+      void flushOutbound(20);
 
       const { data: refreshed } = await supabase.from('student_fees').select('*').eq('id', fee.id).single();
       setSelectedStudentFee(refreshed || fee);

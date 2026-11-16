@@ -5,9 +5,10 @@ import { supabase, must } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useAsync } from '../lib/useAsync';
 import { useI18n } from '../lib/i18n';
-import { formatDate } from '../lib/format';
+import { formatDate, toISODate } from '../lib/format';
 import { colors } from '../lib/theme';
 import { Screen, Card, Txt, EmptyState, StatusBadge, Row, Button, SectionHeader } from '../components';
+import { parseAmount } from '../lib/finance';
 
 const METHODS = ['cash', 'bank_transfer', 'cheque', 'online', 'other'];
 
@@ -24,7 +25,9 @@ export default function ExpensesScreen() {
   const { t } = useI18n();
   const { profile, caps } = useAuth();
   const canView = caps?.isFinanceViewer || profile?.role === 'super_admin' || caps?.isEmployee;
+  // Any employee may submit a claim; only finance staff may pay one (pay_expense enforces the same).
   const canWrite = caps?.isFinanceStaff || caps?.isEmployee || profile?.role === 'super_admin';
+  const canPay = caps?.isFinanceStaff || profile?.role === 'super_admin';
   const canApprove = caps?.isAccountant || caps?.isAdmin || profile?.role === 'super_admin';
   const [tab, setTab] = useState('list');
   const [busy, setBusy] = useState(false);
@@ -48,7 +51,7 @@ export default function ExpensesScreen() {
       must(
         supabase
           .from('accounts')
-          .select('id, code, name_en, name_ar')
+          .select('id, code, name, name_ar')
           .eq('type', 'expense')
           .eq('is_active', true)
           .order('code')
@@ -65,7 +68,7 @@ export default function ExpensesScreen() {
   const accounts = q.data?.accounts || [];
 
   const submit = async () => {
-    const amt = Number(amount);
+    const amt = parseAmount(amount) ?? 0; // rejects negative, Infinity, >2 decimals
     if (!accountId || !payee.trim() || !description.trim() || !(amt > 0)) {
       Alert.alert('Expense', 'Fill account, payee, description and amount.');
       return;
@@ -78,7 +81,7 @@ export default function ExpensesScreen() {
           payee: payee.trim(),
           description: description.trim(),
           amount: Math.round(amt * 100) / 100,
-          expense_date: new Date().toISOString().slice(0, 10),
+          expense_date: toISODate(), // local day (UTC lags Sri Lanka until 05:30)
           reference: reference.trim() || null,
           payment_method: method,
           status: 'submitted',
@@ -136,7 +139,7 @@ export default function ExpensesScreen() {
             {accounts.slice(0, 12).map((a) => (
               <Button
                 key={a.id}
-                title={`${a.code} ${a.name_en || a.name_ar || ''}`.trim()}
+                title={`${a.code} ${a.name || a.name_ar || ''}`.trim()}
                 small
                 variant={accountId === a.id ? 'primary' : 'muted'}
                 onPress={() => setAccountId(a.id)}
@@ -176,7 +179,7 @@ export default function ExpensesScreen() {
                     <Button title="Reject" small variant="danger" disabled={busy} onPress={() => act(r.id, 'reject')} />
                   </>
                 ) : null}
-                {canWrite && r.status === 'approved' ? (
+                {canPay && r.status === 'approved' ? (
                   <Button title="Mark paid" small disabled={busy} onPress={() => act(r.id, 'pay')} />
                 ) : null}
                 {caps?.isAccountant && r.status !== 'void' ? (

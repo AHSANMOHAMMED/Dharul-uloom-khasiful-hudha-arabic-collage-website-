@@ -95,7 +95,10 @@ export async function listClassSchedules(classNumber) {
     .from('class_schedules')
     .select('*, profiles!class_schedules_tutor_id_fkey(full_name)')
     .eq('class_number', classNumber)
-    .order('day_of_week');
+    .order('start_time');
   if (error) return [];
-  return data ?? [];
+  // day_of_week is text: ordering by it in SQL sorts alphabetically (Friday first).
+  const WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  return (data ?? []).slice().sort((a, b) => WEEK.indexOf(a.day_of_week) - WEEK.indexOf(b.day_of_week)
+    || String(a.start_time).localeCompare(String(b.start_time)));
 }

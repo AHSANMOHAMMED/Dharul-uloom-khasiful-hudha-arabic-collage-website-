@@ -49,6 +49,11 @@ export function exportToCSV(data, filename = 'export.csv') {
  * @param {Object} fee      - { month, total_due, paid_amount, status, payments[] }
  * @param {string} receivedBy - Name of treasurer who issued receipt
  */
+// HTML-escape any value interpolated into the printable receipt (stored-XSS guard:
+// the popup shares the app origin, so injected script could read the session).
+const esc = (value) =>
+  String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
 export function generateFeeReceipt(student, fee, receivedBy = 'Treasurer') {
   const remaining = (fee.total_due - fee.paid_amount).toFixed(2);
   const now = new Date();
@@ -61,7 +66,7 @@ export function generateFeeReceipt(student, fee, receivedBy = 'Treasurer') {
         <td>${i + 1}</td>
         <td>${p.date ? new Date(p.date).toLocaleDateString() : '—'}</td>
         <td style="text-align:right;">LKR ${Number(p.amount).toLocaleString('en', { minimumFractionDigits: 2 })}</td>
-        <td>${p.note || '—'}</td>
+        <td>${esc(p.note || '—')}</td>
       </tr>`
     )
     .join('');
@@ -71,7 +76,7 @@ export function generateFeeReceipt(student, fee, receivedBy = 'Treasurer') {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Fee Receipt — ${student.full_name}</title>
+  <title>Fee Receipt — ${esc(student.full_name)}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; padding: 40px; max-width: 700px; margin: 0 auto; }
@@ -126,23 +131,23 @@ export function generateFeeReceipt(student, fee, receivedBy = 'Treasurer') {
     </div>
     <div>
       <div class="meta-label">Student Name</div>
-      <div class="meta-value">${student.full_name}</div>
+      <div class="meta-value">${esc(student.full_name)}</div>
     </div>
     <div>
       <div class="meta-label">Index Number</div>
-      <div class="meta-value" style="font-family:monospace;">${student.index_number || '—'}</div>
+      <div class="meta-value" style="font-family:monospace;">${esc(student.index_number || '—')}</div>
     </div>
     <div>
       <div class="meta-label">Class</div>
-      <div class="meta-value">Class ${student.class_number || '—'}</div>
+      <div class="meta-value">Class ${esc(student.class_number || '—')}</div>
     </div>
     <div>
       <div class="meta-label">Billing Month</div>
-      <div class="meta-value">${fee.month}</div>
+      <div class="meta-value">${esc(fee.month)}</div>
     </div>
   </div>
 
-  <span class="status-badge status-${fee.status}">${fee.status}</span>
+  <span class="status-badge status-${esc(String(fee.status || '').replace(/[^a-z_-]/gi, ''))}">${esc(fee.status)}</span>
 
   ${fee.payments && fee.payments.length > 0 ? `
   <table>
@@ -161,7 +166,7 @@ export function generateFeeReceipt(student, fee, receivedBy = 'Treasurer') {
   <div class="footer">
     <div class="signature-box">
       <div class="signature-line"></div>
-      <div><strong>${receivedBy}</strong></div>
+      <div><strong>${esc(receivedBy)}</strong></div>
       <div style="color:#aaa;">Treasurer / Finance Officer</div>
     </div>
     <div style="text-align:right;max-width:200px;">

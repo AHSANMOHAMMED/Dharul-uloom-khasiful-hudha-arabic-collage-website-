@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
 
   // 1. dictionary
   const { data: dict, error: dictErr } = await admin.rpc('lookup_arabic_word', { p_word: word, p_limit: 8 });
-  if (dictErr) return json({ error: dictErr.message }, 500);
+  if (dictErr) { console.error('[translate-word] lookup', dictErr); return json({ error: 'Dictionary unavailable' }, 500); }
   if (dict?.results?.length) return json({ ...dict, from: 'dictionary', ms: Date.now() - started });
 
   // 2. model fallback — signed-in users only
@@ -76,6 +76,14 @@ Deno.serve(async (req) => {
   const { data: auth } = jwt ? await admin.auth.getUser(jwt) : { data: { user: null } };
   if (!auth?.user) {
     return json({ ...dict, from: 'dictionary', ms: Date.now() - started, note: 'Sign in for AI-assisted meanings' });
+  }
+  // Paid model call: approved accounts only, per-user hourly/daily quota.
+  const { data: allowed, error: quotaErr } = await admin.rpc('consume_ai_quota', {
+    p_user: auth.user.id, p_feature: 'translate-word',
+  });
+  if (quotaErr || !allowed) {
+    return json({ ...dict, from: 'dictionary', ms: Date.now() - started,
+                  note: 'AI translation limit reached — try again later' }, quotaErr ? 200 : 429);
   }
 
   const client = new Anthropic({ apiKey, timeout: 8000, maxRetries: 0 });

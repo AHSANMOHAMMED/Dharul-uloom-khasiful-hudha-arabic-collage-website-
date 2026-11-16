@@ -105,7 +105,7 @@ const StudentLmsPanel = () => {
                   <span className="font-bold text-sm text-[#0B3B2E] block">{m.title}</span>
                   <span className="text-[10px] text-[#4A5E56]">{m.subject}</span>
                 </div>
-                {m.link_url && (
+                {/^https?:\/\//i.test(m.link_url || '') && (
                   <a
                     href={m.link_url}
                     target="_blank"

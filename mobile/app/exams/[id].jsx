@@ -5,9 +5,11 @@ import { supabase, must } from '../../lib/supabase';
 import { useAsync } from '../../lib/useAsync';
 import { useI18n } from '../../lib/i18n';
 import { Screen, Card, Txt, EmptyState, Row, Button, Field } from '../../components';
+import { useAuth } from '../../lib/auth';
+import { Redirect } from 'expo-router';
 
 /** Lite marks entry via student_results upsert. */
-export default function ExamMarksLite() {
+function ExamMarksLite() {
   const { id } = useLocalSearchParams();
   const { t } = useI18n();
   const [paperId, setPaperId] = useState('');
@@ -116,4 +118,13 @@ export default function ExamMarksLite() {
       ) : null}
     </Screen>
   );
+}
+
+// Role gate: deep links (kashifulhudha://...) must not open this screen for
+// users without the matching role. RLS still enforces access server-side.
+export default function GuardedExamMarksLite() {
+  const { profile, caps } = useAuth();
+  if (!profile) return null;
+  if (!(caps?.isAcademicAdmin || caps?.isEmployee || profile.role === 'super_admin')) return <Redirect href="/" />;
+  return <ExamMarksLite />;
 }

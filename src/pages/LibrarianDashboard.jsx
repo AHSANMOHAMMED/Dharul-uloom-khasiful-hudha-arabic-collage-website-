@@ -11,6 +11,7 @@ import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
 import { ROLE_BADGE } from '../lib/roleTheme';
+import { assertSafeImage } from '../lib/contentApi';
 
 const emptyForm = {
   shamela_id: '',
@@ -89,12 +90,13 @@ const LibrarianDashboard = () => {
     if (!coverFile) return null;
     setCoverUploading(true);
     try {
-      const extension = coverFile.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const safeName = `${Date.now()}_${form.shamela_id || 'cover'}.${extension}`;
+      const extension = assertSafeImage(coverFile);
+      const safeName = `${Date.now()}_${String(form.shamela_id || 'cover').replace(/[^a-z0-9_-]/gi, '')}.${extension}`;
       const storagePath = `book-covers/${safeName}`;
       const { error: uploadError } = await supabase.storage.from('covers').upload(storagePath, coverFile, {
         cacheControl: '3600',
-        upsert: true,
+        upsert: false,
+        contentType: coverFile.type,
       });
       if (uploadError) throw uploadError;
 

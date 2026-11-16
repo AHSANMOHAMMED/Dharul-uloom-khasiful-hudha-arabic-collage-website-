@@ -6,6 +6,8 @@ import { useAsync } from '../../lib/useAsync';
 import { useI18n } from '../../lib/i18n';
 import { formatDate } from '../../lib/format';
 import { Screen, Card, Txt, EmptyState, StatusBadge, Row, Button } from '../../components';
+import { useAuth } from '../../lib/auth';
+import { Redirect } from 'expo-router';
 
 const STAGES = ['lead', 'submitted', 'interview', 'accepted', 'enrolled', 'rejected'];
 const STAGE_STATUS = {
@@ -17,7 +19,7 @@ const STAGE_STATUS = {
   rejected: 'rejected',
 };
 
-export default function AdmissionDetail() {
+function AdmissionDetail() {
   const { id } = useLocalSearchParams();
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);
@@ -35,7 +37,9 @@ export default function AdmissionDetail() {
   const r = q.data;
 
   const setStage = async (next) => {
-    if (!r) return;
+    // "enrolled" is only reachable through the enrolment flow (enroll_admission
+    // assigns the index number and parent invite); an enrolled lead is final.
+    if (!r || next === r.pipeline_stage || next === 'enrolled' || r.pipeline_stage === 'enrolled') return;
     setBusy(true);
     try {
       await must(
@@ -48,6 +52,10 @@ export default function AdmissionDetail() {
           })
           .eq('id', r.id),
       );
+      // same audit trail the web CRM writes
+      await supabase
+        .from('admission_status_history')
+        .insert({ admission_id: r.id, from_stage: r.pipeline_stage || 'submitted', to_stage: next });
       q.reload();
     } catch (e) {
       Alert.alert(t('common.error'), e.message);
@@ -78,12 +86,13 @@ export default function AdmissionDetail() {
           <Card>
             <Txt variant="h2">{t('admissions.changeStage') || 'Change stage'}</Txt>
             <Row style={{ flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-              {STAGES.map((s) => (
+              {STAGES.filter((s) => s !== 'enrolled').map((s) => (
                 <Button
                   key={s}
                   title={s}
                   small
                   loading={busy}
+                  disabled={busy || r.pipeline_stage === 'enrolled'}
                   variant={r.pipeline_stage === s ? 'primary' : 'muted'}
                   onPress={() => setStage(s)}
                 />
@@ -94,4 +103,13 @@ export default function AdmissionDetail() {
       ) : null}
     </Screen>
   );
+}
+
+// Role gate: deep links (kashifulhudha://...) must not open this screen for
+// users without the matching role. RLS still enforces access server-side.
+export default function GuardedAdmissionDetail() {
+  const { profile, caps } = useAuth();
+  if (!profile) return null;
+  if (!(caps?.isAdmissions || profile.role === 'super_admin')) return <Redirect href="/" />;
+  return <AdmissionDetail />;
 }

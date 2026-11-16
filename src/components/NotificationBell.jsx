@@ -23,6 +23,7 @@ export default function NotificationBell() {
     notify_whatsapp: true,
     notify_push: true,
     notify_email: true,
+    notify_broadcast_channels: false,
   });
 
   const load = async () => {
@@ -99,7 +100,7 @@ export default function NotificationBell() {
       if (!user) return;
       const { data } = await supabase
         .from('profiles')
-        .select('notify_sms, notify_whatsapp, notify_push, notify_email')
+        .select('notify_sms, notify_whatsapp, notify_push, notify_email, notify_broadcast_channels')
         .eq('id', user.id)
         .maybeSingle();
       if (data) setPrefs(data);
@@ -116,7 +117,9 @@ export default function NotificationBell() {
       await markNotificationRead(n.id);
     }
     // Backend notifications carry an in-app deep link (e.g. /erp?module=tasks).
-    if (typeof n.link === 'string' && n.link.startsWith('/') && !n.link.startsWith('//')) {
+    // '/notifications' (broadcasts) is the mobile inbox; on the web this list is the inbox.
+    if (typeof n.link === 'string' && n.link.startsWith('/') && !n.link.startsWith('//')
+        && n.link !== '/notifications') {
       setOpen(false);
       // Legacy fee reminders used /fees; dashboards expect ?tab=fees.
       const href = n.link === '/fees' || n.link.startsWith('/fees?')

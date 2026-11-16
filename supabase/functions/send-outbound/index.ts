@@ -19,7 +19,7 @@
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { callerIsEmployee } from '../_shared/authz.ts';
 import { base64, buildReceiptPdf } from '../_shared/receiptPdf.ts';
-import { normalizeLkPhone } from '../_shared/phone.ts';
+import { isDialable, normalizeLkPhone } from '../_shared/phone.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -60,7 +60,7 @@ async function smsNotifyLk(to: string, body: string, sender: string): Promise<Re
 
 async function smsTextLk(to: string, body: string, sender: string): Promise<Result> {
   const token = Deno.env.get('TEXTLK_API_TOKEN');
-  if (!token) return { ok: false, blocked: true, error: 'Text.lk not configured' };
+  if (!token || !sender) return { ok: false, blocked: true, error: 'Text.lk needs TEXTLK_API_TOKEN and an approved sender ID (SMS_SENDER_ID)' };
   const res = await timedFetch('https://app.text.lk/api/v3/sms/send', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -88,6 +88,7 @@ async function smsTwilio(to: string, body: string, sender: string): Promise<Resu
 }
 
 function sendSms(to: string, body: string, sender: string): Promise<Result> {
+  if (!isDialable(normalizeLkPhone(to))) return Promise.resolve({ ok: false, skipped: true, error: 'invalid phone number' });
   const provider = (Deno.env.get('SMS_PROVIDER') || 'twilio').toLowerCase();
   if (provider === 'notifylk') return smsNotifyLk(to, body, sender);
   if (provider === 'textlk') return smsTextLk(to, body, sender);
@@ -99,6 +100,7 @@ async function sendWhatsApp(to: string, label: string, appLink: string): Promise
   const token = Deno.env.get('TWILIO_AUTH_TOKEN');
   const from = Deno.env.get('WHATSAPP_FROM') || Deno.env.get('TWILIO_WHATSAPP_FROM');
   const contentSid = Deno.env.get('WHATSAPP_CONTENT_SID');
+  if (!to.startsWith('whatsapp:') && !isDialable(normalizeLkPhone(to))) return { ok: false, skipped: true, error: 'invalid phone number' };
   if (!sid || !token || !from || !contentSid || !appLink) {
     return { ok: false, blocked: true, error: 'WhatsApp needs Twilio credentials, sender, SITE_URL, and an approved content template' };
   }
@@ -175,9 +177,13 @@ async function reconcileExpoReceipts(admin: SupabaseClient<any, 'public', any>) 
     .limit(100);
   if (error || !rows?.length) return;
 
+  // Projects with "enhanced push security" need the access token here too.
+  const receiptHeaders: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'application/json' };
+  const accessToken = Deno.env.get('EXPO_ACCESS_TOKEN');
+  if (accessToken) receiptHeaders.Authorization = `Bearer ${accessToken}`;
   const response = await timedFetch('https://exp.host/--/api/v2/push/getReceipts', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: receiptHeaders,
     body: JSON.stringify({ ids: rows.map((row) => row.provider_id) }),
   });
   if (!response.ok) return;
@@ -237,7 +243,7 @@ Deno.serve(async (req) => {
         ? admin.rpc('claim_org_outbox_batch', { p_requester: requesterId, p_limit: limit })
         : Promise.resolve({ data: [], error: null });
   const { data: rows, error } = await claim;
-  if (error) return json({ error: error.message }, 500);
+  if (error) { console.error('[send-outbound] claim', error); return json({ error: 'Could not claim messages' }, 500); }
   if (!rows?.length) return json({ accepted: 0, status: 'no eligible messages' });
 
   // per-org SMS sender mask
@@ -245,7 +251,9 @@ Deno.serve(async (req) => {
   const senders: Record<string, string> = {};
   if (orgIds.length) {
     const { data: orgs } = await admin.from('organizations').select('id, code, settings').in('id', orgIds);
-    for (const o of orgs || []) senders[o.id] = o.settings?.sms_sender_id || Deno.env.get('SMS_SENDER_ID') || o.code || '';
+    // Only an approved mask: the org code is not a registered sender ID (it
+    // made Twilio ignore TWILIO_FROM_NUMBER and Notify.lk/Text.lk reject it).
+    for (const o of orgs || []) senders[o.id] = o.settings?.sms_sender_id || Deno.env.get('SMS_SENDER_ID') || '';
   }
 
   const pdfCache = new Map<string, { filename: string; content: string } | null>();

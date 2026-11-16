@@ -10,7 +10,7 @@ export default function Payslips() {
   const money = useMoney();
   const { user } = useAuth();
   const q = useAsync(
-    () => must(supabase.from('payslips').select('id, period, gross, net, status, paid_at').eq('staff_id', user.id).order('period', { ascending: false })),
+    () => must(supabase.from('payslips').select('id, period, gross, net, status, paid_at').eq('staff_id', user.id).in('status', ['approved', 'paid']).order('period', { ascending: false })),
     [user?.id],
   );
   const rows = q.data || [];

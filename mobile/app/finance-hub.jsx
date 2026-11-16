@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { colors } from '../lib/theme';
 import { Button, Card, EmptyState, ErrorBanner, Loading, Screen, SectionHeader } from '../components';
+import { parseAmount, parseQty } from '../lib/finance';
 
 const WEB = process.env.EXPO_PUBLIC_WEB_URL || 'https://dharul-uloom-kashiful-hudha.vercel.app';
 
@@ -20,7 +21,6 @@ const DOC_TYPES = [
 function publicPath(doc) {
   if (!doc?.public_token) return null;
   if (doc.doc_type === 'quotation') return `/q/${doc.public_token}`;
-  if (doc.doc_type === 'receipt') return `/r/${doc.public_token}`;
   return `/b/${doc.public_token}`;
 }
 
@@ -77,6 +77,12 @@ export default function FinanceHubMobile() {
 
   const createDoc = async (issueAfter = false) => {
     if (!partyName.trim()) return;
+    const unitAmount = parseAmount(amount);
+    const quantity = parseQty(qty || '1');
+    if (unitAmount == null || quantity == null) {
+      setError('Enter a positive amount (max 2 decimals) and a whole-number quantity.');
+      return;
+    }
     setBusy(true);
     setError('');
     try {
@@ -91,8 +97,8 @@ export default function FinanceHubMobile() {
         p_lines: [{
           line_type: typeMeta.line,
           description: description.trim() || typeMeta.label,
-          qty: Number(qty) || 1,
-          unit_amount: Number(amount) || 0,
+          qty: quantity,
+          unit_amount: unitAmount,
         }],
       });
       if (err) throw err;
@@ -119,7 +125,8 @@ export default function FinanceHubMobile() {
     setBusy(true);
     setError('');
     try {
-      const month = new Date().toISOString().slice(0, 7);
+      // billing month in Sri Lanka time (UTC can still be last month)
+      const month = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Colombo', year: 'numeric', month: '2-digit' }).format(new Date()).slice(0, 7);
       const { error: err } = await supabase.rpc('create_billing_job', {
         p_kind: kind,
         p_month: kind === 'monthly_fees' ? month : null,
@@ -216,8 +223,6 @@ export default function FinanceHubMobile() {
             {canWrite ? (
               <View style={{ gap: 8, marginBottom: 12 }}>
                 <Button title="Run monthly fee job" disabled={busy} onPress={() => runJob('monthly_fees')} />
-                <Button title="Log donation drive" variant="muted" disabled={busy} onPress={() => runJob('donation_drive')} />
-                <Button title="Log quotation batch" variant="muted" disabled={busy} onPress={() => runJob('quotation_batch')} />
               </View>
             ) : null}
             {!jobs.length ? <EmptyState message="No jobs yet" /> : jobs.map((j) => (

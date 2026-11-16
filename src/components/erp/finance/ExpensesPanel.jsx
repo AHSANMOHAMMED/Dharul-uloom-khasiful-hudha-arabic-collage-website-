@@ -13,10 +13,14 @@ import {
   profilesMap,
   runAction,
   toOptions,
+  useOrg,
 } from '../../../lib/erp/financeApi';
 import { ConfirmModal, DateRange, FilterBar, Num } from './shared';
 import { dutyName, listAssignments, listDutyRoles } from '../../../lib/erp/governanceApi';
 import { useUrlState } from '../../../lib/useTabParam';
+import { SlipPrinterButton } from './SlipPrinter';
+import { printSlip } from '../../../lib/slip/slipRender';
+import { expenseVoucherSlip } from '../../../lib/slip/slipModels';
 
 const STATUS_TONE = { submitted: 'amber', draft: 'amber', approved: 'blue', paid: 'green', rejected: 'red', void: 'red' };
 
@@ -138,8 +142,10 @@ function PayModal({ expense, onClose, onPaid }) {
   const [reference, setReference] = useState('');
   const [busy, setBusy] = useState(false);
   const [accounts] = useAsync(() => listCashBankAccounts(), []);
-  const options = (accounts.data || []).length
-    ? accounts.data.map((a) => ({ value: a.code, label: accountLabel(a, ar) }))
+  // 1050 Petty Cash is spent only through the petty cash fund (the server refuses it here).
+  const payable = (accounts.data || []).filter((a) => a.code !== '1050');
+  const options = payable.length
+    ? payable.map((a) => ({ value: a.code, label: accountLabel(a, ar) }))
     : [
         { value: '1000', label: t('1000 · Cash in Hand', '1000 · النقد في الصندوق') },
         { value: '1010', label: t('1010 · Bank - Current Account', '1010 · الحساب البنكي الجاري') },
@@ -189,6 +195,7 @@ export default function ExpensesPanel() {
   const { t, ar, lang } = useLang();
   const { user, isAdmin, isAccountant, isPrincipal, isFinanceStaff, isFinanceViewer } = useAuth();
   const canApprove = isAccountant || isPrincipal;
+  const org = useOrg(user?.orgId);
   // In the URL (?scope=) so Back/Forward and links reach this tab.
   const [scope, setScope] = useUrlState('scope', isFinanceViewer ? 'all' : 'mine');
   const [filters, setFilters] = useState({ status: '', from: '', to: '' });
@@ -235,6 +242,7 @@ export default function ExpensesPanel() {
       <Card
         actions={
           <>
+            {isFinanceViewer && <SlipPrinterButton org={org} />}
             <Button size="sm" variant="secondary" disabled={!state.data?.rows.length} onClick={() => downloadCsv('expenses.csv', (state.data?.rows || []).map(({ account, duty, ...r }) => ({ ...r, account: account?.code, duty: duty?.name_en || '' })))}>
               {t('Export CSV', 'تصدير CSV')}
             </Button>
@@ -327,6 +335,11 @@ export default function ExpensesPanel() {
                             {e.status === 'approved' && isFinanceStaff && (
                               <Button size="sm" onClick={() => setPaying(e)}>
                                 {t('Pay', 'دفع')}
+                              </Button>
+                            )}
+                            {isFinanceViewer && ['approved', 'paid'].includes(e.status) && (
+                              <Button size="sm" variant="ghost" onClick={() => printSlip(expenseVoucherSlip(org, e, people))}>
+                                {t('Voucher', 'سند صرف')}
                               </Button>
                             )}
                             {isAccountant && !['void', 'rejected'].includes(e.status) && (

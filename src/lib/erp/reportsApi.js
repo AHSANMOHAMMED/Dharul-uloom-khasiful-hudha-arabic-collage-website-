@@ -26,8 +26,11 @@ export async function rpcJson(name, params = {}) {
   return data;
 }
 
-const monthStr = (d) => d.toISOString().slice(0, 7);
-const dayStr = (d) => d.toISOString().slice(0, 10);
+// Local calendar date: toISOString() shifts local midnight (e.g. the 1st of the
+// month in Sri Lanka, UTC+5:30) back to the previous day.
+const pad2 = (n) => String(n).padStart(2, '0');
+const dayStr = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const monthStr = (d) => dayStr(d).slice(0, 7);
 
 /**
  * Report catalogue. Labels are [English, Arabic] pairs; the panel translates

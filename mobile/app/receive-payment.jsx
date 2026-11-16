@@ -8,7 +8,9 @@ import { useI18n } from '../lib/i18n';
 import { useLiveReload } from '../lib/live';
 import { formatDate } from '../lib/format';
 import { PAYMENT_METHODS, methodLabel } from '../lib/receipts';
+import { flushOutbound } from '../lib/finance';
 import { colors } from '../lib/theme';
+import { parseAmount } from '../lib/finance';
 import {
   Screen, Card, Txt, Button, Field, Chips, ListItem, EmptyState, Badge, Money, useMoney, SectionHeader, Row, KeyValue, Loading, LiveIndicator,
 } from '../components';
@@ -109,7 +111,8 @@ export default function ReceivePayment() {
   const arrears = arrearsQ.data || {};
   const months = arrears.months || [];
   const total = round2(arrears.total);
-  const amountNum = round2(String(amount).replace(/,/g, ''));
+  // strict parse: '100.555' / '1.2.3' are rejected instead of silently rounded / NaN
+  const amountNum = parseAmount(amount) ?? 0;
   const needsReference = method !== 'cash';
 
   const validate = () => {
@@ -137,6 +140,8 @@ export default function ReceivePayment() {
           p_idempotency_key: idemKey,
         }),
       );
+      // Deliver the receipt SMS / e-mail / push now instead of waiting for the scheduler.
+      flushOutbound(20);
       if (receipt?.id) router.replace(`/receipt/${receipt.id}`);
       else Alert.alert(t('common.success'), t('counter.recorded'));
     } catch (e) {

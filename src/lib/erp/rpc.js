@@ -84,12 +84,26 @@ export async function deleteRow(table, id, idColumn = 'id') {
   return query(table, (q) => q.delete().eq(idColumn, id));
 }
 
+/**
+ * Calendar date (YYYY-MM-DD) in the institution's time zone. toISOString() is
+ * UTC, which is still "yesterday" in Sri Lanka until 05:30 — attendance and
+ * "this month" defaults must use the local calendar day.
+ */
+export function localIsoDate(d = new Date(), timeZone = 'Asia/Colombo') {
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  } catch {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+}
+
 export function currentMonth() {
-  return new Date().toISOString().slice(0, 7);
+  return localIsoDate().slice(0, 7);
 }
 
 export function today() {
-  return new Date().toISOString().slice(0, 10);
+  return localIsoDate();
 }
 
 export function formatMoney(value, currency = 'LKR') {

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabaseClient';
+import { queryAll } from '../lib/erp/rpc';
 import { exportFeesCSV, exportResultsCSV } from '../lib/exportUtils';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -148,7 +149,11 @@ const AnalyticsDashboard = () => {
         { data: attendance },
         { data: profiles },
       ] = await Promise.all([
-        supabase.from('student_fees').select('*, profiles!student_fees_student_id_fkey(full_name, index_number, class_number)').order('month'),
+        // paged: an unpaged list is cut at the API row cap (1000), which made the
+        // fee KPIs and the month chart show only the oldest invoices
+        queryAll('student_fees', (q) =>
+          q.select('*, profiles!student_fees_student_id_fkey(full_name, index_number, class_number)').order('month').order('id'),
+        ).then((data) => ({ data }), (error) => ({ data: null, error })),
         supabase.from('student_results').select('*, profiles!student_results_student_id_fkey(full_name, class_number)').order('created_at'),
         supabase.from('attendance').select('student_id, date, status, profiles!attendance_student_id_fkey(class_number)').order('date'),
         supabase.from('profiles').select('id, account_type, is_approved, class_number, created_at').eq('is_approved', true),

@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { AsyncView, Button, Card, Field, Input, Stat, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
-import { query, rpc, formatDate } from '../../../lib/erp/rpc';
+import { query, rpc, formatDate, today } from '../../../lib/erp/rpc';
 import { invalidateOrg, runAction } from '../../../lib/erp/financeApi';
 import { ConfirmModal } from './shared';
+
+// The server refuses lock dates after today (a future date would block every
+// receipt and expense from today on).
 
 export default function AcctPeriodLock() {
   const { t } = useLang();
@@ -44,9 +47,9 @@ export default function AcctPeriodLock() {
             {isAccountant ? (
               <div className="flex flex-wrap items-end gap-3">
                 <Field label={t('Lock books up to and including', 'إقفال الدفاتر حتى تاريخ (شاملًا)')}>
-                  <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+                  <Input type="date" max={today()} value={newDate} onChange={(e) => setNewDate(e.target.value)} />
                 </Field>
-                <Button onClick={() => setConfirm('set')} disabled={!newDate}>
+                <Button onClick={() => setConfirm('set')} disabled={!newDate || newDate > today()}>
                   {t('Set lock date', 'تعيين تاريخ الإقفال')}
                 </Button>
                 {org?.books_locked_until && (

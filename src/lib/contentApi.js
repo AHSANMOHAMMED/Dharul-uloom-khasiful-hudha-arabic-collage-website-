@@ -225,20 +225,32 @@ export function resolveGalleryUrl(path) {
   return data?.publicUrl ?? null;
 }
 
+const IMAGE_TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+/** Validate an image before it goes to a public bucket; returns the safe extension. */
+export function assertSafeImage(file, maxBytes = MAX_IMAGE_BYTES) {
+  const ext = IMAGE_TYPES[file?.type];
+  if (!ext) throw new Error('Only PNG, JPEG, WebP or GIF images are allowed.');
+  if (file.size > maxBytes) throw new Error(`Image must be under ${Math.round(maxBytes / 1024 / 1024)} MB.`);
+  return ext;
+}
+
 export async function uploadContentImage(file, folder = 'misc') {
   if (!isSupabaseConfigured || !file) return null;
-  const ext = file.name.split('.').pop() || 'jpg';
-  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const { error } = await supabase.storage.from(CONTENT_BUCKET).upload(path, file, { upsert: false });
+  const ext = assertSafeImage(file);
+  const safeFolder = String(folder).replace(/[^a-z0-9_-]/gi, '') || 'misc';
+  const path = `${safeFolder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabase.storage.from(CONTENT_BUCKET).upload(path, file, { upsert: false, contentType: file.type });
   if (error) throw error;
   return path;
 }
 
 export async function uploadGalleryImage(file) {
   if (!isSupabaseConfigured || !file) return null;
-  const ext = file.name.split('.').pop() || 'jpg';
+  const ext = assertSafeImage(file);
   const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const { error } = await supabase.storage.from(GALLERY_BUCKET).upload(path, file, { upsert: false });
+  const { error } = await supabase.storage.from(GALLERY_BUCKET).upload(path, file, { upsert: false, contentType: file.type });
   if (error) throw error;
   return path;
 }
