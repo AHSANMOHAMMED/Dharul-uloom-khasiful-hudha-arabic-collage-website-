@@ -57,7 +57,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.3.0",
     "autoprefixer": "^10.4.16",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.10",
     "eslint": "^8.55.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^7.0.1",
