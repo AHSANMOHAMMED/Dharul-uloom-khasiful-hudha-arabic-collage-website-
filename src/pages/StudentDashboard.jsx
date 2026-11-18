@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useTabParam } from '../lib/useTabParam';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
@@ -19,7 +19,7 @@ import { tx } from '../lib/tx';
 const STUDENT_TABS = ['overview', 'attendance', 'results', 'fees', 'lms', 'query'];
 
 export default function StudentDashboard() {
-  const { user } = useAuth();
+  const { user, isStudent, loading: authLoading } = useAuth();
   useTranslation();
   // Section lives in ?tab= so Back/Forward, refresh and links work.
   const [activeTab, selectTab] = useTabParam(STUDENT_TABS, 'overview');
@@ -32,6 +32,9 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [queryText, setQueryText] = useState('');
   const [querySuccess, setQuerySuccess] = useState(false);
+  const [appealFor, setAppealFor] = useState(null);
+  const [appealReason, setAppealReason] = useState('');
+  const [appealBusy, setAppealBusy] = useState(false);
 
   useEffect(() => {
     fetchStudentData();
@@ -179,16 +182,28 @@ export default function StudentDashboard() {
             <th className="py-2.5 px-3">{tx('الفصل', 'Exam Term')}</th>
             <th className="py-2.5 px-3 text-right">{tx('الدرجة', 'Marks')}</th>
             <th className="py-2.5 px-3 text-center">{tx('التقدير', 'Grade')}</th>
+            <th className="py-2.5 px-3 text-center">{tx('طعن', 'Appeal')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-sand-border/60">
           {results.map((r, i) => (
             <tr key={r.id || i} className="hover:bg-parchment-50/50">
-              <td className="py-2.5 px-3 font-medium text-ink-text-primary">{r.subject}</td>
-              <td className="py-2.5 px-3 text-ink-text-muted">{r.exam_name}</td>
-              <td className="py-2.5 px-3 text-right font-mono font-semibold text-ink-green-900 tabular-nums">{r.marks ?? '-'}</td>
+              <td className="py-2.5 px-3 font-medium text-ink-text-primary">{r.subject || r.exams?.name}</td>
+              <td className="py-2.5 px-3 text-ink-text-muted">{r.exam_name || r.exams?.name}</td>
+              <td className="py-2.5 px-3 text-right font-mono font-semibold text-ink-green-900 tabular-nums">{r.marks_obtained ?? r.marks ?? '-'}</td>
               <td className="py-2.5 px-3 text-center">
                 <span className="px-2 py-0.5 rounded-full bg-mint-wash-100 text-emerald-700 font-semibold text-[11px]">{r.grade || 'Pass'}</span>
+              </td>
+              <td className="py-2.5 px-3 text-center">
+                {r.id ? (
+                  <button
+                    type="button"
+                    className="text-[11px] font-semibold text-emerald-700 underline"
+                    onClick={() => { setAppealFor(r); setAppealReason(''); }}
+                  >
+                    {tx('تقديم طعن', 'File appeal')}
+                  </button>
+                ) : null}
               </td>
             </tr>
           ))}
@@ -196,6 +211,32 @@ export default function StudentDashboard() {
       </table>
     </div>
   );
+
+  const submitAppeal = async () => {
+    if (!appealFor?.id || !appealReason.trim()) return;
+    setAppealBusy(true);
+    try {
+      await rpc('file_result_appeal', { p_result: appealFor.id, p_reason: appealReason.trim() });
+      toast.success(tx('تم تقديم الطعن للمراجعة', 'Appeal filed for review'));
+      setAppealFor(null);
+      setAppealReason('');
+    } catch (e) {
+      toast.error(e.message || tx('تعذر تقديم الطعن', 'Could not file appeal'));
+    } finally {
+      setAppealBusy(false);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-parchment-50">
+        <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!isStudent) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <DashboardSidebarLayout
@@ -342,11 +383,33 @@ export default function StudentDashboard() {
 
         {activeTab === 'results' && (
           <PortalTabChrome title_en="Assessment Marks" title_ar="الدرجات والتقييم" onBack={() => selectTab('overview')}>
-            <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript">
+            <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-4">
               {results.length === 0 ? (
                 <p className="text-xs text-ink-text-muted py-6 text-center">{tx('لم تُنشر أي درجات لهذا الفصل حتى الآن.', 'No examination records published for this academic term yet.')}</p>
               ) : (
                 resultsTable
+              )}
+              {appealFor && (
+                <div className="rounded-[12px] border border-emerald-700/30 bg-mint-wash-100/50 p-4 space-y-3">
+                  <p className="text-sm font-semibold text-ink-green-900">
+                    {tx('طعن في النتيجة', 'Appeal result')}: {appealFor.subject || appealFor.exam_name || '—'}
+                  </p>
+                  <textarea
+                    className="w-full rounded-lg border border-sand-border p-2 text-sm"
+                    rows={3}
+                    value={appealReason}
+                    onChange={(e) => setAppealReason(e.target.value)}
+                    placeholder={tx('سبب الطعن (مطلوب)', 'Reason for appeal (required)')}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" disabled={appealBusy || !appealReason.trim()} onClick={submitAppeal} className="px-4 py-2 rounded-[10px] bg-emerald-700 text-white text-sm font-semibold disabled:opacity-50">
+                      {tx('إرسال', 'Submit')}
+                    </button>
+                    <button type="button" onClick={() => setAppealFor(null)} className="px-4 py-2 text-sm text-ink-text-muted">
+                      {tx('إلغاء', 'Cancel')}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </PortalTabChrome>

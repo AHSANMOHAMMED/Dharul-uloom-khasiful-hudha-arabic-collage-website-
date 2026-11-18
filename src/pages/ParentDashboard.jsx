@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import PayFeeButton from '../components/PayFeeButton';
@@ -16,14 +18,25 @@ import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 
 const PARENT_TABS = ['overview', 'attendance', 'results', 'leaves', 'fees', 'link'];
+const DEFAULT_PERMS = { fees: true, results: true, attendance: true, leave: true };
+
+function guardianMay(child, key) {
+  const p = child?.permissions && typeof child.permissions === 'object' ? child.permissions : DEFAULT_PERMS;
+  const v = p[key];
+  if (v === undefined || v === null) return true;
+  return v === true || v === 'true';
+}
 
 export default function ParentDashboard() {
-  const { user } = useAuth();
+  const { user, isParent, loading: authLoading } = useAuth();
   const { i18n } = useTranslation();
   // Section lives in ?tab= so Back/Forward, refresh and links work.
   const [activeTab, setActiveTab] = useTabParam(PARENT_TABS, 'overview');
   const [children, setChildren] = useState([]);
   const [selectedChild, setSelectedChild] = useState(null);
+  const [appealFor, setAppealFor] = useState(null);
+  const [appealReason, setAppealReason] = useState('');
+  const [appealBusy, setAppealBusy] = useState(false);
   
   // Data for selected child
   const [attendance, setAttendance] = useState([]);
@@ -73,13 +86,15 @@ export default function ParentDashboard() {
       setLoading(true);
       const { data, error } = await supabase
         .from('parent_children')
-        .select('child_id, status, profiles!parent_children_child_id_fkey(id, full_name, index_number, class_number)')
+        .select('child_id, status, permissions, profiles!parent_children_child_id_fkey(id, full_name, index_number, class_number)')
         .eq('parent_id', user.id)
         .eq('status', 'active');
 
       if (error) throw error;
       
-      const mappedChildren = (data || []).map(row => row.profiles).filter(Boolean);
+      const mappedChildren = (data || [])
+        .map((row) => (row.profiles ? { ...row.profiles, permissions: row.permissions || DEFAULT_PERMS } : null))
+        .filter(Boolean);
       setChildren(mappedChildren);
       setActivationEvents(await listActivationEventsForChildren(mappedChildren.map((c) => c.id)));
 
@@ -249,14 +264,30 @@ export default function ParentDashboard() {
   const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 100;
   const showAttendanceWarning = attendanceRate < 85 && totalDays > 3;
 
-  const navItems = [
-    { id: 'overview', label_en: 'Family Overview', label_ar: 'نظرة عامة', icon: 'family_restroom' },
-    { id: 'attendance', label_en: 'Halaqah Presence', label_ar: 'سجل الحضور', icon: 'event_available' },
-    { id: 'results', label_en: 'Academic Marksheet', label_ar: 'الشهادات والدرجات', icon: 'history_edu', badge: results.length },
-    { id: 'leaves', label_en: 'Leave Exeats', label_ar: 'أذونات الإجازة', icon: 'time_to_leave', badge: leaves.length },
-    { id: 'fees', label_en: 'Tuition Ledgers', label_ar: 'الرسوم المدرسية', icon: 'payments' },
-    { id: 'link', label_en: 'Link Ward', label_ar: 'ربط طالب', icon: 'person_add' },
-  ];
+  const navItems = useMemo(() => {
+    const items = [
+      { id: 'overview', label_en: 'Family Overview', label_ar: 'نظرة عامة', icon: 'family_restroom' },
+      guardianMay(selectedChild, 'attendance') && {
+        id: 'attendance', label_en: 'Halaqah Presence', label_ar: 'سجل الحضور', icon: 'event_available',
+      },
+      guardianMay(selectedChild, 'results') && {
+        id: 'results', label_en: 'Academic Marksheet', label_ar: 'الشهادات والدرجات', icon: 'history_edu', badge: results.length,
+      },
+      guardianMay(selectedChild, 'leave') && {
+        id: 'leaves', label_en: 'Leave Exeats', label_ar: 'أذونات الإجازة', icon: 'time_to_leave', badge: leaves.length,
+      },
+      guardianMay(selectedChild, 'fees') && {
+        id: 'fees', label_en: 'Tuition Ledgers', label_ar: 'الرسوم المدرسية', icon: 'payments',
+      },
+      { id: 'link', label_en: 'Link Ward', label_ar: 'ربط طالب', icon: 'person_add' },
+    ];
+    return items.filter(Boolean);
+  }, [selectedChild, results.length, leaves.length]);
+
+  useEffect(() => {
+    const allowed = new Set(navItems.map((n) => n.id));
+    if (!allowed.has(activeTab)) setActiveTab('overview');
+  }, [navItems, activeTab, setActiveTab]);
 
   const childSelector = children.length > 0 ? (
     <div className="flex flex-col gap-1">
@@ -280,12 +311,15 @@ export default function ParentDashboard() {
     </div>
   ) : null;
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-parchment-50 text-ink-text-primary">
         <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
+  }
+  if (!isParent) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
@@ -576,6 +610,7 @@ export default function ParentDashboard() {
                           <th className="py-2.5 px-3">{tx('الفصل / الاختبار', 'Exam Term')}</th>
                           <th className="py-2.5 px-3 text-right">{tx('الدرجة', 'Marks')}</th>
                           <th className="py-2.5 px-3 text-center">{tx('التقدير', 'Grade')}</th>
+                          <th className="py-2.5 px-3 text-center">{tx('طعن', 'Appeal')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-sand-border/60">
@@ -583,16 +618,66 @@ export default function ParentDashboard() {
                           <tr key={r.id || i} className="hover:bg-parchment-50/50">
                             <td className="py-2.5 px-3 font-medium text-ink-text-primary">{r.subject}</td>
                             <td className="py-2.5 px-3 text-ink-text-muted">{r.exam_name}</td>
-                            <td className="py-2.5 px-3 text-right font-mono font-semibold text-ink-green-900 tabular-nums">{r.marks ?? '-'}</td>
+                            <td className="py-2.5 px-3 text-right font-mono font-semibold text-ink-green-900 tabular-nums">{r.marks_obtained ?? r.marks ?? '-'}</td>
                             <td className="py-2.5 px-3 text-center">
-                              <span className="px-2 py-0.5 rounded-full bg-mint-wash-100 text-emerald-700 font-semibold text-[11px">
+                              <span className="px-2 py-0.5 rounded-full bg-mint-wash-100 text-emerald-700 font-semibold text-[11px]">
                                 {r.grade || tx('ناجح', 'Pass')}
                               </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              {r.id ? (
+                                <button
+                                  type="button"
+                                  className="text-[11px] font-semibold text-emerald-700 underline"
+                                  onClick={() => { setAppealFor(r); setAppealReason(''); }}
+                                >
+                                  {tx('تقديم طعن', 'File appeal')}
+                                </button>
+                              ) : null}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+                {appealFor && (
+                  <div className="rounded-[12px] border border-emerald-700/30 bg-mint-wash-100/50 p-4 space-y-3">
+                    <p className="text-sm font-semibold text-ink-green-900">
+                      {tx('طعن في النتيجة', 'Appeal result')}: {appealFor.subject || appealFor.exam_name || '—'}
+                    </p>
+                    <textarea
+                      className="w-full rounded-lg border border-sand-border p-2 text-sm"
+                      rows={3}
+                      value={appealReason}
+                      onChange={(e) => setAppealReason(e.target.value)}
+                      placeholder={tx('سبب الطعن (مطلوب)', 'Reason for appeal (required)')}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={appealBusy || !appealReason.trim()}
+                        onClick={async () => {
+                          setAppealBusy(true);
+                          try {
+                            await rpc('file_result_appeal', { p_result: appealFor.id, p_reason: appealReason.trim() });
+                            toast.success(tx('تم تقديم الطعن للمراجعة', 'Appeal filed for review'));
+                            setAppealFor(null);
+                            setAppealReason('');
+                          } catch (e) {
+                            toast.error(e.message || tx('تعذر تقديم الطعن', 'Could not file appeal'));
+                          } finally {
+                            setAppealBusy(false);
+                          }
+                        }}
+                        className="px-4 py-2 rounded-[10px] bg-emerald-700 text-white text-sm font-semibold disabled:opacity-50"
+                      >
+                        {tx('إرسال', 'Submit')}
+                      </button>
+                      <button type="button" onClick={() => setAppealFor(null)} className="px-4 py-2 text-sm text-ink-text-muted">
+                        {tx('إلغاء', 'Cancel')}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

@@ -59,6 +59,7 @@ export const ERP_MODULE_FEATURES = {
   students: 'erp_students',
   academics: 'erp_academics',
   crm: 'erp_crm',
+  library: 'erp_library',
   financetoday: 'erp_fees',
   fees: 'erp_fees',
   accounting: 'erp_accounting',

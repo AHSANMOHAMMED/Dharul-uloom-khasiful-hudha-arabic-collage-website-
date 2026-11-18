@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Alert, View, Pressable, StyleSheet, Text } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, AppState, View, Pressable, StyleSheet, Text } from 'react-native';
 import { supabase, must } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth';
 import { useI18n } from '../../lib/i18n';
 import { toISODate, addDays, isISODate } from '../../lib/format';
 import { colors } from '../../lib/theme';
+import { enqueueAttendanceDraft, flushAttendanceDrafts } from '../../lib/offlineAttendance';
 import { Screen, Card, Txt, Chips, Field, Button, Row, EmptyState, Loading } from '../../components';
 
 const CLASSES = [1, 2, 3, 4, 5, 6, 7];
@@ -20,6 +21,24 @@ export default function MarkAttendance() {
   const [marks, setMarks] = useState({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [pendingDrafts, setPendingDrafts] = useState(0);
+
+  useEffect(() => {
+    const flush = async () => {
+      try {
+        const r = await flushAttendanceDrafts();
+        if (r.flushed) Alert.alert(t('common.success'), t('attendance.flushed', { n: r.flushed }));
+        setPendingDrafts(r.remaining || 0);
+      } catch {
+        /* keep drafts */
+      }
+    };
+    flush();
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') flush();
+    });
+    return () => sub.remove();
+  }, [t]);
 
   if (!caps.canMarkAttendance) {
     return (
@@ -57,8 +76,22 @@ export default function MarkAttendance() {
       await must(supabase.from('attendance').upsert(rows, { onConflict: 'student_id,date' }));
       Alert.alert(t('common.success'), t('attendance.saved', { n: rows.length }));
       load();
+      const r = await flushAttendanceDrafts();
+      setPendingDrafts(r.remaining || 0);
     } catch (e) {
-      Alert.alert(t('common.error'), e.message);
+      // Network / RLS failure → queue offline drafts for later flush.
+      await Promise.all(
+        rows.map((row) =>
+          enqueueAttendanceDraft({
+            student_id: row.student_id,
+            date: row.date,
+            status: row.status,
+            device_id: user.id,
+          }),
+        ),
+      );
+      setPendingDrafts((n) => n + rows.length);
+      Alert.alert(t('attendance.queuedTitle'), t('attendance.queuedBody', { n: rows.length }));
     } finally {
       setSaving(false);
     }
@@ -66,6 +99,25 @@ export default function MarkAttendance() {
 
   return (
     <Screen onRefresh={sheet ? () => load() : undefined} refreshing={false}>
+      {pendingDrafts > 0 ? (
+        <Card>
+          <Txt variant="strong">{t('attendance.pendingDrafts', { n: pendingDrafts })}</Txt>
+          <Button
+            small
+            variant="outline"
+            title={t('attendance.flushNow')}
+            onPress={async () => {
+              try {
+                const r = await flushAttendanceDrafts();
+                setPendingDrafts(r.remaining || 0);
+                Alert.alert(t('common.success'), t('attendance.flushed', { n: r.flushed || 0 }));
+              } catch (e) {
+                Alert.alert(t('common.error'), e.message);
+              }
+            }}
+          />
+        </Card>
+      ) : null}
       <Card>
         <Txt variant="label">{t('attendance.pickClass')}</Txt>
         <Chips

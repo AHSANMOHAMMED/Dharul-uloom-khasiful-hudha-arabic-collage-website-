@@ -234,6 +234,31 @@ function EmergencyRollcall({ hostels, canManage }) {
   const marks = snap?.marks || [];
   const open = snap?.rollcall?.status === 'open';
 
+  const markAllPresent = async () => {
+    const pending = marks.filter((m) => m.status === 'pending' || !m.status);
+    for (const m of pending) {
+      await mark(m.student_id, 'present');
+    }
+  };
+
+  const exportRoster = () => {
+    const header = ['index_number', 'full_name', 'status', 'emergency_contact', 'phone'];
+    const lines = [header.join(',')].concat(
+      marks.map((m) =>
+        [m.index_number, m.full_name, m.status, m.emergency_contact, m.phone]
+          .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
+          .join(','),
+      ),
+    );
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hostel-rollcall-${snap?.rollcall?.id || 'export'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       <Card title={t('Emergency roll-call', 'نداء الطوارئ')}
@@ -272,7 +297,19 @@ function EmergencyRollcall({ hostels, canManage }) {
         </AsyncView>
       </Card>
       {snap && (
-        <Card title={t('Roster', 'القائمة')}>
+        <Card
+          title={t('Roster', 'القائمة')}
+          actions={(
+            <div className="flex flex-wrap gap-2">
+              {open && canManage && (
+                <Button size="sm" variant="secondary" disabled={busy} onClick={markAllPresent}>
+                  {t('Mark all pending present', 'تسجيل الكل حاضر')}
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" onClick={exportRoster}>{t('Export CSV', 'تصدير CSV')}</Button>
+            </div>
+          )}
+        >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <Stat label={t('Pending', 'معلق')} value={marks.filter((m) => m.status === 'pending').length} tone="amber" />
             <Stat label={t('Present', 'حاضر')} value={marks.filter((m) => m.status === 'present').length} tone="green" />

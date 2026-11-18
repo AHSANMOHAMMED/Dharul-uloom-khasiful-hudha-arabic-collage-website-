@@ -21,13 +21,13 @@ const MODULES = [
     show: (a) => a.isAdmin || a.isFinanceViewer || a.isAcademicAdmin,
     load: () => import('../../components/erp/ops/AnalyticsPanel') },
   { id: 'reports', label: (t) => t('Reports', 'التقارير'), icon: 'summarize', group: 'core',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isAdmin || a.isFinanceViewer || a.isAcademicAdmin || a.isHrStaff,
     load: () => import('../../components/erp/ops/ReportsPanel') },
   { id: 'import', label: (t) => t('Bulk import', 'الاستيراد الجماعي'), icon: 'upload_file', group: 'core',
-    show: (a) => a.isAdmin || a.isAdmissionsStaff || a.isAcademicAdmin || a.isHrStaff || a.isEmployee,
+    show: (a) => a.isAdmin || a.isAdmissionsStaff || a.isAcademicAdmin || a.isHrStaff,
     load: () => import('../../components/erp/ops/ImportPanel') },
   { id: 'documents', label: (t) => t('Documents & exam papers', 'المستندات وأوراق الامتحان'), icon: 'description', group: 'core',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isDocumentAdmin || a.isAcademicAdmin || a.isTutor,
     load: () => import('../../components/erp/docs/DocumentsPanel') },
   { id: 'tasks', label: (t) => t('Task board', 'لوحة المهام'), icon: 'view_kanban', group: 'core',
     show: (a) => a.isEmployee,
@@ -36,14 +36,17 @@ const MODULES = [
     show: (a) => a.isEmployee,
     load: () => import('../../components/erp/campus/MySelfServicePanel') },
   { id: 'students', label: (t) => t('Students', 'الطلاب'), icon: 'school', group: 'academic',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isAdmin || a.isAcademicAdmin || a.isAdmissionsStaff || a.isTutor || a.isHostelStaff || a.isWelfareStaff,
     load: () => import('../../components/erp/campus/StudentsPanel') },
   { id: 'academics', label: (t) => t('Academics & Exams', 'الشؤون الأكاديمية'), icon: 'menu_book', group: 'academic',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isAdmin || a.isAcademicAdmin || a.isTutor,
     load: () => import('../../components/erp/campus/AcademicsPanel') },
   { id: 'crm', label: (t) => t('Admissions CRM', 'إدارة القبول'), icon: 'explore', group: 'academic',
     show: (a) => a.isAdmissionsStaff,
     load: () => import('../../components/erp/campus/CrmPanel') },
+  { id: 'library', label: (t) => t('Library', 'المكتبة'), icon: 'local_library', group: 'academic',
+    show: (a) => a.isLibrarian || a.isAdmin || a.isAcademicAdmin,
+    load: () => import('../../components/erp/campus/LibraryErpLink') },
   { id: 'financetoday', label: (t) => t('Finance today', 'المالية اليوم'), icon: 'point_of_sale', group: 'finance',
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/ops/FinanceTodayPanel') },
@@ -57,7 +60,7 @@ const MODULES = [
     show: (a) => a.isFinanceViewer,
     load: () => import('../../components/erp/finance/ChequesPanel') },
   { id: 'expenses', label: (t) => t('Expenses', 'المصروفات'), icon: 'receipt_long', group: 'finance',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isFinanceViewer || a.isFinanceStaff,
     load: () => import('../../components/erp/finance/ExpensesPanel') },
   { id: 'donations', label: (t) => t('Donations', 'التبرعات'), icon: 'volunteer_activism', group: 'finance',
     show: (a) => a.isFinanceViewer,
@@ -72,25 +75,25 @@ const MODULES = [
     show: (a) => a.isHrStaff || a.isPrincipal || a.isVP,
     load: () => import('../../components/erp/campus/StaffHrPanel') },
   { id: 'hostel', label: (t) => t('Hostel', 'السكن'), icon: 'apartment', group: 'campus',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isHostelStaff,
     load: () => import('../../components/erp/campus/HostelPanel') },
   { id: 'welfare', label: (t) => t('Discipline & Welfare', 'الانضباط والرعاية'), icon: 'health_and_safety', group: 'campus',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isWelfareStaff,
     load: () => import('../../components/erp/campus/WelfarePanel') },
   { id: 'certificates', label: (t) => t('Certificates', 'الشهادات'), icon: 'workspace_premium', group: 'campus',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isAcademicAdmin || a.isAdmin,
     load: () => import('../../components/erp/campus/CertificatesPanel') },
   { id: 'duties', label: (t) => t('Duties', 'المسؤوليات'), icon: 'assignment_ind', group: 'governance',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isAdmin || a.isPrincipal || a.isVP || a.isTutor || a.isNonTeachingStaff,
     load: () => import('../../components/erp/governance/DutiesPanel') },
   { id: 'activities', label: (t) => t('Activities', 'الأنشطة'), icon: 'event', group: 'governance',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isAdmin || a.isPrincipal || a.isVP || a.isAcademicAdmin || a.isTutor,
     load: () => import('../../components/erp/ops/ActivitiesPanel') },
   { id: 'mashoora', label: (t) => t('Mashoora', 'الشورى'), icon: 'diversity_3', group: 'governance',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isAdmin || a.isPrincipal || a.isVP,
     load: () => import('../../components/erp/governance/MashooraPanel') },
   { id: 'pettycash', label: (t) => t('Petty cash', 'النثرية'), icon: 'account_balance_wallet', group: 'governance',
-    show: (a) => a.isEmployee,
+    show: (a) => a.isFinanceViewer || a.isAdmin || a.isPrincipal,
     load: () => import('../../components/erp/governance/PettyCashPanel') },
   { id: 'audit', label: (t) => t('Audit Log', 'سجل التدقيق'), icon: 'history_edu', group: 'admin',
     show: (a) => a.isAdmin || a.isAccountant,
@@ -176,10 +179,22 @@ export default function ErpWorkspace() {
     if (auth.loading) return;
     if (!auth.isAuthenticated) {
       navigate('/login', { replace: true, state: { from: `/erp${window.location.search}` } });
+      return;
     }
-  }, [auth.loading, auth.isAuthenticated, navigate]);
+    if (!auth.isEmployee && !auth.isLibrarian && !auth.isSuperAdmin) {
+      navigate(portalHomeFor(auth), { replace: true });
+    }
+  }, [auth.loading, auth.isAuthenticated, auth.isEmployee, auth.isLibrarian, auth.isSuperAdmin, auth, navigate]);
 
   if (auth.loading || featuresLoading || !auth.isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-parchment-50 flex items-center justify-center">
+        <Loading />
+      </div>
+    );
+  }
+
+  if (!auth.isEmployee && !auth.isLibrarian && !auth.isSuperAdmin) {
     return (
       <div className="min-h-screen bg-parchment-50 flex items-center justify-center">
         <Loading />
@@ -195,9 +210,9 @@ export default function ErpWorkspace() {
           <p className="text-ink-text-secondary text-sm">
             {auth.isSuperAdmin
               ? t('No ERP modules are enabled. Open the Super Admin console to turn features on.', 'لا توجد وحدات مفعّلة. افتح لوحة المدير العام لتفعيل الميزات.')
-              : t('The ERP workspace is available to approved staff accounts.', 'مساحة الإدارة متاحة لحسابات الموظفين المعتمدة.')}
+              : t('No ERP modules are available for your role, or they are turned off for this college.', 'لا توجد وحدات متاحة لدورك، أو أنها معطّلة لهذه المؤسسة.')}
           </p>
-          <Link to={auth.isSuperAdmin ? '/platform' : '/dashboard'} className="text-emerald-700 font-semibold underline text-sm">
+          <Link to={auth.isSuperAdmin ? '/platform' : portalHomeFor(auth)} className="text-emerald-700 font-semibold underline text-sm">
             {auth.isSuperAdmin ? t('Super Admin console', 'لوحة المدير العام') : t('Go to my portal', 'الذهاب إلى بوابتي')}
           </Link>
         </div>
@@ -258,7 +273,16 @@ export default function ErpWorkspace() {
                 </div>
               ))}
             </nav>
-            <div className="border-t border-sand-border/60 mt-2 pt-3 px-3">
+            <div className="border-t border-sand-border/60 mt-2 pt-3 px-3 space-y-2">
+              {(auth.isLibrarian || auth.isAdmin) && (
+                <Link
+                  to="/library-admin"
+                  className="text-xs text-ink-text-muted hover:text-emerald-700 font-medium flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">local_library</span>
+                  <span>{t('Library desk', 'مكتب المكتبة')}</span>
+                </Link>
+              )}
               <Link
                 to={auth.isAdmin ? '/admin' : '/dashboard'}
                 className="text-xs text-ink-text-muted hover:text-emerald-700 font-medium flex items-center gap-1.5"

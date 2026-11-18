@@ -23,13 +23,27 @@ function AppealsQueue({ canReview }) {
         .order('created_at', { ascending: false }).limit(50)),
     [],
   );
+  const [exams] = useAsync(
+    () => query('exams', (q) => q.select('id, name, status').order('created_at', { ascending: false }).limit(40)),
+    [],
+  );
   const decide = async (row, decision) => {
     const notes = window.prompt(t('Review notes (optional)', 'ملاحظات المراجعة (اختياري)'), '') ?? '';
+    let resit = null;
+    if (decision === 'resit_scheduled') {
+      const choices = (exams.data || []).map((e) => `${e.id} · ${e.name} (${e.status})`).join('\n');
+      const picked = window.prompt(
+        `${t('Paste resit exam UUID', 'الصق معرّف امتحان الإعادة')}\n${choices}`,
+        '',
+      );
+      if (!picked?.trim()) return;
+      resit = picked.trim().split(/\s|·/)[0];
+    }
     const res = await run(() => rpc('review_result_appeal', {
       p_appeal: row.id,
       p_decision: decision,
       p_notes: notes || null,
-      p_resit_exam: null,
+      p_resit_exam: resit,
     }), t('Appeal updated', 'تم تحديث الطعن'));
     if (res.ok) reload();
   };
@@ -44,8 +58,10 @@ function AppealsQueue({ canReview }) {
             {
               key: 'act', label: '',
               render: (r) => (canReview && ['filed', 'under_review'].includes(r.status) ? (
-                <div className="flex gap-1">
+                <div className="flex flex-wrap gap-1">
+                  <Button size="sm" disabled={busy} onClick={() => decide(r, 'under_review')}>{t('Reviewing', 'قيد المراجعة')}</Button>
                   <Button size="sm" disabled={busy} onClick={() => decide(r, 'accepted')}>{t('Accept', 'قبول')}</Button>
+                  <Button size="sm" variant="secondary" disabled={busy} onClick={() => decide(r, 'resit_scheduled')}>{t('Schedule resit', 'جدولة إعادة')}</Button>
                   <Button size="sm" variant="danger" disabled={busy} onClick={() => decide(r, 'rejected')}>{t('Reject', 'رفض')}</Button>
                 </div>
               ) : null),
