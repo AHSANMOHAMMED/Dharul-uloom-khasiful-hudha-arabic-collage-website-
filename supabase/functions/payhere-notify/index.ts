@@ -67,8 +67,32 @@ Deno.serve(async (req) => {
   }
 
   console.log('[payhere-notify]', orderId, data);
-  if (data?.ok === false && data?.error === 'order_not_found') {
-    return new Response('Order not found', { status: 404 });
+  if (data?.ok === false) {
+    const err = String(data?.error || 'settlement_failed');
+    // Permanent validation failures: ACK with 200 so PayHere stops retrying, but
+    // record a failed job run for ops recon (money may already be captured).
+    if (err === 'order_not_found') {
+      return new Response('Order not found', { status: 404 });
+    }
+    try {
+      const { data: runId } = await admin.rpc('begin_job_run', {
+        p_job: 'payhere-notify',
+        p_meta: { order_id: orderId, payment_id: paymentId, error: err },
+      });
+      if (runId) {
+        await admin.rpc('finish_job_run', {
+          p_id: runId,
+          p_status: 'failed',
+          p_error: err,
+          p_message: `PayHere notify rejected for ${orderId}`,
+          p_meta: { order_id: orderId, payment_id: paymentId, amount: payhereAmount },
+        });
+      }
+    } catch (e) {
+      console.error('[payhere-notify] failed to record job run', e);
+    }
+    console.error('[payhere-notify] settlement rejected', { orderId, err });
+    return new Response(`REJECTED:${err}`, { status: 200 });
   }
 
   if (data?.receipt_no && !data?.duplicate) {

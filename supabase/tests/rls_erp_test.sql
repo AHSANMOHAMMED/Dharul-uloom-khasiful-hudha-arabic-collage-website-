@@ -1411,6 +1411,9 @@ select tst.ok((select count(*) = 0 from public.lms_quiz_questions),
 select tst.ok((select count(*) = 0 from public.platform_job_runs),
               'jobs: students cannot read platform job runs');
 
+select tst.login('00000000-0000-0000-0000-000000000001'); -- admin
+select tst.ok((select public.mark_overdue_library_loans() >= 0), 'library: staff can mark overdue in own org');
+
 select tst.login('00000000-0000-0000-0000-000000000006'); -- tutor
 select tst.ok((
   select (public.apply_offline_attendance_draft(
@@ -1432,6 +1435,8 @@ select tst.ok((
     )
   ) ->> 'status') = 'duplicate'
 ), 'offline: duplicate idempotency key returns duplicate');
+select tst.login('00000000-0000-0000-0000-000000000008'); -- student
+select tst.fails($$select public.mark_overdue_library_loans()$$, 'library: student cannot mark overdue');
 
 -- ---------------------------------------------------------------------------
 select tst.logout();
