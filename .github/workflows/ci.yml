@@ -21,7 +21,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '18'
+          # Vite 8 / Vitest 5 need Node >= 20.19 (util.styleText).
+          node-version: '22'
           cache: 'npm'
 
       - name: Install frontend dependencies
@@ -47,7 +48,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install backend dependencies

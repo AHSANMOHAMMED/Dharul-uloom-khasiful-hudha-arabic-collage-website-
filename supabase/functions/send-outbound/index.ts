@@ -32,6 +32,7 @@ type Result = { ok: boolean; id?: string; error?: string; skipped?: boolean; blo
 type OutboxRow = {
   id: string;
   org_id: string;
+  user_id?: string | null;
   channel: 'sms' | 'whatsapp' | 'email' | 'push';
   to_address: string;
   subject: string | null;
@@ -300,10 +301,11 @@ Deno.serve(async (req) => {
         .eq('id', row.id);
       return;
     }
-    const purpose = typeof meta.purpose === 'string' ? meta.purpose : null;
-    if (purpose && row.metadata?.user_id) {
+    const purpose = typeof meta.purpose === 'string' ? meta.purpose : (meta.type === 'fee_receipt' ? 'fees' : null);
+    const purposeUser = row.user_id || (typeof meta.user_id === 'string' ? meta.user_id : null);
+    if (purpose && purposeUser) {
       const { data: allowed } = await admin.rpc('purpose_notify_allowed', {
-        p_user: row.metadata.user_id,
+        p_user: purposeUser,
         p_purpose: purpose,
       });
       if (allowed === false) {

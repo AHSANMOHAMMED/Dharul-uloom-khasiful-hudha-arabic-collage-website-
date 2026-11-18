@@ -1395,6 +1395,9 @@ select tst.fails($$select public.upsert_payroll_tax_table(current_date, '[]'::js
 select tst.login('00000000-0000-0000-0000-000000000001'); -- admin
 select tst.ok((select public.request_break_glass('drill access for audit', 'read_student_records') is not null),
               'break-glass: staff can request');
+select tst.login('00000000-0000-0000-0000-000000000006'); -- tutor
+select tst.ok((select not public.has_active_break_glass('read_finance')),
+              'break-glass: tutor has no active finance grant by default');
 
 select tst.login('00000000-0000-0000-0000-000000000003'); -- treasurer
 select tst.ok((select public.add_bank_statement_line(current_date, 2500.00, 'REF-TEST', 'pgTAP') is not null),

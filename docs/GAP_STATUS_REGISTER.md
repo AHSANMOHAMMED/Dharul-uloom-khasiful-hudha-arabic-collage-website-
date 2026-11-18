@@ -18,7 +18,7 @@ Production verification is blank until ops signs off a live drill.
 | Cross-tenant / cross-user AuthZ tests | P0 | Partial | `supabase/tests/rls_erp_test.sql` expanded for new RPCs | Continue per release |
 | Storage bucket AuthZ | P0 | Partial | `0004`, `0014`, `0031` policies; pgTAP negatives | Keep auditing new buckets |
 | SECURITY DEFINER RPC caller checks | P0 | Partial | Most RPCs set `search_path`; Edge `_shared/authz.ts` | Continue per-RPC review |
-| Break-glass emergency access | P0 | Partial (Needs institutional policy) | `0057_break_glass.sql` + Super Admin `BreakGlassPanel` | Policy sign-off before production use |
+| Break-glass emergency access | P0 | Partial (Needs institutional policy) | `0057` + `0067_break_glass_elevation.sql` (elevated SELECT) + Super Admin panel | Policy sign-off before production use |
 | Privacy data inventory / PDPA readiness | P0 | Partial (Needs institutional policy) | `PRIVACY_PDPA.md` + `0058_privacy_retention.sql` + Org admin panel | Editable days; no counsel-certified defaults |
 | Student lifecycle state machine | P0 | Partial | `0040` + StudentDetail UI | Full applicant→offer still policy |
 | Guardian verification + unlink | P0 | Partial | `0041` + StudentDetail/ParentDashboard | Custody playbook = policy |
