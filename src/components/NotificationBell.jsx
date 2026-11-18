@@ -230,9 +230,9 @@ export default function NotificationBell() {
                   value={prefs.preferred_locale || 'en'}
                   onChange={(e) => setPrefs({ ...prefs, preferred_locale: e.target.value })}
                 >
-                  <option value="en">English</option>
-                  <option value="ta">தமிழ் (Tamil)</option>
-                  <option value="ar">العربية</option>
+                  <option value="en">{tx('الإنجليزية', 'English')}</option>
+                  <option value="ta">{tx('التاميلية', 'Tamil')}</option>
+                  <option value="ar">{tx('العربية', 'Arabic')}</option>
                 </select>
               </label>
               <div className="grid grid-cols-2 gap-2">
