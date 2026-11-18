@@ -4,7 +4,7 @@ import { getCaps } from './roles';
 import { unregisterPush } from './push';
 
 const PROFILE_COLUMNS =
-  'id, email, full_name, phone, role, account_type, is_approved, index_number, class_number, assigned_tutor_role, extra_roles, org_id';
+  'id, email, full_name, phone, role, account_type, is_approved, index_number, class_number, assigned_tutor_role, extra_roles, org_id, preferred_locale, notify_sms, notify_whatsapp, notify_email, notify_push, notify_broadcast_channels, notify_purpose_fees, notify_purpose_attendance, notify_purpose_results, notify_purpose_marketing';
 
 const AuthContext = createContext(null);
 

@@ -6,7 +6,7 @@ import { query, rpc, formatMoney, formatDate, today } from '../../../lib/erp/rpc
 import { PAYMENT_METHODS, labelOf, num, runAction, useOrg } from '../../../lib/erp/financeApi';
 import { ConfirmModal, Num } from './shared';
 import FeeChargeForm from './FeeChargeForm';
-import { printFeeInvoice, printFeeReceipt } from './feePrint';
+import { printFeeInvoice } from './feePrint';
 import { openReceiptPdf, printReceiptById } from './receiptActions';
 import { flushOutbound } from '../../../lib/notifyApi';
 
@@ -188,11 +188,10 @@ export default function FeeInvoiceDetail({ invoiceId, student, onClose, onChange
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() =>
-                              p.receipt_id
-                                ? printReceiptById(p.receipt_id, p.fee_receipts || {})
-                                : printFeeReceipt({ org, invoice, student, payment: p })
-                            }
+                            onClick={() => {
+                              if (p.receipt_id) return printReceiptById(p.receipt_id, p.fee_receipts || {});
+                              toast.info(t('Official slip unavailable for this legacy payment.', 'الإيصال الرسمي غير متاح لهذه الدفعة القديمة.'));
+                            }}
                           >
                             {t('Print', 'طباعة')}
                           </Button>
@@ -261,6 +260,7 @@ export default function FeeInvoiceDetail({ invoiceId, student, onClose, onChange
                   onCancel={() => setMode(null)}
                   onDone={(res) => {
                     toast.success(t(`Receipt ${res.receipt_no} recorded`, `تم تسجيل الإيصال ${res.receipt_no}`));
+                    if (res.receipt_id) void printReceiptById(res.receipt_id, { receipt_no: res.receipt_no });
                     refresh();
                   }}
                 />

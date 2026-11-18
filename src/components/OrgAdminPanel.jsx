@@ -102,6 +102,7 @@ export default function OrgAdminPanel() {
       </form>
 
       <QuietHoursForm />
+      <SmsSenderForm initial={org?.settings?.sms_sender_id || ''} />
       <PrivacyRetentionPanel />
 
       <p className="text-[11px] text-[#60736C]">
@@ -111,6 +112,55 @@ export default function OrgAdminPanel() {
         )}
       </p>
     </div>
+  );
+}
+
+function SmsSenderForm({ initial = '' }) {
+  const [sender, setSender] = useState(initial || '');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { setSender(initial || ''); }, [initial]);
+
+  const save = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const { error } = await supabase.rpc('set_org_sms_sender', { p_sender: sender.trim() || null });
+      if (error) throw error;
+      toast.success(tx('تم حفظ معرّف المرسل', 'SMS sender ID saved'));
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form onSubmit={save} className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3">
+      <h3 className="font-serif font-bold text-[#0B3B2E] text-base">
+        {tx('معرّف مرسل الرسائل (قناع المدرسة)', 'SMS sender ID (madrasa mask)')}
+      </h3>
+      <p className="text-xs text-[#4A5E56]">
+        {tx(
+          'يُعرض كمرسل الرسائل القصيرة عبر Notify.lk / Text.lk / Twilio (بحد أقصى 11 حرفًا). اتركه فارغًا لاستخدام الإعداد العام.',
+          'Shown as the SMS From mask via Notify.lk / Text.lk / Twilio (max 11 chars). Leave blank to use the platform default.',
+        )}
+      </p>
+      <div className="flex flex-wrap gap-3 items-end">
+        <label className="text-xs flex-1 min-w-[12rem]">
+          {tx('معرّف المرسل', 'Sender ID')}
+          <input
+            className="mt-1 w-full border rounded-lg p-2 font-mono uppercase"
+            maxLength={11}
+            value={sender}
+            onChange={(e) => setSender(e.target.value.toUpperCase())}
+            placeholder="KASHIFUL"
+          />
+        </label>
+        <button type="submit" disabled={busy} className="px-3 py-2 rounded-xl bg-[#11694A] text-white text-xs font-bold disabled:opacity-50">
+          {tx('حفظ', 'Save')}
+        </button>
+      </div>
+    </form>
   );
 }
 

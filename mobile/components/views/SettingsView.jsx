@@ -19,7 +19,17 @@ export default function SettingsView({ links = [] }) {
   const lock = useAppLock();
   const [bio, setBio] = useState({ available: false, enrolled: false });
   const [pinPrompt, setPinPrompt] = useState(false);
-  const [notify, setNotify] = useState({ notify_sms: true, notify_whatsapp: true, notify_email: true, notify_push: true, notify_broadcast_channels: false });
+  const [notify, setNotify] = useState({
+    notify_sms: true,
+    notify_whatsapp: true,
+    notify_email: true,
+    notify_push: true,
+    notify_broadcast_channels: false,
+    notify_purpose_fees: true,
+    notify_purpose_attendance: true,
+    notify_purpose_results: true,
+    notify_purpose_marketing: false,
+  });
   useEffect(() => {
     biometricSupport().then(setBio).catch(() => {});
   }, []);
@@ -31,8 +41,14 @@ export default function SettingsView({ links = [] }) {
       notify_email: Boolean(profile.notify_email),
       notify_push: Boolean(profile.notify_push),
       notify_broadcast_channels: Boolean(profile.notify_broadcast_channels),
+      notify_purpose_fees: profile.notify_purpose_fees !== false,
+      notify_purpose_attendance: profile.notify_purpose_attendance !== false,
+      notify_purpose_results: profile.notify_purpose_results !== false,
+      notify_purpose_marketing: Boolean(profile.notify_purpose_marketing),
     });
-  }, [profile]);
+    const loc = profile.preferred_locale;
+    if ((loc === 'en' || loc === 'ta' || loc === 'ar') && loc !== lang) setLang(loc);
+  }, [profile, setLang, lang]);
   const bioUsable = bio.available && bio.enrolled;
 
   const toggleLock = async (on) => {
@@ -71,12 +87,23 @@ export default function SettingsView({ links = [] }) {
         throw new Error(t('settings.pushUnavailable'));
       }
       const next = { ...notify, [key]: value };
-      const { error } = await supabase.rpc('update_my_notification_preferences', {
-        p_sms: Boolean(next.notify_sms), p_whatsapp: Boolean(next.notify_whatsapp),
-        p_email: Boolean(next.notify_email), p_push: Boolean(next.notify_push),
-        p_broadcast_channels: Boolean(next.notify_broadcast_channels),
-      });
-      if (error) throw error;
+      const channelKeys = ['notify_sms', 'notify_whatsapp', 'notify_email', 'notify_push', 'notify_broadcast_channels'];
+      if (channelKeys.includes(key)) {
+        const { error } = await supabase.rpc('update_my_notification_preferences', {
+          p_sms: Boolean(next.notify_sms), p_whatsapp: Boolean(next.notify_whatsapp),
+          p_email: Boolean(next.notify_email), p_push: Boolean(next.notify_push),
+          p_broadcast_channels: Boolean(next.notify_broadcast_channels),
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.rpc('set_notify_purposes', {
+          p_fees: Boolean(next.notify_purpose_fees),
+          p_attendance: Boolean(next.notify_purpose_attendance),
+          p_results: Boolean(next.notify_purpose_results),
+          p_marketing: Boolean(next.notify_purpose_marketing),
+        });
+        if (error) throw error;
+      }
     } catch (error) {
       setNotify((current) => ({ ...current, [key]: before }));
       Alert.alert(t('common.error'), error.message || t('settings.notifySaveError'));
@@ -102,6 +129,10 @@ export default function SettingsView({ links = [] }) {
           ['notify_email', 'settings.notifyEmail'],
           ['notify_push', 'settings.notifyPush'],
           ['notify_broadcast_channels', 'settings.notifyBroadcastChannels'],
+          ['notify_purpose_fees', 'settings.notifyFees'],
+          ['notify_purpose_attendance', 'settings.notifyAttendance'],
+          ['notify_purpose_results', 'settings.notifyResults'],
+          ['notify_purpose_marketing', 'settings.notifyMarketing'],
         ].map(([key, label]) => (
           <View key={key} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 44 }}>
             <Txt style={{ flex: 1 }}>{t(label)}</Txt>

@@ -1,6 +1,7 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { I18nManager } from 'react-native';
 import { storage } from './storage';
+import { supabase } from './supabase';
 
 const LANG_KEY = 'kh_lang';
 
@@ -275,7 +276,11 @@ const en = {
   'settings.notifyEmail': 'Email alerts',
   'settings.notifyPush': 'Push alerts',
   'settings.notifyBroadcastChannels': 'External channels for college broadcasts',
-  'settings.notificationsHint': 'Choose how the college can send you alerts. In-app messages always stay in your inbox.',
+  'settings.notifyFees': 'Fee & payment messages',
+  'settings.notifyAttendance': 'Attendance & leave messages',
+  'settings.notifyResults': 'Results & exam messages',
+  'settings.notifyMarketing': 'Marketing & promotions',
+  'settings.notificationsHint': 'Choose how the college can send you alerts. In-app messages always stay in your inbox. App language also sets fee/leave SMS language (English / Tamil / Arabic).',
   'settings.pushUnavailable': 'Push permission or device setup is unavailable.',
   'settings.notifySaveError': 'Could not save notification preferences.',
   'settings.myInfo': 'My information',
@@ -1144,6 +1149,10 @@ const ar = {
   'settings.notifyEmail': 'تنبيهات البريد الإلكتروني',
   'settings.notifyPush': 'الإشعارات الفورية',
   'settings.notifyBroadcastChannels': 'القنوات الخارجية لإعلانات الكلية',
+  'settings.notifyFees': 'رسائل الرسوم والمدفوعات',
+  'settings.notifyAttendance': 'رسائل الحضور والإجازات',
+  'settings.notifyResults': 'رسائل النتائج والامتحانات',
+  'settings.notifyMarketing': 'التسويق والعروض',
   'settings.notificationsHint': 'اختر طريقة إرسال تنبيهات الكلية إليك. تبقى الرسائل داخل التطبيق في صندوق الوارد دائمًا.',
   'settings.pushUnavailable': 'إذن الإشعارات أو إعداد الجهاز غير متاح.',
   'settings.notifySaveError': 'تعذر حفظ تفضيلات الإشعارات.',
@@ -1997,6 +2006,10 @@ const ta = {
   "settings.notifyEmail": "மின்னஞ்சல் அறிவிப்புகள்",
   "settings.notifyPush": "புஷ் அறிவிப்புகள்",
   "settings.notifyBroadcastChannels": "கல்லூரி அறிவிப்புகளுக்கான வெளிப்புற சேனல்கள்",
+  "settings.notifyFees": "கட்டணம் மற்றும் பணம் செலுத்தல் செய்திகள்",
+  "settings.notifyAttendance": "வருகை மற்றும் விடுப்பு செய்திகள்",
+  "settings.notifyResults": "முடிவுகள் மற்றும் தேர்வு செய்திகள்",
+  "settings.notifyMarketing": "சந்தைப்படுத்தல் மற்றும் விளம்பரங்கள்",
   "settings.notificationsHint": "கல்லூரி அறிவிப்புகளைப் பெறும் வழியைத் தேர்ந்தெடுக்கவும். செயலிக்குள் வரும் செய்திகள் எப்போதும் இன்பாக்ஸில் இருக்கும்.",
   "settings.pushUnavailable": "புஷ் அனுமதி அல்லது சாதன அமைப்பு கிடைக்கவில்லை.",
   "settings.notifySaveError": "அறிவிப்பு விருப்பங்களைச் சேமிக்க முடியவில்லை.",
@@ -2613,8 +2626,11 @@ export function I18nProvider({ children }) {
   }, []);
 
   const setLang = useCallback((next) => {
-    setLangState(next);
-    storage.setItem(LANG_KEY, next).catch(() => {});
+    const v = next === 'ar' || next === 'ta' || next === 'en' ? next : 'en';
+    setLangState(v);
+    storage.setItem(LANG_KEY, v).catch(() => {});
+    // Keep fee/leave SMS language aligned with the in-app language choice.
+    void supabase.rpc('set_my_preferred_locale', { p_locale: v }).then(() => {}, () => {});
   }, []);
 
   const value = useMemo(() => {

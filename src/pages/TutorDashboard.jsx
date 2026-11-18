@@ -65,26 +65,17 @@ const TutorDashboard = () => {
     setLeaveSuccess(false);
     setLeaveProcessing(true);
     try {
-      const { error } = await supabase
-        .from('leave_requests')
-        .update({ status, response_note: leaveReply, reviewed_by: user.id })
-        .eq('id', selectedLeave.id);
+      const { error } = await supabase.rpc('review_student_leave', {
+        p_leave: selectedLeave.id,
+        p_status: status,
+        p_response_note: leaveReply || null,
+      });
       if (error) throw error;
-
-      const notifyTargets = [selectedLeave.parent_id, selectedLeave.student_id].filter(Boolean);
-      if (notifyTargets.length) {
-        const { error: notifyErr } = await supabase.from('notifications').insert(
-          notifyTargets.map((uid) => ({
-            user_id: uid,
-            title: `Leave Request ${status.toUpperCase()}`,
-            message: `Your leave request for ${selectedLeave.start_date} has been ${status}.${leaveReply ? ` Note: ${leaveReply}` : ''}`,
-            link: '/dashboard?tab=leaves',
-          })),
-        );
-        if (notifyErr) {
-          console.warn('Leave saved but notification failed', notifyErr);
-          toast.warn(tx('تم حفظ القرار لكن تعذر إرسال الإشعار', 'Decision saved but notification could not be sent'));
-        }
+      // Drain org outbox so SMS/WhatsApp with college sender mask leave promptly.
+      try {
+        await supabase.functions.invoke('send-outbound', { body: { limit: 20 } });
+      } catch {
+        /* queue remains pending for cron */
       }
 
       setLeaveReply('');

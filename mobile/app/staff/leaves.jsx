@@ -9,7 +9,7 @@ import { Screen, Card, Txt, Field, Button, Row, EmptyState, Chips, StatusBadge }
 
 export default function ReviewLeaves() {
   const { t } = useI18n();
-  const { user, caps } = useAuth();
+  const { caps } = useAuth();
   const [filter, setFilter] = useState('pending');
   const [notes, setNotes] = useState({});
   const [busy, setBusy] = useState(null);
@@ -40,11 +40,18 @@ export default function ReviewLeaves() {
     setBusy(r.id + status);
     try {
       await must(
-        supabase
-          .from('leave_requests')
-          .update({ status, response_note: notes[r.id]?.trim() || null, reviewed_by: user.id, updated_at: new Date().toISOString() })
-          .eq('id', r.id),
+        supabase.rpc('review_student_leave', {
+          p_leave: r.id,
+          p_status: status,
+          p_response_note: notes[r.id]?.trim() || null,
+        }),
       );
+      // Drain org outbox so SMS/WhatsApp with college sender mask leave promptly.
+      try {
+        await supabase.functions.invoke('send-outbound', { body: { limit: 20 } });
+      } catch {
+        /* queue remains pending for cron */
+      }
       Alert.alert(t('common.success'), t('leave.reviewed', { status: t(`status.${status}`) }));
       q.reload();
     } catch (e) {

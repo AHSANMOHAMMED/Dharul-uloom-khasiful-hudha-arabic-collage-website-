@@ -4,6 +4,7 @@ import { AsyncView, Badge, Button, Card, EmptyState, Field, Input, Modal, Select
 import { useAuth } from '../../../context/AuthContext';
 import { currentMonth, formatDate, formatMoney, query, rpc, today } from '../../../lib/erp/rpc';
 import { PAYMENT_METHODS, labelOf, num, profilesMap, runAction } from '../../../lib/erp/financeApi';
+import { flushOutbound } from '../../../lib/notifyApi';
 import { monthLabel } from '../../../lib/receiptPrint';
 import {
   allocateOldestFirst, copyReceiptLink, downloadPrn, openReceiptPdf, printReceiptById,
@@ -122,6 +123,8 @@ function PaymentPanel({ studentId, arrears, onReceived }) {
     if (res && typeof res === 'object') {
       if (res.duplicate) toast.info(t('This payment was already recorded — showing the existing receipt.', 'تم تسجيل هذه الدفعة مسبقًا — يُعرض الإيصال الموجود.'));
       else toast.success(t('Payment received', 'تم استلام الدفعة'));
+      // Drain org outbox so SMS/WhatsApp with college sender mask leave promptly.
+      void flushOutbound(20);
       onReceived({ ...res, payer_name: res.payer_name ?? payer });
     }
   };

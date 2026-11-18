@@ -105,7 +105,7 @@ async function sendWhatsApp(to: string, label: string, appLink: string): Promise
   if (!sid || !token || !from || !contentSid || !appLink) {
     return { ok: false, blocked: true, error: 'WhatsApp needs Twilio credentials, sender, SITE_URL, and an approved content template' };
   }
-  const templateLabel = label.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'college update';
+  const templateLabel = label.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 320) || 'college update';
   const safeLink = appLink.replace(/[\r\n]+/g, '').slice(0, 500);
   const res = await timedFetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: 'POST',
@@ -251,8 +251,11 @@ Deno.serve(async (req) => {
     ? await admin.rpc('begin_job_run', { p_job: 'send-outbound', p_meta: { claimed: rows.length } })
     : { data: null };
 
-  // per-org SMS sender mask + quiet hours
-  const orgIds = [...new Set(((rows || []) as OutboxRow[]).map((r) => r.org_id))];
+  // per-org SMS sender mask + quiet hours (row.org_id, else metadata.org_id for legacy rows)
+  const orgIds = [...new Set(((rows || []) as OutboxRow[]).flatMap((r) => {
+    const metaOrg = r.metadata && typeof r.metadata === 'object' ? (r.metadata as Record<string, unknown>).org_id : null;
+    return [r.org_id, typeof metaOrg === 'string' ? metaOrg : null].filter(Boolean) as string[];
+  }))];
   const senders: Record<string, string> = {};
   const quietByOrg: Record<string, { start_hour: number; end_hour: number; tz: string } | null> = {};
   if (orgIds.length) {
@@ -340,8 +343,12 @@ Deno.serve(async (req) => {
     const appLink = chatLink.trim() || link.trim() || (siteUrl && meta.link ? `${siteUrl}${String(meta.link).startsWith('/') ? '' : '/'}${meta.link}` : siteUrl);
     let result: Result;
     try {
-      if (row.channel === 'sms') result = await sendSms(row.to_address, row.body + link, senders[row.org_id] || '');
-      else if (row.channel === 'whatsapp') result = await sendWhatsApp(row.to_address, row.subject || 'College update', appLink || '');
+      const orgKey = row.org_id || (typeof meta.org_id === 'string' ? meta.org_id : '') || '';
+      const senderMask = (orgKey && senders[orgKey]) || Deno.env.get('SMS_SENDER_ID') || '';
+      // WhatsApp template {{1}} must carry the full amount/locale body (not just the short title).
+      const waLabel = (row.body || row.subject || 'College update').replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 320);
+      if (row.channel === 'sms') result = await sendSms(row.to_address, row.body + link, senderMask);
+      else if (row.channel === 'whatsapp') result = await sendWhatsApp(row.to_address, waLabel, appLink || '');
       else if (row.channel === 'email') {
         const att = meta.attach_receipt && receiptToken ? await receiptAttachment(receiptToken) : undefined;
         result = await sendEmail(row.to_address, row.subject, row.body + (link ? `\n\nReceipt:${link}` : ''), att);

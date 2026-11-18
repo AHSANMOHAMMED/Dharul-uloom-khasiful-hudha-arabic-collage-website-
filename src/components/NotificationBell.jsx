@@ -28,6 +28,7 @@ export default function NotificationBell() {
     notify_purpose_attendance: true,
     notify_purpose_results: true,
     notify_purpose_marketing: false,
+    preferred_locale: 'en',
   });
 
   const load = async () => {
@@ -104,10 +105,10 @@ export default function NotificationBell() {
       if (!user) return;
       const { data } = await supabase
         .from('profiles')
-        .select('notify_sms, notify_whatsapp, notify_push, notify_email, notify_broadcast_channels, notify_purpose_fees, notify_purpose_attendance, notify_purpose_results, notify_purpose_marketing')
+        .select('notify_sms, notify_whatsapp, notify_push, notify_email, notify_broadcast_channels, notify_purpose_fees, notify_purpose_attendance, notify_purpose_results, notify_purpose_marketing, preferred_locale')
         .eq('id', user.id)
         .maybeSingle();
-      if (data) setPrefs((p) => ({ ...p, ...data }));
+      if (data) setPrefs((p) => ({ ...p, ...data, preferred_locale: data.preferred_locale || 'en' }));
     })();
   }, [isAuthenticated]);
 
@@ -148,6 +149,10 @@ export default function NotificationBell() {
     setSaving(true);
     try {
       await updateNotifyPrefs(prefs);
+      const { error: locErr } = await supabase.rpc('set_my_preferred_locale', {
+        p_locale: prefs.preferred_locale || 'en',
+      });
+      if (locErr) throw locErr;
       toast.success(tx('تم حفظ التفضيلات', 'Preferences saved'));
       setPrefsOpen(false);
     } catch (e) {
@@ -218,6 +223,18 @@ export default function NotificationBell() {
 
           {prefsOpen && (
             <div className="px-4 py-3 border-b border-[#E8E1D0] space-y-2 bg-[#FBF8F0]/60">
+              <label className="flex flex-col gap-1 text-xs text-[#14201B]">
+                <span className="font-semibold">{tx('لغة رسائل الرسوم والإجازات', 'Fee & leave message language')}</span>
+                <select
+                  className="rounded-lg border border-[#E8E1D0] bg-white px-2 py-1.5 text-xs"
+                  value={prefs.preferred_locale || 'en'}
+                  onChange={(e) => setPrefs({ ...prefs, preferred_locale: e.target.value })}
+                >
+                  <option value="en">English</option>
+                  <option value="ta">தமிழ் (Tamil)</option>
+                  <option value="ar">العربية</option>
+                </select>
+              </label>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   ['notify_sms', 'SMS'],
