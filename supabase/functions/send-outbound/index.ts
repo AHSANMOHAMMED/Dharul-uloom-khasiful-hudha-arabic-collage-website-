@@ -246,15 +246,36 @@ Deno.serve(async (req) => {
   if (error) { console.error('[send-outbound] claim', error); return json({ error: 'Could not claim messages' }, 500); }
   if (!rows?.length) return json({ accepted: 0, status: 'no eligible messages' });
 
-  // per-org SMS sender mask
+  const { data: jobRunId } = serviceCaller
+    ? await admin.rpc('begin_job_run', { p_job: 'send-outbound', p_meta: { claimed: rows.length } })
+    : { data: null };
+
+  // per-org SMS sender mask + quiet hours
   const orgIds = [...new Set(((rows || []) as OutboxRow[]).map((r) => r.org_id))];
   const senders: Record<string, string> = {};
+  const quietByOrg: Record<string, { start_hour: number; end_hour: number } | null> = {};
   if (orgIds.length) {
     const { data: orgs } = await admin.from('organizations').select('id, code, settings').in('id', orgIds);
     // Only an approved mask: the org code is not a registered sender ID (it
     // made Twilio ignore TWILIO_FROM_NUMBER and Notify.lk/Text.lk reject it).
-    for (const o of orgs || []) senders[o.id] = o.settings?.sms_sender_id || Deno.env.get('SMS_SENDER_ID') || '';
+    for (const o of orgs || []) {
+      senders[o.id] = o.settings?.sms_sender_id || Deno.env.get('SMS_SENDER_ID') || '';
+      const qh = o.settings?.quiet_hours;
+      quietByOrg[o.id] = qh && typeof qh.start_hour === 'number' && typeof qh.end_hour === 'number'
+        ? { start_hour: qh.start_hour, end_hour: qh.end_hour }
+        : null;
+    }
   }
+
+  const inQuietHours = (orgId: string) => {
+    const q = quietByOrg[orgId];
+    if (!q) return false;
+    // Asia/Colombo ≈ UTC+5:30
+    const colomboHour = new Date(Date.now() + 330 * 60 * 1000).getUTCHours();
+    if (q.start_hour === q.end_hour) return false;
+    if (q.start_hour < q.end_hour) return colomboHour >= q.start_hour && colomboHour < q.end_hour;
+    return colomboHour >= q.start_hour || colomboHour < q.end_hour;
+  };
 
   const pdfCache = new Map<string, { filename: string; content: string } | null>();
   async function receiptAttachment(token: string) {
@@ -271,6 +292,27 @@ Deno.serve(async (req) => {
 
   const processRow = async (row: OutboxRow) => {
     const meta = row.metadata || {};
+    const urgent = Boolean(meta.urgent || meta.type === 'fee_receipt' || meta.type === 'break_glass');
+    if (!urgent && inQuietHours(row.org_id)) {
+      // Leave pending for a later cron tick outside quiet hours.
+      await admin.from('message_outbox')
+        .update({ status: 'pending', error: 'quiet_hours' })
+        .eq('id', row.id);
+      return;
+    }
+    const purpose = typeof meta.purpose === 'string' ? meta.purpose : null;
+    if (purpose && row.metadata?.user_id) {
+      const { data: allowed } = await admin.rpc('purpose_notify_allowed', {
+        p_user: row.metadata.user_id,
+        p_purpose: purpose,
+      });
+      if (allowed === false) {
+        await admin.from('message_outbox')
+          .update({ status: 'skipped', error: 'purpose_consent_denied', sent_at: new Date().toISOString() })
+          .eq('id', row.id);
+        return;
+      }
+    }
     const receiptToken: string | undefined = meta.token || meta.receipt_token || meta.data?.token;
     const link = meta.type === 'fee_receipt' && receiptToken && siteUrl ? ` ${siteUrl}/r/${receiptToken}` : '';
     const chatLink = meta.type === 'chat_message' && meta.conversation_id && siteUrl
@@ -312,11 +354,29 @@ Deno.serve(async (req) => {
   // a large queue from turning one HTTP invocation into a long serial request.
   const background = (async () => {
     const claimed = rows as OutboxRow[];
-    for (let i = 0; i < claimed.length; i += 8) {
-      await Promise.all(claimed.slice(i, i + 8).map(processRow));
+    try {
+      for (let i = 0; i < claimed.length; i += 8) {
+        await Promise.all(claimed.slice(i, i + 8).map(processRow));
+      }
+      try { await reconcileExpoReceipts(admin); }
+      catch (error) { console.error('Expo receipt reconciliation failed', error); }
+      if (jobRunId) {
+        await admin.rpc('finish_job_run', {
+          p_id: jobRunId,
+          p_status: 'success',
+          p_message: `Processed ${claimed.length} outbox row(s)`,
+        });
+      }
+    } catch (error) {
+      console.error('Outbound worker failed', error);
+      if (jobRunId) {
+        await admin.rpc('finish_job_run', {
+          p_id: jobRunId,
+          p_status: 'failed',
+          p_error: (error as Error).message,
+        });
+      }
     }
-    try { await reconcileExpoReceipts(admin); }
-    catch (error) { console.error('Expo receipt reconciliation failed', error); }
   })();
   const runtime = (globalThis as typeof globalThis & { EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void } }).EdgeRuntime;
   if (runtime?.waitUntil) runtime.waitUntil(background);

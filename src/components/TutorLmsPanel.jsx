@@ -10,8 +10,87 @@ import {
   gradeSubmission,
 } from '../lib/lmsApi';
 import { tx } from '../lib/tx';
+import { supabase } from '../lib/supabaseClient';
 
 const inputCls = 'w-full bg-[#FBF8F0] border border-[#E8E1D0] text-sm text-[#14201B] p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#11694A]';
+
+function QuizManager({ classNumber }) {
+  const [quizzes, setQuizzes] = useState([]);
+  const [title, setTitle] = useState('');
+  const [subject, setSubject] = useState('');
+  const [qPrompt, setQPrompt] = useState('');
+  const [qAnswer, setQAnswer] = useState('');
+  const [selected, setSelected] = useState('');
+
+  const load = async () => {
+    const { data } = await supabase.from('lms_quizzes').select('*').eq('class_number', classNumber).order('created_at', { ascending: false });
+    setQuizzes(data || []);
+  };
+  useEffect(() => { load(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classNumber]);
+
+  const create = async (e) => {
+    e.preventDefault();
+    const { data, error } = await supabase.rpc('create_lms_quiz', {
+      p_class: classNumber, p_subject: subject || 'General', p_title: title, p_instructions: null, p_due: null,
+    });
+    if (error) return;
+    setTitle('');
+    setSelected(data);
+    load();
+  };
+
+  const addQ = async (e) => {
+    e.preventDefault();
+    if (!selected) return;
+    await supabase.rpc('add_lms_quiz_question', {
+      p_quiz: selected, p_prompt: qPrompt, p_choices: [], p_answer_key: qAnswer, p_points: 1, p_sort: 0,
+    });
+    setQPrompt('');
+    setQAnswer('');
+  };
+
+  const publish = async (id) => {
+    await supabase.rpc('publish_lms_quiz', { p_quiz: id });
+    load();
+  };
+  const release = async (id) => {
+    await supabase.rpc('release_quiz_results', { p_quiz: id });
+    load();
+  };
+
+  return (
+    <div className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3">
+      <h3 className="font-bold text-sm text-[#0B3B2E]">{tx('اختبارات LMS', 'LMS quizzes')}</h3>
+      <form onSubmit={create} className="grid sm:grid-cols-3 gap-2">
+        <input className={inputCls} placeholder={tx('العنوان', 'Title')} value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <input className={inputCls} placeholder={tx('المادة', 'Subject')} value={subject} onChange={(e) => setSubject(e.target.value)} />
+        <button type="submit" className="px-3 py-2 bg-[#11694A] text-white text-xs font-bold rounded-xl">{tx('إنشاء مسودة', 'Create draft')}</button>
+      </form>
+      {selected && (
+        <form onSubmit={addQ} className="grid sm:grid-cols-3 gap-2">
+          <input className={inputCls} placeholder={tx('السؤال', 'Question')} value={qPrompt} onChange={(e) => setQPrompt(e.target.value)} required />
+          <input className={inputCls} placeholder={tx('الإجابة الصحيحة (للطاقم فقط)', 'Answer key (staff only)')} value={qAnswer} onChange={(e) => setQAnswer(e.target.value)} required />
+          <button type="submit" className="px-3 py-2 border border-[#11694A] text-[#11694A] text-xs font-bold rounded-xl">{tx('إضافة سؤال', 'Add question')}</button>
+        </form>
+      )}
+      <ul className="space-y-2 text-xs">
+        {quizzes.map((q) => (
+          <li key={q.id} className="flex flex-wrap items-center gap-2 bg-white border border-[#E8E1D0] rounded-xl p-2.5">
+            <button type="button" className="font-bold text-[#0B3B2E]" onClick={() => setSelected(q.id)}>{q.title}</button>
+            <span className="text-[#4A5E56]">{q.status}</span>
+            {q.status === 'draft' && (
+              <button type="button" className="text-[#11694A] font-bold" onClick={() => publish(q.id)}>{tx('نشر', 'Publish')}</button>
+            )}
+            {q.status === 'published' && (
+              <button type="button" className="text-[#C29A3A] font-bold" onClick={() => release(q.id)}>{tx('إصدار النتائج', 'Release results')}</button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 const TutorLmsPanel = () => {
   const { user } = useAuth();
@@ -198,6 +277,8 @@ const TutorLmsPanel = () => {
           )}
         </div>
       </div>
+
+      <QuizManager classNumber={classNumber} />
 
       {/* Submissions & Grading Drawer */}
       {gradingId && (

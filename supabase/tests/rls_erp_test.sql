@@ -1368,9 +1368,11 @@ select student_id, id, '00000000-0000-0000-0000-000000000010',
        greatest(total_due - paid_amount, 1), 'KH-OVERPAY-1', 'pending'
 from public.student_fees where student_id = '00000000-0000-0000-0000-000000000009' and month = '2026-11'
 limit 1;
+select set_config('app.fee_internal', 'on', false);
 update public.student_fees
 set paid_amount = greatest(total_due - 1, 0), status = 'partial'
 where student_id = '00000000-0000-0000-0000-000000000009' and month = '2026-11';
+select set_config('app.fee_internal', 'off', false);
 select tst.ok((
   select (public.apply_gateway_payment(
     'KH-OVERPAY-1', 'PH-OVER',
@@ -1381,6 +1383,52 @@ select tst.ok((
   select coalesce((metadata ->> 'overpay')::boolean, false)
   from public.payment_transactions where gateway_order_id = 'KH-OVERPAY-1'
 ), 'payments: overpay stamped on payment_transactions.metadata');
+
+-- ---------------------------------------------------------------------------
+-- P0/P1 MVPs: hostel rollcall, appeals, break-glass, bank recon, APIT, offline
+-- ---------------------------------------------------------------------------
+select tst.login('00000000-0000-0000-0000-000000000006'); -- tutor
+select tst.fails($$select public.decide_break_glass(gen_random_uuid(), true)$$, 'break-glass: tutor cannot approve');
+select tst.fails($$select public.add_bank_statement_line(current_date, 100)$$, 'bank recon: tutor cannot add lines');
+select tst.fails($$select public.upsert_payroll_tax_table(current_date, '[]'::jsonb)$$, 'apit: tutor cannot upsert tax tables');
+
+select tst.login('00000000-0000-0000-0000-000000000001'); -- admin
+select tst.ok((select public.request_break_glass('drill access for audit', 'read_student_records') is not null),
+              'break-glass: staff can request');
+
+select tst.login('00000000-0000-0000-0000-000000000003'); -- treasurer
+select tst.ok((select public.add_bank_statement_line(current_date, 2500.00, 'REF-TEST', 'pgTAP') is not null),
+              'bank recon: finance can add unmatched line');
+select tst.ok((select count(*) >= 1 from public.bank_statement_lines where status = 'unmatched'),
+              'bank recon: unmatched visible to finance');
+
+select tst.login('00000000-0000-0000-0000-000000000008'); -- student
+select tst.ok((select count(*) = 0 from public.lms_quiz_questions),
+              'lms: students cannot read quiz questions (answer keys) via table RLS');
+select tst.ok((select count(*) = 0 from public.platform_job_runs),
+              'jobs: students cannot read platform job runs');
+
+select tst.login('00000000-0000-0000-0000-000000000006'); -- tutor
+select tst.ok((
+  select (public.apply_offline_attendance_draft(
+    'pgtap-device', 'pgtap-key-1',
+    jsonb_build_object(
+      'student_id', '00000000-0000-0000-0000-000000000008',
+      'date', current_date::text,
+      'status', 'present'
+    )
+  ) ->> 'status') in ('applied', 'duplicate')
+), 'offline: attendance draft applies idempotently');
+select tst.ok((
+  select (public.apply_offline_attendance_draft(
+    'pgtap-device', 'pgtap-key-1',
+    jsonb_build_object(
+      'student_id', '00000000-0000-0000-0000-000000000008',
+      'date', current_date::text,
+      'status', 'present'
+    )
+  ) ->> 'status') = 'duplicate'
+), 'offline: duplicate idempotency key returns duplicate');
 
 -- ---------------------------------------------------------------------------
 select tst.logout();

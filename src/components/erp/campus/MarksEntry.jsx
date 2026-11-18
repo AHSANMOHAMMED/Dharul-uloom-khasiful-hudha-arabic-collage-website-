@@ -14,6 +14,49 @@ import { useAction } from './hooks';
  * PostgREST cannot use it as an ON CONFLICT target. Existing rows are
  * upserted by primary key and new rows are inserted.
  */
+function AppealsQueue({ canReview }) {
+  const { t } = useLang();
+  const [busy, run] = useAction();
+  const [state, reload] = useAsync(
+    () => query('result_appeals', (q) =>
+      q.select('*, student:profiles!student_id(full_name, index_number)')
+        .order('created_at', { ascending: false }).limit(50)),
+    [],
+  );
+  const decide = async (row, decision) => {
+    const notes = window.prompt(t('Review notes (optional)', 'ملاحظات المراجعة (اختياري)'), '') ?? '';
+    const res = await run(() => rpc('review_result_appeal', {
+      p_appeal: row.id,
+      p_decision: decision,
+      p_notes: notes || null,
+      p_resit_exam: null,
+    }), t('Appeal updated', 'تم تحديث الطعن'));
+    if (res.ok) reload();
+  };
+  return (
+    <Card title={t('Result appeals', 'طعون النتائج')} className="mt-6">
+      <AsyncView state={state}>
+        {(rows) => (
+          <Table rows={rows} empty={t('No appeals filed.', 'لا توجد طعون.')} columns={[
+            { key: 'student', label: t('Student', 'الطالب'), render: (r) => r.student?.full_name || '—' },
+            { key: 'reason', label: t('Reason', 'السبب') },
+            { key: 'status', label: t('Status', 'الحالة'), render: (r) => <Badge>{r.status}</Badge> },
+            {
+              key: 'act', label: '',
+              render: (r) => (canReview && ['filed', 'under_review'].includes(r.status) ? (
+                <div className="flex gap-1">
+                  <Button size="sm" disabled={busy} onClick={() => decide(r, 'accepted')}>{t('Accept', 'قبول')}</Button>
+                  <Button size="sm" variant="danger" disabled={busy} onClick={() => decide(r, 'rejected')}>{t('Reject', 'رفض')}</Button>
+                </div>
+              ) : null),
+            },
+          ]} />
+        )}
+      </AsyncView>
+    </Card>
+  );
+}
+
 export default function MarksEntry() {
   const { t, lang } = useLang();
   const auth = useAuth();
@@ -152,6 +195,7 @@ export default function MarksEntry() {
   };
 
   return (
+    <div>
     <Card
       title={t('Marks entry', 'إدخال الدرجات')}
       actions={
@@ -227,5 +271,7 @@ export default function MarksEntry() {
         </AsyncView>
       )}
     </Card>
+    {canCorrect && <AppealsQueue canReview={canCorrect} />}
+    </div>
   );
 }

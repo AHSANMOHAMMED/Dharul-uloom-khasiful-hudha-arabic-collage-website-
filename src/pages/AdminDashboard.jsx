@@ -19,6 +19,7 @@ import { ErpEmbedProvider } from '../context/ErpEmbedContext';
 import { PortalNavProvider } from '../context/PortalNavContext';
 import { ERP_QUICK_LINK } from '../lib/portalChrome';
 import { ROLE_BADGE } from '../lib/roleTheme';
+import { smsEncodingInfo } from '../lib/smsCost';
 
 // Full ERP modules — overview tiles open these (not mini previews).
 const ErpDashboard = lazy(() => import('../components/erp/campus/ErpDashboard'));
@@ -860,6 +861,17 @@ const AdminDashboard = () => {
                       className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none resize-none h-20"
                       required
                     />
+                    {(() => {
+                      const info = smsEncodingInfo(broadcastMsg);
+                      return (
+                        <p className="mt-1 text-[11px] text-[#4A5E56]">
+                          {tx(
+                            `${info.encoding} · ${info.length} حرف · ≈ ${info.segments} مقطع SMS`,
+                            `${info.encoding} · ${info.length} chars · ≈ ${info.segments} SMS segment(s)`,
+                          )}
+                        </p>
+                      );
+                    })()}
                   </div>
                   <button
                     type="submit"

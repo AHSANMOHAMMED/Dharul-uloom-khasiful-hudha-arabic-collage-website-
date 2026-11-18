@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { getDefaultOrganization, updateOrganizationBranding } from '../lib/orgApi';
 import { tx } from '../lib/tx';
+import { supabase } from '../lib/supabaseClient';
+import PrivacyRetentionPanel from './erp/ops/PrivacyRetentionPanel';
 
 export default function OrgAdminPanel() {
   useTranslation(); // re-render on language change
@@ -99,6 +101,9 @@ export default function OrgAdminPanel() {
         </button>
       </form>
 
+      <QuietHoursForm />
+      <PrivacyRetentionPanel />
+
       <p className="text-[11px] text-[#60736C]">
         {tx(
           'تعدد المستأجرين محمي عبر org_id في جداول قاعدة البيانات الأساسية وسياسات RLS في Supabase.',
@@ -106,5 +111,54 @@ export default function OrgAdminPanel() {
         )}
       </p>
     </div>
+  );
+}
+
+function QuietHoursForm() {
+  const [start, setStart] = useState(21);
+  const [end, setEnd] = useState(7);
+  const [busy, setBusy] = useState(false);
+
+  const save = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const { error } = await supabase.rpc('set_org_quiet_hours', {
+        p_start_hour: Number(start),
+        p_end_hour: Number(end),
+        p_tz: 'Asia/Colombo',
+      });
+      if (error) throw error;
+      toast.success(tx('تم حفظ ساعات الهدوء', 'Quiet hours saved'));
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form onSubmit={save} className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3">
+      <h3 className="font-serif font-bold text-[#0B3B2E] text-base">
+        {tx('ساعات الهدوء للرسائل', 'Outbound quiet hours')}
+      </h3>
+      <p className="text-xs text-[#4A5E56]">
+        {tx('لا تُرسل الرسائل غير العاجلة بين هذين الساعتين (توقيت كولومبو).',
+          'Non-urgent outbound messages are held between these hours (Asia/Colombo).')}
+      </p>
+      <div className="flex flex-wrap gap-3 items-end">
+        <label className="text-xs">
+          {tx('من الساعة', 'From hour')}
+          <input type="number" min="0" max="23" className="ml-2 w-16 border rounded-lg p-1.5" value={start} onChange={(e) => setStart(e.target.value)} />
+        </label>
+        <label className="text-xs">
+          {tx('إلى الساعة', 'To hour')}
+          <input type="number" min="0" max="23" className="ml-2 w-16 border rounded-lg p-1.5" value={end} onChange={(e) => setEnd(e.target.value)} />
+        </label>
+        <button type="submit" disabled={busy} className="px-3 py-2 rounded-xl bg-[#11694A] text-white text-xs font-bold disabled:opacity-50">
+          {tx('حفظ', 'Save')}
+        </button>
+      </div>
+    </form>
   );
 }

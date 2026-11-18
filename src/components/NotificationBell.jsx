@@ -24,6 +24,10 @@ export default function NotificationBell() {
     notify_push: true,
     notify_email: true,
     notify_broadcast_channels: false,
+    notify_purpose_fees: true,
+    notify_purpose_attendance: true,
+    notify_purpose_results: true,
+    notify_purpose_marketing: false,
   });
 
   const load = async () => {
@@ -100,10 +104,10 @@ export default function NotificationBell() {
       if (!user) return;
       const { data } = await supabase
         .from('profiles')
-        .select('notify_sms, notify_whatsapp, notify_push, notify_email, notify_broadcast_channels')
+        .select('notify_sms, notify_whatsapp, notify_push, notify_email, notify_broadcast_channels, notify_purpose_fees, notify_purpose_attendance, notify_purpose_results, notify_purpose_marketing')
         .eq('id', user.id)
         .maybeSingle();
-      if (data) setPrefs(data);
+      if (data) setPrefs((p) => ({ ...p, ...data }));
     })();
   }, [isAuthenticated]);
 
@@ -220,6 +224,10 @@ export default function NotificationBell() {
                   ['notify_whatsapp', 'WhatsApp'],
                   ['notify_email', 'Email'],
                   ['notify_push', 'Push'],
+                  ['notify_purpose_fees', tx('الرسوم', 'Fees')],
+                  ['notify_purpose_attendance', tx('الحضور', 'Attendance')],
+                  ['notify_purpose_results', tx('النتائج', 'Results')],
+                  ['notify_purpose_marketing', tx('تسويق', 'Marketing')],
                 ].map(([key, label]) => (
                   <label key={key} className="flex items-center gap-1.5 text-xs text-[#14201B] cursor-pointer">
                     <input

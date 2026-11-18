@@ -94,4 +94,18 @@ export async function updateNotifyPrefs(prefs) {
     p_broadcast_channels: Boolean(prefs.notify_broadcast_channels),
   });
   if (error) throw error;
+  if (
+    prefs.notify_purpose_fees != null
+    || prefs.notify_purpose_attendance != null
+    || prefs.notify_purpose_results != null
+    || prefs.notify_purpose_marketing != null
+  ) {
+    const { error: pe } = await supabase.rpc('set_notify_purposes', {
+      p_fees: prefs.notify_purpose_fees ?? null,
+      p_attendance: prefs.notify_purpose_attendance ?? null,
+      p_results: prefs.notify_purpose_results ?? null,
+      p_marketing: prefs.notify_purpose_marketing ?? null,
+    });
+    if (pe) throw pe;
+  }
 }

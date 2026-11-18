@@ -27,6 +27,7 @@ import { useUrlState } from '../../../lib/useTabParam';
 import { printSlip } from '../../../lib/slip/slipRender';
 import { financeDocSlip, financePaymentSlip } from '../../../lib/slip/slipModels';
 import { SlipPrinterButton } from './SlipPrinter';
+import BankReconPanel from './BankReconPanel';
 
 const DOC_TYPES = [
   { value: 'quotation', en: 'Quotation', ar: 'عرض سعر' },
@@ -206,6 +207,7 @@ export default function FinanceHubPanel() {
           ['documents', t('Documents', 'المستندات')],
           ['create', t('Create document', 'إنشاء مستند')],
           ['jobs', t('Billing jobs', 'مهام الفوترة')],
+          ['recon', t('Bank recon', 'مطابقة البنك')],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -282,6 +284,8 @@ export default function FinanceHubPanel() {
           </div>
         </Card>
       )}
+
+      {tab === 'recon' && <BankReconPanel />}
 
       {tab === 'create' && (
         <Card title={t('Create bill / quotation / donation', 'إنشاء فاتورة أو عرض سعر أو تبرع')}>

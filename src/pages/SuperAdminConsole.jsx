@@ -36,6 +36,8 @@ import {
 import { setActingOrg } from '../lib/erp/governanceApi';
 import PageNavBar from '../components/PageNavBar';
 import { BroadcastTab, HealthTab, UserAuthActions } from '../components/platform/PlatformOps';
+import BreakGlassPanel from '../components/erp/ops/BreakGlassPanel';
+import JobRunsPanel from '../components/erp/ops/JobRunsPanel';
 
 const NAV = [
   { id: 'overview', label: 'Overview', icon: 'dashboard' },
@@ -48,6 +50,8 @@ const NAV = [
   { id: 'audit', label: 'Audit & deletes', icon: 'history_edu' },
   { id: 'history', label: 'Control log', icon: 'history' },
   { id: 'health', label: 'Health', icon: 'monitor_heart' },
+  { id: 'jobs', label: 'Job runs', icon: 'schedule' },
+  { id: 'breakglass', label: 'Break-glass', icon: 'emergency' },
   // Institution chat is per college (the database refuses it for super admins);
   // platform-wide notices go out through Broadcast.
   { id: 'broadcast', label: 'Broadcast', icon: 'campaign' },
@@ -706,6 +710,8 @@ export default function SuperAdminConsole() {
           )}
 
           {section === 'health' && <HealthTab />}
+          {section === 'jobs' && <JobRunsPanel />}
+          {section === 'breakglass' && <BreakGlassPanel />}
           {section === 'broadcast' && <BroadcastTab organizations={controls?.organizations || []} />}
         </main>
       </div>

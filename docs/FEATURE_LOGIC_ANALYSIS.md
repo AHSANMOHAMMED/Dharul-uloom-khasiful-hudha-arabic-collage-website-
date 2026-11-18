@@ -391,10 +391,21 @@ Backup/restore drill and job owners: [GO_LIVE.md](./GO_LIVE.md). Set RPO/RTO wit
 | Cross-tenant org_id change | existing RLS suite |
 | Storage wrong parent denied | `test:db` storage negatives |
 | Hostel leave overdue visible | `0044` UI + RPC |
-| Tamil/Arabic broadcast cost | UAT (Missing automation) |
+| Tamil/Arabic broadcast cost | UAT + `smsCost.js` segment preview |
 | Production restore drill | GO_LIVE checklist (ops) |
+| Hostel emergency roll-call | `0055` + HostelPanel + `test:db` |
+| Result appeal file/review | `0056` + MarksEntry AppealsQueue |
+| Break-glass request/approve (MFA) | `0057` + Super Admin panel (policy gate) |
+| Bank statement unmatched match | `0060` + Finance Hub recon tab |
+| APIT table by payslip month | `0061` + Payroll APIT tab |
+| Attendance exception audit | `0062` + ClassAttendance |
+| Quiet hours hold non-urgent SMS | `0063` + `send-outbound` |
+| Purpose consent gates marketing | `0063` + NotificationBell |
+| Offline attendance idempotent apply | `0064` + `test:db` |
+| Library checkout/return | `0065` + Librarian Circulation |
+| LMS quiz staff key / student take | `0066` + Tutor/Student LMS |
 
 ---
 
-*Updated for P0 gap closure (lifecycle, guardians, result corrections, fee adjustments, hostel leave) and operational rulebook. Evidence: GAP_STATUS_REGISTER.md.*
+*Updated for Finish P0+P1 real-world logic MVP (0055–0066). Evidence: GAP_STATUS_REGISTER.md.*
 

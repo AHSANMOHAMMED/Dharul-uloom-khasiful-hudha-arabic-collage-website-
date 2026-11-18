@@ -185,6 +185,120 @@ function Residents({ canManage, onChanged }) {
   );
 }
 
+function EmergencyRollcall({ hostels, canManage }) {
+  const { t } = useLang();
+  const [busy, run] = useAction();
+  const [hostelId, setHostelId] = useState('');
+  const [activeId, setActiveId] = useState('');
+  const [snap, setSnap] = useState(null);
+  const [list, reloadList] = useAsync(
+    () => query('hostel_rollcalls', (q) => q.select('*').order('started_at', { ascending: false }).limit(20)),
+    [],
+  );
+
+  const loadSnap = async (id) => {
+    if (!id) { setSnap(null); return; }
+    const data = await rpc('hostel_rollcall_snapshot', { p_rollcall: id });
+    setSnap(data);
+  };
+
+  const start = async () => {
+    const res = await run(() => rpc('start_hostel_rollcall', {
+      p_hostel: hostelId || null,
+      p_kind: 'emergency',
+      p_notes: null,
+    }), t('Emergency roll-call started', 'بدأ نداء الطوارئ'));
+    if (res.ok) {
+      setActiveId(res.data);
+      reloadList();
+      await loadSnap(res.data);
+    }
+  };
+
+  const mark = async (studentId, status) => {
+    const res = await run(() => rpc('mark_hostel_rollcall', {
+      p_rollcall: activeId || snap?.rollcall?.id,
+      p_student: studentId,
+      p_status: status,
+    }), t('Marked', 'تم التسجيل'));
+    if (res.ok) await loadSnap(activeId || snap?.rollcall?.id);
+  };
+
+  const close = async () => {
+    const id = activeId || snap?.rollcall?.id;
+    if (!id) return;
+    const res = await run(() => rpc('close_hostel_rollcall', { p_rollcall: id }), t('Roll-call closed', 'أُغلق النداء'));
+    if (res.ok) { reloadList(); await loadSnap(id); }
+  };
+
+  const marks = snap?.marks || [];
+  const open = snap?.rollcall?.status === 'open';
+
+  return (
+    <div className="space-y-4">
+      <Card title={t('Emergency roll-call', 'نداء الطوارئ')}
+        actions={canManage && (
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="w-48">
+              <Select value={hostelId} onChange={(e) => setHostelId(e.target.value)}
+                placeholder={t('All hostels', 'كل المساكن')}
+                options={(hostels || []).map((h) => ({ value: h.id, label: h.name }))} />
+            </div>
+            <Button disabled={busy} onClick={start}>{t('Start emergency', 'بدء الطوارئ')}</Button>
+            {open && <Button variant="secondary" disabled={busy} onClick={close}>{t('Close roll-call', 'إغلاق النداء')}</Button>}
+          </div>
+        )}
+      >
+        <p className="text-sm text-gray-400 mb-3">
+          {t('Shows current residents, open leave, and emergency contacts. Mark present/absent until closed.',
+            'يعرض المقيمين الحاليين والإجازات المفتوحة وجهات اتصال الطوارئ.')}
+        </p>
+        <AsyncView state={list}>
+          {(rows) => (
+            <Table rows={rows} empty={t('No roll-calls yet.', 'لا توجد نداءات بعد.')} columns={[
+              { key: 'kind', label: t('Kind', 'النوع') },
+              { key: 'status', label: t('Status', 'الحالة'), render: (r) => <Badge tone={r.status === 'open' ? 'amber' : 'green'}>{r.status}</Badge> },
+              { key: 'started_at', label: t('Started', 'البدء'), render: (r) => formatDate(r.started_at) },
+              {
+                key: 'act', label: '',
+                render: (r) => (
+                  <Button size="sm" variant="ghost" onClick={() => { setActiveId(r.id); loadSnap(r.id); }}>
+                    {t('Open', 'فتح')}
+                  </Button>
+                ),
+              },
+            ]} />
+          )}
+        </AsyncView>
+      </Card>
+      {snap && (
+        <Card title={t('Roster', 'القائمة')}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <Stat label={t('Pending', 'معلق')} value={marks.filter((m) => m.status === 'pending').length} tone="amber" />
+            <Stat label={t('Present', 'حاضر')} value={marks.filter((m) => m.status === 'present').length} tone="green" />
+            <Stat label={t('Absent', 'غائب')} value={marks.filter((m) => m.status === 'absent').length} tone="red" />
+            <Stat label={t('On leave', 'في إجازة')} value={marks.filter((m) => m.status === 'on_leave').length} />
+          </div>
+          <Table rows={marks} empty={t('No residents on this roll-call.', 'لا مقيمين في هذا النداء.')} columns={[
+            { key: 'name', label: t('Student', 'الطالب'), render: (m) => `${m.full_name || ''} · ${m.index_number || ''}` },
+            { key: 'status', label: t('Status', 'الحالة'), render: (m) => <Badge>{m.status}</Badge> },
+            { key: 'emergency_contact', label: t('Emergency', 'الطوارئ'), render: (m) => m.emergency_contact || m.phone || '—' },
+            {
+              key: 'act', label: '',
+              render: (m) => open && canManage ? (
+                <div className="flex gap-1">
+                  <Button size="sm" disabled={busy} onClick={() => mark(m.student_id, 'present')}>{t('Present', 'حاضر')}</Button>
+                  <Button size="sm" variant="danger" disabled={busy} onClick={() => mark(m.student_id, 'absent')}>{t('Absent', 'غائب')}</Button>
+                </div>
+              ) : null,
+            },
+          ]} />
+        </Card>
+      )}
+    </div>
+  );
+}
+
 function OvernightLeave({ allocations, canManage }) {
   const { t } = useLang();
   const [busy, run] = useAction();
@@ -309,6 +423,7 @@ export default function HostelPanel() {
         actions={canManage && <Button onClick={() => setAlloc({ student_id: '', room_id: '', bed_no: '', start_date: today(), notes: '' })}>{t('Allocate student', 'تخصيص طالب')}</Button>} />
       <Tabs active={tab} onChange={setTab} tabs={[
         { id: 'occupancy', label: t('Occupancy', 'الإشغال') },
+        { id: 'emergency', label: t('Emergency', 'الطوارئ') },
         { id: 'leave', label: t('Overnight leave', 'إجازة ليلية') },
         { id: 'residents', label: t('Residents', 'المقيمون') },
         { id: 'setup', label: t('Hostels & rooms', 'المساكن والغرف') },
@@ -318,6 +433,7 @@ export default function HostelPanel() {
           <>
             {tab === 'occupancy' && <Occupancy data={d} canManage={canManage} busy={busy} onEnd={endAlloc}
               onAllocate={(roomId) => setAlloc({ student_id: '', room_id: roomId || '', bed_no: '', start_date: today(), notes: '' })} />}
+            {tab === 'emergency' && <EmergencyRollcall hostels={d.hostels} canManage={canManage} />}
             {tab === 'leave' && <OvernightLeave allocations={d.allocations} canManage={canManage} />}
             {tab === 'residents' && <Residents canManage={canManage} onChanged={reload} />}
             {tab === 'setup' && <HostelsAndRooms data={d} reload={reload} canManage={canManage} />}

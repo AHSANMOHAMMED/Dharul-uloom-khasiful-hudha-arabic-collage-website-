@@ -52,12 +52,20 @@ Deno.serve(async (req) => {
     if (token === serviceKey) {
       // Scheduled: every active tenant.
       const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const { data: runId } = await admin.rpc('begin_job_run', {
+        p_job: 'generate-monthly-fees',
+        p_meta: { month },
+      });
       const { data: orgs, error: orgErr } = await admin
         .from('organizations').select('id, slug').in('status', ['trial', 'active']);
-      if (orgErr) throw orgErr;
+      if (orgErr) {
+        if (runId) await admin.rpc('finish_job_run', { p_id: runId, p_status: 'failed', p_error: orgErr.message });
+        throw orgErr;
+      }
 
       const results: Record<string, unknown> = {};
       let generated = 0;
+      let hadError = false;
       for (const org of orgs || []) {
         // bounded batches: each RPC stays ~1 s regardless of college size
         let orgGenerated = 0;
@@ -66,7 +74,7 @@ Deno.serve(async (req) => {
           const { data, error } = await admin.rpc('generate_monthly_invoices', {
             p_month: month, p_org: org.id, p_default_tuition: defaultFee, p_limit: BATCH,
           });
-          if (error) { last = { error: error.message }; break; }
+          if (error) { last = { error: error.message }; hadError = true; break; }
           last = data;
           orgGenerated += Number(data?.generated || 0);
           if (!Number(data?.remaining) || !Number(data?.generated)) break;
@@ -75,6 +83,14 @@ Deno.serve(async (req) => {
         generated += orgGenerated;
       }
       if (generated > 0) await triggerOutboundWorker(supabaseUrl, serviceKey);
+      if (runId) {
+        await admin.rpc('finish_job_run', {
+          p_id: runId,
+          p_status: hadError ? 'partial' : 'success',
+          p_message: `Generated ${generated} for ${month}`,
+          p_meta: { organizations: results },
+        });
+      }
       return json({ month, generated, organizations: results });
     }
 

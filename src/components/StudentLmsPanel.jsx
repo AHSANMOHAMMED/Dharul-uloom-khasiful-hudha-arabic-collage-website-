@@ -9,6 +9,78 @@ import {
   listClassSchedules,
 } from '../lib/lmsApi';
 import { tx } from '../lib/tx';
+import { supabase } from '../lib/supabaseClient';
+
+function StudentQuizTake({ classNumber }) {
+  const [quizzes, setQuizzes] = useState([]);
+  const [active, setActive] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState({});
+  const [attemptId, setAttemptId] = useState(null);
+  const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    if (!classNumber) return;
+    supabase.from('lms_quizzes').select('id, title, subject, status, due_at, results_released_at')
+      .eq('class_number', classNumber).eq('status', 'published')
+      .then(({ data }) => setQuizzes(data || []));
+  }, [classNumber]);
+
+  const start = async (quizId) => {
+    const { data: aid, error } = await supabase.rpc('start_or_resume_quiz', { p_quiz: quizId });
+    if (error) return;
+    const { data: qs } = await supabase.rpc('student_quiz_questions', { p_quiz: quizId });
+    setAttemptId(aid);
+    setQuestions(qs || []);
+    setActive(quizId);
+    setResult(null);
+  };
+
+  const submit = async () => {
+    const { data, error } = await supabase.rpc('submit_quiz_attempt', { p_attempt: attemptId, p_answers: answers });
+    if (error) return;
+    setResult(data);
+    setActive(null);
+  };
+
+  return (
+    <div className="bg-[#FBF8F0] p-4 rounded-2xl border border-[#E8E1D0] space-y-2">
+      <h3 className="font-bold text-sm text-[#0B3B2E]">{tx('الاختبارات', 'Quizzes')}</h3>
+      {!active && quizzes.map((q) => (
+        <button key={q.id} type="button" onClick={() => start(q.id)}
+          className="block w-full text-start text-xs p-2.5 bg-white border border-[#E8E1D0] rounded-xl hover:border-[#11694A]">
+          {q.title} · {q.subject}
+        </button>
+      ))}
+      {!active && !quizzes.length && <p className="text-xs text-[#4A5E56]">{tx('لا اختبارات منشورة', 'No published quizzes')}</p>}
+      {active && (
+        <div className="space-y-3">
+          {questions.map((qq) => (
+            <div key={qq.id} className="text-xs space-y-1">
+              <p className="font-bold text-[#0B3B2E]">{qq.prompt}</p>
+              <input
+                className="w-full border rounded-lg p-2"
+                value={answers[qq.id] || ''}
+                onChange={(e) => setAnswers((a) => ({ ...a, [qq.id]: e.target.value }))}
+                placeholder={tx('إجابتك', 'Your answer')}
+              />
+            </div>
+          ))}
+          <button type="button" onClick={submit} className="px-3 py-2 bg-[#11694A] text-white text-xs font-bold rounded-xl">
+            {tx('تسليم الاختبار', 'Submit quiz')}
+          </button>
+        </div>
+      )}
+      {result && (
+        <p className="text-xs text-[#11694A]">
+          {result.released
+            ? `${tx('الدرجة', 'Score')}: ${result.score}/${result.max_score}`
+            : tx('تم التسليم — النتائج لم تُصدر بعد', 'Submitted — results not released yet')}
+        </p>
+      )}
+    </div>
+  );
+}
 
 const StudentLmsPanel = () => {
   const { user } = useAuth();
@@ -53,6 +125,7 @@ const StudentLmsPanel = () => {
 
   return (
     <div className="space-y-6">
+      <StudentQuizTake classNumber={classNumber} />
       <div className="flex items-center justify-between pb-3 border-b border-[#E8E1D0]">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">

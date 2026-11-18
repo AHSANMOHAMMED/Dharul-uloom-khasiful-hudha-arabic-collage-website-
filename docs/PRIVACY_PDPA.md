@@ -55,10 +55,22 @@ This document is **not legal advice**. It is an operational register for enginee
 
 ---
 
-## 5. Open decisions (college + counsel)
+## 5. Operational retention settings
+
+Migration `0058_privacy_retention.sql` stores **editable day counts** per category on `org_privacy_retention` (Admin → Org settings).  
+`policy_signed_off` is an institutional checkbox — not proof of legal compliance. Empty/null days mean “not set”.
+
+Purpose-level notification consent (`0063`): `notify_purpose_fees|attendance|results|marketing` on `profiles`.
+
+Break-glass (`0057`) disclosures must be logged and time-boxed; **Needs institutional policy** before production grants.
+
+---
+
+## 6. Open decisions (college + counsel)
 
 - Exact retention periods and archival media.  
 - Lawful basis per processing purpose.  
 - Whether AI `translate-word` / analytics processors are approved.  
 - Safeguarding escalation map (who must not be auto-notified).  
-- Tenant offboarding export vs delete when a SaaS college leaves.
+- Tenant offboarding export vs delete when a SaaS college leaves.  
+- Break-glass approvers, max duration, and post-incident review.

@@ -32,7 +32,7 @@ const LibrarianDashboard = () => {
   const { user, isAdmin, isLibrarian, loading: authLoading } = useAuth();
   const { i18n } = useTranslation();
   const dir = { ar: 'rtl' }[i18n.language] || 'ltr';
-  const [activeTab, setActiveTab] = useTabParam(['catalog', 'add', 'dictionary'], 'catalog');
+  const [activeTab, setActiveTab] = useTabParam(['catalog', 'add', 'loans', 'dictionary'], 'catalog');
   const [books, setBooks] = useState([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -174,6 +174,7 @@ const LibrarianDashboard = () => {
   const navItems = [
     { id: 'catalog', label_en: 'Manuscripts Catalog', label_ar: 'فهرس المخطوطات والكتب', icon: 'menu_book', badge: stats.total },
     { id: 'add', label_en: 'Add / Edit Manuscript', label_ar: 'إضافة مخطوط أو كتاب', icon: 'library_add' },
+    { id: 'loans', label_en: 'Circulation', label_ar: 'الإعارة', icon: 'swap_horiz' },
     { id: 'dictionary', label_en: 'Arabic–Tamil Dictionary', label_ar: 'القاموس العربي–التاميلي', icon: 'translate' },
   ];
 
@@ -245,7 +246,9 @@ const LibrarianDashboard = () => {
           </div>
         )}
 
-        {activeTab !== 'dictionary' && (
+        {activeTab === 'loans' && <LibraryCirculationPanel books={books} />}
+
+        {activeTab !== 'dictionary' && activeTab !== 'loans' && (
         <>
         {/* 3 KPI Stat Tiles */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -535,5 +538,85 @@ const LibrarianDashboard = () => {
     </DashboardSidebarLayout>
   );
 };
+
+function LibraryCirculationPanel({ books }) {
+  const [loans, setLoans] = useState([]);
+  const [bookId, setBookId] = useState('');
+  const [borrowerId, setBorrowerId] = useState('');
+  const [due, setDue] = useState('');
+
+  const load = async () => {
+    await supabase.rpc('mark_overdue_library_loans');
+    const { data } = await supabase
+      .from('library_loans')
+      .select('*, books(title_ar, title_en), profiles:borrower_id(full_name)')
+      .in('status', ['out', 'overdue'])
+      .order('due_at', { ascending: true })
+      .limit(100);
+    setLoans(data || []);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const checkout = async (e) => {
+    e.preventDefault();
+    const { error } = await supabase.rpc('checkout_library_book', {
+      p_book: bookId,
+      p_borrower: borrowerId,
+      p_due: due || null,
+      p_notes: null,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success(tx('تم الإعارة', 'Checked out'));
+    setBookId('');
+    setBorrowerId('');
+    load();
+  };
+
+  const ret = async (id) => {
+    const { error } = await supabase.rpc('return_library_book', { p_loan: id, p_notes: null });
+    if (error) { toast.error(error.message); return; }
+    toast.success(tx('تم الإرجاع', 'Returned'));
+    load();
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#E8E1D0] p-4 sm:p-6 space-y-4">
+      <h2 className="font-serif font-bold text-[#0B3B2E] text-lg">{tx('إعارة وإرجاع', 'Checkout & return')}</h2>
+      <form onSubmit={checkout} className="grid sm:grid-cols-4 gap-2 items-end">
+        <label className="text-xs">
+          {tx('الكتاب', 'Book')}
+          <select className="w-full mt-1 border rounded-xl p-2 text-xs" value={bookId} onChange={(e) => setBookId(e.target.value)} required>
+            <option value="">{tx('اختر…', 'Select…')}</option>
+            {(books || []).map((b) => (
+              <option key={b.id} value={b.id}>{b.title_ar || b.title_en || b.id}</option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs">
+          {tx('معرّف المستعير', 'Borrower UUID')}
+          <input className="w-full mt-1 border rounded-xl p-2 text-xs" value={borrowerId} onChange={(e) => setBorrowerId(e.target.value)} required />
+        </label>
+        <label className="text-xs">
+          {tx('الاستحقاق', 'Due')}
+          <input type="date" className="w-full mt-1 border rounded-xl p-2 text-xs" value={due} onChange={(e) => setDue(e.target.value)} />
+        </label>
+        <button type="submit" className="px-3 py-2 rounded-xl bg-[#11694A] text-white text-xs font-bold">{tx('إعارة', 'Checkout')}</button>
+      </form>
+      <ul className="space-y-2 text-xs">
+        {loans.map((l) => (
+          <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 border border-[#E8E1D0] rounded-xl p-2.5">
+            <div>
+              <div className="font-bold text-[#0B3B2E]">{l.books?.title_ar || l.books?.title_en || l.book_id}</div>
+              <div className="text-[#4A5E56]">{l.profiles?.full_name || l.borrower_id} · {l.status} · {tx('الاستحقاق', 'due')} {l.due_at}</div>
+            </div>
+            <button type="button" className="text-[#11694A] font-bold" onClick={() => ret(l.id)}>{tx('إرجاع', 'Return')}</button>
+          </li>
+        ))}
+        {!loans.length && <li className="text-[#4A5E56]">{tx('لا إعارات مفتوحة', 'No open loans')}</li>}
+      </ul>
+    </div>
+  );
+}
 
 export default LibrarianDashboard;

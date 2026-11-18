@@ -20,6 +20,8 @@ export default function ClassAttendance() {
   const [cls, setCls] = useState(auth.user?.classNumber ? String(auth.user.classNumber) : '1');
   const [date, setDate] = useState(today());
   const [marks, setMarks] = useState({});
+  const [correctId, setCorrectId] = useState('');
+  const [correctReason, setCorrectReason] = useState('');
   const [state, reload] = useAsync(() => rpc('class_attendance_sheet', { p_class: Number(cls), p_date: date }), [cls, date]);
 
   useEffect(() => {
@@ -49,6 +51,23 @@ export default function ClassAttendance() {
       (r) => `${r?.length ?? rows.length} ${t('attendance records saved', 'سجل حضور تم حفظه')}`
     );
     if (res.ok) reload();
+  };
+
+  const correctOne = async () => {
+    if (!correctId || !correctReason.trim() || !marks[correctId]?.status) return;
+    const res = await run(
+      () => rpc('correct_attendance', {
+        p_student: correctId,
+        p_date: date,
+        p_to_status: marks[correctId].status,
+        p_kind: marks[correctId].status === 'late' ? 'late' : marks[correctId].status === 'excused' ? 'excused' : 'corrected',
+        p_reason: correctReason.trim(),
+        p_class: Number(cls),
+        p_period: 'day',
+      }),
+      t('Correction recorded', 'تم تسجيل التصحيح'),
+    );
+    if (res.ok) { setCorrectReason(''); setCorrectId(''); reload(); }
   };
 
   const statusLabel = (id) => {
@@ -101,6 +120,17 @@ export default function ClassAttendance() {
         <div className="w-48"><Field label={t('Date', 'التاريخ')}><Input type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value || today())} /></Field></div>
         <Button variant="secondary" onClick={() => markAll('present')}>{t('Mark unmarked as present', 'تحديد غير المسجلين كحاضرين')}</Button>
         <Button disabled={busy || !values.some((v) => v.status)} onClick={save}>{t('Save attendance', 'حفظ الحضور')}</Button>
+      </div>
+      <div className="flex flex-wrap gap-2 items-end mb-4 p-3 rounded-xl border border-sand-border bg-parchment-50">
+        <Field label={t('Correction student id', 'معرّف الطالب للتصحيح')}>
+          <Input value={correctId} onChange={(e) => setCorrectId(e.target.value)} placeholder="uuid" />
+        </Field>
+        <Field label={t('Reason (audited)', 'السبب (مُدقَّق)')}>
+          <Input value={correctReason} onChange={(e) => setCorrectReason(e.target.value)} />
+        </Field>
+        <Button size="sm" variant="secondary" disabled={busy || !correctId || !correctReason.trim()} onClick={correctOne}>
+          {t('Record exception', 'تسجيل استثناء')}
+        </Button>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         {STATUSES.map((s) => (
