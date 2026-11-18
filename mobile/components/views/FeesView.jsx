@@ -62,6 +62,18 @@ export default function FeesView({ studentId }) {
   const arrearsOverdue = Number(arrears.overdue || 0);
   const openMonths = arrears.months || [];
   const receiptList = q.data?.receiptList || [];
+  // Online pay targets the oldest open month (same as counter / web dashboards).
+  const oldestPayableId = [...invoices]
+    .filter((inv) => {
+      const balance = Number(inv.balance ?? Number(inv.total_due) - Number(inv.paid_amount));
+      return (
+        !inv.cancelled_at &&
+        inv.status !== 'cancelled' &&
+        (inv.status === 'unpaid' || inv.status === 'partial') &&
+        balance > 0
+      );
+    })
+    .sort((a, b) => String(a.month || '').localeCompare(String(b.month || '')))[0]?.id;
 
   return (
     <Screen loading={q.loading} error={q.error} onRefresh={q.refresh} refreshing={q.refreshing}>
@@ -129,11 +141,7 @@ export default function FeesView({ studentId }) {
       {!invoices.length ? <EmptyState message={t('fees.none')} icon="receipt-outline" /> : null}
       {invoices.map((inv) => {
         const balance = Number(inv.balance ?? Number(inv.total_due) - Number(inv.paid_amount));
-        const payable =
-          !inv.cancelled_at &&
-          inv.status !== 'cancelled' &&
-          (inv.status === 'unpaid' || inv.status === 'partial') &&
-          balance > 0;
+        const payable = inv.id === oldestPayableId;
         const open = expanded === inv.id;
         return (
           <Card key={inv.id} onPress={() => setExpanded(open ? null : inv.id)}>

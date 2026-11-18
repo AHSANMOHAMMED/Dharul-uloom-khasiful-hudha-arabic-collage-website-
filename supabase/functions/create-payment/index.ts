@@ -24,8 +24,9 @@ const json = (body: unknown, status = 200) =>
 
 const fail = (status: number, code: string, error: string) => json({ error, code }, status);
 
+/** Malformed JSON ⇒ deny. Missing `fees` key ⇒ allow (matches DB default). Explicit false ⇒ deny. */
 function feesPermissionAllowed(permissions: unknown): boolean {
-  if (!permissions || typeof permissions !== 'object' || Array.isArray(permissions)) return true;
+  if (!permissions || typeof permissions !== 'object' || Array.isArray(permissions)) return false;
   const fees = (permissions as Record<string, unknown>).fees;
   if (fees === undefined || fees === null) return true;
   return fees === true || fees === 'true';
@@ -110,9 +111,10 @@ Deno.serve(async (req) => {
   if (!isOwnFee && !isOrgAdmin) {
     const { data: link } = await admin
       .from('parent_children')
-      .select('child_id, status, permissions')
+      .select('child_id, status, permissions, org_id')
       .eq('parent_id', user.id)
       .eq('child_id', fee.student_id)
+      .eq('org_id', fee.org_id)
       .maybeSingle();
 
     if (!link) {

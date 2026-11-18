@@ -254,28 +254,46 @@ Deno.serve(async (req) => {
   // per-org SMS sender mask + quiet hours
   const orgIds = [...new Set(((rows || []) as OutboxRow[]).map((r) => r.org_id))];
   const senders: Record<string, string> = {};
-  const quietByOrg: Record<string, { start_hour: number; end_hour: number } | null> = {};
+  const quietByOrg: Record<string, { start_hour: number; end_hour: number; tz: string } | null> = {};
   if (orgIds.length) {
-    const { data: orgs } = await admin.from('organizations').select('id, code, settings').in('id', orgIds);
+    const { data: orgs } = await admin.from('organizations').select('id, code, timezone, settings').in('id', orgIds);
     // Only an approved mask: the org code is not a registered sender ID (it
     // made Twilio ignore TWILIO_FROM_NUMBER and Notify.lk/Text.lk reject it).
     for (const o of orgs || []) {
       senders[o.id] = o.settings?.sms_sender_id || Deno.env.get('SMS_SENDER_ID') || '';
       const qh = o.settings?.quiet_hours;
       quietByOrg[o.id] = qh && typeof qh.start_hour === 'number' && typeof qh.end_hour === 'number'
-        ? { start_hour: qh.start_hour, end_hour: qh.end_hour }
+        ? {
+          start_hour: qh.start_hour,
+          end_hour: qh.end_hour,
+          tz: (typeof qh.tz === 'string' && qh.tz.trim()) || o.timezone || 'Asia/Colombo',
+        }
         : null;
     }
   }
 
+  const hourInTz = (tz: string) => {
+    try {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: tz,
+        hour: 'numeric',
+        hourCycle: 'h23',
+      }).formatToParts(new Date());
+      const h = Number(parts.find((p) => p.type === 'hour')?.value);
+      return Number.isFinite(h) ? h : null;
+    } catch {
+      return null;
+    }
+  };
+
   const inQuietHours = (orgId: string) => {
     const q = quietByOrg[orgId];
     if (!q) return false;
-    // Asia/Colombo ≈ UTC+5:30
-    const colomboHour = new Date(Date.now() + 330 * 60 * 1000).getUTCHours();
+    const hour = hourInTz(q.tz) ?? hourInTz('Asia/Colombo');
+    if (hour == null) return false;
     if (q.start_hour === q.end_hour) return false;
-    if (q.start_hour < q.end_hour) return colomboHour >= q.start_hour && colomboHour < q.end_hour;
-    return colomboHour >= q.start_hour || colomboHour < q.end_hour;
+    if (q.start_hour < q.end_hour) return hour >= q.start_hour && hour < q.end_hour;
+    return hour >= q.start_hour || hour < q.end_hour;
   };
 
   const pdfCache = new Map<string, { filename: string; content: string } | null>();

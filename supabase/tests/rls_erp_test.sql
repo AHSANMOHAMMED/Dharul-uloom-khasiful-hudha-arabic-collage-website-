@@ -1185,6 +1185,28 @@ select tst.succeeds($$
     and child_id = '00000000-0000-0000-0000-000000000008'
 $$, 'guardian: restore active link for remaining suite');
 
+-- 0069: permission JSON gates fee/results reads for active guardians.
+select tst.as_service();
+update public.parent_children
+   set permissions = '{"fees":false,"results":false,"attendance":true,"leave":true}'::jsonb
+ where parent_id = '00000000-0000-0000-0000-000000000010'
+   and child_id = '00000000-0000-0000-0000-000000000008';
+select tst.login('00000000-0000-0000-0000-000000000010');
+select tst.ok((select count(*) = 0 from public.student_fees where student_id = '00000000-0000-0000-0000-000000000008'),
+              'guardian: fees=false hides child invoices');
+select tst.fails($$select public.student_arrears('00000000-0000-0000-0000-000000000008')$$,
+                 'guardian: fees=false blocks arrears RPC');
+select tst.ok((select count(*) = 0 from public.student_results where student_id = '00000000-0000-0000-0000-000000000008'),
+              'guardian: results=false hides child results');
+select tst.as_service();
+update public.parent_children
+   set permissions = '{"fees":true,"results":true,"attendance":true,"leave":true}'::jsonb
+ where parent_id = '00000000-0000-0000-0000-000000000010'
+   and child_id = '00000000-0000-0000-0000-000000000008';
+select tst.login('00000000-0000-0000-0000-000000000010');
+select tst.ok((select count(*) >= 1 from public.student_fees where student_id = '00000000-0000-0000-0000-000000000008'),
+              'guardian: fees=true restores invoice read');
+
 -- Published result requires correction RPC (direct update blocked).
 select tst.login('00000000-0000-0000-0000-000000000002');
 update public.exams set status = 'published', published_at = now() where id = 'e0000000-0000-0000-0000-000000000001';
