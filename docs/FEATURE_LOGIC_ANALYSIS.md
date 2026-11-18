@@ -223,11 +223,15 @@ There is **no production Express API** for the SPA. Backend = Postgres + RLS + R
 ### Critical money flow
 
 ```text
-PayFeeButton → create-payment (JWT)
-  → PayHere (or payment-checkout HMAC)
+PayFeeButton / FeesView → create-payment (JWT)
+  → AuthZ: own fee | active parent with permissions.fees | MFA org admin
+  → Feature gate: org payments flag
+  → Supersede prior pending txns for same fee
+  → PayHere (or payment-checkout HMAC, constant-time)
   → payhere-notify (signature + merchant)
-  → apply_gateway_payment (idempotent)
+  → apply_gateway_payment (idempotent; overpay stamped in metadata)
   → fee_receipts + notify channels
+  → Web/mobile success screens poll payment_transactions (return URL is not authority)
 ```
 
 ### Parent link flow
@@ -324,6 +328,7 @@ Side effects on withdraw/transfer: end open hostel allocations. Fee cancel/credi
 - `request_child_link`: auto-link only when a **single** admission contact match; ambiguous matches → staff review queue.
 - `unlink_child` revokes future access; history retained.
 - Parent RLS reads require `status = 'active'`.
+- Online PayHere also requires `permissions.fees !== false` (`create-payment` returns `fees_permission_denied`).
 
 ### 11.3 Permission matrix (summary)
 

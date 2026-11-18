@@ -248,6 +248,8 @@ Monitor these signals after release:
   functions.
 - Pending, failed, and retrying outbox rows.
 - PayHere transaction records that remain `pending` beyond the gateway window.
+  Run as service role when needed: `select public.expire_stale_payment_checkouts(6);`
+  (`create-payment` also cancels prior pending rows for the same fee on each new checkout.)
 - Vercel build status, runtime errors, and frontend asset failures.
 - Mobile crash reports, push-token registration failures, and deep-link returns.
 

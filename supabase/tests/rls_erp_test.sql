@@ -1321,7 +1321,7 @@ select tst.ok((select count(*) = 0 from public.finance_document_payments), 'fhub
 select tst.fails($$select public.record_finance_document_payment((select id from fh_bill), 1)$$, 'fhub: tutor cannot take payments');
 
 -- ---------------------------------------------------------------------------
--- Security hardening 0042: tenant storage, index lookup, chat claim, AI quota
+-- Security hardening: tenant storage, index lookup, chat claim, AI quota
 -- ---------------------------------------------------------------------------
 select tst.logout();
 insert into storage.objects (bucket_id, name, owner) values
@@ -1350,6 +1350,37 @@ select tst.ok((select public.consume_ai_quota('00000000-0000-0000-0000-000000000
 select tst.ok((select public.consume_ai_quota('00000000-0000-0000-0000-000000000006', 'translate-word', 2, 10)), 'AI quota: second call allowed');
 select tst.ok((select not public.consume_ai_quota('00000000-0000-0000-0000-000000000006', 'translate-word', 2, 10)), 'AI quota: over the hourly limit is refused');
 select tst.ok((select not public.consume_ai_quota('00000000-0000-0000-0000-000000000007', 'translate-word')), 'AI quota: unapproved account refused');
+
+-- ---------------------------------------------------------------------------
+-- PayHere checkout hygiene (0054): expire stale pending + realloc/overpay audit
+-- ---------------------------------------------------------------------------
+select tst.as_service();
+insert into public.payment_transactions (student_id, fee_id, payer_id, amount, gateway_order_id, status, created_at)
+select student_id, id, '00000000-0000-0000-0000-000000000010', 10, 'KH-STALE-PENDING', 'pending', now() - interval '8 hours'
+from public.student_fees where student_id = '00000000-0000-0000-0000-000000000009' and month = '2026-11'
+limit 1;
+select tst.ok((select public.expire_stale_payment_checkouts(6) >= 1), 'payments: expire_stale_payment_checkouts cancels old pending');
+select tst.ok((select status = 'cancelled' from public.payment_transactions where gateway_order_id = 'KH-STALE-PENDING'),
+              'payments: stale pending marked cancelled');
+
+insert into public.payment_transactions (student_id, fee_id, payer_id, amount, gateway_order_id, status)
+select student_id, id, '00000000-0000-0000-0000-000000000010',
+       greatest(total_due - paid_amount, 1), 'KH-OVERPAY-1', 'pending'
+from public.student_fees where student_id = '00000000-0000-0000-0000-000000000009' and month = '2026-11'
+limit 1;
+update public.student_fees
+set paid_amount = greatest(total_due - 1, 0), status = 'partial'
+where student_id = '00000000-0000-0000-0000-000000000009' and month = '2026-11';
+select tst.ok((
+  select (public.apply_gateway_payment(
+    'KH-OVERPAY-1', 'PH-OVER',
+    (select amount from public.payment_transactions where gateway_order_id = 'KH-OVERPAY-1'),
+    'LKR', '2') ->> 'overpay')::boolean
+), 'payments: gateway overpay flagged when balance shrank');
+select tst.ok((
+  select coalesce((metadata ->> 'overpay')::boolean, false)
+  from public.payment_transactions where gateway_order_id = 'KH-OVERPAY-1'
+), 'payments: overpay stamped on payment_transactions.metadata');
 
 -- ---------------------------------------------------------------------------
 select tst.logout();

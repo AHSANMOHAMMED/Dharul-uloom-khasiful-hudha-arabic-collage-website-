@@ -29,7 +29,8 @@ Deno.serve(async (req) => {
   const siteUrl = (Deno.env.get('SITE_URL') || 'http://localhost:3000').replace(/\/$/, '');
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 
-  if (!orderId || !merchantSecret || !safeEqual(sig, await checkoutSignature(orderId, merchantSecret))) {
+  const expectedSig = merchantSecret ? await checkoutSignature(orderId, merchantSecret) : '';
+  if (!orderId || !merchantSecret || !safeEqual(sig, expectedSig)) {
     return html('<div class="card"><h2>Invalid payment link</h2><p>Please start the payment again from the app.</p></div>', 400);
   }
 

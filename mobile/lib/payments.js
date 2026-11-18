@@ -5,6 +5,23 @@ import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY, fetchWithTimeout } from './s
 
 export const RETURN_URL = 'kashifulhudha://';
 
+const ERROR_KEYS = {
+  unauthorized: 'auth.signInRequired',
+  forbidden: 'fees.payForbidden',
+  guardian_inactive: 'fees.guardianInactive',
+  fees_permission_denied: 'fees.feesPermissionDenied',
+  payments_disabled: 'fees.paymentsDisabled',
+  fee_not_found: 'fees.notFound',
+  invoice_cancelled: 'fees.invoiceCancelled',
+  no_balance: 'fees.noBalance',
+  invoice_not_payable: 'fees.notPayable',
+  gateway_not_configured: 'fees.gatewayDown',
+};
+
+export function paymentErrorKey(code) {
+  return (code && ERROR_KEYS[code]) || 'fees.payFailed';
+}
+
 // Order ids whose payment-success / payment-cancel screen already opened via
 // the OS deep link, so the auth-session result does not navigate twice.
 const handledOrders = new Set();
@@ -15,7 +32,11 @@ export function markOrderHandled(orderId) {
 async function createCheckout(feeId) {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
-  if (!token) throw new Error('Not signed in');
+  if (!token) {
+    const err = new Error('Not signed in');
+    err.code = 'unauthorized';
+    throw err;
+  }
 
   const res = await fetchWithTimeout(`${SUPABASE_URL}/functions/v1/create-payment`, {
     method: 'POST',
@@ -32,7 +53,12 @@ async function createCheckout(feeId) {
   } catch {
     /* non-JSON error body */
   }
-  if (!res.ok) throw new Error(json.error || `Payment service error (${res.status})`);
+  if (!res.ok) {
+    const err = new Error(json.error || `Payment service error (${res.status})`);
+    err.code = json.code || null;
+    err.status = res.status;
+    throw err;
+  }
   if (!json.hosted_checkout_url) throw new Error('Payment service did not return a checkout page');
   return json;
 }

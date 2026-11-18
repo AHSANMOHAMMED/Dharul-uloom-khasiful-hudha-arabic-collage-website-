@@ -142,9 +142,11 @@ export default function ParentDashboard() {
       if (resData.data) setResults(resData.data);
       if (attData.data) setAttendance(attData.data);
       setFeeArrears(arrearsResult);
-      const unpaid = (feePayData.data || []).find(
-        (f) => f.status !== 'completed' && Number(f.total_due || 0) - Number(f.paid_amount || 0) > 0,
-      );
+      const unpaid = (feePayData.data || []).find((f) => {
+        if (f.cancelled_at || f.status === 'cancelled') return false;
+        if (f.status !== 'unpaid' && f.status !== 'partial') return false;
+        return Number(f.total_due || 0) - Number(f.paid_amount || 0) > 0;
+      });
       setPayableFee(unpaid || null);
       if (leaveData.data) setLeaves(leaveData.data);
       if (jobData.data) setTutorJobs(jobData.data);

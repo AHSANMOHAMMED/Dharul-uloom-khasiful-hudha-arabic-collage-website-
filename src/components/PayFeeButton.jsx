@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { payFeeOnline } from '../lib/paymentsApi';
+import { isInvoicePayableOnline, paymentErrorMessage } from '../lib/paymentErrors';
+import { useFeatures } from '../context/FeatureFlagsContext';
 import { tx } from '../lib/tx';
 
 const PayFeeButton = ({ fee, className = '' }) => {
-  useTranslation(); // subscribe: re-render on language change
+  const { i18n } = useTranslation();
+  const { enabled } = useFeatures();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (!fee || fee.status === 'completed') return null;
+  if (!enabled('payments')) return null;
+  if (!isInvoicePayableOnline(fee)) return null;
 
   const remaining = Number(fee.total_due) - Number(fee.paid_amount);
-  if (remaining <= 0) return null;
 
   const handlePay = async () => {
     setError('');
@@ -19,9 +22,9 @@ const PayFeeButton = ({ fee, className = '' }) => {
     try {
       await payFeeOnline(fee.id);
     } catch (err) {
-      setError(err.message);
+      const lang = i18n.language?.startsWith('ar') ? 'ar' : 'en';
+      setError(paymentErrorMessage(err.code, err.message, lang));
       setLoading(false);
-      return;
     }
   };
 

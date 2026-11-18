@@ -78,7 +78,11 @@ export default function StudentDashboard() {
         .order('month', { ascending: true })
         .limit(3);
       const unpaid = (feesData || []).find(
-        (f) => f.status !== 'completed' && Number(f.total_due || 0) - Number(f.paid_amount || 0) > 0,
+        (f) => {
+          if (f.cancelled_at || f.status === 'cancelled') return false;
+          if (f.status !== 'unpaid' && f.status !== 'partial') return false;
+          return Number(f.total_due || 0) - Number(f.paid_amount || 0) > 0;
+        },
       );
       setPayableFee(unpaid || null);
 

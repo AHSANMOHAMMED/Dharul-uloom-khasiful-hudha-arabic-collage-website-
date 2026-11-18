@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, fetchWithTimeout } from './supabaseClient';
+import { PaymentApiError, paymentErrorMessage } from './paymentErrors';
 
 /**
  * Initiate PayHere checkout for a student fee row.
@@ -6,10 +7,10 @@ import { supabase, isSupabaseConfigured, fetchWithTimeout } from './supabaseClie
  */
 export async function createPaymentCheckout(feeId) {
   if (!isSupabaseConfigured) throw new Error('Supabase is not configured');
-  if (!feeId) throw new Error('Fee ID is required');
+  if (!feeId) throw new PaymentApiError('Fee ID is required', 'fee_id_required', 400);
 
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('Not authenticated');
+  if (!session) throw new PaymentApiError('Not authenticated', 'unauthorized', 401);
 
   const functionBaseUrl = import.meta.env.VITE_SUPABASE_URL;
   if (!functionBaseUrl) throw new Error('Supabase function URL is not configured');
@@ -32,7 +33,11 @@ export async function createPaymentCheckout(feeId) {
     json = {};
   }
 
-  if (!res.ok) throw new Error(json.error || 'Payment initiation failed');
+  if (!res.ok) {
+    const code = json.code || null;
+    const message = paymentErrorMessage(code, json.error || 'Payment initiation failed', 'en');
+    throw new PaymentApiError(message, code, res.status);
+  }
   if (!json.checkout_url || !json.params) {
     throw new Error('Payment gateway response is incomplete');
   }
@@ -64,4 +69,25 @@ export async function payFeeOnline(feeId) {
     throw new Error('Invalid payment checkout URL');
   }
   redirectToPayHere(checkout_url, params);
+}
+
+/** Poll payment_transactions until webhook settles (or timeout). */
+export async function waitForPayment(orderId, { timeoutMs = 30000, intervalMs = 2500, isCancelled } = {}) {
+  if (!orderId || !isSupabaseConfigured) return { status: 'processing', txn: null };
+  const started = Date.now();
+  let last = null;
+  while (Date.now() - started < timeoutMs) {
+    if (isCancelled?.()) return { status: 'aborted', txn: last };
+    const { data } = await supabase
+      .from('payment_transactions')
+      .select('id, status, amount, currency, fee_id, student_id, gateway_order_id, updated_at')
+      .eq('gateway_order_id', orderId)
+      .maybeSingle();
+    last = data || last;
+    if (data?.status === 'paid' || data?.status === 'failed' || data?.status === 'cancelled') {
+      return { status: data.status, txn: data };
+    }
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+  return { status: 'processing', txn: last };
 }

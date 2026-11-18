@@ -23,6 +23,7 @@ Production verification is blank until ops signs off a live drill.
 | Student lifecycle state machine | P0 | Partial | `0040_student_lifecycle.sql` + StudentDetail UI | Full applicant→offer machine still policy |
 | Guardian verification + unlink | P0 | Partial | `0041_guardian_relationship.sql` + StudentDetail/ParentDashboard | Custody playbook = policy |
 | Fee/payment idempotency (PayHere) | P0 | Already implemented | `apply_gateway_payment`, `payhere-notify` md5sig | Keep webhook audit trail |
+| PayHere checkout AuthZ + UX | P0 | Partial | `create-payment` enforces active guardian + `permissions.fees`, stable error codes, pending supersede; web success polls; mobile active-only children; `0054_payment_checkout_hygiene` overpay/realloc audit | Live sandbox drill still open |
 | Invoice credit / write-off / immutable lines | P0 | Partial | `0043_fee_adjustments.sql` + FeeInvoiceDetail | Bank recon still Phase 2 |
 | Period lock | P0 | Already implemented | `books_locked_until`; tests in `rls_erp_test.sql` §19 | Run `npm run test:db` when Docker available |
 | Exam publish lock | P0 | Already implemented | `0016` / `0028`, MarksEntry | — |
@@ -62,4 +63,5 @@ Production verification is blank until ops signs off a live drill.
 | Result corrections | `0042_result_corrections.sql` |
 | Fee adjustments | `0043_fee_adjustments.sql` |
 | Hostel overnight leave | `0044_hostel_leave.sql` |
+| PayHere checkout hygiene | `0054_payment_checkout_hygiene.sql` + create-payment AuthZ |
 | Privacy + restore docs | `PRIVACY_PDPA.md`, `GO_LIVE.md` |

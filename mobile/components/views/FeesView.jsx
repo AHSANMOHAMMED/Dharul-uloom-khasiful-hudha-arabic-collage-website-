@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { supabase, must } from '../../lib/supabase';
 import { useAsync } from '../../lib/useAsync';
 import { useI18n } from '../../lib/i18n';
-import { payFee } from '../../lib/payments';
+import { payFee, paymentErrorKey } from '../../lib/payments';
 import { formatDate } from '../../lib/format';
 import { useLiveReload } from '../../lib/live';
 import { methodLabel } from '../../lib/receipts';
@@ -48,7 +48,7 @@ export default function FeesView({ studentId }) {
       const outcome = await payFee(inv.id);
       if (outcome === 'dismissed') Alert.alert(t('fees.title'), t('fees.payCancelled'));
     } catch (e) {
-      Alert.alert(t('fees.payFailed'), e?.message || t('common.error'));
+      Alert.alert(t('fees.payFailed'), t(paymentErrorKey(e?.code)));
     } finally {
       setPaying(null);
       q.reload();
@@ -129,7 +129,11 @@ export default function FeesView({ studentId }) {
       {!invoices.length ? <EmptyState message={t('fees.none')} icon="receipt-outline" /> : null}
       {invoices.map((inv) => {
         const balance = Number(inv.balance ?? Number(inv.total_due) - Number(inv.paid_amount));
-        const payable = (inv.status === 'unpaid' || inv.status === 'partial') && balance > 0;
+        const payable =
+          !inv.cancelled_at &&
+          inv.status !== 'cancelled' &&
+          (inv.status === 'unpaid' || inv.status === 'partial') &&
+          balance > 0;
         const open = expanded === inv.id;
         return (
           <Card key={inv.id} onPress={() => setExpanded(open ? null : inv.id)}>

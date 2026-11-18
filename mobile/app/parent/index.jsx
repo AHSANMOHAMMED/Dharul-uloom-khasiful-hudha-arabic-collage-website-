@@ -11,7 +11,8 @@ export async function fetchChildren(parentId) {
     supabase
       .from('parent_children')
       .select('child_id, child:profiles!parent_children_child_id_fkey(id, full_name, index_number, class_number, is_approved)')
-      .eq('parent_id', parentId),
+      .eq('parent_id', parentId)
+      .eq('status', 'active'),
   );
   return rows.map((r) => r.child).filter(Boolean);
 }
