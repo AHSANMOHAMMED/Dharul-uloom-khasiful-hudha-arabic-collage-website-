@@ -15,6 +15,7 @@ const ERROR_KEYS = {
   invoice_cancelled: 'fees.invoiceCancelled',
   no_balance: 'fees.noBalance',
   invoice_not_payable: 'fees.notPayable',
+  pay_oldest_first: 'fees.payOldestFirst',
   gateway_not_configured: 'fees.gatewayDown',
 };
 

@@ -141,6 +141,22 @@ Deno.serve(async (req) => {
     return fail(400, 'invoice_not_payable', 'Invoice is not payable online');
   }
 
+  // Same rule as the counter / web dashboards: online pay must target the oldest open month.
+  const { data: olderOpen } = await admin
+    .from('student_fees')
+    .select('id, month')
+    .eq('student_id', fee.student_id)
+    .eq('org_id', fee.org_id)
+    .in('status', ['unpaid', 'partial'])
+    .is('cancelled_at', null)
+    .lt('month', fee.month)
+    .order('month', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (olderOpen?.id) {
+    return fail(400, 'pay_oldest_first', 'Please pay the oldest unpaid invoice first');
+  }
+
   // Supersede any open pending checkouts for this invoice (stale or duplicate).
   await admin
     .from('payment_transactions')

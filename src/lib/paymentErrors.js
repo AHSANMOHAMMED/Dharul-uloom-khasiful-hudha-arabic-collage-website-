@@ -9,6 +9,7 @@ const PAYMENT_ERROR_COPY = {
   invoice_cancelled: ['الفاتورة ملغاة', 'This invoice has been cancelled'],
   no_balance: ['لا يوجد رصيد مستحق', 'No balance due on this invoice'],
   invoice_not_payable: ['لا يمكن دفع هذه الفاتورة إلكترونيًا', 'This invoice cannot be paid online'],
+  pay_oldest_first: ['يرجى دفع أقدم فاتورة غير مسددة أولاً', 'Please pay the oldest unpaid invoice first'],
   fee_id_required: ['معرّف الفاتورة مطلوب', 'Fee ID is required'],
   gateway_not_configured: ['بوابة الدفع غير مهيأة', 'Payment gateway is not configured'],
   return_url_misconfigured: ['رابط العودة غير صحيح', 'Payment return URL is not configured correctly'],

@@ -5,6 +5,7 @@ describe('paymentErrors', () => {
   it('maps stable create-payment codes', () => {
     expect(paymentErrorMessage('fees_permission_denied', 'x', 'en')).toMatch(/permission/i);
     expect(paymentErrorMessage('guardian_inactive', 'x', 'ar')).toMatch(/ولي/);
+    expect(paymentErrorMessage('pay_oldest_first', 'x', 'en')).toMatch(/oldest/i);
     expect(paymentErrorMessage('unknown', 'fallback', 'en')).toBe('fallback');
   });
 

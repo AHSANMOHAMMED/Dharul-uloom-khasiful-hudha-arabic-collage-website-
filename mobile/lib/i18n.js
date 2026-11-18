@@ -176,6 +176,7 @@ const en = {
   'fees.invoiceCancelled': 'This invoice has been cancelled',
   'fees.noBalance': 'No balance due on this invoice',
   'fees.notPayable': 'This invoice cannot be paid online',
+  'fees.payOldestFirst': 'Please pay the oldest unpaid invoice first',
   'fees.gatewayDown': 'Payment gateway is not configured',
 
   'payment.successTitle': 'Payment received',
@@ -1039,6 +1040,7 @@ const ar = {
   'fees.invoiceCancelled': 'هذه الفاتورة ملغاة',
   'fees.noBalance': 'لا يوجد رصيد مستحق',
   'fees.notPayable': 'لا يمكن دفع هذه الفاتورة إلكترونيًا',
+  'fees.payOldestFirst': 'يرجى دفع أقدم فاتورة غير مسددة أولاً',
   'fees.gatewayDown': 'بوابة الدفع غير مهيأة',
 
   'payment.successTitle': 'تم استلام الدفع',
@@ -1893,6 +1895,7 @@ const ta = {
   "fees.invoiceCancelled": "இந்த விலைப்பட்டியல் ரத்துசெய்யப்பட்டது",
   "fees.noBalance": "இந்த விலைப்பட்டியலில் மீதி இல்லை",
   "fees.notPayable": "இந்த விலைப்பட்டியலை ஆன்லைனில் செலுத்த முடியாது",
+  "fees.payOldestFirst": "முதலில் மிகப் பழைய செலுத்தப்படாத விலைப்பட்டியலைச் செலுத்துங்கள்",
   "fees.gatewayDown": "கொடுப்பனவு வாயில் அமைக்கப்படவில்லை",
   "payment.successTitle": "கொடுப்பனவு கிடைத்தது",
   "payment.checking": "PayHere உடன் உங்கள் கொடுப்பனவை உறுதிப்படுத்துகிறது…",
