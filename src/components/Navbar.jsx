@@ -93,7 +93,9 @@ export default function Navbar() {
               }`}
             >
               <span>{t('nav.academics')}</span>
-              <span className="material-symbols-outlined text-[18px] transition-transform group-hover:rotate-180">{'expand_more'}</span>
+              <svg className="w-3.5 h-3.5 transition-transform group-hover:rotate-180 opacity-70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </button>
             <div className="absolute start-0 top-full mt-1 w-52 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-all">
               <Link
@@ -133,7 +135,9 @@ export default function Navbar() {
               }`}
             >
               <span>{t('nav.explore')}</span>
-              <span className="material-symbols-outlined text-[18px] transition-transform group-hover:rotate-180">{'expand_more'}</span>
+              <svg className="w-3.5 h-3.5 transition-transform group-hover:rotate-180 opacity-70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </button>
             <div className="absolute start-0 top-full mt-1 w-52 rounded-[12px] bg-paper-white border border-sand-border shadow-manuscript-md py-2 z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto transition-all">
               {showLibrary && (
@@ -291,7 +295,12 @@ export default function Navbar() {
                 to="/admissions"
                 className="inline-flex items-center justify-center gap-1.5 h-9 sm:h-10 px-3.5 sm:px-4 rounded-lg bg-[#e77835] hover:bg-[#ce6327] text-white text-xs font-semibold shadow-xs transition-colors"
               >
-                <span className="material-symbols-outlined text-[16px] hidden sm:inline">edit_document</span>
+                <svg className="w-3.5 h-3.5 hidden sm:inline shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
                 {/* Short label on phones so the menu button stays on screen. */}
                 <span className="sm:hidden">{tx('تقديم', 'Apply')}</span>
                 <span className="hidden sm:inline">{tx('التقديم للقبول', 'Apply for Admission')}</span>
@@ -307,9 +316,18 @@ export default function Navbar() {
             className="lg:hidden inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-sand-border text-ink-text-primary hover:bg-sand-border/30 transition-colors"
             aria-label={tx('فتح/إغلاق القائمة', 'Toggle navigation menu')}
           >
-            <span className="material-symbols-outlined text-[22px]">
-              {isOpen ? 'close' : 'menu'}
-            </span>
+            {isOpen ? (
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
@@ -345,9 +363,9 @@ export default function Navbar() {
               className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm font-medium text-ink-text-primary"
             >
               <span>{t('nav.academics')}</span>
-              <span className="material-symbols-outlined text-[18px]">
-                {mobileAcademicsOpen ? 'expand_less' : 'expand_more'}
-              </span>
+              <svg className={`w-4 h-4 transition-transform opacity-70 shrink-0 ${mobileAcademicsOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </button>
             {mobileAcademicsOpen && (
               <div className="ps-4 space-y-1 mt-1 border-s-2 border-sand-border ms-3">
@@ -384,9 +402,9 @@ export default function Navbar() {
               className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm font-medium text-ink-text-primary"
             >
               <span>{t('nav.explore')}</span>
-              <span className="material-symbols-outlined text-[18px]">
-                {mobileExploreOpen ? 'expand_less' : 'expand_more'}
-              </span>
+              <svg className={`w-4 h-4 transition-transform opacity-70 shrink-0 ${mobileExploreOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </button>
             {mobileExploreOpen && (
               <div className="ps-4 space-y-1 mt-1 border-s-2 border-sand-border ms-3">

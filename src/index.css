@@ -80,8 +80,9 @@
 }
 
 /* Material Symbols Outlined font display */
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
+.material-symbols-outlined,
+.material-icons {
+  font-family: 'Material Symbols Outlined', 'Material Icons';
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -92,8 +93,11 @@
   white-space: nowrap;
   word-wrap: normal;
   direction: ltr;
+  font-feature-settings: 'liga';
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Arabic / Urdu text: elegant Naskh and Amiri stack with RTL refinements */
