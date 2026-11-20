@@ -5,6 +5,7 @@ import {
   fetchOrgInvitations, fetchPlatformHealth, inviteOrgAdmin, platformBroadcast,
   platformUserAction, revokeInvitation, updatePlatformOrg,
 } from '../../lib/platformApi';
+import Icon from '../Icon';
 
 // The platform console is English + LTR by design (see SuperAdminConsole).
 export const en = (_ar, english) => english;
@@ -29,12 +30,12 @@ export function Dialog({ title, onClose, children, footer, wide }) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <button type="button" onClick={onClose} className={secondary} aria-label={en('رجوع', 'Back')}>
-              <span className="material-symbols-outlined text-[16px] align-[-3px]" aria-hidden>arrow_back</span> {en('رجوع', 'Back')}
+              <Icon name="arrow_back" className="text-[16px] me-1" /> {en('رجوع', 'Back')}
             </button>
             <h3 className="truncate font-serif text-lg font-semibold text-ink-green-900">{title}</h3>
           </div>
           <button type="button" onClick={onClose} aria-label={en('إغلاق', 'Close')} className="text-ink-text-muted hover:text-ink-green-900">
-            <span className="material-symbols-outlined text-[18px]" aria-hidden>close</span>
+            <Icon name="close" className="text-[18px]" />
           </button>
         </div>
         {children}

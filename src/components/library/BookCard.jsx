@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { tx } from '../../lib/tx';
+import Icon from '../Icon';
 
 const LANGUAGE_LABELS = {
   ar: { ar: 'عربي', en: 'Arabic' },
@@ -81,7 +82,7 @@ export default function BookCard({ book }) {
               {primaryCategory}
             </span>
             <span className="text-emerald-700 font-semibold group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-0.5">
-              {tx('اقرأ', 'Read')} <span className="material-symbols-outlined text-[12px] rtl:rotate-180">{'chevron_right'}</span>
+              {tx('اقرأ', 'Read')} <Icon name="chevron_right" className="text-[12px] rtl:rotate-180" />
             </span>
           </div>
         </div>

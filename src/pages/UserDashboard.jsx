@@ -17,6 +17,7 @@ import WardenPortal from './portals/WardenPortal';
 import CounselorPortal from './portals/CounselorPortal';
 import ExamPortal from './portals/ExamPortal';
 import KhatamPattern from '../components/KhatamPattern';
+import Icon from '../components/Icon';
 import { tx } from '../lib/tx';
 
 export default function UserDashboard() {
@@ -75,7 +76,7 @@ export default function UserDashboard() {
         <KhatamPattern className="opacity-[0.05]" strokeColor="#0B3B2E" id="pending-dashboard-khatam" />
         <div className="max-w-md w-full bg-paper-white rounded-[14px] border border-sand-border p-8 text-center space-y-6 shadow-manuscript-md relative z-10">
           <div className="w-16 h-16 rounded-full bg-gold-wash-100 text-brass-gold-500 mx-auto flex items-center justify-center border border-brass-gold-500/30">
-            <span className="material-symbols-outlined text-3xl">hourglass_top</span>
+            <Icon name="hourglass_top" className="text-3xl" />
           </div>
           <div className="space-y-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-brass-gold-500 block">
@@ -259,7 +260,7 @@ export default function UserDashboard() {
       <div className="min-h-screen bg-parchment-50 text-ink-text-primary flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-paper-white border border-sand-border p-8 rounded-[14px] text-center space-y-4 shadow-manuscript-md">
           <div className="w-16 h-16 rounded-full bg-mint-wash-100 text-emerald-700 mx-auto flex items-center justify-center border border-emerald-700/20">
-            <span className="material-symbols-outlined text-3xl">waving_hand</span>
+            <Icon name="waving_hand" className="text-3xl" />
           </div>
           <h2 className="text-xl font-serif font-bold text-ink-green-900">
             {tx('حساب زائر', 'Visitor account')}

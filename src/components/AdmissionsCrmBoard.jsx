@@ -10,6 +10,7 @@ import {
 } from '../lib/crmApi';
 import { toast } from 'react-toastify';
 import { tx } from '../lib/tx';
+import Icon from './Icon';
 
 const STAGE_LABELS = {
   lead: { en: 'Lead', ar: 'عميل محتمل' },
@@ -186,7 +187,7 @@ export default function AdmissionsCrmBoard() {
               className="text-xs font-bold px-2.5 py-1 rounded-lg bg-white border border-[#E8E1D0] text-[#4A5E56] hover:text-[#0B3B2E] inline-flex items-center gap-1"
               onClick={() => setSelected(null)}
             >
-              <span className="material-symbols-outlined text-[14px]">close</span>
+              <Icon name="close" className="text-[14px]" />
               <span>{tx('إغلاق', 'Close')}</span>
             </button>
           </div>

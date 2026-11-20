@@ -5,6 +5,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import { tx } from '../../lib/tx';
 import TextReader from './TextReader';
 import WordMeaningPanel from './WordMeaningPanel';
+import Icon from '../Icon';
 
 /**
  * Google Drive based reader:
@@ -75,7 +76,7 @@ export default function BookReader({ book }) {
 
   const fallbackCard = (
     <div className="max-w-md w-full p-8 rounded-[14px] bg-paper-white border border-sand-border text-center shadow-manuscript space-y-4">
-      <span className="material-symbols-outlined text-4xl text-brass-gold-500">{'menu_book'}</span>
+      <Icon name="menu_book" className="text-4xl text-brass-gold-500" />
       <h4 className="font-serif text-lg font-semibold text-ink-green-900">
         {tx('تعذر عرض الملف داخل الصفحة', 'In-browser preview unavailable')}
       </h4>
@@ -93,7 +94,7 @@ export default function BookReader({ book }) {
             rel="noopener noreferrer"
             className="flex-1 h-10 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-1 shadow-xs"
           >
-            <span className="material-symbols-outlined text-[16px]">{'open_in_new'}</span>
+            <Icon name="open_in_new" className="text-[16px]" />
             <span>{tx('فتح Drive', 'Open Drive')}</span>
           </a>
         )}
@@ -104,7 +105,7 @@ export default function BookReader({ book }) {
             rel="noopener noreferrer"
             className="flex-1 h-10 rounded-[10px] border border-sand-border hover:bg-parchment-50 text-ink-text-primary text-xs font-semibold flex items-center justify-center gap-1"
           >
-            <span className="material-symbols-outlined text-[16px]">{'download'}</span>
+            <Icon name="download" className="text-[16px]" />
             <span>{tx('تنزيل PDF', 'Download PDF')}</span>
           </a>
         )}
@@ -173,7 +174,7 @@ export default function BookReader({ book }) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-sand-border hover:bg-parchment-50 text-xs font-semibold text-ink-text-secondary transition-colors"
             >
-              <span className="material-symbols-outlined text-[15px]">{'open_in_new'}</span>
+              <Icon name="open_in_new" className="text-[15px]" />
               <span className="hidden sm:inline">{'Drive'}</span>
             </a>
           )}
@@ -185,7 +186,7 @@ export default function BookReader({ book }) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-colors"
             >
-              <span className="material-symbols-outlined text-[15px]">{'download'}</span>
+              <Icon name="download" className="text-[15px]" />
               <span className="hidden sm:inline">{tx('تنزيل', 'Download')}</span>
             </a>
           )}
@@ -243,7 +244,7 @@ export default function BookReader({ book }) {
           onClick={() => setMeaning({ word: '', context: '' })}
           className="fixed bottom-4 end-4 z-40 inline-flex items-center gap-1.5 rounded-full bg-emerald-700 px-5 py-3 text-sm font-semibold text-white shadow-manuscript-md hover:bg-emerald-500"
         >
-          <span className="material-symbols-outlined text-[18px]">{'translate'}</span>
+          <Icon name="translate" className="text-[18px]" />
           {tx('معنى كلمة', 'Word meaning')}
         </button>
       )}

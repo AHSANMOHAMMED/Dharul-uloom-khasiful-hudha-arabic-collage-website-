@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import NotificationBell from './NotificationBell'
 import LanguageSelect from './LanguageSelect'
+import Icon from './Icon'
 import { tx } from '../lib/tx'
 
 export default function Navbar() {
@@ -223,7 +224,7 @@ export default function Navbar() {
                   title={tx('الرسائل', 'Messages')}
                   className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-sand-border px-2.5 text-xs font-semibold text-ink-green-900 hover:bg-mint-wash-100"
                 >
-                  <span className="material-symbols-outlined text-[18px]">forum</span>
+                  <Icon name="forum" className="text-[18px]" />
                   <span className="hidden xl:inline">{tx('الرسائل', 'Messages')}</span>
                 </Link>
               )}
@@ -234,7 +235,7 @@ export default function Navbar() {
                   to="/platform"
                   className="hidden sm:inline-flex items-center h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[16px] mr-1.5">{'admin_panel_settings'}</span>
+                  <Icon name="shield_person" className="text-[16px] mr-1.5" />
                   <span>{tx('المدير العام', 'Super Admin')}</span>
                 </Link>
               ) : isAdmin ? (
@@ -242,7 +243,7 @@ export default function Navbar() {
                   to="/admin"
                   className="hidden sm:inline-flex items-center h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[16px] mr-1.5">{'admin_panel_settings'}</span>
+                  <Icon name="shield_person" className="text-[16px] mr-1.5" />
                   <span>{tx('لوحة الإدارة', 'Admin')}</span>
                 </Link>
               ) : (
@@ -250,7 +251,7 @@ export default function Navbar() {
                   to="/dashboard"
                   className="hidden sm:inline-flex items-center h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[16px] mr-1.5">{'dashboard'}</span>
+                  <Icon name="dashboard" className="text-[16px] mr-1.5" />
                   <span>{tx('البوابة', 'My Portal')}</span>
                 </Link>
               )}
@@ -279,7 +280,7 @@ export default function Navbar() {
                 title={tx('تسجيل الخروج', 'Sign out')}
                 className="inline-flex items-center justify-center w-9 h-9 rounded-[10px] border border-sand-border text-ink-text-secondary hover:text-feedback-danger hover:border-feedback-danger/30 transition-colors"
               >
-                <span className="material-symbols-outlined text-[18px]">{'logout'}</span>
+                <Icon name="logout" className="text-[18px]" />
               </button>
             </div>
           ) : (

@@ -11,6 +11,7 @@ import {
 } from '../lib/lmsApi';
 import { tx } from '../lib/tx';
 import { supabase } from '../lib/supabaseClient';
+import Icon from './Icon';
 
 const inputCls = 'w-full bg-[#FBF8F0] border border-[#E8E1D0] text-sm text-[#14201B] p-2.5 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#11694A]';
 
@@ -292,7 +293,7 @@ const TutorLmsPanel = () => {
               onClick={() => setGradingId(null)}
               className="text-xs text-[#4A5E56] hover:text-[#0B3B2E] inline-flex items-center gap-1"
             >
-              <span className="material-symbols-outlined text-[14px]">close</span>
+              <Icon name="close" className="text-[14px]" />
               <span>{tx('إغلاق', 'Close')}</span>
             </button>
           </div>

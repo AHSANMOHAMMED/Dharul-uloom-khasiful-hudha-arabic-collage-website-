@@ -11,6 +11,7 @@ import StudentLmsPanel from '../components/StudentLmsPanel';
 import PortalTabChrome from '../components/portals/PortalTabChrome';
 import KhatamPattern from '../components/KhatamPattern';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
 import { openChatConversation, sendChatMessage } from '../lib/chatApi';
 import { rpc } from '../lib/erp/rpc';
@@ -277,7 +278,7 @@ export default function StudentDashboard() {
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <Link to="/library" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-paper-white/10 hover:bg-paper-white/20 text-white text-xs font-semibold border border-sand-border/20 transition-colors">
-                  <span className="material-symbols-outlined text-[18px]">auto_stories</span>
+                  <Icon name="auto_stories" className="text-[18px]" />
                   <span>{tx('المكتبة الرقمية', 'Open Library')}</span>
                 </Link>
               </div>
@@ -289,7 +290,7 @@ export default function StudentDashboard() {
           <div className="space-y-2">
             {announcements.map((ann) => (
               <div key={ann.id} className="p-4 rounded-xl bg-gold-wash-100/60 border border-brass-gold-500/30 flex items-start gap-3 text-xs">
-                <span className="material-symbols-outlined text-brass-gold-500 text-[18px] shrink-0 mt-0.5">{'campaign'}</span>
+                <Icon name="campaign" className="text-brass-gold-500 text-[18px] shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-serif font-bold text-ink-green-900">{ann.title}</h4>
                   <p className="text-ink-text-secondary mt-0.5">{ann.body}</p>
@@ -301,7 +302,7 @@ export default function StudentDashboard() {
 
         {activeTab === 'overview' && showAttendanceWarning && (
           <div className="p-4 rounded-xl bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger flex items-start gap-3 text-xs">
-            <span className="material-symbols-outlined text-xl shrink-0">{'warning'}</span>
+            <Icon name="warning" className="text-xl shrink-0" />
             <div>
               <h4 className="font-semibold">{tx('تنبيه الحضور: النسبة دون الحد المطلوب', 'Attendance Warning: Ratio Below Threshold')}</h4>
               <p className="mt-0.5">

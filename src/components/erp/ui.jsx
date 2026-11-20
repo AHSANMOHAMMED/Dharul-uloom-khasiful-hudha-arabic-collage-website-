@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toTamil } from '../../lib/tx';
 import { useErpEmbedded } from '../../context/ErpEmbedContext';
+import Icon from '../Icon';
 
 /**
  * Shared ERP UI kit — Modern Manuscript light theme (parchment canvas, white
@@ -228,13 +229,13 @@ export function DialogHeader({ title, onClose }) {
           className="inline-flex items-center gap-1 h-8 px-2.5 rounded-[10px] border border-sand-border text-xs font-semibold text-ink-green-900 hover:bg-mint-wash-100 shrink-0"
           aria-label={t('Back', 'رجوع')}
         >
-          <span className="material-symbols-outlined text-[16px] rtl:rotate-180" aria-hidden>arrow_back</span>
+          <Icon name="arrow_back" className="text-[16px] rtl:rotate-180" />
           {t('Back', 'رجوع')}
         </button>
         <h3 className="text-lg font-serif font-semibold text-ink-green-900 truncate">{title}</h3>
       </div>
       <button type="button" onClick={onClose} className="text-ink-text-muted hover:text-ink-green-900 flex items-center justify-center" aria-label={t('Close', 'إغلاق')}>
-        <span className="material-symbols-outlined text-[18px]">close</span>
+        <Icon name="close" className="text-[18px]" />
       </button>
     </div>
   );

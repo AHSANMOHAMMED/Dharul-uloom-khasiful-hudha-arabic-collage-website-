@@ -15,6 +15,7 @@ import OrgAdminPanel from '../components/OrgAdminPanel';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import Icon from '../components/Icon';
 import { ErpEmbedProvider } from '../context/ErpEmbedContext';
 import { PortalNavProvider } from '../context/PortalNavContext';
 import { ERP_QUICK_LINK } from '../lib/portalChrome';
@@ -449,7 +450,7 @@ const AdminDashboard = () => {
           title={tx('إرسال تذكير بالرسوم', 'Trigger Fee Reminders')}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
         >
-          <span className="material-symbols-outlined text-[16px] text-[#C29A3A]">notifications_active</span>
+          <Icon name="notifications_active" className="text-[16px] text-[#C29A3A]" />
           <span className="hidden md:inline">{tx('تذكير الرسوم', 'Fee Reminders')}</span>
         </button>
       }
@@ -547,7 +548,7 @@ const AdminDashboard = () => {
                   className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
                   style={{ backgroundColor: kpi.bg, color: kpi.color }}
                 >
-                  <span className="material-symbols-outlined text-xl">{kpi.icon}</span>
+                  <Icon name={kpi.icon} className="text-xl" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-2xl font-serif font-bold" style={{ color: kpi.color }}>
@@ -612,7 +613,7 @@ const AdminDashboard = () => {
               </h2>
               {admissions.length === 0 ? (
                 <p className="text-xs text-[#4A5E56] py-12 text-center flex items-center justify-center gap-1.5">
-                  <span className="material-symbols-outlined text-[16px] text-[#11694A]">check_circle</span>
+                  <Icon name="check_circle" className="text-[16px] text-[#11694A]" />
                   <span>{tx('لا توجد طلبات قبول معلقة حالياً.', 'No pending admissions inquiries.')}</span>
                 </p>
               ) : (
@@ -671,7 +672,7 @@ const AdminDashboard = () => {
               </h2>
               {pendingApprovals.length === 0 ? (
                 <p className="text-xs text-[#4A5E56] py-12 text-center flex items-center justify-center gap-1.5">
-                  <span className="material-symbols-outlined text-[16px] text-[#11694A]">check_circle</span>
+                  <Icon name="check_circle" className="text-[16px] text-[#11694A]" />
                   <span>{tx('لا يوجد مستخدمون في قائمة الانتظار.', 'No users waiting in the approval queue.')}</span>
                 </p>
               ) : (
@@ -810,7 +811,7 @@ const AdminDashboard = () => {
                   </button>
                   {jobSuccess && (
                     <p className="text-xs text-[#11694A] text-center font-bold animate-pulse flex items-center justify-center gap-1">
-                      <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                      <Icon name="check_circle" className="text-[15px]" />
                       <span>{tx('تم تحديث المسؤولية بنجاح!', 'Responsibility updated successfully!')}</span>
                     </p>
                   )}

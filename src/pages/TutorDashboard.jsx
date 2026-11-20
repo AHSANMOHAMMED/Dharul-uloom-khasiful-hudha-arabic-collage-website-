@@ -10,6 +10,7 @@ import ClassAttendance from '../components/erp/campus/ClassAttendance';
 import SelfPayslips from '../components/erp/campus/SelfPayslips';
 import { tx } from '../lib/tx';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
 
 const TUTOR_TABS = ['attendance', 'leaves', 'lms', 'salaries'];
@@ -154,16 +155,16 @@ const TutorDashboard = () => {
             <div className="flex flex-wrap items-center gap-3">
               {isTreasurer && (
                 <Link to="/dashboard?view=treasurer" className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#C29A3A] hover:bg-[#A8822B] text-[#0B3B2E] font-sans font-bold text-xs sm:text-sm rounded-xl transition shadow-sm">
-                  <span className="material-symbols-outlined text-[18px]">account_balance</span>
+                  <Icon name="account_balance" className="text-[18px]" />
                   <span>{tx('لوحة أمين الصندوق', 'Treasurer Portal')}</span>
                 </Link>
               )}
               <Link to="/erp?module=academics" className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#E3F1EA] hover:bg-[#D4E8DF] border border-[#11694A]/30 text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm">
-                <span className="material-symbols-outlined text-[18px] text-[#11694A]">menu_book</span>
+                <Icon name="menu_book" className="text-[18px] text-[#11694A]" />
                 <span>{tx('الشؤون الأكاديمية ERP', 'ERP Academics')}</span>
               </Link>
               <Link to="/erp?module=self" className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm">
-                <span className="material-symbols-outlined text-[18px] text-[#11694A]">badge</span>
+                <Icon name="badge" className="text-[18px] text-[#11694A]" />
                 <span>{tx('مساحتي', 'My workspace')}</span>
               </Link>
             </div>

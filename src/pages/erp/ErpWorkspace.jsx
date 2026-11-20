@@ -5,6 +5,7 @@ import { useFeatures } from '../../context/FeatureFlagsContext';
 import { Loading, useLang } from '../../components/erp/ui';
 import KhatamPattern from '../../components/KhatamPattern';
 import PageNavBar from '../../components/PageNavBar';
+import Icon from '../../components/Icon';
 import { portalHomeFor } from '../../lib/useHistoryNav';
 import { fetchActingOrg, setActingOrg } from '../../lib/erp/governanceApi';
 import { ERP_MODULE_FEATURES } from '../../lib/platformApi';
@@ -265,7 +266,7 @@ export default function ErpWorkspace() {
                             : 'text-ink-text-secondary hover:bg-parchment-50 hover:text-ink-green-900'
                         }`}
                       >
-                        <span aria-hidden className="material-symbols-outlined text-[18px]">{m.icon}</span>
+                        <Icon name={m.icon} className="text-[18px]" />
                         <span>{m.label(t)}</span>
                       </button>
                     );
@@ -279,7 +280,7 @@ export default function ErpWorkspace() {
                   to="/library-admin"
                   className="text-xs text-ink-text-muted hover:text-emerald-700 font-medium flex items-center gap-1.5"
                 >
-                  <span className="material-symbols-outlined text-[16px]">local_library</span>
+                  <Icon name="local_library" className="text-[16px]" />
                   <span>{t('Library desk', 'مكتب المكتبة')}</span>
                 </Link>
               )}
@@ -287,7 +288,7 @@ export default function ErpWorkspace() {
                 to={auth.isAdmin ? '/admin' : '/dashboard'}
                 className="text-xs text-ink-text-muted hover:text-emerald-700 font-medium flex items-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[16px]">{'arrow_back'}</span>
+                <Icon name="arrow_back" className="text-[16px] rtl:rotate-180" />
                 <span>{t('Back to portal', 'العودة إلى البوابة')}</span>
               </Link>
             </div>

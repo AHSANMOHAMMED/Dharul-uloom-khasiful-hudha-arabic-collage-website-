@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { tx } from '../../lib/tx';
+import Icon from '../Icon';
 
 /**
  * Standard tab header: title, optional Back, optional Print/Export actions.
@@ -33,7 +34,7 @@ export default function PortalTabChrome({
                 onClick={goBack}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#E8E1D0] bg-white text-[11px] font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0]"
               >
-                <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                <Icon name="arrow_back" className="text-[16px] rtl:rotate-180" />
                 {tx('رجوع', 'Back')}
               </button>
             )}
@@ -52,7 +53,7 @@ export default function PortalTabChrome({
               onClick={onPrint}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B3B2E] text-white text-xs font-semibold hover:bg-[#11694A]"
             >
-              <span className="material-symbols-outlined text-[16px]">print</span>
+              <Icon name="print" className="text-[16px]" />
               {tx('طباعة', 'Print')}
             </button>
           )}
@@ -62,7 +63,7 @@ export default function PortalTabChrome({
               onClick={onExport}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0]"
             >
-              <span className="material-symbols-outlined text-[16px]">download</span>
+              <Icon name="download" className="text-[16px]" />
               {tx('تصدير', 'Export')}
             </button>
           )}

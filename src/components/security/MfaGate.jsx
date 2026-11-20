@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import KhatamPattern from '../KhatamPattern';
+import Icon from '../Icon';
 import { tx } from '../../lib/tx';
 import MfaChallenge from './MfaChallenge';
 import MfaEnroll from './MfaEnroll';
@@ -25,7 +26,7 @@ export default function MfaGate({ children }) {
         ) : (
           <div className="space-y-5">
             <div className="flex items-start gap-3">
-              <span className="material-symbols-outlined text-[28px] text-brass-gold-500" aria-hidden>{'encrypted'}</span>
+              <Icon name="encrypted" className="text-[28px] text-brass-gold-500" />
               <div>
                 <h2 className="font-serif text-xl font-semibold text-ink-green-900">
                   {tx('مطلوب إعداد التحقق بخطوتين', 'Set up two-step verification')}

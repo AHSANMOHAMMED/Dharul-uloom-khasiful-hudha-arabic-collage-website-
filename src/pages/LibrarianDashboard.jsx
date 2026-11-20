@@ -10,6 +10,7 @@ import DictionaryAdmin from '../components/library/DictionaryAdmin';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
 import { assertSafeImage } from '../lib/contentApi';
 
@@ -196,7 +197,7 @@ const LibrarianDashboard = () => {
           onClick={() => exportToCSV(books)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
         >
-          <span className="material-symbols-outlined text-[16px] text-[#11694A]">download</span>
+          <Icon name="download" className="text-[16px] text-[#11694A]" />
           <span className="hidden sm:inline">{tx('تصدير CSV', 'Export CSV')}</span>
         </button>
       }
@@ -233,7 +234,7 @@ const LibrarianDashboard = () => {
                 to="/library"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
               >
-                <span className="material-symbols-outlined text-[16px] text-[#11694A]">auto_stories</span>
+                <Icon name="auto_stories" className="text-[16px] text-[#11694A]" />
                 {tx('عرض المكتبة للعامة', 'Public Library View')}
               </Link>
             </div>
@@ -306,7 +307,7 @@ const LibrarianDashboard = () => {
             {/* Quick Tip Box */}
             <div className="rounded-xl border border-[#E8E1D0] bg-[#FBF8F0] p-4 text-xs text-[#4A5E56] space-y-2">
               <div className="font-bold text-[#0B3B2E] flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[16px] text-[#C29A3A]">auto_awesome</span>
+                <Icon name="auto_awesome" className="text-[16px] text-[#C29A3A]" />
                 <span>{tx('إرشاد الاستيراد الفوري', 'Automated Batch Ingestion')}</span>
               </div>
               <p className="leading-relaxed">
@@ -516,7 +517,7 @@ const LibrarianDashboard = () => {
                         title={tx('حذف الكتاب', 'Delete book')}
                         aria-label={tx('حذف الكتاب', 'Delete book')}
                       >
-                        <span className="material-symbols-outlined text-[15px]">delete</span>
+                        <Icon name="delete" className="text-[15px]" />
                       </button>
                     </div>
                   </div>

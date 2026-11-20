@@ -13,6 +13,7 @@ import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
 import { listActivationEventsForChildren } from '../lib/notifyApi';
 import KhatamPattern from '../components/KhatamPattern';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
@@ -342,7 +343,7 @@ export default function ParentDashboard() {
             onClick={() => setActiveTab('link')}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-colors"
           >
-            <span className="material-symbols-outlined text-[16px]">person_add</span>
+            <Icon name="person_add" className="text-[16px]" />
             <span className="hidden sm:inline">{tx('ربط طالب', 'Link Ward')}</span>
           </button>
         ) : null
@@ -400,7 +401,7 @@ export default function ParentDashboard() {
           <div className="space-y-2">
             {announcements.map((ann) => (
               <div key={ann.id} className="flex items-start gap-3 p-4 rounded-[14px] bg-paper-white border border-sand-border shadow-xs">
-                <span className="material-symbols-outlined text-[18px] text-brass-gold-500">{'push_pin'}</span>
+                <Icon name="push_pin" className="text-[18px] text-brass-gold-500" />
                 <div>
                   <h3 className="font-serif text-sm font-semibold text-ink-green-900">{ann.title}</h3>
                   <p className="text-xs text-ink-text-secondary mt-0.5">{ann.body}</p>
@@ -429,7 +430,7 @@ export default function ParentDashboard() {
                         : 'bg-parchment-50 border-sand-border hover:bg-sand-border/30 text-ink-text-secondary'
                     }`}
                   >
-                    <span className="material-symbols-outlined text-[18px] text-emerald-700">{'school'}</span>
+                    <Icon name="school" className="text-[18px] text-emerald-700" />
                     <span className="text-xs">{child.full_name}</span>
                     {child.index_number && (
                       <span className="font-mono text-[10px] text-ink-text-muted">({child.index_number})</span>
@@ -444,13 +445,13 @@ export default function ParentDashboard() {
               onClick={() => setActiveTab('link')}
               className="text-xs text-emerald-700 hover:text-ink-green-900 font-semibold flex items-center gap-1"
             >
-              <span className="material-symbols-outlined text-[16px]">{'add'}</span>
+              <Icon name="add" className="text-[16px]" />
               <span>{tx('ربط طالب آخر', 'Link another')}</span>
             </button>
           </div>
         ) : (
           <div className="p-8 rounded-[14px] bg-paper-white border border-sand-border text-center space-y-4 shadow-manuscript-sm">
-            <span className="material-symbols-outlined text-4xl text-brass-gold-500">{'family_restroom'}</span>
+            <Icon name="family_restroom" className="text-4xl text-brass-gold-500" />
             <h3 className="font-serif text-lg font-semibold text-ink-green-900">
               {tx('لا توجد حسابات طلاب مرتبطة حتى الآن', 'No Student Accounts Linked Yet')}
             </h3>
@@ -485,7 +486,7 @@ export default function ParentDashboard() {
           <div className="space-y-8">
             {showAttendanceWarning && (
               <div className="p-4 rounded-xl bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger flex items-start gap-3 text-xs">
-                <span className="material-symbols-outlined text-xl shrink-0">{'warning'}</span>
+                <Icon name="warning" className="text-xl shrink-0" />
                 <div>
                   <h4 className="font-semibold">{tx('تجاوز حد الغياب المسموح به', 'Absence Threshold Exceeded')}</h4>
                   <p className="mt-0.5">
@@ -719,7 +720,7 @@ export default function ParentDashboard() {
             <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 sm:p-8 shadow-manuscript space-y-6">
               {leaveSuccess && (
                 <div className="p-3.5 rounded-lg bg-mint-wash-100 border border-emerald-700/20 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">{'check_circle'}</span>
+                  <Icon name="check_circle" className="text-[18px]" />
                   <span>{tx('تم تسجيل طلب الإجازة وتحويله لمشرف الحلقة.', 'Leave request registered and routed to halaqah supervisor.')}</span>
                 </div>
               )}

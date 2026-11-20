@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { listCoursePrograms } from '../lib/contentApi'
 import KhatamPattern from '../components/KhatamPattern'
+import Icon from '../components/Icon'
 import { localized } from '../lib/localized';
 import { tx } from '../lib/tx';
 
@@ -181,9 +182,7 @@ export default function Courses() {
           ) : filteredCourses.length === 0 ? (
             /* Empty State */
             <div className="p-12 text-center rounded-[14px] bg-paper-white border border-sand-border max-w-lg mx-auto my-8">
-              <span className="material-symbols-outlined text-4xl text-ink-text-muted mb-3 block">
-                {'search_off'}
-              </span>
+              <Icon name="search_off" className="text-4xl text-ink-text-muted mb-3 block mx-auto" />
               <h3 className="font-serif text-lg font-semibold text-ink-green-900 mb-1">
                 {tx('لا توجد دورات في هذه الفئة', 'No courses in this category')}
               </h3>
@@ -234,7 +233,7 @@ export default function Courses() {
 
                       <div className="pt-4 border-t border-sand-border/60 text-xs text-ink-text-muted mb-6 flex items-center justify-between">
                         <span className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[15px] text-brass-gold-500">{'calendar_month'}</span>
+                          <Icon name="calendar_month" className="text-[15px] text-brass-gold-500" />
                           <span>{tx('القبول:', 'Intake:')} {intake}</span>
                         </span>
                       </div>
@@ -247,7 +246,7 @@ export default function Courses() {
                         className="text-xs font-semibold text-ink-text-secondary hover:text-emerald-700 inline-flex items-center gap-1"
                       >
                         <span>{tx('عرض التفاصيل', 'View details')}</span>
-                        <span className="material-symbols-outlined text-[15px]">{'info'}</span>
+                        <Icon name="info" className="text-[15px]" />
                       </button>
 
                       <Link
@@ -280,7 +279,7 @@ export default function Courses() {
                 aria-label={tx('إغلاق', 'Close')}
                 className="w-8 h-8 rounded-full border border-sand-border flex items-center justify-center text-ink-text-secondary hover:bg-sand-border/30"
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <Icon name="close" className="text-[16px]" />
               </button>
             </div>
 

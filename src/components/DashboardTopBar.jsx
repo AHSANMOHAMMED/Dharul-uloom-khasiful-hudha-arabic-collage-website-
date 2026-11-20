@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 import LanguageSelect from './LanguageSelect';
+import Icon from './Icon';
 import { tx } from '../lib/tx';
 
 export default function DashboardTopBar() {
@@ -119,7 +120,7 @@ export default function DashboardTopBar() {
                       : 'text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-white'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[16px]">{s.icon}</span>
+                  <Icon name={s.icon} className="text-[16px]" />
                   <span>{s.label}</span>
                 </Link>
               );
@@ -129,7 +130,7 @@ export default function DashboardTopBar() {
               title={tx('الموقع العام', 'Public website')}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-white transition-all"
             >
-              <span className="material-symbols-outlined text-[16px]">{'public'}</span>
+              <Icon name="public" className="text-[16px]" />
               <span className="hidden lg:inline">{tx('الموقع', 'Website')}</span>
             </Link>
           </nav>
@@ -140,7 +141,7 @@ export default function DashboardTopBar() {
           <LanguageSelect className="text-xs bg-white border border-[#E8E1D0] text-[#0B3B2E] py-1 px-2 rounded-lg" />
           {!isSuperAdmin && (
             <Link to="/messages" aria-label={tx('الرسائل', 'Messages')} title={tx('الرسائل', 'Messages')} className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]">
-              <span className="material-symbols-outlined text-[18px]">forum</span>
+              <Icon name="forum" className="text-[18px]" />
             </Link>
           )}
           
@@ -167,7 +168,7 @@ export default function DashboardTopBar() {
             aria-label={tx('الأمان وتسجيل الدخول', 'Security & sign-in')}
             className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-[10px] border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]"
           >
-            <span className="material-symbols-outlined text-[18px]">{'shield_person'}</span>
+            <Icon name="shield_person" className="text-[18px]" />
           </Link>
 
           {/* Logout Button */}
@@ -177,7 +178,7 @@ export default function DashboardTopBar() {
             title={tx('تسجيل الخروج', 'Sign out')}
             className="inline-flex items-center gap-1.5 h-9 px-3 rounded-[10px] bg-[#FEE2E2]/60 hover:bg-[#FEE2E2] text-[#991B1B] text-xs font-semibold border border-[#991B1B]/20 transition-colors"
           >
-            <span className="material-symbols-outlined text-[16px]">{'logout'}</span>
+            <Icon name="logout" className="text-[16px]" />
             <span className="hidden sm:inline">{tx('خروج', 'Logout')}</span>
           </button>
 
@@ -190,7 +191,7 @@ export default function DashboardTopBar() {
             aria-label={tx('قائمة مساحة العمل', 'Workspace menu')}
             className="2xl:hidden inline-flex items-center justify-center w-9 h-9 rounded-[10px] border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]"
           >
-            <span className="material-symbols-outlined text-[22px]">{menuOpen ? 'close' : 'menu'}</span>
+            <Icon name={menuOpen ? 'close' : 'menu'} className="text-[22px]" />
           </button>
         </div>
 
@@ -217,22 +218,22 @@ export default function DashboardTopBar() {
                   active ? 'bg-[#E3F1EA] text-[#11694A] font-semibold' : 'text-[#14201B] hover:bg-[#FBF8F0]'
                 }`}
               >
-                <span className="material-symbols-outlined text-[18px]">{s.icon}</span>
+                <Icon name={s.icon} className="text-[18px]" />
                 <span>{s.label}</span>
               </Link>
             );
           })}
           <Link to="/" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-[#14201B] hover:bg-[#FBF8F0]">
-            <span className="material-symbols-outlined text-[18px]">{'public'}</span>
+            <Icon name="public" className="text-[18px]" />
             <span>{tx('الموقع العام', 'Public website')}</span>
           </Link>
           <Link to="/account/security" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-[#14201B] hover:bg-[#FBF8F0]">
-            <span className="material-symbols-outlined text-[18px]">{'shield_person'}</span>
+            <Icon name="shield_person" className="text-[18px]" />
             <span>{tx('الأمان وتسجيل الدخول', 'Security & sign-in')}</span>
           </Link>
           {!isParent && (
             <Link to="/library" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-[#14201B] hover:bg-[#FBF8F0]">
-              <span className="material-symbols-outlined text-[18px]">{'menu_book'}</span>
+              <Icon name="menu_book" className="text-[18px]" />
               <span>{tx('المكتبة الرقمية', 'Digital Library')}</span>
             </Link>
           )}

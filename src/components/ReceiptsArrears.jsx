@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { formatDate, formatMoney, query, rpc } from '../lib/erp/rpc';
 import { receiptPdfUrl } from '../lib/receiptPrint';
+import Icon from './Icon';
 import { tx } from '../lib/tx';
 
 /** Modern Manuscript "Receipts & arrears" card for the student / parent portals. */
@@ -43,7 +44,7 @@ export default function ReceiptsArrears({ studentId }) {
     <div className="bg-paper-white rounded-[14px] p-6 border border-sand-border shadow-manuscript-sm space-y-4">
       <div className="flex items-center justify-between gap-2 border-b border-sand-border/60 pb-3">
         <h3 className="font-serif text-base font-bold text-ink-green-900 flex items-center gap-2">
-          <span className="material-symbols-outlined text-emerald-700 text-[20px]">{'receipt_long'}</span>
+          <Icon name="receipt_long" className="text-emerald-700 text-[20px]" />
           <span>{tx('الإيصالات والمتأخرات', 'Receipts & Fee Arrears')}</span>
         </h3>
         <button
@@ -51,7 +52,7 @@ export default function ReceiptsArrears({ studentId }) {
           onClick={load}
           className="text-xs text-ink-text-muted hover:text-emerald-700 transition-colors flex items-center gap-1 font-medium"
         >
-          <span className="material-symbols-outlined text-[16px]">{'refresh'}</span>
+          <Icon name="refresh" className="text-[16px]" />
           <span>{tx('تحديث', 'Refresh')}</span>
         </button>
       </div>

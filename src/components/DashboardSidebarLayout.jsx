@@ -7,6 +7,7 @@ import LanguageSelect from './LanguageSelect';
 import KhatamPattern from './KhatamPattern';
 import { tx } from '../lib/tx';
 import PageNavBar from './PageNavBar';
+import Icon from './Icon';
 
 /**
  * DashboardSidebarLayout
@@ -120,7 +121,7 @@ export default function DashboardSidebarLayout({
               className="lg:hidden p-1 rounded-lg text-[#4A5E56] hover:bg-[#FBF8F0] hover:text-[#0B3B2E]"
               aria-label={tx('إغلاق القائمة الجانبية', 'Close sidebar')}
             >
-              <span className="material-symbols-outlined text-[20px]">close</span>
+              <Icon name="close" className="text-[20px]" />
             </button>
           </div>
         </div>
@@ -155,13 +156,12 @@ export default function DashboardSidebarLayout({
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <span
-                    className={`material-symbols-outlined text-[19px] shrink-0 ${
+                  <Icon
+                    name={item.icon || 'circle'}
+                    className={`text-[19px] shrink-0 ${
                       isActive ? 'text-[#C29A3A]' : 'text-[#4A5E56]'
                     }`}
-                  >
-                    {item.icon || 'circle'}
-                  </span>
+                  />
                   <span className="truncate">{tx(item.label_ar, item.label_en)}</span>
                 </div>
 
@@ -194,9 +194,7 @@ export default function DashboardSidebarLayout({
                   to={link.to}
                   className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-[#FBF8F0] transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[18px] text-[#11694A]">
-                    {link.icon}
-                  </span>
+                  <Icon name={link.icon} className="text-[18px] text-[#11694A]" />
                   <span>{tx(link.label_ar, link.label_en)}</span>
                 </Link>
               ))}
@@ -242,7 +240,7 @@ export default function DashboardSidebarLayout({
               className="lg:hidden p-2 rounded-xl border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]"
               aria-label={tx('فتح القائمة الجانبية', 'Open sidebar menu')}
             >
-              <span className="material-symbols-outlined text-[20px]">menu</span>
+              <Icon name="menu" className="text-[20px]" />
             </button>
 
             {/* Breadcrumb / Title */}
@@ -279,7 +277,7 @@ export default function DashboardSidebarLayout({
                 title={tx('الرسائل', 'Messages')}
                 aria-label={tx('الرسائل', 'Messages')}
               >
-                <span className="material-symbols-outlined text-[18px] text-[#11694A]">chat</span>
+                <Icon name="chat" className="text-[18px] text-[#11694A]" />
               </Link>
             )}
 
@@ -288,7 +286,7 @@ export default function DashboardSidebarLayout({
                 to="/library"
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
               >
-                <span className="material-symbols-outlined text-[16px] text-[#11694A]">auto_stories</span>
+                <Icon name="auto_stories" className="text-[16px] text-[#11694A]" />
                 <span>{tx('المكتبة', 'Library')}</span>
               </Link>
             )}
@@ -299,7 +297,7 @@ export default function DashboardSidebarLayout({
               title={tx('تسجيل الخروج', 'Sign out')}
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FEE2E2]/70 hover:bg-[#FEE2E2] text-[#991B1B] text-xs font-bold border border-[#991B1B]/20 transition-colors"
             >
-              <span className="material-symbols-outlined text-[16px]">logout</span>
+              <Icon name="logout" className="text-[16px]" />
               <span className="hidden sm:inline">{tx('خروج', 'Logout')}</span>
             </button>
           </div>

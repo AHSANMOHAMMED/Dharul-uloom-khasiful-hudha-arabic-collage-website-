@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cleanArabicWord, lookupArabicWord, posLabel } from '../../lib/dictionaryApi';
 import { tx } from '../../lib/tx';
+import Icon from '../Icon';
 
 function ResultCard({ r }) {
   const ai = r.source === 'ai';
@@ -111,7 +112,7 @@ export default function WordMeaningPanel({ initialWord = '', initialContext = ''
         <h3 className="font-bold text-emerald-900">{tx('معنى الكلمة (عربي ← تاميل)', 'Word meaning (Arabic → Tamil)')}</h3>
         {onClose && (
           <button type="button" onClick={onClose} className="rounded-lg p-1 text-slate-500 hover:bg-white hover:text-slate-900 flex items-center justify-center" aria-label={tx('إغلاق', 'Close')}>
-            <span className="material-symbols-outlined text-[16px]">close</span>
+            <Icon name="close" className="text-[16px]" />
           </button>
         )}
       </div>

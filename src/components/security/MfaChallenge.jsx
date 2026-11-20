@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { verifySignInCode } from '../../lib/mfaApi';
 import { tx } from '../../lib/tx';
 import CodeInput from './CodeInput';
+import Icon from '../Icon';
 
 /** Second sign-in step: the 6-digit code from the user's authenticator app. */
 export default function MfaChallenge({ onVerified, onCancel }) {
@@ -41,7 +42,7 @@ export default function MfaChallenge({ onVerified, onCancel }) {
   return (
     <form onSubmit={submit} className="space-y-5" aria-labelledby="mfa-challenge-title">
       <div className="flex items-start gap-3">
-        <span className="material-symbols-outlined text-[28px] text-emerald-700" aria-hidden>{'shield_lock'}</span>
+        <Icon name="shield_lock" className="text-[28px] text-emerald-700" />
         <div>
           <h2 id="mfa-challenge-title" className="font-serif text-xl font-semibold text-ink-green-900">
             {tx('التحقق بخطوتين', 'Two-step verification')}

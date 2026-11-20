@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useFeatures } from '../context/FeatureFlagsContext';
 import KhatamPattern from '../components/KhatamPattern';
+import Icon from '../components/Icon';
 import { tx } from '../lib/tx';
 import { passwordProblem } from '../lib/passwordPolicy';
 
@@ -192,9 +193,10 @@ export default function Register() {
                         : 'bg-paper-white border-sand-border hover:bg-parchment-50'
                     }`}
                   >
-                    <span className={`material-symbols-outlined text-[24px] block mb-1 ${isSelected ? 'text-emerald-700' : 'text-ink-text-muted'}`}>
-                      {r.icon}
-                    </span>
+                    <Icon
+                      name={r.icon}
+                      className={`text-[24px] block mx-auto mb-1 ${isSelected ? 'text-emerald-700' : 'text-ink-text-muted'}`}
+                    />
                     <span className="font-serif text-xs font-semibold text-ink-green-900 block leading-tight">
                       {r.label}
                     </span>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { tx } from '../../lib/tx';
+import Icon from '../Icon';
 
 const LANGUAGES = [
   { value: '', ar: 'كل اللغات', en: 'All languages' },
@@ -27,7 +28,7 @@ export default function AdvancedSearch({ categories = [], value, onChange }) {
     <form onSubmit={submit} className="space-y-3">
       {/* Search Input Bar */}
       <div className="flex items-center bg-paper-white p-2 rounded-[14px] border border-sand-border shadow-manuscript">
-        <span className="material-symbols-outlined text-ink-text-muted mx-3 text-[20px]">{'search'}</span>
+        <Icon name="search" className="text-ink-text-muted mx-3 text-[20px]" />
         <input
           type="text"
           value={draftQuery}
@@ -43,7 +44,7 @@ export default function AdvancedSearch({ categories = [], value, onChange }) {
             aria-expanded={showFilters}
             className="px-3 py-1.5 rounded-lg border border-sand-border hover:bg-parchment-50 text-xs text-ink-text-secondary flex items-center gap-1 font-medium"
           >
-            <span className="material-symbols-outlined text-[16px]">{'tune'}</span>
+            <Icon name="tune" className="text-[16px]" />
             <span className="hidden sm:inline">{tx('عوامل التصفية', 'Filters')}</span>
           </button>
           <button
