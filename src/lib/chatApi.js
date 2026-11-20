@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { supabase, isSupabaseConfigured, subscribeTableWithFallback } from './supabaseClient';
 
 function requireClient() {
   if (!isSupabaseConfigured || !supabase) throw new Error('Messaging is not configured');
@@ -55,12 +55,19 @@ export async function markChatRead(conversationId) {
 }
 
 export function subscribeToChat(conversationId, onMessage) {
-  const client = requireClient();
-  const channel = client
-    .channel(`chat:${conversationId}`)
-    .on('postgres_changes', {
-      event: '*', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${conversationId}`,
-    }, (payload) => onMessage(payload.new, payload.eventType))
-    .subscribe();
-  return () => client.removeChannel(channel);
+  requireClient();
+  return subscribeTableWithFallback({
+    table: 'chat_messages',
+    filter: `conversation_id=eq.${conversationId}`,
+    channelName: `chat:${conversationId}`,
+    onChange: (payload) => onMessage(payload.new, payload.eventType),
+    onFallback: async () => {
+      try {
+        const rows = await listChatMessages(conversationId);
+        for (const row of rows) onMessage(row, 'POLL');
+      } catch {
+        // The next interval or the next user action retries.
+      }
+    },
+  });
 }

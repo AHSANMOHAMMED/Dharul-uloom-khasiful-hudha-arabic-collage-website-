@@ -3,6 +3,7 @@
 .aider-desk/
 .claude/
 .cursor/
+.github/modernize/
 
 # Dependencies
 node_modules/

@@ -57,7 +57,12 @@ export default function PromptModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={busy ? undefined : onClose}>
       <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={busy ? undefined : onClose} accessibilityLabel={t('common.close')} />
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={busy ? undefined : onClose}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close')}
+        />
         <View style={styles.sheet}>
           {title ? <Txt variant="h2">{title}</Txt> : null}
           {message ? <Txt variant="muted">{message}</Txt> : null}

@@ -44,6 +44,8 @@ const en = {
   'common.openWeb': 'Open web portal',
   'common.notConfigured': 'Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY',
   'common.more': 'More',
+  'common.all': 'All',
+  'common.share': 'Share',
 
   'lang.toggle': 'العربية',
   'lang.label': 'Language',
@@ -864,6 +866,38 @@ const en = {
   'analytics.tasksOpen': 'Open',
   'analytics.tasksOverdue': 'Overdue',
   'analytics.tasksDone30': 'Done in 30 days',
+
+  'roles.switch': 'Active duty',
+
+  'finance.title': 'Finance',
+  'finance.hub': 'Finance Hub',
+  'finance.donations': 'Donations',
+  'finance.expenses': 'Expenses',
+  'finance.cheques': 'Cheques',
+  'finance.accounting': 'Accounting',
+  'finance.receive': 'Receive payment',
+  'finance.outstanding': 'Outstanding fees',
+
+  'library.title': 'Digital Library',
+  'library.dictionary': 'Dictionary',
+  'nav.library': 'Digital Library',
+
+  'admissions.pipeline': 'Admissions Pipeline',
+  'admissions.detail': 'Admission Application',
+
+  'welfare.title': 'Student Welfare',
+  'welfare.case': 'Welfare Case',
+
+  'exams.title': 'Examinations',
+  'exams.detail': 'Exam Details',
+
+  'discipline.title': 'Discipline Records',
+
+  'tasks.title': 'Tasks',
+
+  'hr.leave': 'Staff Leave',
+  'hr.payslips': 'Payslips',
+
   'month.short.1': 'Jan',
   'month.short.2': 'Feb',
   'month.short.3': 'Mar',
@@ -917,6 +951,8 @@ const ar = {
   'common.openWeb': 'فتح بوابة الويب',
   'common.notConfigured': 'يرجى ضبط EXPO_PUBLIC_SUPABASE_URL و EXPO_PUBLIC_SUPABASE_ANON_KEY',
   'common.more': 'المزيد',
+  'common.all': 'الكل',
+  'common.share': 'مشاركة',
 
   'lang.toggle': 'தமிழ்',
   'lang.label': 'اللغة',
@@ -1737,6 +1773,38 @@ const ar = {
   'analytics.tasksOpen': 'مفتوحة',
   'analytics.tasksOverdue': 'متأخرة',
   'analytics.tasksDone30': 'أُنجزت خلال 30 يومًا',
+
+  'roles.switch': 'المسؤولية الحالية',
+
+  'finance.title': 'المالية',
+  'finance.hub': 'مركز المالية',
+  'finance.donations': 'التبرعات',
+  'finance.expenses': 'المصروفات',
+  'finance.cheques': 'الشيكات',
+  'finance.accounting': 'المحاسبة',
+  'finance.receive': 'استلام دفعة',
+  'finance.outstanding': 'الرسوم المتأخرة',
+
+  'library.title': 'المكتبة الرقمية',
+  'library.dictionary': 'القاموس',
+  'nav.library': 'المكتبة الرقمية',
+
+  'admissions.pipeline': 'طلبات القبول',
+  'admissions.detail': 'تفاصيل طلب القبول',
+
+  'welfare.title': 'الرعاية الاجتماعية',
+  'welfare.case': 'حالة رعاية',
+
+  'exams.title': 'الامتحانات',
+  'exams.detail': 'تفاصيل الامتحان',
+
+  'discipline.title': 'سجلات السلوك',
+
+  'tasks.title': 'المهام',
+
+  'hr.leave': 'إجازات الموظفين',
+  'hr.payslips': 'قسائم الراتب',
+
   'month.short.1': 'يناير',
   'month.short.2': 'فبراير',
   'month.short.3': 'مارس',
@@ -1789,6 +1857,8 @@ const ta = {
   "common.openWeb": "இணைய வலைவாசலைத் திற",
   "common.notConfigured": "EXPO_PUBLIC_SUPABASE_URL மற்றும் EXPO_PUBLIC_SUPABASE_ANON_KEY ஆகியவற்றை அமைக்கவும்",
   "common.more": "மேலும்",
+  "common.all": "அனைத்தும்",
+  "common.share": "பகிர்",
   "lang.toggle": "English",
   "lang.label": "மொழி",
   "lang.en": "ஆங்கிலம்",
@@ -2581,6 +2651,38 @@ const ta = {
   "analytics.tasksOpen": "திறந்தவை",
   "analytics.tasksOverdue": "காலம் கடந்தவை",
   "analytics.tasksDone30": "30 நாட்களில் நிறைவுற்றவை",
+
+  "roles.switch": "செயலில் உள்ள பொறுப்பு",
+
+  "finance.title": "நிதி",
+  "finance.hub": "நிதி மையம்",
+  "finance.donations": "நன்கொடைகள்",
+  "finance.expenses": "செலவுகள்",
+  "finance.cheques": "காசோலைகள்",
+  "finance.accounting": "கணக்கியல்",
+  "finance.receive": "கொடுப்பனவு பெறு",
+  "finance.outstanding": "நிலுவைக் கட்டணங்கள்",
+
+  "library.title": "மின் நூலகம்",
+  "library.dictionary": "அகராதி",
+  "nav.library": "மின் நூலகம்",
+
+  "admissions.pipeline": "சேர்க்கை விண்ணப்பங்கள்",
+  "admissions.detail": "சேர்க்கை விவரங்கள்",
+
+  "welfare.title": "மாணவர் நலன்",
+  "welfare.case": "நலன்புரி வழக்கு",
+
+  "exams.title": "பரீட்சைகள்",
+  "exams.detail": "பரீட்சை விவரங்கள்",
+
+  "discipline.title": "ஒழுக்கப் பதிவுகள்",
+
+  "tasks.title": "பணிகள்",
+
+  "hr.leave": "ஊழியர் விடுப்பு",
+  "hr.payslips": "சம்பளப் பட்டியல்கள்",
+
   "month.short.1": "ஜன",
   "month.short.2": "பெப்",
   "month.short.3": "மார்",

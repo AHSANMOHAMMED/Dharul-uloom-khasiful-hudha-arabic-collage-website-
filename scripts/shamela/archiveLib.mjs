@@ -9,7 +9,6 @@ import { cleanPage } from './lib.mjs';
 import {
   detectV4Archive,
   ensureV4DatabaseExtracted,
-  extractZipPrefixes,
   loadV4Catalog,
 } from './v4Archive.mjs';
 
@@ -122,7 +121,6 @@ export async function parseBokFile(bokPath) {
   if (!bkId) throw new Error('Could not determine book id');
 
   const nashTable = tables.find((t) => t.toLowerCase() === `b${bkId}`.toLowerCase());
-  const titleTable = tables.find((t) => t.toLowerCase() === `t${bkId}`.toLowerCase());
 
   const nashRows = nashTable ? await exportMdbTable(bokPath, nashTable) : [];
   const pages = nashRows

@@ -38,7 +38,13 @@ vi.mock('../lib/supabaseClient', () => {
     },
     storage: { from: () => ({ upload: async () => ({}), getPublicUrl: () => ({ data: { publicUrl: '' } }) }) },
   }
-  return { supabase, default: supabase, isSupabaseConfigured: true, supabaseFunctionBaseUrl: '' }
+  return {
+    supabase,
+    default: supabase,
+    isSupabaseConfigured: true,
+    supabaseFunctionBaseUrl: '',
+    subscribeTableWithFallback: () => () => {},
+  }
 })
 
 vi.mock('../context/AuthContext', () => {

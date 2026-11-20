@@ -244,8 +244,8 @@ export function Modal({ open, title, onClose, children, footer }) {
   useEscapeToClose(open, onClose);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-green-900/50 backdrop-blur-xs p-4" role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined}>
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript-lg p-6 space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-green-900/50 backdrop-blur-xs p-4" role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined} onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto overscroll-contain rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript-lg p-6 space-y-4">
         <DialogHeader title={title} onClose={onClose} />
         {children}
         {footer && <div className="flex justify-end gap-2 pt-2">{footer}</div>}

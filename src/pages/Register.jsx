@@ -213,12 +213,15 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+              <label htmlFor="register-username" className="block text-xs font-semibold text-ink-text-primary mb-1">
                 {tx('الاسم الكامل *', 'Full Name *')}
               </label>
               <input
+                id="register-username"
                 type="text"
                 name="username"
+                autoComplete="name"
+                spellCheck={false}
                 required
                 value={formData.username}
                 onChange={handleChange}
@@ -229,12 +232,15 @@ export default function Register() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                <label htmlFor="register-email" className="block text-xs font-semibold text-ink-text-primary mb-1">
                   {tx('البريد الإلكتروني *', 'Email Address *')}
                 </label>
                 <input
+                  id="register-email"
                   type="email"
                   name="email"
+                  autoComplete="email"
+                  spellCheck={false}
                   required
                   value={formData.email}
                   onChange={handleChange}
@@ -244,12 +250,14 @@ export default function Register() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                <label htmlFor="register-phone" className="block text-xs font-semibold text-ink-text-primary mb-1">
                   {phoneRequired ? tx('رقم الهاتف *', 'Phone Number *') : tx('رقم الهاتف', 'Phone Number')}
                 </label>
                 <input
+                  id="register-phone"
                   type="tel"
                   name="phone"
+                  autoComplete="tel"
                   required={phoneRequired}
                   value={formData.phone}
                   onChange={handleChange}
@@ -262,12 +270,15 @@ export default function Register() {
             {/* Student Index Number Field */}
             {formData.role === 'student' && (
               <div className="p-3.5 rounded-xl bg-gold-wash-100/40 border border-brass-gold-500/30">
-                <label className="block text-xs font-semibold text-ink-green-900 mb-1">
+                <label htmlFor="register-index" className="block text-xs font-semibold text-ink-green-900 mb-1">
                   {tx('رقم القيد في الكلية * (الصيغة: KH-YYYY-XXXX)', 'College Index Number * (Format: KH-YYYY-XXXX)')}
                 </label>
                 <input
+                  id="register-index"
                   type="text"
                   name="indexNumber"
+                  autoComplete="off"
+                  spellCheck={false}
                   required
                   value={formData.indexNumber}
                   onChange={handleChange}
@@ -282,12 +293,14 @@ export default function Register() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                <label htmlFor="register-password" className="block text-xs font-semibold text-ink-text-primary mb-1">
                   {tx('كلمة المرور (10 أحرف على الأقل، حروف وأرقام) *', 'Password (min 10 chars, letters and numbers) *')}
                 </label>
                 <input
+                  id="register-password"
                   type={showPassword ? 'text' : 'password'}
                   name="password"
+                  autoComplete="new-password"
                   required
                   value={formData.password}
                   onChange={handleChange}
@@ -297,12 +310,14 @@ export default function Register() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-ink-text-primary mb-1">
+                <label htmlFor="register-confirm-password" className="block text-xs font-semibold text-ink-text-primary mb-1">
                   {tx('تأكيد كلمة المرور *', 'Confirm Password *')}
                 </label>
                 <input
+                  id="register-confirm-password"
                   type={showPassword ? 'text' : 'password'}
                   name="confirmPassword"
+                  autoComplete="new-password"
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}

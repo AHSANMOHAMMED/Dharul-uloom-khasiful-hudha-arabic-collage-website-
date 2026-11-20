@@ -25,6 +25,58 @@
     min-width: 0;
     min-height: 100vh;
   }
+
+  :focus-visible {
+    outline: 3px solid #C29A3A;
+    outline-offset: 3px;
+  }
+
+  button, a, input, select, textarea {
+    touch-action: manipulation;
+  }
+
+  button, [role="button"], a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  input, select, textarea {
+    color-scheme: light;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (pointer: fine) {
+  body {
+    overscroll-behavior-y: none;
+  }
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 1000;
+  inset-inline-start: 1rem;
+  top: -100%;
+  border-radius: 0 0 10px 10px;
+  background: #0B3B2E;
+  color: #FFFFFF;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(11, 59, 46, 0.18);
+}
+
+.skip-link:focus {
+  top: 0.5rem;
 }
 
 /* Material Symbols Outlined font display */

@@ -46,8 +46,10 @@ export default function NotFound() {
 
         {/* Quick Search */}
         <form onSubmit={handleSearch} className="flex items-center bg-parchment-50 p-1.5 rounded-[10px] border border-sand-border">
-          <span className="material-symbols-outlined text-ink-text-muted mx-2 text-[18px]">{'search'}</span>
+          <label htmlFor="not-found-search" className="sr-only">{tx('البحث في المكتبة', 'Search the library')}</label>
+          <span aria-hidden="true" className="material-symbols-outlined text-ink-text-muted mx-2 text-[18px]">{'search'}</span>
           <input
+            id="not-found-search"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

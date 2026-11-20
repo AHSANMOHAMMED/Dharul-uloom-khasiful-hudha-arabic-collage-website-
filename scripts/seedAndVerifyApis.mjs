@@ -94,11 +94,6 @@ async function login(email, password) {
   return { token: j.access_token, uid: j.user.id, email };
 }
 
-async function unwrap(label, { data, error }) {
-  if (error) throw new Error(`${label}: ${error.message}`);
-  return data;
-}
-
 async function ensureProfiles() {
   // Rely on prior seedProductionReady; refresh map.
   const { data } = await admin.from('profiles').select('id,email,account_type,role,assigned_tutor_role,org_id,class_number,index_number');
@@ -117,10 +112,7 @@ async function seedExtra(ids, orgId) {
   const principalId = ids.principal?.id;
   const treasurerId = ids.treasurer?.id;
   const accountantId = ids.accountant?.id;
-  const admissionsId = ids.admissions?.id;
   const counselorId = ids.counselor?.id;
-  const wardenId = ids.warden?.id;
-  const hrId = ids.hr?.id;
   const parentId = ids.parent?.id;
 
   // Announcements for each audience

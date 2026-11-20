@@ -39,15 +39,35 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!supabase) return undefined;
     let active = true;
+    let profileChannel = null;
+    const subscribeProfile = (userId) => {
+      if (!userId) return;
+      if (profileChannel) supabase.removeChannel(profileChannel);
+      profileChannel = supabase.channel(`mobile-profile:${userId}`)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`,
+        }, () => {
+          if (active) loadProfile(userId);
+        })
+        .subscribe();
+    };
     supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return;
       setSession(data.session);
-      if (data.session?.user) await Promise.all([loadProfile(data.session.user.id), loadAal()]);
+      if (data.session?.user) {
+        await Promise.all([loadProfile(data.session.user.id), loadAal()]);
+        if (active) subscribeProfile(data.session.user.id);
+      }
       if (active) setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       if (event === 'SIGNED_OUT' || !s) {
+        if (profileChannel) supabase.removeChannel(profileChannel);
+        profileChannel = null;
         setAal({ currentLevel: 'aal1', nextLevel: 'aal1' });
         setProfile(null);
         profileIdRef.current = null;
@@ -61,6 +81,7 @@ export function AuthProvider({ children }) {
         return;
       }
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        subscribeProfile(s.user.id);
         // Defer DB calls out of the auth callback (supabase-js recommendation).
         // Only show the global loader when the user actually changed; a
         // re-emitted SIGNED_IN for the same user refreshes silently.
@@ -73,6 +94,7 @@ export function AuthProvider({ children }) {
     });
     return () => {
       active = false;
+      if (profileChannel) supabase.removeChannel(profileChannel);
       sub?.subscription?.unsubscribe();
     };
   }, [loadProfile, loadAal]);

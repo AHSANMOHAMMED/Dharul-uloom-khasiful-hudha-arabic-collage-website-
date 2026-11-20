@@ -1,4 +1,5 @@
-import { ScrollView, RefreshControl, View, StyleSheet } from 'react-native';
+import { ScrollView, RefreshControl, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, space } from '../lib/theme';
 import Loading from './Loading';
 import ErrorBanner from './ErrorBanner';
@@ -26,10 +27,10 @@ export default function Screen({
     </>
   );
   if (!scroll) {
-    return <View style={[styles.wrap, styles.content, contentStyle]}>{body}</View>;
+    return <SafeAreaView edges={['top', 'bottom']} style={[styles.wrap, styles.content, contentStyle]}>{body}</SafeAreaView>;
   }
   return (
-    <View style={styles.wrap}>
+    <SafeAreaView edges={['top', 'bottom']} style={styles.wrap}>
       <ScrollView
         contentContainerStyle={[styles.content, contentStyle]}
         keyboardShouldPersistTaps="handled"
@@ -42,11 +43,11 @@ export default function Screen({
         {body}
       </ScrollView>
       {footer}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: space.lg, gap: space.md, paddingBottom: 40 },
+  content: { paddingHorizontal: space.lg, paddingTop: space.lg, gap: space.md, paddingBottom: 40 },
 });

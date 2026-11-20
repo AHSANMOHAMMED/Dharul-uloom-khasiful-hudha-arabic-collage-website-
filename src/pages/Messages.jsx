@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, subscribeTableWithFallback } from '../lib/supabaseClient';
 import { listChatConversations, listChatMessages, markChatRead, openChatConversation, searchChatContacts, sendChatMessage, subscribeToChat } from '../lib/chatApi';
 import { tx } from '../lib/tx';
 import PageNavBar from '../components/PageNavBar';
@@ -107,10 +107,13 @@ export default function Messages() {
 
   useEffect(() => {
     if (!chatAllowed || !user?.id) return undefined;
-    const channel = supabase.channel(`chat-list:${user.id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_conversations' }, refreshConversations)
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return subscribeTableWithFallback({
+      table: 'chat_conversations',
+      event: 'UPDATE',
+      channelName: `chat-list:${user.id}`,
+      onChange: refreshConversations,
+      onFallback: refreshConversations,
+    });
   }, [chatAllowed, user?.id, refreshConversations]);
 
   if (!loading && !isAuthenticated) return <Navigate to="/login" replace />;
@@ -124,7 +127,7 @@ export default function Messages() {
           <p className="text-sm text-ink-text-secondary">
             {tx('لا يشارك مشرف المنصة في محادثات الكليات. لإرسال إشعار إلى المؤسسات استخدم البث في لوحة المنصة.', 'Platform operators are not part of college conversations. To reach institutions, use the broadcast in the Super Admin console.')}
           </p>
-          <a href="/platform?tab=broadcast" className="inline-flex h-10 items-center px-4 rounded-[10px] bg-emerald-700 text-white text-sm font-semibold">{tx('فتح لوحة المنصة', 'Open Super Admin console')}</a>
+          <Link to="/platform?tab=broadcast" className="inline-flex h-10 items-center px-4 rounded-[10px] bg-emerald-700 text-white text-sm font-semibold">{tx('فتح لوحة المنصة', 'Open Super Admin console')}</Link>
         </div>
       </div>
     );

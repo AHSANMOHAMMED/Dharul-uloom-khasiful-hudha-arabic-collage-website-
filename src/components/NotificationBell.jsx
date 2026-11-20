@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { listMyNotifications, markAllNotificationsRead, markNotificationRead, updateNotifyPrefs } from '../lib/notifyApi';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { supabase, isSupabaseConfigured, subscribeTableWithFallback } from '../lib/supabaseClient';
 import { subscribeToPush } from '../lib/registerSW';
 import { tx } from '../lib/tx';
 
@@ -31,14 +31,14 @@ export default function NotificationBell() {
     preferred_locale: 'en',
   });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!isAuthenticated) return;
     const result = await listMyNotifications(25);
     // Back-compat if a caller still returns a bare array.
     const rows = Array.isArray(result) ? result : (result?.items || []);
     setItems(rows);
     setLoadError(Array.isArray(result) ? '' : (result?.error || ''));
-  };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     load();
@@ -59,27 +59,29 @@ export default function NotificationBell() {
   // lightweight recovery path for reconnects and missed realtime events.
   useEffect(() => {
     if (!isAuthenticated || !isSupabaseConfigured) return undefined;
-    let channel;
+    let unsubscribe;
     let active = true;
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!active || !user) return;
-      channel = supabase.channel(`notifications:${user.id}`)
-        .on('postgres_changes', {
-          event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}`,
-        }, (payload) => {
+      unsubscribe = subscribeTableWithFallback({
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`,
+        channelName: `notifications:${user.id}`,
+        onFallback: load,
+        onChange: (payload) => {
           if (payload.eventType === 'INSERT') {
             setItems((current) => [payload.new, ...current.filter((n) => n.id !== payload.new.id)].slice(0, 25));
           } else if (payload.eventType === 'UPDATE') {
             setItems((current) => current.map((n) => n.id === payload.new.id ? { ...n, ...payload.new } : n));
           }
-        })
-        .subscribe();
+        },
+      });
     });
     return () => {
       active = false;
-      if (channel) supabase.removeChannel(channel);
+      if (unsubscribe) unsubscribe();
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, load]);
 
   // Close on outside click / Escape.
   useEffect(() => {

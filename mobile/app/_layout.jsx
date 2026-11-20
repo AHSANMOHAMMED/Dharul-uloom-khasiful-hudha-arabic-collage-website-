@@ -71,12 +71,12 @@ function RootStack() {
         <Stack.Screen name="staff" options={{ headerShown: false }} />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
         <Stack.Screen name="platform" options={{ title: t('role.super_admin') }} />
-        <Stack.Screen name="finance-hub" options={{ title: 'Finance Hub' }} />
-        <Stack.Screen name="donations" options={{ title: 'Donations' }} />
-        <Stack.Screen name="expenses" options={{ title: 'Expenses' }} />
-        <Stack.Screen name="cheques" options={{ title: 'Cheques' }} />
-        <Stack.Screen name="library" options={{ title: t('nav.library') || 'Library' }} />
-        <Stack.Screen name="tutor-lms" options={{ title: t('lms.title') || 'Class LMS' }} />
+        <Stack.Screen name="finance-hub" options={{ title: t('finance.hub') }} />
+        <Stack.Screen name="donations" options={{ title: t('finance.donations') }} />
+        <Stack.Screen name="expenses" options={{ title: t('finance.expenses') }} />
+        <Stack.Screen name="cheques" options={{ title: t('finance.cheques') }} />
+        <Stack.Screen name="library" options={{ title: t('library.title') }} />
+        <Stack.Screen name="tutor-lms" options={{ title: t('lms.title') }} />
         <Stack.Screen name="payment-success" options={{ title: t('payment.successTitle') }} />
         <Stack.Screen name="payment-cancel" options={{ title: t('payment.cancelTitle') }} />
         <Stack.Screen name="notifications" options={{ title: t('notif.title') }} />
@@ -90,7 +90,7 @@ function RootStack() {
         <Stack.Screen name="certificates" options={{ title: t('cert.title') }} />
         <Stack.Screen name="hostel" options={{ title: t('hostel.title') }} />
         <Stack.Screen name="leave-requests" options={{ title: t('leave.title') }} />
-        <Stack.Screen name="discipline" options={{ title: t('child.discipline') }} />
+        <Stack.Screen name="discipline" options={{ title: t('discipline.title') || t('child.discipline') }} />
         <Stack.Screen name="announcements" options={{ title: t('home.announcements') }} />
         <Stack.Screen name="link-child" options={{ title: t('parent.link') }} />
         <Stack.Screen name="child/[id]" options={{ title: t('child.overview') }} />
@@ -113,13 +113,13 @@ function RootStack() {
         <Stack.Screen name="responsibilities" options={{ title: t('resp.title') }} />
         <Stack.Screen name="activity/[id]" options={{ title: t('activity.title') }} />
         <Stack.Screen name="analytics" options={{ title: t('analytics.title') }} />
-        <Stack.Screen name="accounting/index" options={{ title: t('finance.accounting') || 'Accounting' }} />
-        <Stack.Screen name="admissions/index" options={{ title: t('admissions.pipeline') || 'Admissions' }} />
-        <Stack.Screen name="admissions/[id]" options={{ title: t('admissions.detail') || 'Admission' }} />
-        <Stack.Screen name="welfare/index" options={{ title: t('welfare.title') || 'Welfare' }} />
-        <Stack.Screen name="welfare/[id]" options={{ title: t('welfare.case') || 'Welfare case' }} />
-        <Stack.Screen name="exams/index" options={{ title: t('exams.title') || 'Exams' }} />
-        <Stack.Screen name="exams/[id]" options={{ title: t('exams.detail') || 'Exam' }} />
+        <Stack.Screen name="accounting/index" options={{ title: t('finance.accounting') }} />
+        <Stack.Screen name="admissions/index" options={{ title: t('admissions.pipeline') }} />
+        <Stack.Screen name="admissions/[id]" options={{ title: t('admissions.detail') }} />
+        <Stack.Screen name="welfare/index" options={{ title: t('welfare.title') }} />
+        <Stack.Screen name="welfare/[id]" options={{ title: t('welfare.case') }} />
+        <Stack.Screen name="exams/index" options={{ title: t('exams.title') }} />
+        <Stack.Screen name="exams/[id]" options={{ title: t('exams.detail') }} />
       </Stack>
       <LiveToast />
       <LockOverlay />

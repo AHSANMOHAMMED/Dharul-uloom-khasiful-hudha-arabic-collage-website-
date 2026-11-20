@@ -2,12 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Linking, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
 import { useAuth } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { supabase, WEB_URL } from '../lib/supabase';
 import { useI18n } from '../lib/i18n';
 import { colors } from '../lib/theme';
 import { Button, Card, EmptyState, ErrorBanner, Loading, Screen, SectionHeader } from '../components';
-
-const WEB = process.env.EXPO_PUBLIC_WEB_URL || 'https://dharul-uloom-kashiful-hudha.vercel.app';
 
 const KEY_FEATURES = [
   'erp', 'erp_fees', 'erp_accounting', 'erp_finance_hub', 'erp_quotations',
@@ -384,7 +382,7 @@ export default function PlatformScreen() {
           <>
             <Card>
               <SectionHeader title="Open full tools" />
-              <Button title="Web Super Admin" onPress={() => Linking.openURL(`${WEB}/platform`)} />
+              <Button title="Web Super Admin" onPress={() => Linking.openURL(`${WEB_URL}/platform`)} />
               <View style={{ height: 8 }} />
               <Button title="Finance Hub (app)" variant="muted" onPress={() => router.push('/finance-hub')} />
               <View style={{ height: 8 }} />

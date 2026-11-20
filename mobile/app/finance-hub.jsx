@@ -2,12 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking, ScrollView, Share, Text, TextInput, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuth } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { supabase, WEB_URL } from '../lib/supabase';
 import { colors } from '../lib/theme';
 import { Button, Card, EmptyState, ErrorBanner, Loading, Screen, SectionHeader } from '../components';
 import { parseAmount, parseQty } from '../lib/finance';
-
-const WEB = process.env.EXPO_PUBLIC_WEB_URL || 'https://dharul-uloom-kashiful-hudha.vercel.app';
 
 const DOC_TYPES = [
   { id: 'donation', label: 'Donation', line: 'donation' },
@@ -145,7 +143,7 @@ export default function FinanceHubMobile() {
   const shareDoc = async (doc, channel) => {
     const path = publicPath(doc);
     if (!path) return;
-    const url = `${WEB}${path}`;
+    const url = `${WEB_URL}${path}`;
     const msg = `Kashiful Hudha ${doc.doc_type} ${doc.doc_number || ''} — ${url}`;
     if (channel === 'whatsapp') {
       Linking.openURL(`https://wa.me/?text=${encodeURIComponent(msg)}`);
@@ -312,7 +310,7 @@ export default function FinanceHubMobile() {
                       <Button title="WhatsApp share" onPress={() => shareDoc(selected, 'whatsapp')} />
                       <Button title="SMS share" variant="muted" onPress={() => shareDoc(selected, 'sms')} />
                       <Button title="Copy / share link" variant="muted" onPress={() => shareDoc(selected, 'share')} />
-                      <Button title="Open public page" variant="muted" onPress={() => Linking.openURL(`${WEB}${publicPath(selected)}`)} />
+                      <Button title="Open public page" variant="muted" onPress={() => Linking.openURL(`${WEB_URL}${publicPath(selected)}`)} />
                     </>
                   ) : null}
                   {selected.status !== 'void' && canWrite ? (

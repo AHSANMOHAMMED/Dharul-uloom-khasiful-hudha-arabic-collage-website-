@@ -177,7 +177,7 @@ export default function Login() {
           )}
 
           {error && (
-            <div className="p-3.5 rounded-lg bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger text-xs font-medium flex items-center gap-2">
+            <div role="alert" aria-live="polite" className="p-3.5 rounded-lg bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger text-xs font-medium flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px]">{'error'}</span>
               <span>{error}</span>
             </div>
@@ -185,12 +185,15 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-ink-text-primary mb-1.5">
+              <label htmlFor="login-email" className="block text-xs font-semibold text-ink-text-primary mb-1.5">
                 {tx('البريد الإلكتروني *', 'Email / Index Identifier *')}
               </label>
               <input
+                id="login-email"
                 type="email"
                 name="email"
+                autoComplete="email"
+                spellCheck={false}
                 required
                 value={formData.email}
                 onChange={handleChange}
@@ -201,7 +204,7 @@ export default function Login() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-ink-text-primary">
+                <label htmlFor="login-password" className="text-xs font-semibold text-ink-text-primary">
                   {tx('كلمة المرور *', 'Password *')}
                 </label>
                 <Link
@@ -214,8 +217,10 @@ export default function Login() {
 
               <div className="relative">
                 <input
+                  id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   name="password"
+                  autoComplete="current-password"
                   required
                   value={formData.password}
                   onChange={handleChange}

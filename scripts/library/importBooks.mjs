@@ -136,7 +136,7 @@ async function main() {
   console.log(`Loaded ${total} books from ${args.input}`);
 
   let buffer = [];
-  for (const [index, book] of books.entries()) {
+  for (const book of books) {
     const shamelaId = String(book.shamela_id ?? book.shamelaId ?? book.id ?? '').trim();
     if (!shamelaId || processed.has(shamelaId)) continue;
 

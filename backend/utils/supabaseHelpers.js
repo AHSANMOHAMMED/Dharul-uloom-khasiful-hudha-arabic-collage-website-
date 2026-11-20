@@ -9,12 +9,16 @@ import { supabase } from '../config/supabase.js';
  * Test Supabase connection
  */
 export async function testConnection() {
+  if (!supabase) {
+    return { success: false, error: 'Supabase is not configured' };
+  }
   try {
-    const { count, error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
-      .select('*', { count: 'exact', head: true });
+      .select('id')
+      .limit(1);
     if (error) throw error;
-    return { success: true, count };
+    return { success: true, count: data?.length ?? 0 };
   } catch (error) {
     return { success: false, error: error.message };
   }

@@ -2,7 +2,7 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 /** Ask the authenticated staff worker to drain its own organization's queue. */
 export async function flushOutbound(limit = 20) {
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured || !supabase?.functions?.invoke) return;
   try {
     const { error } = await supabase.functions.invoke('send-outbound', { body: { limit } });
     if (error) console.warn('[notifyApi] outbound queue remains pending', error);

@@ -2,15 +2,13 @@ import { useState } from 'react';
 import { Linking, TextInput } from 'react-native';
 import { Redirect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { supabase, must } from '../lib/supabase';
+import { supabase, must, WEB_URL } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useAsync } from '../lib/useAsync';
 import { useI18n } from '../lib/i18n';
 import { colors } from '../lib/theme';
 import { Screen, Card, Txt, EmptyState, Row, Button } from '../components';
 import { cleanTerm } from '../lib/finance';
-
-const WEB = process.env.EXPO_PUBLIC_WEB_URL || 'https://dharul-uloom-kashiful-hudha.vercel.app';
 
 const inputStyle = {
   borderWidth: 1,
@@ -72,7 +70,7 @@ export default function LibraryScreen() {
   const openBook = async (b) => {
     if (b.file_path) {
       // Only open HTTPS links stored in the DB; anything else goes via the site viewer.
-      const url = /^https:\/\//i.test(b.file_path) ? b.file_path : `${WEB}/library/${b.id}`;
+      const url = /^https:\/\//i.test(b.file_path) ? b.file_path : `${WEB_URL}/library/${b.id}`;
       try {
         await WebBrowser.openBrowserAsync(url);
       } catch {
@@ -80,7 +78,7 @@ export default function LibraryScreen() {
       }
       return;
     }
-    Linking.openURL(`${WEB}/library/${b.id}`);
+    Linking.openURL(`${WEB_URL}/library/${b.id}`);
   };
 
   return (
@@ -100,7 +98,7 @@ export default function LibraryScreen() {
       <Row style={{ gap: 8, marginBottom: 12 }}>
         <Button title={t('common.search') || 'Search'} small onPress={() => setQuery(qText.trim())} />
         <Button title={t('common.clear') || 'Clear'} small variant="muted" onPress={() => { setQText(''); setQuery(''); }} />
-        <Button title="Web library" small variant="outline" onPress={() => Linking.openURL(`${WEB}/library`)} />
+        <Button title="Web library" small variant="outline" onPress={() => Linking.openURL(`${WEB_URL}/library`)} />
       </Row>
       {!rows.length ? <EmptyState message={t('common.none')} icon="library-outline" /> : null}
       {rows.map((b) => (

@@ -43,6 +43,9 @@ export default function Home() {
         <img
           src="/images/campus/building.jpg"
           alt={tx('مبنى كلية دار العلوم كاشف الهدى في مدلايبلي', 'Dharul Uloom Kashiful Hudha campus building in Mudalippalli')}
+          width="1600"
+          height="900"
+          fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div

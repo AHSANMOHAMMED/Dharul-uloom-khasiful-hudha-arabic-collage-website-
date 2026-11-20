@@ -304,7 +304,7 @@ export default function Navbar() {
             type="button"
             onClick={() => setIsOpen(!isOpen)}
             aria-expanded={isOpen}
-            className="lg:hidden inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-sand-border text-ink-text-primary hover:bg-sand-border/30 focus:outline-none transition-colors"
+            className="lg:hidden inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-sand-border text-ink-text-primary hover:bg-sand-border/30 transition-colors"
             aria-label={tx('فتح/إغلاق القائمة', 'Toggle navigation menu')}
           >
             <span className="material-symbols-outlined text-[22px]">

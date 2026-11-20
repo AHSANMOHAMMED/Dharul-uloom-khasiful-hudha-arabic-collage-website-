@@ -74,4 +74,44 @@ export const supabase = isSupabaseConfigured
     })
   : null;
 
+/**
+ * Subscribe to a table with a polling recovery path.
+ *
+ * Realtime is preferred, but it may be disabled at the project level or lose
+ * its WebSocket connection. Calling `onFallback` at the configured interval
+ * keeps dependent screens fresh even without Realtime.
+ */
+export function subscribeTableWithFallback({
+  table,
+  filter,
+  event = '*',
+  onChange,
+  onFallback,
+  channelName,
+  intervalMs = 15_000,
+}) {
+  if (!supabase || !table) return () => {};
+
+  const opts = { event, schema: 'public', table };
+  if (filter) opts.filter = filter;
+
+  const channel = supabase
+    .channel(channelName || `fallback:${table}:${Math.random().toString(36).slice(2, 8)}`)
+    .on('postgres_changes', opts, (payload) => onChange?.(payload))
+    .subscribe();
+
+  const timer = onFallback
+    ? setInterval(() => {
+        if (typeof document === 'undefined' || document.visibilityState !== 'hidden') {
+          onFallback();
+        }
+      }, intervalMs)
+    : null;
+
+  return () => {
+    if (timer) clearInterval(timer);
+    supabase.removeChannel(channel);
+  };
+}
+
 export default supabase;

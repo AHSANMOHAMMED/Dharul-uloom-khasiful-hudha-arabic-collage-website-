@@ -68,10 +68,11 @@ export default function DashboardSidebarLayout({
 
       {/* Mobile Backdrop Overlay */}
       {mobileOpen && (
-        <div
+        <button
+          type="button"
           className="fixed inset-0 bg-[#0B3B2E]/50 backdrop-blur-xs z-40 lg:hidden"
           onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
+          aria-label={tx('إغلاق القائمة الجانبية', 'Close sidebar menu')}
         />
       )}
 

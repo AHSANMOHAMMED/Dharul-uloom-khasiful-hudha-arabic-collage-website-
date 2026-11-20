@@ -85,11 +85,37 @@ export const AuthProvider = ({ children }) => {
       return;
     }
     let active = true;
+    let profileChannel = null;
+
+    const subscribeProfile = (authUser) => {
+      if (!authUser) return;
+      if (profileChannel) {
+        supabase.removeChannel(profileChannel);
+        profileChannel = null;
+      }
+      profileChannel = supabase.channel(`profile:${authUser.id}`)
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${authUser.id}`,
+        }, async () => {
+          if (!active) return;
+          const [u, m] = await Promise.all([buildUser(authUser), loadMfa(authUser)]);
+          if (!active) return;
+          setUser(u);
+          setMfa(m);
+        })
+        .subscribe();
+    };
 
     // Hydrate from any persisted session on first load.
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!active) return;
       const authUser = session?.user ?? null;
+      if (authUser) {
+        subscribeProfile(authUser);
+      }
       const [u, m] = await Promise.all([buildUser(authUser), loadMfa(authUser)]);
       if (!active) return;
       setUser(u);
@@ -107,6 +133,13 @@ export const AuthProvider = ({ children }) => {
       setTimeout(async () => {
         if (!active) return;
         const authUser = session?.user ?? null;
+        if (profileChannel) {
+          supabase.removeChannel(profileChannel);
+          profileChannel = null;
+        }
+        if (authUser) {
+          subscribeProfile(authUser);
+        }
         const [u, m] = await Promise.all([buildUser(authUser), loadMfa(authUser)]);
         if (!active) return;
         setUser(u);
@@ -117,6 +150,7 @@ export const AuthProvider = ({ children }) => {
 
     return () => {
       active = false;
+      if (profileChannel) supabase.removeChannel(profileChannel);
       sub?.subscription?.unsubscribe();
     };
   }, [buildUser, loadMfa]);

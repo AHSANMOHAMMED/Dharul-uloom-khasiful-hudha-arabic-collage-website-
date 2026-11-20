@@ -1,4 +1,4 @@
-import { supabase } from '../supabaseClient';
+import { subscribeTableWithFallback } from '../supabaseClient';
 import { query, rpc, insertRow, updateRow } from './rpc';
 
 /**
@@ -301,18 +301,11 @@ export function createMeetingTasks(meetingId, tasks) {
 // ---------------------------------------------------------------------------
 /** Subscribe to postgres_changes on a table (RLS applies); returns an unsubscribe fn. */
 export function subscribeTable(table, onChange, name = `gov-${table}`) {
-  if (!supabase?.channel) return () => {};
-  const channel = supabase
-    .channel(`${name}-${Math.random().toString(36).slice(2, 8)}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => onChange(payload))
-    .subscribe();
-  return () => {
-    try {
-      supabase.removeChannel(channel);
-    } catch {
-      /* already closed */
-    }
-  };
+  return subscribeTableWithFallback({
+    table,
+    channelName: `${name}-${Math.random().toString(36).slice(2, 8)}`,
+    onChange,
+  });
 }
 
 export const setActingOrg = (orgId) => rpc('set_acting_org', { p_org: orgId || null });

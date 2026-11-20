@@ -219,7 +219,7 @@ function preparePages(bookId, pages) {
   }));
 }
 
-async function upsertPageRows(supabase, rows, shamelaId, label) {
+async function upsertPageRows(supabase, rows) {
   const { error } = await supabase.from('book_pages').upsert(rows, {
     onConflict: 'book_id,page_index',
     ignoreDuplicates: false,
@@ -230,7 +230,7 @@ async function upsertPageRows(supabase, rows, shamelaId, label) {
 async function upsertChunkResilient(supabase, bookId, chunk, shamelaId, offset) {
   const rows = chunk.map((p) => ({ book_id: bookId, ...p }));
   try {
-    await withRetry(() => upsertPageRows(supabase, rows, shamelaId, offset), {
+    await withRetry(() => upsertPageRows(supabase, rows), {
       label: `upsert pages ${shamelaId} @${offset}`,
       retries: 4,
       baseDelay: 4000,

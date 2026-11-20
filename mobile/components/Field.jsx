@@ -9,6 +9,7 @@ export default function Field({ label, hint, multiline, style, inputStyle, ...pr
     <View style={[styles.wrap, style]}>
       {label ? <Txt variant="label">{label}</Txt> : null}
       <TextInput
+        accessibilityLabel={props.accessibilityLabel || label || props.placeholder}
         placeholderTextColor="#94a3b8"
         style={[styles.input, textAlign, multiline && styles.multi, inputStyle]}
         multiline={multiline}

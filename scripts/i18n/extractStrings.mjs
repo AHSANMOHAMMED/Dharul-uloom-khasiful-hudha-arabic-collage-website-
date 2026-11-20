@@ -6,7 +6,7 @@
  * Writes scripts/i18n/strings.json and reports which are missing from
  * src/locales/ta.json.   node scripts/i18n/extractStrings.mjs [--missing]
  */
-import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { parse } from '@babel/parser';
 import traverseMod from '@babel/traverse';
@@ -35,7 +35,6 @@ for (const file of files(SRC)) {
 }
 const all = [...out].filter((s) => /[A-Za-z]/.test(s)).sort();
 writeFileSync(join(ROOT, 'scripts/i18n/strings.json'), JSON.stringify(all, null, 1) + '\n');
-const taPath = join(SRC, 'locales/ta.json');
 const ta = {};
 for (const f of readdirSync(join(SRC, 'locales')).filter((n) => /^ta.*\.json$/.test(n))) {
   Object.assign(ta, JSON.parse(readFileSync(join(SRC, 'locales', f), 'utf8')));
