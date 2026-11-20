@@ -332,7 +332,12 @@ export default function Courses() {
           to="/admissions"
           className="inline-flex items-center gap-2 h-12 px-5 rounded-full bg-emerald-700 hover:bg-emerald-500 text-white shadow-manuscript-lg border border-white/20 text-xs font-semibold tracking-wide transition-transform hover:scale-105"
         >
-          <span className="material-symbols-outlined text-[18px]">{'edit_document'}</span>
+          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
           <span>{tx('قدّم للالتحاق الآن', 'Apply for Admission')}</span>
         </Link>
       </div>

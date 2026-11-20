@@ -76,7 +76,9 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3.5 text-xs sm:text-sm text-dark-text-primary/80">
               <li className="flex items-start gap-2.5">
-                <span className="material-symbols-outlined text-emerald-500 text-[18px] mt-0.5 shrink-0">{'call'}</span>
+                <svg className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
                 <div>
                   <div className="text-xs uppercase tracking-wider text-dark-text-primary/60 font-semibold mb-0.5">
                     {tx('الهواتف', 'Hotlines')}
@@ -86,7 +88,9 @@ export default function Footer() {
                 </div>
               </li>
               <li className="flex items-start gap-2.5">
-                <span className="material-symbols-outlined text-emerald-500 text-[18px] mt-0.5 shrink-0">{'location_on'}</span>
+                <svg className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                </svg>
                 <div>
                   <div className="text-xs uppercase tracking-wider text-dark-text-primary/60 font-semibold mb-0.5">
                     {tx('مقر الكلية', 'Campus Grounds')}
@@ -96,7 +100,10 @@ export default function Footer() {
                 </div>
               </li>
               <li className="flex items-start gap-2.5">
-                <span className="material-symbols-outlined text-emerald-500 text-[18px] mt-0.5 shrink-0">{'mail'}</span>
+                <svg className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect width="20" height="16" x="2" y="4" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
                 <div>
                   <div className="text-xs uppercase tracking-wider text-dark-text-primary/60 font-semibold mb-0.5">
                     {tx('البريد الإلكتروني', 'Electronic Inquiries')}
@@ -116,25 +123,33 @@ export default function Footer() {
             <ul className="space-y-2.5 text-xs sm:text-sm text-dark-text-primary/80">
               <li>
                 <Link to="/admissions" className="hover:text-gold-wash-100 transition-colors flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px] text-brass-gold-500">{'chevron_right'}</span>
+                  <svg className="w-3.5 h-3.5 text-brass-gold-500 rtl:rotate-180 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                   <span>{tx('التقديم للقبول', 'Admission Application')}</span>
                 </Link>
               </li>
               <li>
                 <Link to="/curriculum" className="hover:text-gold-wash-100 transition-colors flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px] text-brass-gold-500">{'chevron_right'}</span>
+                  <svg className="w-3.5 h-3.5 text-brass-gold-500 rtl:rotate-180 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                   <span>{tx('المنهج الدراسي والسند', 'Curriculum & Sanad')}</span>
                 </Link>
               </li>
               <li>
                 <Link to="/login" className="hover:text-gold-wash-100 transition-colors flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px] text-brass-gold-500">{'chevron_right'}</span>
+                  <svg className="w-3.5 h-3.5 text-brass-gold-500 rtl:rotate-180 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                   <span>{tx('دخول الطلاب وأولياء الأمور', 'Student & Parent Portal Login')}</span>
                 </Link>
               </li>
               <li>
                 <Link to="/contact" className="hover:text-gold-wash-100 transition-colors flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[14px] text-brass-gold-500">{'chevron_right'}</span>
+                  <svg className="w-3.5 h-3.5 text-brass-gold-500 rtl:rotate-180 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                   <span>{tx('اتصل بنا', 'Contact Us')}</span>
                 </Link>
               </li>

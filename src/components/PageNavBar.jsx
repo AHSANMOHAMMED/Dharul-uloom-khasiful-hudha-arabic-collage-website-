@@ -30,19 +30,31 @@ export default function PageNavBar({ crumbs = [], home, className = '' }) {
   return (
     <nav aria-label={tx('التنقل', 'Page navigation')} className={`flex items-center gap-2 min-w-0 ${className}`}>
       <button type="button" onClick={onBack} disabled={backDisabled} className={btn} aria-label={tx('رجوع', 'Back')} title={tx('رجوع', 'Back')}>
-        <span className="material-symbols-outlined text-[20px] rtl:rotate-180" aria-hidden>{'arrow_back'}</span>
+        <svg className="w-4 h-4 rtl:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <line x1="19" y1="12" x2="5" y2="12" />
+          <polyline points="12 19 5 12 12 5" />
+        </svg>
       </button>
       <button type="button" onClick={forward} disabled={!canForward} className={btn} aria-label={tx('تقدم', 'Forward')} title={tx('تقدم', 'Forward')}>
-        <span className="material-symbols-outlined text-[20px] rtl:rotate-180" aria-hidden>{'arrow_forward'}</span>
+        <svg className="w-4 h-4 rtl:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <polyline points="12 5 19 12 12 19" />
+        </svg>
       </button>
       {home && (
         home.to ? (
           <Link to={home.to} className={btn} aria-label={home.label || tx('الرئيسية', 'Home')} title={home.label || tx('الرئيسية', 'Home')}>
-            <span className="material-symbols-outlined text-[20px]" aria-hidden>{'home'}</span>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
           </Link>
         ) : (
           <button type="button" onClick={goHome} disabled={atHome} className={btn} aria-label={home.label || tx('الرئيسية', 'Home')} title={home.label || tx('الرئيسية', 'Home')}>
-            <span className="material-symbols-outlined text-[20px]" aria-hidden>{'home'}</span>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
           </button>
         )
       )}
@@ -52,7 +64,11 @@ export default function PageNavBar({ crumbs = [], home, className = '' }) {
             const last = i === crumbs.length - 1;
             return (
               <li key={`${c.label}-${i}`} className={`flex items-center gap-1 min-w-0 ${last ? '' : 'hidden sm:flex'}`}>
-                {i > 0 && <span className="material-symbols-outlined text-[16px] text-ink-text-muted rtl:rotate-180" aria-hidden>{'chevron_right'}</span>}
+                {i > 0 && (
+                  <svg className="w-3.5 h-3.5 text-ink-text-muted rtl:rotate-180 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                )}
                 {last ? (
                   <span aria-current="page" className="font-semibold text-ink-green-900 truncate">{c.label}</span>
                 ) : c.to ? (
