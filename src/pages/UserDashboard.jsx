@@ -57,10 +57,10 @@ export default function UserDashboard() {
       navigate('/platform', { replace: true });
       return;
     }
-    if (isAdmin) {
+    if (isAdmin && !searchParams.get('view')) {
       navigate('/admin', { replace: true });
     }
-  }, [authLoading, isAuthenticated, isAdmin, isSuperAdmin, navigate]);
+  }, [authLoading, isAuthenticated, isAdmin, isSuperAdmin, navigate, searchParams]);
 
   if (authLoading) {
     return (
@@ -133,7 +133,13 @@ export default function UserDashboard() {
                     ? 'exam'
                     : isLibrarian
                       ? 'librarian'
-                      : null;
+                      : isTutor
+                        ? 'tutor'
+                        : isParent
+                          ? 'parent'
+                          : isStudent
+                            ? 'student'
+                            : null;
   const activeView = view || defaultSpecialView || 'tutor';
 
   // RolePortalShell embeds RoleSwitcher; Tutor/Librarian keep a top bar.
@@ -145,6 +151,9 @@ export default function UserDashboard() {
   );
 
   const portalForView = (v) => {
+    if (v === 'admin' && isAdmin) return <Navigate to="/admin" replace />;
+    if (v === 'parent' && isParent) return <ParentDashboard />;
+    if (v === 'student' && isStudent) return <StudentDashboard />;
     if (v === 'treasurer' && isTreasurer) return <TreasurerPortal />;
     if (v === 'principal' && isPrincipal) return <PrincipalPortal vpMode={false} />;
     if (v === 'vp' && isVP) return <PrincipalPortal vpMode />;
@@ -160,6 +169,9 @@ export default function UserDashboard() {
   };
 
   const hatFlags = [
+    isAdmin,
+    isParent,
+    isStudent,
     isTreasurer,
     isPrincipal,
     isVP,
@@ -179,6 +191,7 @@ export default function UserDashboard() {
     const needsTopBar = activeView === 'tutor' || activeView === 'librarian';
     if (chosen) return wrapWithSwitcher(chosen, { topBar: needsTopBar });
     const fallback =
+      portalForView('admin') ||
       portalForView('treasurer') ||
       portalForView('principal') ||
       portalForView('vp') ||
@@ -189,7 +202,9 @@ export default function UserDashboard() {
       portalForView('counselor') ||
       portalForView('exam') ||
       portalForView('librarian') ||
-      portalForView('tutor');
+      portalForView('tutor') ||
+      portalForView('parent') ||
+      portalForView('student');
     if (fallback) {
       return wrapWithSwitcher(fallback, {
         topBar: !portalForView(activeView) && (isTutor || isLibrarian) && !(isTreasurer || isPrincipal || isVP || isAccountantRole),

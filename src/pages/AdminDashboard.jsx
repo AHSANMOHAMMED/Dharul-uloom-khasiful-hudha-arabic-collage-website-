@@ -15,6 +15,7 @@ import OrgAdminPanel from '../components/OrgAdminPanel';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import RoleSwitcher from '../components/RoleSwitcher';
 import Icon from '../components/Icon';
 import { ErpEmbedProvider } from '../context/ErpEmbedContext';
 import { PortalNavProvider } from '../context/PortalNavContext';
@@ -437,6 +438,7 @@ const AdminDashboard = () => {
       navItems={tabs}
       activeItem={activeTab}
       onSelect={openTab}
+      roleSwitcher={<RoleSwitcher compact />}
       homeItem="overview"
       quickLinks={[
         ERP_QUICK_LINK,

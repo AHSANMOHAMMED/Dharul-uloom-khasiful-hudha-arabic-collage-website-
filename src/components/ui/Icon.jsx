@@ -297,6 +297,25 @@ export default function Icon({ name, className = '', size, ...props }) {
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         );
 
+      case 'send':
+        return (
+          <>
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </>
+        );
+
+      case 'done':
+        return <polyline points="20 6 9 17 4 12" />;
+
+      case 'done_all':
+        return (
+          <>
+            <polyline points="18 6 7 17 2 12" />
+            <polyline points="22 10 13.5 18.5 11 16" />
+          </>
+        );
+
       case 'logout':
         return (
           <>

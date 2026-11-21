@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabaseClient';
 import PayFeeButton from '../components/PayFeeButton';
 import ReceiptsArrears from '../components/ReceiptsArrears';
 import PortalTabChrome from '../components/portals/PortalTabChrome';
+import RoleSwitcher from '../components/RoleSwitcher';
 import { claimParentInvite } from '../lib/parentInviteApi';
 import { rpc } from '../lib/erp/rpc';
 import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
@@ -18,7 +19,7 @@ import { ROLE_BADGE } from '../lib/roleTheme';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 
-const PARENT_TABS = ['overview', 'attendance', 'results', 'leaves', 'fees', 'link'];
+const PARENT_TABS = ['overview', 'attendance', 'results', 'leaves', 'fees', 'messages', 'link'];
 const DEFAULT_PERMS = { fees: true, results: true, attendance: true, leave: true };
 
 function guardianMay(child, key) {
@@ -280,6 +281,7 @@ export default function ParentDashboard() {
       guardianMay(selectedChild, 'fees') && {
         id: 'fees', label_en: 'Tuition Ledgers', label_ar: 'الرسوم المدرسية', icon: 'payments',
       },
+      { id: 'messages', label_en: 'Tutor & College Chat', label_ar: 'التواصل مع المعلم والكلية', icon: 'forum' },
       { id: 'link', label_en: 'Link Ward', label_ar: 'ربط طالب', icon: 'person_add' },
     ];
     return items.filter(Boolean);
@@ -335,7 +337,12 @@ export default function ParentDashboard() {
       navItems={navItems}
       activeItem={activeTab}
       onSelect={setActiveTab}
-      roleSwitcher={childSelector}
+      roleSwitcher={
+        <div className="space-y-2">
+          <RoleSwitcher compact />
+          {childSelector}
+        </div>
+      }
       topActions={
         children.length === 0 ? (
           <button
@@ -870,6 +877,101 @@ export default function ParentDashboard() {
                     {tx('تفعيل الدعوة', 'Claim invite')}
                   </button>
                 </form>
+              </div>
+            </div>
+          </PortalTabChrome>
+        )}
+
+        {/* Tab: Messages & Communication */}
+        {activeTab === 'messages' && (
+          <PortalTabChrome
+            title_ar="التواصل مع إدارة الكلية ومعلمي الحلقات"
+            title_en="Parent-Tutor & Institutional Communication"
+            subtitle_ar="قنوات المراسلة المباشرة المعتمدة لمتابعة مسيرة الطالب والتنسيق مع إدارة دار العلوم"
+            subtitle_en="Direct official channels to consult class tutors and coordinate with college administration"
+          >
+            <div className="space-y-6">
+              <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 sm:p-8 shadow-manuscript space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-sand-border/70 pb-6">
+                  <div>
+                    <h3 className="font-serif text-lg font-semibold text-ink-green-900">
+                      {tx('غرفة الرسائل والمحادثات المباشرة', 'Live Messages & Inquiries Hub')}
+                    </h3>
+                    <p className="text-xs text-ink-text-secondary mt-1">
+                      {tx(
+                        'تتيح لك المنصة التواصل الفوري مع معلم حلقة ابنك، وأمانة الصندوق، وإدارة القبول وشؤون الطلاب.',
+                        'Direct messaging with your child’s halaqah mentor, the treasurer, and student affairs administration.'
+                      )}
+                    </p>
+                  </div>
+                  <Link
+                    to="/messages"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[10px] bg-emerald-700 hover:bg-ink-green-900 text-white text-xs font-semibold shadow-xs transition"
+                  >
+                    <Icon name="chat" className="text-[18px]" />
+                    <span>{tx('فتح صندوق الرسائل', 'Open Messages Inbox')}</span>
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-5 rounded-[12px] bg-parchment-50 border border-sand-border space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-mint-wash-100 text-emerald-700 flex items-center justify-center">
+                        <Icon name="school" className="text-[22px]" />
+                      </div>
+                      <div>
+                        <h4 className="font-serif font-bold text-sm text-ink-green-900">
+                          {tx('التواصل مع معلم الحلقة', 'Contact Halaqah Tutor')}
+                        </h4>
+                        <p className="text-[11px] text-ink-text-muted">
+                          {selectedChild ? `${selectedChild.full_name} (${tx('الصف', 'Class')} ${selectedChild.class_number || '—'})` : tx('اختر طالباً', 'Select a student')}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-ink-text-secondary leading-relaxed">
+                      {tx(
+                        'استفسر عن حفظ القرآن، السلوك، والمستوى الأكاديمي والتزام الطالب بالحضور اليومي.',
+                        'Inquire about Quran memorization progress, conduct, academic performance, and daily halaqah presence.'
+                      )}
+                    </p>
+                    <Link
+                      to="/messages"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:underline"
+                    >
+                      <span>{tx('إرسال رسالة للمعلم', 'Message Mentor')}</span>
+                      <Icon name="arrow_forward" className="text-[14px] rtl:rotate-180" />
+                    </Link>
+                  </div>
+
+                  <div className="p-5 rounded-[12px] bg-parchment-50 border border-sand-border space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gold-wash-100 text-brass-gold-500 flex items-center justify-center">
+                        <Icon name="account_balance" className="text-[22px]" />
+                      </div>
+                      <div>
+                        <h4 className="font-serif font-bold text-sm text-ink-green-900">
+                          {tx('أمانة الصندوق والمالية', 'Treasury & Bursar Support')}
+                        </h4>
+                        <p className="text-[11px] text-ink-text-muted">
+                          {tx('الرسوم، إيصالات الدفع، والإعفاءات', 'Tuition, receipts & hardship support')}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-ink-text-secondary leading-relaxed">
+                      {tx(
+                        'تأكيد الدفعات المصرفية، مراجعة متأخرات الرسوم، أو طلب ترتيبات السداد الميسر مع إدارة الكلية.',
+                        'Verify bank slip transfers, review balance ledgers, or request flexible tuition payment arrangements.'
+                      )}
+                    </p>
+                    <Link
+                      to="/messages"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:underline"
+                    >
+                      <span>{tx('مراسلة إدارة المالية', 'Message Treasury')}</span>
+                      <Icon name="arrow_forward" className="text-[14px] rtl:rotate-180" />
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           </PortalTabChrome>

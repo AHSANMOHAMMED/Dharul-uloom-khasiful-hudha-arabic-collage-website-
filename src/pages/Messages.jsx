@@ -5,6 +5,7 @@ import { supabase, subscribeTableWithFallback } from '../lib/supabaseClient';
 import { listChatConversations, listChatMessages, markChatRead, openChatConversation, searchChatContacts, sendChatMessage, subscribeToChat } from '../lib/chatApi';
 import { tx } from '../lib/tx';
 import PageNavBar from '../components/PageNavBar';
+import Icon from '../components/Icon';
 import { portalHomeFor } from '../lib/useHistoryNav';
 
 const timeLabel = (value) => value ? new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
@@ -186,7 +187,7 @@ export default function Messages() {
                 <div className="text-lg font-bold">{tx('الرسائل', 'Messages')}</div>
                 <div className="text-xs text-white/70">{tx('محادثات خاصة داخل بوابة الكلية', 'Private conversations in the college app')}</div>
               </div>
-              <span className="material-symbols-outlined">forum</span>
+              <Icon name="forum" className="text-2xl" />
             </div>
           </header>
           <div className="p-3">
@@ -201,7 +202,7 @@ export default function Messages() {
                   <button key={person.user_id} type="button" disabled={busy} onClick={() => chooseContact(person)} className="flex w-full items-center gap-3 px-4 py-3 text-start hover:bg-white disabled:opacity-50">
                     <Avatar name={person.full_name} />
                     <span className="min-w-0 flex-1"><b className="block truncate text-sm text-[#0B3B2E]">{person.full_name}</b><small className="text-[#60736C]">{roleName(person.account_type)}{person.class_number ? ` · ${tx('الصف', 'Class')} ${person.class_number}` : ''}</small></span>
-                    <span className="material-symbols-outlined text-[#11694A]">chat</span>
+                    <Icon name="chat" className="text-[#11694A] text-lg" />
                   </button>
                 ))}
                 {!contacts.length && <p className="px-4 py-6 text-center text-xs text-[#60736C]">{tx('لا يوجد مستخدمون مطابقون', 'No matching people')}</p>}
@@ -227,7 +228,7 @@ export default function Messages() {
           {active ? (
             <>
               <header className="flex items-center gap-3 border-b border-[#E8E1D0] bg-white px-4 py-3 shadow-sm">
-                <button type="button" aria-label={tx('المحادثات', 'Chats')} onClick={() => setMobileListOpen(true)} className="rounded-lg p-1 text-[#11694A] md:hidden"><span className="material-symbols-outlined">arrow_back</span></button>
+                <button type="button" aria-label={tx('المحادثات', 'Chats')} onClick={() => setMobileListOpen(true)} className="rounded-lg p-1 text-[#11694A] md:hidden"><Icon name="arrow_back" className="text-lg rtl:rotate-180" /></button>
                 <Avatar name={active.other_user_name} />
                 <div className="min-w-0"><b className="block truncate text-sm text-[#0B3B2E]">{active.other_user_name}</b><small className="text-[#60736C]">{roleName(active.other_account_type)}</small></div>
                 <span className="ms-auto text-xs text-[#60736C]">{tx('رسائل مباشرة', 'Direct messages')}</span>
@@ -237,7 +238,7 @@ export default function Messages() {
                 {!loadingMessages && messages.length === 0 && <div className="m-auto max-w-xs rounded-2xl bg-white/80 px-5 py-4 text-center text-sm text-[#60736C]">{tx('ابدأ المحادثة برسالة خاصة إلى', 'Start a private conversation with')} {active.other_user_name}.</div>}
                 {messages.map((m) => {
                   const mine = m.sender_id === user?.id;
-                  return <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[85%] rounded-2xl px-3.5 py-2 shadow-sm sm:max-w-[70%] ${mine ? 'rounded-br-sm bg-[#D9FDD3] text-[#143A2A]' : 'rounded-bl-sm bg-white text-[#202C26]'}`}><p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{m.body}</p><div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-[#60736C]">{timeLabel(m.created_at)}{mine && <span className={`material-symbols-outlined text-[14px] ${m.read_at ? 'text-sky-600' : ''}`}>{m.read_at ? 'done_all' : 'done'}</span>}</div></div></div>;
+                  return <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[85%] rounded-2xl px-3.5 py-2 shadow-sm sm:max-w-[70%] ${mine ? 'rounded-br-sm bg-[#D9FDD3] text-[#143A2A]' : 'rounded-bl-sm bg-white text-[#202C26]'}`}><p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{m.body}</p><div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-[#60736C]">{timeLabel(m.created_at)}{mine && <Icon name={m.read_at ? 'done_all' : 'done'} className={`text-[14px] ms-1 ${m.read_at ? 'text-sky-600' : ''}`} />}</div></div></div>;
                 })}
                 {hasOlder && <button type="button" onClick={async () => {
                   const before = messages[0]?.created_at;
@@ -256,11 +257,11 @@ export default function Messages() {
               </div>
               <form onSubmit={submit} className="flex items-end gap-2 border-t border-[#E8E1D0] bg-[#FBF8F0] p-3 sm:p-4">
                 <textarea value={draft} onChange={(e) => setDraft(e.target.value.slice(0, 4000))} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} rows={1} maxLength={4000} placeholder={tx('اكتب رسالة…', 'Type a message…')} className="max-h-32 min-h-11 flex-1 resize-y rounded-2xl border border-[#E8E1D0] bg-white px-4 py-3 text-sm outline-none focus:border-[#11694A]" />
-                <button type="submit" disabled={busy || !draft.trim()} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#11694A] text-white shadow-sm hover:bg-[#0B3B2E] disabled:cursor-not-allowed disabled:opacity-40" aria-label={tx('إرسال', 'Send')}><span className="material-symbols-outlined">send</span></button>
+                <button type="submit" disabled={busy || !draft.trim()} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#11694A] text-white shadow-sm hover:bg-[#0B3B2E] disabled:cursor-not-allowed disabled:opacity-40" aria-label={tx('إرسال', 'Send')}><Icon name="send" className="text-lg" /></button>
               </form>
             </>
           ) : (
-            <div className="hidden flex-1 flex-col items-center justify-center bg-[#F5F2EB] px-8 text-center md:flex"><span className="material-symbols-outlined text-6xl text-[#11694A]/50">forum</span><h1 className="mt-4 text-xl font-bold text-[#0B3B2E]">{tx('رسائل الكلية', 'College messages')}</h1><p className="mt-2 max-w-md text-sm text-[#60736C]">{isParent ? tx('اختر محادثة أو ابحث عن إدارة الكلية أو مدرّس لبدء مراسلة خاصة.', 'Choose a chat or search for college admin or a tutor to start a private conversation.') : tx('اختر محادثة أو ابحث عن طالب أو ولي أمر أو موظف لبدء مراسلة خاصة وآمنة.', 'Choose a chat or search for a student, parent, or staff member to start a private conversation.')}</p></div>
+            <div className="hidden flex-1 flex-col items-center justify-center bg-[#F5F2EB] px-8 text-center md:flex"><Icon name="forum" className="text-6xl text-[#11694A]/50 mb-2" /><h1 className="mt-2 text-xl font-bold text-[#0B3B2E]">{tx('رسائل الكلية', 'College messages')}</h1><p className="mt-2 max-w-md text-sm text-[#60736C]">{isParent ? tx('اختر محادثة أو ابحث عن إدارة الكلية أو مدرّس لبدء مراسلة خاصة.', 'Choose a chat or search for college admin or a tutor to start a private conversation.') : tx('اختر محادثة أو ابحث عن طالب أو ولي أمر أو موظف لبدء مراسلة خاصة وآمنة.', 'Choose a chat or search for a student, parent, or staff member to start a private conversation.')}</p></div>
           )}
         </section>
       </section>

@@ -10,6 +10,7 @@ import DictionaryAdmin from '../components/library/DictionaryAdmin';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import RoleSwitcher from '../components/RoleSwitcher';
 import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
 import { assertSafeImage } from '../lib/contentApi';
@@ -191,6 +192,7 @@ const LibrarianDashboard = () => {
       navItems={navItems}
       activeItem={activeTab}
       onSelect={setActiveTab}
+      roleSwitcher={<RoleSwitcher compact />}
       topActions={
         <button
           type="button"

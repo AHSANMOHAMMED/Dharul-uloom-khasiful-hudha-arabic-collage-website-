@@ -54,6 +54,14 @@ export default function DashboardSidebarLayout({
     }
   }
 
+  if (!isSuperAdmin && location.pathname !== '/messages') {
+    defaultQuickLinks.push({ to: '/messages', label_en: 'Messages & Chat', label_ar: 'الرسائل والمحادثات', icon: 'forum' });
+  }
+  if (location.pathname !== '/library') {
+    defaultQuickLinks.push({ to: '/library', label_en: 'Digital Maktabah', label_ar: 'المكتبة الرقمية', icon: 'auto_stories' });
+  }
+  defaultQuickLinks.push({ to: '/', label_en: 'College Homepage', label_ar: 'بوابة الكلية العامة', icon: 'public' });
+
   const effectiveQuickLinks = quickLinks.length > 0 ? quickLinks : defaultQuickLinks;
 
   // Active item details for breadcrumb

@@ -11,6 +11,7 @@ import StudentLmsPanel from '../components/StudentLmsPanel';
 import PortalTabChrome from '../components/portals/PortalTabChrome';
 import KhatamPattern from '../components/KhatamPattern';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import RoleSwitcher from '../components/RoleSwitcher';
 import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
 import { openChatConversation, sendChatMessage } from '../lib/chatApi';
@@ -251,6 +252,7 @@ export default function StudentDashboard() {
       navItems={navItems}
       activeItem={activeTab}
       onSelect={selectTab}
+      roleSwitcher={<RoleSwitcher compact />}
     >
       <div className="space-y-8">
         {activeTab === 'overview' && (
