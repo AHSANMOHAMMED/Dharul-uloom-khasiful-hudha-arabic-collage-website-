@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import BookReader from '../components/library/BookReader';
+import Icon from '../components/Icon';
 import { getBook } from '../lib/booksApi';
 import { tx } from '../lib/tx';
 import { useAuth } from '../context/AuthContext';
@@ -63,7 +64,7 @@ export default function BookReaderPage() {
   if (!book) {
     return (
       <div className="min-h-screen bg-parchment-50 flex flex-col items-center justify-center p-8 text-center space-y-4">
-        <span className="material-symbols-outlined text-4xl text-ink-text-muted">{'auto_stories'}</span>
+        <Icon name="auto_stories" className="text-4xl text-ink-text-muted" />
         <h2 className="font-serif text-2xl font-semibold text-ink-green-900">
           {tx('لم يتم العثور على الكتاب.', 'Book not found.')}
         </h2>
@@ -98,9 +99,10 @@ export default function BookReaderPage() {
             to="/library"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-ink-green-900"
           >
-            <span className="material-symbols-outlined text-[16px]">
-              {i18n.dir() === 'rtl' ? 'arrow_forward' : 'arrow_back'}
-            </span>
+            <Icon
+              name={i18n.dir() === 'rtl' ? 'arrow_forward' : 'arrow_back'}
+              className="text-[16px]"
+            />
             <span>{tx('العودة إلى المكتبة', 'Back to library')}</span>
           </Link>
 
@@ -112,7 +114,7 @@ export default function BookReaderPage() {
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-sand-border bg-paper-white hover:bg-parchment-50 text-xs font-semibold text-ink-text-secondary"
               >
-                <span className="material-symbols-outlined text-[15px]">{'open_in_new'}</span>
+                <Icon name="open_in_new" className="text-[15px]" />
                 {tx('فتح في Google Drive', 'Open in Google Drive')}
               </a>
             )}

@@ -233,25 +233,25 @@ export default function Navbar() {
               {isSuperAdmin ? (
                 <Link
                   to="/platform"
-                  className="hidden sm:inline-flex items-center h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
+                  className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
                 >
-                  <Icon name="shield_person" className="text-[16px] mr-1.5" />
+                  <Icon name="shield_person" className="text-[16px]" />
                   <span>{tx('المدير العام', 'Super Admin')}</span>
                 </Link>
               ) : isAdmin ? (
                 <Link
                   to="/admin"
-                  className="hidden sm:inline-flex items-center h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
+                  className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
                 >
-                  <Icon name="shield_person" className="text-[16px] mr-1.5" />
+                  <Icon name="shield_person" className="text-[16px]" />
                   <span>{tx('لوحة الإدارة', 'Admin')}</span>
                 </Link>
               ) : (
                 <Link
                   to="/dashboard"
-                  className="hidden sm:inline-flex items-center h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
+                  className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-[10px] bg-mint-wash-100 text-emerald-700 text-xs font-semibold border border-emerald-700/20 hover:bg-emerald-700 hover:text-white transition-colors"
                 >
-                  <Icon name="dashboard" className="text-[16px] mr-1.5" />
+                  <Icon name="dashboard" className="text-[16px]" />
                   <span>{tx('البوابة', 'My Portal')}</span>
                 </Link>
               )}

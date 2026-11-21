@@ -4,6 +4,7 @@ import { useLang } from '../../components/erp/ui';
 import { formatDate, rpc } from '../../lib/erp/rpc';
 import { CERTIFICATE_TYPES, labelOf } from '../../lib/erp/campusApi';
 import KhatamPattern from '../../components/KhatamPattern';
+import Icon from '../../components/Icon';
 import { tx } from '../../lib/tx';
 
 /** Public certificate verification (no login). Calls verify_certificate (anon). */
@@ -76,7 +77,7 @@ export default function VerifyCertificate() {
             disabled={state.loading || !code.trim()}
             className="rounded-[10px] bg-emerald-700 hover:bg-emerald-500 text-white font-medium px-6 py-2.5 disabled:opacity-50 text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5"
           >
-            <span className="material-symbols-outlined text-[16px]">{'verified'}</span>
+            <Icon name="verified" className="text-[16px]" />
             <span>{state.loading ? t('Checking…', 'جارٍ التحقق…') : t('Verify', 'تحقق الآن')}</span>
           </button>
         </form>
@@ -89,7 +90,7 @@ export default function VerifyCertificate() {
 
         {r && !found && (
           <div className="rounded-[14px] border border-sand-border bg-paper-white p-6 text-center space-y-2 shadow-manuscript-sm">
-            <span className="material-symbols-outlined text-3xl text-feedback-warning">{'warning'}</span>
+            <Icon name="warning" className="text-3xl text-feedback-warning mx-auto" />
             <h2 className="text-lg font-serif font-bold text-ink-green-900">{t('Certificate not found', 'الشهادة غير موجودة في السجل')}</h2>
             <p className="text-ink-text-muted text-xs max-w-md mx-auto">
               {t(
@@ -105,9 +106,11 @@ export default function VerifyCertificate() {
             r.valid ? 'border-sand-border bg-paper-white' : 'border-feedback-danger/30 bg-feedback-danger/5'
           }`}>
             <div className="flex items-center gap-3 mb-4 pb-3 border-b border-sand-border/60">
-              <span className={`material-symbols-outlined text-3xl ${r.valid ? 'text-emerald-700' : 'text-feedback-danger'}`} aria-hidden>
-                {r.valid ? 'verified_user' : 'cancel'}
-              </span>
+              <Icon
+                name={r.valid ? 'verified_user' : 'cancel'}
+                className={`text-3xl ${r.valid ? 'text-emerald-700' : 'text-feedback-danger'}`}
+                aria-hidden
+              />
               <div>
                 <h2 className={`font-serif text-lg font-bold ${r.valid ? 'text-ink-green-900' : 'text-feedback-danger'}`}>
                   {r.valid ? t('Valid certificate', 'شهادة رسمية معتمدة وصحيحة') : t('This certificate has been revoked', 'تم إلغاء هذه الشهادة')}

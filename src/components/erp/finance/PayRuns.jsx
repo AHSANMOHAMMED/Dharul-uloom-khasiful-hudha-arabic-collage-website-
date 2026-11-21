@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AsyncView, Button, Card, Field, Input, StatusBadge, Table, useAsync, useLang } from '../ui';
+import { AsyncView, Button, Card, Field, Icon, Input, StatusBadge, Table, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
 import { query, rpc, currentMonth, formatMoney, formatDate } from '../../../lib/erp/rpc';
 import { profilesMap, runAction } from '../../../lib/erp/financeApi';
@@ -56,7 +56,7 @@ export default function PayRuns() {
                     <div>{people[r.created_by]?.full_name || '—'}</div>
                     {r.approved_by && (
                       <div className="text-gray-500 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[13px] text-emerald-500">check_circle</span>
+                        <Icon name="check_circle" className="text-[13px] text-emerald-500" />
                         <span>{people[r.approved_by]?.full_name || '—'} · {formatDate(r.approved_at)}</span>
                       </div>
                     )}

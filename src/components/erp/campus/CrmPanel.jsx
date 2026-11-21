@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Icon, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { downloadCsv, formatDate, insertRow, query, queryAll, rpc, updateRow } from '../../../lib/erp/rpc';
 import { COURSES, CRM_STAGES, LEAD_SOURCES, STAGE_STATUS, labelOf, toOptions } from '../../../lib/erp/campusApi';
 import { useAction, useEmployees } from './hooks';
@@ -134,7 +134,7 @@ function Pipeline({ onChangedStats }) {
         <div className="text-xs text-gray-500">{r.phone}</div>
         <div className="flex flex-wrap gap-1 mt-1">
           <Badge>{labelOf(LEAD_SOURCES, r.source, ar)}</Badge>
-          {r.follow_up_at && <Badge tone={new Date(r.follow_up_at).getTime() < now ? 'red' : 'amber'}><span className="material-symbols-outlined text-[12px] align-middle me-0.5">schedule</span>{formatDate(r.follow_up_at)}</Badge>}
+          {r.follow_up_at && <Badge tone={new Date(r.follow_up_at).getTime() < now ? 'red' : 'amber'}><Icon name="schedule" className="text-[12px] align-middle me-0.5" />{formatDate(r.follow_up_at)}</Badge>}
         </div>
       </button>
       {r.pipeline_stage !== 'enrolled' && (

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, StatusBadge, Table, Tabs, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Icon, Input, Modal, PageHeader, Select, StatusBadge, Table, Tabs, useAsync, useLang } from '../ui';
 import { deleteRow, downloadCsv, formatDate, insertRow, query, queryAll, rpc, today, updateRow } from '../../../lib/erp/rpc';
 import { useAction } from './hooks';
 import StaffRecord from './StaffRecord';
@@ -193,7 +193,7 @@ function LeaveTypes({ canEdit }) {
             { key: 'name', label: t('Name', 'الاسم') },
             { key: 'days_per_year', label: t('Days / year', 'أيام / سنة') },
             { key: 'is_paid', label: t('Paid', 'مدفوعة'), render: (r) => (r.is_paid ? <Badge tone="green">{t('paid', 'مدفوعة')}</Badge> : <Badge tone="amber">{t('unpaid', 'غير مدفوعة')}</Badge>) },
-            { key: 'is_active', label: t('Active', 'نشط'), render: (r) => (r.is_active ? <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span> : '—') },
+            { key: 'is_active', label: t('Active', 'نشط'), render: (r) => (r.is_active ? <Icon name="check_circle" className="text-emerald-500 text-[16px]" /> : '—') },
             { key: 'act', label: '', render: (r) => canEdit && (
               <div className="flex gap-2">
                 <Button size="sm" variant="ghost" onClick={() => setModal({ ...r, days_per_year: String(r.days_per_year) })}>{t('Edit', 'تعديل')}</Button>

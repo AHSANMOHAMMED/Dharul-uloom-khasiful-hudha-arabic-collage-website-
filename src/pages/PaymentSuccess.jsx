@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import KhatamPattern from '../components/KhatamPattern';
 import { waitForPayment } from '../lib/paymentsApi';
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
+import Icon from '../components/Icon';
 import { tx } from '../lib/tx';
 
 export default function PaymentSuccess() {
@@ -95,7 +96,7 @@ export default function PaymentSuccess() {
 
       <div className="relative z-10 max-w-md w-full rounded-[14px] bg-paper-white border border-sand-border p-8 sm:p-10 shadow-manuscript-md text-center space-y-6">
         <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center border ${crestTone}`}>
-          <span className="material-symbols-outlined text-3xl">{crestIcon}</span>
+          <Icon name={crestIcon} className="text-3xl" />
         </div>
 
         <div>
@@ -139,7 +140,7 @@ export default function PaymentSuccess() {
               href={appLink}
               className="w-full flex items-center justify-center gap-2 h-11 rounded-[10px] bg-emerald-700 text-white font-medium text-sm hover:bg-ink-green-900 transition-colors shadow-xs"
             >
-              <span className="material-symbols-outlined text-[18px]">smartphone</span>
+              <Icon name="smartphone" className="text-[18px]" />
               <span>{tx('العودة إلى التطبيق', 'Return to the app')}</span>
             </a>
           )}
@@ -150,7 +151,7 @@ export default function PaymentSuccess() {
               onClick={poll}
               className="w-full flex items-center justify-center gap-2 h-11 rounded-[10px] border border-sand-border bg-paper-white text-ink-text-primary font-medium text-sm hover:bg-parchment-50 transition-colors"
             >
-              <span className="material-symbols-outlined text-[18px]">refresh</span>
+              <Icon name="refresh" className="text-[18px]" />
               <span>{tx('تحقق مرة أخرى', 'Check again')}</span>
             </button>
           )}
@@ -160,7 +161,7 @@ export default function PaymentSuccess() {
             onClick={handlePrint}
             className="w-full flex items-center justify-center gap-2 h-11 rounded-[10px] bg-emerald-700 text-white font-medium text-sm hover:bg-ink-green-900 transition-colors shadow-xs"
           >
-            <span className="material-symbols-outlined text-[18px]">print</span>
+            <Icon name="print" className="text-[18px]" />
             <span>{tx('طباعة هذه الصفحة', 'Print this page')}</span>
           </button>
 
@@ -168,7 +169,7 @@ export default function PaymentSuccess() {
             to="/dashboard"
             className="w-full flex items-center justify-center gap-2 h-11 rounded-[10px] border border-sand-border bg-paper-white text-ink-text-primary font-medium text-sm hover:bg-parchment-50 transition-colors"
           >
-            <span className="material-symbols-outlined text-[18px]">dashboard</span>
+            <Icon name="dashboard" className="text-[18px]" />
             <span>{tx('العودة للوحة التحكم', 'Back to dashboard')}</span>
           </Link>
         </div>

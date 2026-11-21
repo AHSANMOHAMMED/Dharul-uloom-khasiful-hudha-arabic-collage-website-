@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import KhatamPattern from '../components/KhatamPattern';
+import Icon from '../components/Icon';
 import { listCurriculum } from '../lib/contentApi';
 import { localized } from '../lib/localized';
 import { tx } from '../lib/tx';
@@ -154,7 +155,7 @@ export default function Curriculum() {
               onClick={() => window.print()}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-paper-white border border-sand-border hover:border-emerald-700 text-xs font-semibold text-ink-text-primary shadow-xs transition-colors print:hidden"
             >
-              <span className="material-symbols-outlined text-[18px] text-emerald-700">{'print'}</span>
+              <Icon name="print" className="text-[18px] text-emerald-700" />
               <span>{tx('تحميل مخطط المنهج', 'Download Syllabus Outline')}</span>
             </button>
           </div>

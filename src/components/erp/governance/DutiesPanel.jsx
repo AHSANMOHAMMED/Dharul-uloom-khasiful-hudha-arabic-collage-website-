@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
-import { AsyncView, Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, EmptyState, Field, Icon, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { ConfirmModal, FilterBar, Num } from '../finance/shared';
 import { downloadCsv, formatDate, formatMoney, today } from '../../../lib/erp/rpc';
 import { num, profilesMap, runAction } from '../../../lib/erp/financeApi';
@@ -517,7 +517,7 @@ function CatalogTab({ isGov }) {
               },
               { key: 'category', label: t('Category', 'الفئة'), render: (d) => pairLabel(DUTY_CATEGORIES, d.category, t) },
               { key: 'default_petty_cash', label: t('Default petty cash', 'النثرية الافتراضية'), render: (d) => <Num>{formatMoney(d.default_petty_cash)}</Num> },
-              { key: 'grants_leave_review', label: t('Reviews student leave', 'يراجع إجازات الطلاب'), render: (d) => (d.grants_leave_review ? <span className="material-symbols-outlined text-[15px] text-[#11694A]">check</span> : '—') },
+              { key: 'grants_leave_review', label: t('Reviews student leave', 'يراجع إجازات الطلاب'), render: (d) => (d.grants_leave_review ? <Icon name="check" className="text-[15px] text-[#11694A]" /> : '—') },
               { key: 'is_active', label: t('Status', 'الحالة'), render: (d) => (d.is_active ? <Badge tone="green">{t('Active', 'نشط')}</Badge> : <Badge>{t('Inactive', 'غير نشط')}</Badge>) },
               {
                 key: 'act',

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import KhatamPattern from '../components/KhatamPattern'
+import Icon from '../components/Icon'
 import { tx } from '../lib/tx';
 
 export default function About() {
@@ -140,7 +141,7 @@ export default function About() {
             {/* Mission Panel */}
             <div className="p-8 rounded-[14px] bg-paper-white border border-sand-border border-t-4 border-t-brass-gold-500 shadow-manuscript relative">
               <div className="w-10 h-10 rounded-lg bg-gold-wash-100 text-brass-gold-500 flex items-center justify-center mb-6">
-                <span className="material-symbols-outlined text-[22px]">{'flag'}</span>
+                <Icon name="flag" className="text-[22px]" />
               </div>
               <h3 className="font-serif text-xl font-semibold text-ink-green-900 mb-3">
                 {tx('رسالتنا المؤسسية', 'Our Mission')}
@@ -153,7 +154,7 @@ export default function About() {
             {/* Vision Panel */}
             <div className="p-8 rounded-[14px] bg-paper-white border border-sand-border border-t-4 border-t-emerald-700 shadow-manuscript relative">
               <div className="w-10 h-10 rounded-lg bg-mint-wash-100 text-emerald-700 flex items-center justify-center mb-6">
-                <span className="material-symbols-outlined text-[22px]">{'visibility'}</span>
+                <Icon name="visibility" className="text-[22px]" />
               </div>
               <h3 className="font-serif text-xl font-semibold text-ink-green-900 mb-3">
                 {tx('رؤيتنا المستقبلية', 'Our Vision')}
@@ -192,7 +193,7 @@ export default function About() {
                 className="p-6 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript hover:border-emerald-700 hover:-translate-y-0.5 transition-all"
               >
                 <div className="w-10 h-10 rounded-lg bg-mint-wash-100 text-emerald-700 flex items-center justify-center mb-4">
-                  <span className="material-symbols-outlined text-[20px]">{val.icon}</span>
+                  <Icon name={val.icon} className="text-[20px]" />
                 </div>
                 <h3 className="font-serif text-base font-semibold text-ink-green-900 mb-2">
                   {val.title}

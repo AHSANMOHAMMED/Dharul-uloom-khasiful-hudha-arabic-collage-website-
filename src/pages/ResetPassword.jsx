@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import KhatamPattern from '../components/KhatamPattern';
+import Icon from '../components/Icon';
 import { tx } from '../lib/tx';
 import { passwordProblem } from '../lib/passwordPolicy';
 
@@ -123,7 +124,7 @@ export default function ResetPassword() {
         
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-full bg-mint-wash-100 text-emerald-700 mx-auto flex items-center justify-center border border-emerald-700/20">
-            <span className="material-symbols-outlined text-2xl">{'key'}</span>
+            <Icon name="key" className="text-2xl" />
           </div>
           <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 block">
             {tx('بيانات الأمان', 'Security Credential')}
@@ -138,7 +139,7 @@ export default function ResetPassword() {
 
         {success ? (
           <div className="p-4 rounded-xl bg-mint-wash-100 border border-emerald-700/20 text-center space-y-2">
-            <span className="material-symbols-outlined text-3xl text-emerald-700">{'check_circle'}</span>
+            <Icon name="check_circle" className="text-3xl text-emerald-700 mx-auto" />
             <p className="text-xs text-emerald-900 font-semibold">
               {tx('تم تحديث كلمة المرور بنجاح. جارٍ التحويل إلى صفحة الدخول...', 'Password updated successfully. Redirecting to login...')}
             </p>

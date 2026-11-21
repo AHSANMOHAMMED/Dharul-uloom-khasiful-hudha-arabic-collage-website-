@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import KhatamPattern from '../components/KhatamPattern'
+import Icon from '../components/Icon'
 import { tx } from '../lib/tx';
 
 export default function NotFound() {
@@ -26,7 +27,7 @@ export default function NotFound() {
         
         {/* Khatam Motif Crest */}
         <div className="w-16 h-16 rounded-full bg-mint-wash-100 text-emerald-700 mx-auto flex items-center justify-center border border-emerald-700/20">
-          <span className="material-symbols-outlined text-3xl">{'auto_stories'}</span>
+          <Icon name="auto_stories" className="text-3xl" />
         </div>
 
         <div>
@@ -47,7 +48,7 @@ export default function NotFound() {
         {/* Quick Search */}
         <form onSubmit={handleSearch} className="flex items-center bg-parchment-50 p-1.5 rounded-[10px] border border-sand-border">
           <label htmlFor="not-found-search" className="sr-only">{tx('البحث في المكتبة', 'Search the library')}</label>
-          <span aria-hidden="true" className="material-symbols-outlined text-ink-text-muted mx-2 text-[18px]">{'search'}</span>
+          <Icon name="search" className="text-ink-text-muted mx-2 text-[18px]" aria-hidden="true" />
           <input
             id="not-found-search"
             type="text"

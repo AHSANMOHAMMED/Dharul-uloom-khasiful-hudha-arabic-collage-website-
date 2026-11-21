@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AsyncView, Badge, Button, Card, Field, Input, Select, Table, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Icon, Input, Select, Table, useAsync, useLang } from '../ui';
 import { query, rpc } from '../../../lib/erp/rpc';
 import { useAuth } from '../../../context/AuthContext';
 import { printTable } from '../../../lib/printReport';
@@ -216,7 +216,7 @@ export default function MarksEntry() {
       title={t('Marks entry', 'إدخال الدرجات')}
       actions={
         <Button size="sm" variant="secondary" disabled={!sheet.data?.students?.length || !paper} onClick={printMarksheet}>
-          <span className="material-symbols-outlined text-[16px] align-middle me-1">print</span>
+          <Icon name="print" className="text-[16px] align-middle me-1" />
           {t('Print marksheet', 'طباعة كشف الدرجات')}
         </Button>
       }

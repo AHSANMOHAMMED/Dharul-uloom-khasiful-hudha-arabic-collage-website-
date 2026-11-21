@@ -1,5 +1,5 @@
 import { Fragment, useState } from 'react';
-import { AsyncView, Badge, Button, Card, Field, Input, PageHeader, Select, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Icon, Input, PageHeader, Select, useAsync, useLang } from '../ui';
 import { downloadCsv, query } from '../../../lib/erp/rpc';
 import { profilesMap } from '../../../lib/erp/financeApi';
 import { DateRange, FilterBar } from './shared';
@@ -112,7 +112,7 @@ export default function AuditLogPanel() {
         actions={
           <>
             <Button size="sm" variant="secondary" disabled={!state.data?.list?.length} onClick={exportPageCsv}>
-              <span className="material-symbols-outlined text-[16px] align-middle me-1">download</span>
+              <Icon name="download" className="text-[16px] align-middle me-1" />
               {t('Export CSV', 'تصدير CSV')}
             </Button>
             <Button size="sm" variant="secondary" onClick={reload}>

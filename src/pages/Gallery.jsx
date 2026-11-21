@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { listGalleryItems } from '../lib/contentApi'
 import KhatamPattern from '../components/KhatamPattern'
+import Icon from '../components/Icon'
 import { localized } from '../lib/localized';
 import { tx } from '../lib/tx';
 
@@ -148,7 +149,7 @@ export default function Gallery() {
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="p-12 text-center rounded-[14px] bg-paper-white border border-sand-border max-w-md mx-auto">
-              <span className="material-symbols-outlined text-4xl text-ink-text-muted mb-2 block">{'photo_library'}</span>
+              <Icon name="photo_library" className="text-4xl text-ink-text-muted mb-2 block mx-auto" />
               <p className="text-sm font-semibold text-ink-green-900 mb-1">{tx('لا توجد صور في هذا الألبوم', 'No photos in this album')}</p>
               <button
                 type="button"
@@ -183,9 +184,10 @@ export default function Gallery() {
                         <span className="font-semibold uppercase tracking-wider text-emerald-700">
                           {categoryLabel(item.category, tx('الكلية', 'Collegiate'))}
                         </span>
-                        <span className="material-symbols-outlined text-[16px] text-ink-text-muted group-hover:text-emerald-700">
-                          {'zoom_in'}
-                        </span>
+                        <Icon
+                          name="zoom_in"
+                          className="text-[16px] text-ink-text-muted group-hover:text-emerald-700"
+                        />
                       </div>
                       <h3 className="font-serif text-sm font-semibold text-ink-green-900 leading-snug">
                         {title}
@@ -216,7 +218,7 @@ export default function Gallery() {
                 aria-label={tx('إغلاق', 'Close')}
                 className="w-8 h-8 rounded-full border border-sand-border flex items-center justify-center text-ink-text-primary hover:bg-sand-border/30 text-sm"
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <Icon name="close" className="text-[16px]" />
               </button>
             </div>
 
@@ -235,9 +237,7 @@ export default function Gallery() {
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-paper-white/80 hover:bg-paper-white text-ink-green-900 flex items-center justify-center shadow-md transition-all"
                 aria-label={rtl ? tx('الصورة التالية', 'Next image') : tx('الصورة السابقة', 'Previous image')}
               >
-                <span className="material-symbols-outlined text-[20px]">
-                  {'chevron_left'}
-                </span>
+                <Icon name="chevron_left" className="text-[20px]" />
               </button>
 
               <button
@@ -246,9 +246,7 @@ export default function Gallery() {
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-paper-white/80 hover:bg-paper-white text-ink-green-900 flex items-center justify-center shadow-md transition-all"
                 aria-label={rtl ? tx('الصورة السابقة', 'Previous image') : tx('الصورة التالية', 'Next image')}
               >
-                <span className="material-symbols-outlined text-[20px]">
-                  {'chevron_right'}
-                </span>
+                <Icon name="chevron_right" className="text-[20px]" />
               </button>
             </div>
 

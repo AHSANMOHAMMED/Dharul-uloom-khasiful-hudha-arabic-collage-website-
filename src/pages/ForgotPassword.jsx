@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import KhatamPattern from '../components/KhatamPattern';
+import Icon from '../components/Icon';
 import { tx } from '../lib/tx';
 
 export default function ForgotPassword() {
@@ -38,7 +39,7 @@ export default function ForgotPassword() {
         
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-full bg-mint-wash-100 text-emerald-700 mx-auto flex items-center justify-center border border-emerald-700/20">
-            <span className="material-symbols-outlined text-2xl">{'lock_reset'}</span>
+            <Icon name="lock_reset" className="text-2xl" />
           </div>
           <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 block">
             {tx('استعادة الحساب', 'Account Recovery')}
@@ -53,7 +54,7 @@ export default function ForgotPassword() {
 
         {sent ? (
           <div className="p-5 rounded-xl bg-mint-wash-100 border border-emerald-700/20 text-center space-y-3">
-            <span className="material-symbols-outlined text-3xl text-emerald-700">{'mark_email_read'}</span>
+            <Icon name="mark_email_read" className="text-3xl text-emerald-700" />
             <p className="text-xs text-emerald-900 font-medium leading-relaxed">
               {tx('تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني. تفقد صندوق الوارد.', 'A recovery link has been dispatched to your email. Please follow the instructions to set a new password.')}
             </p>

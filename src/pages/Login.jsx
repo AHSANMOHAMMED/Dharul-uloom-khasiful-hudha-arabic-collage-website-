@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import KhatamPattern from '../components/KhatamPattern';
+import Icon from '../components/Icon';
 import { tx } from '../lib/tx';
 import { safeRedirectPath } from '../lib/useTabParam';
 import MfaChallenge from '../components/security/MfaChallenge';
@@ -52,7 +53,7 @@ export default function Login() {
         <KhatamPattern className="opacity-[0.05]" strokeColor="#0B3B2E" id="pending-khatam" />
         <div className="relative z-10 max-w-md w-full bg-paper-white rounded-[14px] border border-sand-border p-8 text-center shadow-manuscript-md space-y-5">
           <div className="w-16 h-16 rounded-full bg-gold-wash-100 text-brass-gold-500 mx-auto flex items-center justify-center">
-            <span className="material-symbols-outlined text-3xl">{'hourglass_top'}</span>
+            <Icon name="hourglass_top" className="text-3xl" />
           </div>
           <div>
             <span className="text-xs font-semibold uppercase tracking-wider text-brass-gold-500 block mb-1">
@@ -178,7 +179,7 @@ export default function Login() {
 
           {error && (
             <div role="alert" aria-live="polite" className="p-3.5 rounded-lg bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger text-xs font-medium flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">{'error'}</span>
+              <Icon name="error" className="text-[18px]" />
               <span>{error}</span>
             </div>
           )}
@@ -233,9 +234,10 @@ export default function Login() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-text-muted hover:text-ink-text-primary"
                   aria-label={tx('إظهار/إخفاء كلمة المرور', 'Toggle password visibility')}
                 >
-                  <span className="material-symbols-outlined text-[18px]">
-                    {showPassword ? 'visibility_off' : 'visibility'}
-                  </span>
+                  <Icon
+                    name={showPassword ? 'visibility_off' : 'visibility'}
+                    className="text-[18px]"
+                  />
                 </button>
               </div>
             </div>

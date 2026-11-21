@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../context/AuthContext';
-import { Badge, Button, ErrorNote, Field, Input, Loading, Modal, PageHeader, Select, Table, Tabs, Textarea, useLang } from '../ui';
+import { Badge, Button, ErrorNote, Field, Icon, Input, Loading, Modal, PageHeader, Select, Table, Tabs, Textarea, useLang } from '../ui';
 import { Checkbox } from '../campus/common';
 import { query } from '../../../lib/erp/rpc';
 import {
@@ -115,11 +115,11 @@ function LibraryTab({ onOpen }) {
           </Field>
         </div>
         <Button onClick={() => setCreating(true)}>
-          <span className="material-symbols-outlined text-[16px] align-[-3px] me-1" aria-hidden>{'note_add'}</span>
+          <Icon name="note_add" className="text-[16px] align-[-3px] me-1" aria-hidden />
           {t('New document', 'مستند جديد')}
         </Button>
         <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-          <span className="material-symbols-outlined text-[16px] align-[-3px] me-1" aria-hidden>{'upload_file'}</span>
+          <Icon name="upload_file" className="text-[16px] align-[-3px] me-1" aria-hidden />
           {t('Open Word file', 'فتح ملف Word')}
         </Button>
         <input ref={fileRef} type="file" accept=".docx" hidden onChange={(e) => fromWord(e.target.files?.[0])} />

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../context/AuthContext';
-import { Badge, Button, ErrorNote, Field, Loading, PageHeader, Select, Table, Tabs, useLang } from '../ui';
+import { Badge, Button, ErrorNote, Field, Icon, Loading, PageHeader, Select, Table, Tabs, useLang } from '../ui';
 import { downloadImportTemplate, exportXlsx, readSpreadsheet } from '../../../lib/spreadsheet';
 import { rpcJson } from '../../../lib/erp/reportsApi';
 import { query } from '../../../lib/erp/rpc';
@@ -249,7 +249,7 @@ export default function ImportPanel() {
                 )
               }
             >
-              <span className="material-symbols-outlined text-[16px] align-[-3px] me-1" aria-hidden>{'download'}</span>
+              <Icon name="download" className="text-[16px] align-[-3px] me-1" aria-hidden />
               {t('Download template', 'تنزيل القالب')}
             </Button>
             <p className="text-xs text-ink-text-muted">

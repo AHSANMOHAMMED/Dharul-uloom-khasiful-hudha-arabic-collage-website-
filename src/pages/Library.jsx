@@ -7,6 +7,7 @@ import BookCard from '../components/library/BookCard';
 import { getCategories, searchBooks } from '../lib/booksApi';
 import { isSupabaseConfigured } from '../lib/supabaseClient';
 import KhatamPattern from '../components/KhatamPattern';
+import Icon from '../components/Icon';
 import { tx } from '../lib/tx';
 import { useAuth } from '../context/AuthContext';
 
@@ -204,7 +205,7 @@ export default function Library() {
           {/* Empty State */}
           {!loading && books.length === 0 && (
             <div className="p-16 text-center rounded-[14px] bg-paper-white border border-sand-border max-w-md mx-auto my-12 space-y-3">
-              <span className="material-symbols-outlined text-4xl text-ink-text-muted">{'search_off'}</span>
+              <Icon name="search_off" className="text-4xl text-ink-text-muted mx-auto" />
               <h3 className="font-serif text-lg font-semibold text-ink-green-900">
                 {tx('لا توجد كتب مطابقة.', 'No matching books found.')}
               </h3>

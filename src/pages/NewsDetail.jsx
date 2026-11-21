@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getNewsById, listNews, resolveContentUrl } from '../lib/contentApi';
+import Icon from '../components/Icon';
 import { localized } from '../lib/localized';
 import { tx } from '../lib/tx';
 
@@ -53,7 +54,7 @@ export default function NewsDetail() {
   if (notFound || !article) {
     return (
       <div className="min-h-screen bg-parchment-50 flex flex-col items-center justify-center p-8 text-center">
-        <span className="material-symbols-outlined text-4xl text-ink-text-muted mb-2">{'article'}</span>
+        <Icon name="article" className="text-4xl text-ink-text-muted mb-2 mx-auto" />
         <h2 className="font-serif text-2xl font-semibold text-ink-green-900 mb-2">
           {tx('الخبر غير متوفر', 'Article Not Found')}
         </h2>
@@ -148,9 +149,7 @@ export default function NewsDetail() {
         {/* Share & Meta Bar */}
         <div className="pt-8 border-t border-sand-border flex items-center justify-between text-xs text-ink-text-muted">
           <Link to="/news" className="inline-flex items-center text-emerald-700 font-semibold gap-1">
-            <span className="material-symbols-outlined text-[16px]">
-              {backIcon}
-            </span>
+            <Icon name={backIcon} className="text-[16px]" />
             <span>{tx('العودة إلى جميع النشرات', 'Back to all bulletins')}</span>
           </Link>
 
@@ -164,7 +163,7 @@ export default function NewsDetail() {
             }}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sand-border hover:bg-paper-white text-ink-text-secondary transition-colors"
           >
-            <span className="material-symbols-outlined text-[16px]">{'share'}</span>
+            <Icon name="share" className="text-[16px]" />
             <span>{tx('نسخ الرابط', 'Copy Link')}</span>
           </button>
         </div>
@@ -191,9 +190,7 @@ export default function NewsDetail() {
                   </h4>
                   <Link to={`/news/${item._id || item.id}`} className="text-xs font-semibold text-emerald-700 inline-flex items-center gap-1 mt-2">
                     <span>{tx('قراءة الخبر', 'Read dispatch')}</span>
-                    <span className="material-symbols-outlined text-[14px]">
-                      {arrowIcon}
-                    </span>
+                    <Icon name={arrowIcon} className="text-[14px]" />
                   </Link>
                 </div>
               ))}

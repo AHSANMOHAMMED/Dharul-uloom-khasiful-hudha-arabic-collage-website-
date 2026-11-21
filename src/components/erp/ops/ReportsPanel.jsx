@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../context/AuthContext';
-import { Button, ErrorNote, Field, Input, Loading, PageHeader, Select, Table, useLang } from '../ui';
+import { Button, ErrorNote, Field, Icon, Input, Loading, PageHeader, Select, Table, useLang } from '../ui';
 import { ClassSelect } from '../campus/common';
 import { REPORTS, pivotResults, totalsFor } from '../../../lib/erp/reportsApi';
 import { query } from '../../../lib/erp/rpc';
@@ -146,7 +146,7 @@ export default function ReportsPanel() {
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-emerald-700 text-[20px]" aria-hidden>{r.icon}</span>
+              <Icon name={r.icon} className="text-emerald-700 text-[20px]" aria-hidden />
               <span className="font-semibold text-ink-green-900 text-sm">{tt(r.title)}</span>
             </div>
             <p className="text-xs text-ink-text-secondary mt-1.5 leading-relaxed">{tt(r.description)}</p>
@@ -214,11 +214,11 @@ export default function ReportsPanel() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button onClick={toExcel} disabled={!rows.length}>
-                  <span className="material-symbols-outlined text-[16px] align-[-3px] me-1" aria-hidden>{'table_view'}</span>
+                  <Icon name="table_view" className="text-[16px] align-[-3px] me-1" aria-hidden />
                   {t('Excel', 'Excel')}
                 </Button>
                 <Button variant="secondary" onClick={toPdf} disabled={!rows.length}>
-                  <span className="material-symbols-outlined text-[16px] align-[-3px] me-1" aria-hidden>{'picture_as_pdf'}</span>
+                  <Icon name="picture_as_pdf" className="text-[16px] align-[-3px] me-1" aria-hidden />
                   {t('PDF / Print', 'PDF / طباعة')}
                 </Button>
                 <Button variant="ghost" onClick={() => exportCsv({ filename: fileBase, columns, rows })} disabled={!rows.length}>

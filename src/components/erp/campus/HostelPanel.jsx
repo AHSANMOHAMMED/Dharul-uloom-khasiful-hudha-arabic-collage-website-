@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Icon, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { deleteRow, formatDate, formatMoney, insertRow, query, rpc, today, updateRow } from '../../../lib/erp/rpc';
 import { studentLabel } from '../../../lib/erp/campusApi';
 import { StudentPicker } from './common';
@@ -100,7 +100,7 @@ function HostelsAndRooms({ data, reload, canManage }) {
           { key: 'gender', label: t('Gender', 'الجنس') },
           { key: 'warden', label: t('Warden', 'المشرف'), render: (h) => h.warden?.full_name || '—' },
           { key: 'rooms', label: t('Rooms', 'الغرف'), render: (h) => data.rooms.filter((r) => r.hostel_id === h.id).length },
-          { key: 'is_active', label: t('Active', 'نشط'), render: (h) => (h.is_active ? <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span> : '—') },
+          { key: 'is_active', label: t('Active', 'نشط'), render: (h) => (h.is_active ? <Icon name="check_circle" className="text-emerald-500 text-[16px]" /> : '—') },
           { key: 'act', label: '', render: (h) => canManage && (
             <div className="flex gap-2">
               <Button size="sm" variant="secondary" onClick={() => setRModal({ hostel_id: h.id, room_no: '', capacity: '4', monthly_fee: '0', is_active: true })}>+ {t('Room', 'غرفة')}</Button>
@@ -116,7 +116,7 @@ function HostelsAndRooms({ data, reload, canManage }) {
           { key: 'room_no', label: t('Room', 'الغرفة') },
           { key: 'capacity', label: t('Capacity', 'السعة'), render: (r) => `${occ(r.id)} / ${r.capacity}` },
           { key: 'monthly_fee', label: t('Monthly fee', 'الرسوم الشهرية'), render: (r) => formatMoney(r.monthly_fee) },
-          { key: 'is_active', label: t('Active', 'نشطة'), render: (r) => (r.is_active ? <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span> : '—') },
+          { key: 'is_active', label: t('Active', 'نشطة'), render: (r) => (r.is_active ? <Icon name="check_circle" className="text-emerald-500 text-[16px]" /> : '—') },
           { key: 'act', label: '', render: (r) => canManage && (
             <div className="flex gap-2">
               <Button size="sm" variant="ghost" onClick={() => setRModal({ ...r, capacity: String(r.capacity), monthly_fee: String(r.monthly_fee) })}>{t('Edit', 'تعديل')}</Button>

@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { getOrgSecurity, listTotpFactors, removeFactor, setOrgRequiresMfa } from '../lib/mfaApi';
 import MfaEnroll from '../components/security/MfaEnroll';
 import KhatamPattern from '../components/KhatamPattern';
+import Icon from '../components/Icon';
 import { tx } from '../lib/tx';
 import PageNavBar from '../components/PageNavBar';
 import { portalHomeFor } from '../lib/useHistoryNav';
@@ -126,7 +127,7 @@ export default function AccountSecurity() {
               {factors.map((f) => (
                 <li key={f.id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="material-symbols-outlined text-emerald-700" aria-hidden>{'smartphone'}</span>
+                    <Icon name="smartphone" className="text-emerald-700" aria-hidden />
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-ink-green-900 truncate">{f.friendly_name || tx('تطبيق المصادقة', 'Authenticator app')}</div>
                       <div className="text-[11px] text-ink-text-muted">
@@ -164,7 +165,7 @@ export default function AccountSecurity() {
               onClick={() => setEnrolling(true)}
               className="inline-flex items-center gap-2 h-10 px-4 rounded-[10px] bg-emerald-700 hover:bg-emerald-500 text-white text-sm font-semibold"
             >
-              <span className="material-symbols-outlined text-[18px]" aria-hidden>{'add'}</span>
+              <Icon name="add" className="text-[18px]" aria-hidden />
               {factors.length ? tx('إضافة جهاز احتياطي', 'Add a backup device') : tx('تفعيل التحقق بخطوتين', 'Turn on two-step verification')}
             </button>
           )}

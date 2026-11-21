@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { AsyncView, Button, Card, Field, Input, Select, StatusBadge, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
+import { AsyncView, Button, Card, Field, Icon, Input, Select, StatusBadge, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { formatDate, insertRow, query, rpc, updateRow } from '../../../lib/erp/rpc';
 import { COURSES, CRM_STAGES, LEAD_SOURCES, STAGE_STATUS, classOptions, labelOf } from '../../../lib/erp/campusApi';
 import { KeyValue, WideModal } from './common';
@@ -81,7 +81,7 @@ export function FollowupsTable({ rows, busy, onDone, onDelete, showLead, t }) {
       { key: 'kind', label: t('Type', 'النوع') },
       { key: 'note', label: t('Note', 'ملاحظة') },
       { key: 'assignee', label: t('Assigned', 'المسؤول'), render: (r) => r.assignee?.full_name || '—' },
-      { key: 'done', label: t('Outcome', 'النتيجة'), render: (r) => (r.done_at ? <span className="text-emerald-300 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">check_circle</span><span>{r.outcome || ''}</span> <span className="text-xs text-gray-500">{fmtDateTime(r.done_at)}</span></span> : null) },
+      { key: 'done', label: t('Outcome', 'النتيجة'), render: (r) => (r.done_at ? <span className="text-emerald-300 flex items-center gap-1"><Icon name="check_circle" className="text-[14px]" /><span>{r.outcome || ''}</span> <span className="text-xs text-gray-500">{fmtDateTime(r.done_at)}</span></span> : null) },
       { key: 'act', label: '', render: (r) => (!r.done_at ? (
         <div className="flex gap-2">
           <Button size="sm" disabled={busy} onClick={() => onDone(r)}>{t('Mark done', 'تم')}</Button>

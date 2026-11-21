@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Card, PageHeader, useLang } from '../ui';
+import { Card, Icon, PageHeader, useLang } from '../ui';
 
 /** ERP entry point for library circulation (full UI remains on /library-admin). */
 export default function LibraryErpLink() {
@@ -22,7 +22,7 @@ export default function LibraryErpLink() {
             to="/library-admin"
             className="inline-flex items-center gap-2 rounded-[10px] bg-emerald-700 hover:bg-emerald-800 px-4 py-2 text-sm font-semibold text-white transition"
           >
-            <span className="material-symbols-outlined text-[18px]">local_library</span>
+            <Icon name="local_library" className="text-[18px]" />
             {t('Open library desk', 'فتح مكتب المكتبة')}
           </Link>
           <Link

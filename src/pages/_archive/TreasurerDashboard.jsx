@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import Icon from '../../components/Icon';
 import { generateInvoicesInBatches, queryAll } from '../lib/erp/rpc';
 import { toast } from 'react-toastify';
 import KhatamPattern from '../components/KhatamPattern';
@@ -611,7 +612,7 @@ const TreasurerDashboard = () => {
                   {feeSuccess && (
                     <div className="md:col-span-2 text-center">
                       <p className="text-xs text-[#11694A] font-bold animate-pulse flex items-center justify-center gap-1">
-                        <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                        <Icon name="check_circle" className="text-[15px]" />
                         <span>{tx('تم تسجيل الدفعة وإرسال الإشعار لولي الأمر!', 'Payment logged and parent notified!')}</span>
                       </p>
                     </div>
@@ -734,7 +735,7 @@ const TreasurerDashboard = () => {
                     </button>
                     {salarySuccess && (
                       <p className="text-xs text-[#11694A] text-center mt-2 font-bold animate-pulse flex items-center justify-center gap-1">
-                        <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                        <Icon name="check_circle" className="text-[15px]" />
                         <span>{tx('تم تحديث حالة الراتب وإشعار المعلم!', 'Salary status updated and tutor notified!')}</span>
                       </p>
                     )}

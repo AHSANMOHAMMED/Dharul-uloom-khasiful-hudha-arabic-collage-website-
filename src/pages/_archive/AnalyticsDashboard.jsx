@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabaseClient';
 import { queryAll } from '../lib/erp/rpc';
 import { exportFeesCSV, exportResultsCSV } from '../lib/exportUtils';
+import Icon from '../../components/Icon';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -404,7 +405,7 @@ const AnalyticsDashboard = () => {
               {allFees.filter(f => f.status !== 'completed').length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-[#4A5E56]">
-                    <span className="material-symbols-outlined text-[15px] align-middle me-1 text-[#11694A]">check_circle</span>
+                    <Icon name="check_circle" className="text-[15px] align-middle me-1 text-[#11694A]" />
                     <span>{tx('لا توجد متأخرات مالية — جميع الرسوم مستوفاة!', 'No outstanding fees — all balances cleared!')}</span>
                   </td>
                 </tr>

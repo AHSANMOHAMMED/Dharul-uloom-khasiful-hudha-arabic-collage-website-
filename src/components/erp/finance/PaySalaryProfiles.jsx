@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AsyncView, Badge, Button, Card, Field, Input, Modal, Select, Table, Textarea, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Icon, Input, Modal, Select, Table, Textarea, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
 import { query, insertRow, updateRow, formatMoney, formatDate, today } from '../../../lib/erp/rpc';
 import { num, profilesMap, runAction } from '../../../lib/erp/financeApi';
@@ -107,7 +107,7 @@ function ProfileForm({ initial, components, existingIds, onClose, onSaved }) {
               <Input type="number" min="0" step="0.01" value={c.amount} onChange={(e) => setComp(i, { amount: e.target.value })} />
             </div>
             <Button variant="ghost" size="sm" onClick={() => set({ components: form.components.filter((_, j) => j !== i) })} aria-label={t('Remove', 'حذف')}>
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              <Icon name="close" className="text-[16px]" />
             </Button>
           </div>
         ))}
@@ -186,7 +186,7 @@ export default function PaySalaryProfiles() {
                     </div>
                   ),
                 },
-                { key: 'epf_applicable', label: 'EPF', render: (r) => (r.epf_applicable ? <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span> : '—') },
+                { key: 'epf_applicable', label: 'EPF', render: (r) => (r.epf_applicable ? <Icon name="check_circle" className="text-emerald-500 text-[16px]" /> : '—') },
                 { key: 'effective_from', label: t('Effective', 'ساري من'), render: (r) => formatDate(r.effective_from) },
                 {
                   key: 'is_active',

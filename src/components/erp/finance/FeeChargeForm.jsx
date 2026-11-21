@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Field, Input, Select, useAsync, useLang } from '../ui';
+import { Button, Field, Icon, Input, Select, useAsync, useLang } from '../ui';
 import { query, rpc, currentMonth, formatMoney } from '../../../lib/erp/rpc';
 import { num, runAction } from '../../../lib/erp/financeApi';
 import { StudentPicker } from './shared';
@@ -79,7 +79,7 @@ export default function FeeChargeForm({ studentId: fixedStudent, month: fixedMon
               <Input type="number" min="0" step="0.01" value={l.amount} onChange={(e) => setLine(i, { amount: e.target.value })} />
               {lines.length > 1 && (
                 <Button variant="ghost" size="sm" onClick={() => setLines((ls) => ls.filter((_, j) => j !== i))} aria-label={t('Remove', 'حذف')}>
-                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  <Icon name="close" className="text-[16px]" />
                 </Button>
               )}
             </div>

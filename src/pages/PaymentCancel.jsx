@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import KhatamPattern from '../components/KhatamPattern';
+import Icon from '../components/Icon';
 import { tx } from '../lib/tx';
 
 export default function PaymentCancel() {
@@ -23,7 +24,7 @@ export default function PaymentCancel() {
         
         {/* Status Crest */}
         <div className="w-16 h-16 rounded-full bg-gold-wash-100 text-feedback-warning mx-auto flex items-center justify-center border border-brass-gold-500/30">
-          <span className="material-symbols-outlined text-3xl">{'cancel'}</span>
+          <Icon name="cancel" className="text-3xl" />
         </div>
 
         <div>
@@ -55,7 +56,7 @@ export default function PaymentCancel() {
               href={appLink}
               className="w-full flex items-center justify-center gap-2 h-11 rounded-[10px] bg-emerald-700 text-white font-medium text-sm hover:bg-ink-green-900 transition-colors shadow-xs"
             >
-              <span className="material-symbols-outlined text-[18px]">{'smartphone'}</span>
+              <Icon name="smartphone" className="text-[18px]" />
               <span>{tx('العودة إلى التطبيق', 'Return to Mobile App')}</span>
             </a>
           )}
@@ -64,7 +65,7 @@ export default function PaymentCancel() {
             to="/dashboard"
             className="w-full flex items-center justify-center gap-2 h-11 rounded-[10px] bg-emerald-700 text-white font-medium text-sm hover:bg-ink-green-900 transition-colors shadow-xs"
           >
-            <span className="material-symbols-outlined text-[18px]">{'refresh'}</span>
+            <Icon name="refresh" className="text-[18px]" />
             <span>{tx('المحاولة مجدداً في البوابة', 'Retry from Portal')}</span>
           </Link>
 
@@ -72,7 +73,7 @@ export default function PaymentCancel() {
             to="/contact"
             className="w-full flex items-center justify-center gap-2 h-11 rounded-[10px] border border-sand-border bg-paper-white text-ink-text-primary font-medium text-sm hover:bg-parchment-50 transition-colors"
           >
-            <span className="material-symbols-outlined text-[18px]">{'help_outline'}</span>
+            <Icon name="help_outline" className="text-[18px]" />
             <span>{tx('المساعدة والدعم المالي', 'Need Financial Help? Contact Us')}</span>
           </Link>
         </div>

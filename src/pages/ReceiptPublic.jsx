@@ -9,6 +9,7 @@ import { printSlip } from '../lib/slip/slipRender';
 import { feeReceiptSlip } from '../lib/slip/slipModels';
 import ReceiptSlip from '../components/ReceiptSlip';
 import KhatamPattern from '../components/KhatamPattern';
+import Icon from '../components/Icon';
 
 /**
  * /r/:token  — public secret-link receipt (no login; fee_receipt_by_token)
@@ -74,7 +75,7 @@ export default function ReceiptPublic() {
                   rel="noreferrer"
                   className="rounded-[10px] bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500 transition-colors shadow-xs flex items-center gap-1.5"
                 >
-                  <span className="material-symbols-outlined text-[16px]">{'picture_as_pdf'}</span>
+                  <Icon name="picture_as_pdf" className="text-[16px]" />
                   <span>{tx('تنزيل PDF', 'Download PDF')}</span>
                 </a>
               )}
@@ -83,7 +84,7 @@ export default function ReceiptPublic() {
                 onClick={() => printReceipt(r)}
                 className="rounded-[10px] border border-sand-border bg-paper-white px-4 py-2 text-xs font-semibold text-ink-text-primary hover:bg-parchment-50 transition-colors flex items-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[16px]">{'print'}</span>
+                <Icon name="print" className="text-[16px]" />
                 <span>{tx('طباعة', 'Print')}</span>
               </button>
               <button
@@ -91,7 +92,7 @@ export default function ReceiptPublic() {
                 onClick={() => printSlip(feeReceiptSlip(r), { mode: 'lq310' })}
                 className="rounded-[10px] border border-sand-border bg-paper-white px-4 py-2 text-xs font-semibold text-ink-text-primary hover:bg-parchment-50 transition-colors flex items-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[16px]">{'receipt_long'}</span>
+                <Icon name="receipt_long" className="text-[16px]" />
                 {tx('طباعة نقطية (LQ-310)', 'Dot-matrix (LQ-310)')}
               </button>
             </div>
@@ -100,7 +101,7 @@ export default function ReceiptPublic() {
 
         {needsLogin ? (
           <div className="rounded-[14px] border border-sand-border bg-paper-white p-8 text-center space-y-3 shadow-manuscript-sm">
-            <span className="material-symbols-outlined text-3xl text-brass-gold-500">{'lock'}</span>
+            <Icon name="lock" className="text-3xl text-brass-gold-500 mx-auto" />
             <p className="text-ink-text-secondary text-sm">
               {tx('سجّل الدخول إلى بوابتك المؤسسية لعرض هذا الإيصال.', 'Sign in to view this receipt.')}
             </p>
@@ -124,7 +125,7 @@ export default function ReceiptPublic() {
           </div>
         ) : !r ? (
           <div className="rounded-[14px] border border-sand-border bg-paper-white p-8 text-center space-y-2 shadow-manuscript-sm">
-            <span className="material-symbols-outlined text-3xl text-feedback-warning">{'search_off'}</span>
+            <Icon name="search_off" className="text-3xl text-feedback-warning mx-auto" />
             <h2 className="text-xl font-serif font-bold text-ink-green-900">{tx('الإيصال غير موجود', 'Receipt Not Found')}</h2>
             <p className="text-xs text-ink-text-secondary max-w-md mx-auto">
               {tx(

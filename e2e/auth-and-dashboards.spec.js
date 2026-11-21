@@ -41,16 +41,16 @@ test.describe('Authentication & Role-Based Dashboard Isolation', () => {
     // 3. Admin KPI stats strip must be visible
     await expect(page.getByText(/Total Students|إجمالي الطلاب/i)).toBeVisible();
     await expect(page.getByText(/Total Tutors|إجمالي المعلمين/i)).toBeVisible();
-    await expect(page.getByText(/Pending Approvals|بانتظار الموافقة/i)).toBeVisible();
+    await expect(page.getByText(/Pending Approvals|بانتظار الموافقة/i).first()).toBeVisible();
     await expect(page.getByText(/Library Books|الكتب المتاحة/i)).toBeVisible();
 
     // 4. Background watermark pattern must exist
     const watermark = page.locator('#admin-khatam');
     await expect(watermark).toBeAttached();
 
-    // 5. Test tab switching: CRM Pipeline, Staff HRM, Signups
+    // 5. Test tab switching: CRM Pipeline, Staff HR, Signups
     await page.getByRole('button', { name: /CRM Pipeline|مسار القبول/i }).click();
-    await page.getByRole('button', { name: /Staff HRM|الموارد البشرية/i }).click();
+    await page.getByRole('button', { name: /Staff HR|الموارد البشرية/i }).click();
     await page.getByRole('button', { name: /Signups|الموافقات/i }).click();
 
     // 6. Test Logout

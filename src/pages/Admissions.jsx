@@ -15,6 +15,7 @@ import {
   todayIso,
 } from '../lib/admissionsApi'
 import KhatamPattern from '../components/KhatamPattern'
+import Icon from '../components/Icon'
 import { tx } from '../lib/tx';
 
 const fill = (s, vars) => Object.entries(vars).reduce((acc, [k, v]) => acc.replaceAll(`{${k}}`, v), s)
@@ -316,28 +317,28 @@ export default function Admissions() {
               {/* Checklist */}
               <div className="relative z-10 space-y-3 pt-3 border-t border-sand-border/15 text-xs text-dark-text-primary/85">
                 <div className="flex items-start gap-2.5">
-                  <span className="material-symbols-outlined text-emerald-500 text-[18px] shrink-0 mt-0.5">{'check_circle'}</span>
+                  <Icon name="check_circle" className="text-emerald-500 text-[18px] shrink-0 mt-0.5" />
                   <span>
                     <strong>{tx('حدود العمر:', 'Age limits:')}</strong>{' '}
                     {fill(tx('من {min} إلى {max} سنة حسب تاريخ الميلاد.', '{min} to {max} years, by date of birth.'), { min: limits.minAge, max: limits.maxAge })}
                   </span>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <span className="material-symbols-outlined text-emerald-500 text-[18px] shrink-0 mt-0.5">{'check_circle'}</span>
+                  <Icon name="check_circle" className="text-emerald-500 text-[18px] shrink-0 mt-0.5" />
                   <span>
                     <strong>{tx('شهادة الميلاد الأصلية', 'Original birth certificate')}</strong>{' '}
                     {tx('وخطاب إقامة مصدق من الغراما نيلادهاري.', 'and certified Grama Niladhari residence letter.')}
                   </span>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <span className="material-symbols-outlined text-emerald-500 text-[18px] shrink-0 mt-0.5">{'check_circle'}</span>
+                  <Icon name="check_circle" className="text-emerald-500 text-[18px] shrink-0 mt-0.5" />
                   <span>
                     <strong>{tx('اختبار التلاوة الشفهي:', 'Oral recitation test:')}</strong>{' '}
                     {tx('طلاقة أساسية في قراءة القرآن بالتجويد.', 'Basic fluency in reading the Quran with Tajweed.')}
                   </span>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <span className="material-symbols-outlined text-emerald-500 text-[18px] shrink-0 mt-0.5">{'check_circle'}</span>
+                  <Icon name="check_circle" className="text-emerald-500 text-[18px] shrink-0 mt-0.5" />
                   <span>
                     <strong>{tx('الاستعداد للإقامة:', 'Residential readiness:')}</strong>{' '}
                     {tx('الرغبة في الإقامة في السكن الداخلي للطلاب.', 'Willingness to reside in student boarding halls.')}
@@ -371,7 +372,7 @@ export default function Admissions() {
               {success ? (
                 <div className="py-8 text-center space-y-5">
                   <div className="w-16 h-16 rounded-full bg-mint-wash-100 text-emerald-700 mx-auto flex items-center justify-center">
-                    <span className="material-symbols-outlined text-3xl">{'check_circle'}</span>
+                    <Icon name="check_circle" className="text-3xl" />
                   </div>
 
                   <div className="space-y-1">
@@ -764,7 +765,7 @@ export default function Admissions() {
 
                   {submitError && (
                     <div className="p-3.5 rounded-lg border border-feedback-danger/30 bg-feedback-danger/5 text-xs text-feedback-danger flex items-start gap-2" role="alert">
-                      <span className="material-symbols-outlined text-[18px] shrink-0">{'error'}</span>
+                      <Icon name="error" className="text-[18px] shrink-0" />
                       <span>{submitError}</span>
                     </div>
                   )}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Field, Input, Modal, Select, useAsync, useLang } from '../ui';
+import { Button, Field, Icon, Input, Modal, Select, useAsync, useLang } from '../ui';
 import { rpc, formatMoney, formatDate, today } from '../../../lib/erp/rpc';
 import { accountLabel, listAccounts, num, runAction } from '../../../lib/erp/financeApi';
 
@@ -93,7 +93,7 @@ export default function AcctJournalForm({ lockedUntil, onClose, onSaved }) {
                 </div>
                 {rows.length > 2 && (
                   <Button variant="ghost" size="sm" onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))} aria-label={t('Remove', 'حذف')}>
-                    <span className="material-symbols-outlined text-[16px]">close</span>
+                    <Icon name="close" className="text-[16px]" />
                   </Button>
                 )}
               </div>

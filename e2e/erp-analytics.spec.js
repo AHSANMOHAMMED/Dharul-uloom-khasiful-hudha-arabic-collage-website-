@@ -30,7 +30,7 @@ test.describe('ERP and analytics role-aware interface', () => {
     await expect(page.getByRole('button', { name: /6 months|6 أشهر/i })).toBeVisible();
     await expect(page.getByText(/LKR 50,000/i)).toBeVisible();
     await expect(page.getByText('Outstanding now', { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: /Academic/i }).click();
+    await page.getByRole('button', { name: /^Academic$|^الأكاديمي$/i }).click();
     await expect(page.getByText(/Attendance rate/i)).toBeVisible();
 
     expect(rpcCalls.some((url) => url.includes('finance_analytics'))).toBeTruthy();

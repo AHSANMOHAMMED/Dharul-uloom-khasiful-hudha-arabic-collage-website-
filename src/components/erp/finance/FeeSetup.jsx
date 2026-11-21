@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AsyncView, Badge, Button, Card, Field, Input, Modal, Select, Table, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Icon, Input, Modal, Select, Table, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
 import { query, insertRow, updateRow, deleteRow, formatMoney } from '../../../lib/erp/rpc';
 import { CLASS_OPTIONS, FEE_FREQUENCIES, labelOf, listAccounts, num, runAction, toOptions } from '../../../lib/erp/financeApi';
@@ -221,7 +221,7 @@ export default function FeeSetup() {
                   { key: 'name', label: t('Name', 'الاسم'), render: (c) => (ar && c.name_ar ? c.name_ar : c.name) },
                   { key: 'income_account_code', label: t('Income a/c', 'حساب الإيراد') },
                   { key: 'default_amount', label: t('Default', 'الافتراضي'), render: (c) => <Num>{formatMoney(c.default_amount)}</Num> },
-                  { key: 'is_recurring', label: t('Recurring', 'متكرر'), render: (c) => (c.is_recurring ? <span className="material-symbols-outlined text-emerald-500 text-[16px]">check_circle</span> : '—') },
+                  { key: 'is_recurring', label: t('Recurring', 'متكرر'), render: (c) => (c.is_recurring ? <Icon name="check_circle" className="text-emerald-500 text-[16px]" /> : '—') },
                   {
                     key: 'is_active',
                     label: t('Status', 'الحالة'),

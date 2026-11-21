@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Badge, Button, ErrorNote, Field, Input, Loading, PageHeader, Select, Tabs, Textarea, useAsync, useLang } from '../ui';
+import { Badge, Button, ErrorNote, Field, Icon, Input, Loading, PageHeader, Select, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { FilterBar } from '../finance/shared';
 import { WideModal } from '../campus/common';
 import { formatDate, today } from '../../../lib/erp/rpc';
@@ -404,11 +404,11 @@ function TaskCard({ task, people, canMove, canReview, onOpen, onMove, onDragStar
       {canReview && task.status === 'review' && (
         <div className="flex flex-wrap gap-1 justify-end">
           <Button size="sm" variant="secondary" onClick={() => onMove(task, 'in_progress')}>
-            <span className="material-symbols-outlined text-[14px] align-middle me-0.5">undo</span>
+            <Icon name="undo" className="text-[14px] align-middle me-0.5" />
             {t('Send back', 'إعادة')}
           </Button>
           <Button size="sm" onClick={() => onMove(task, 'done')}>
-            <span className="material-symbols-outlined text-[14px] align-middle me-0.5">check_circle</span>
+            <Icon name="check_circle" className="text-[14px] align-middle me-0.5" />
             {t('Approve', 'اعتماد')}
           </Button>
         </div>

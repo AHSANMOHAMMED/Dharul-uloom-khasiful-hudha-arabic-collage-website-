@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { toast } from 'react-toastify';
 import KhatamPattern from '../components/KhatamPattern';
+import Icon from '../../components/Icon';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 
@@ -455,7 +456,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                 <div key={ann.id} className="p-4 bg-[#FBF8F0] border border-[#E8E1D0] rounded-xl flex gap-3.5 items-start">
                   {ann.is_pinned ? (
                     <span className="w-7 h-7 rounded-lg bg-[#F7EDD2] text-[#C29A3A] flex items-center justify-center shrink-0 text-xs font-bold">
-                      <span className="material-symbols-outlined text-[15px]">push_pin</span>
+                      <Icon name="push_pin" className="text-[15px]" />
                     </span>
                   ) : (
                     <span className="w-7 h-7 rounded-lg bg-white border border-[#E8E1D0] text-[#4A5E56] flex items-center justify-center shrink-0">
@@ -545,7 +546,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-[#0B3B2E] text-sm truncate flex items-center gap-1">
-                          {ann.is_pinned && <span className="material-symbols-outlined text-[14px] text-[#C29A3A]">push_pin</span>}
+                          {ann.is_pinned && <Icon name="push_pin" className="text-[14px] text-[#C29A3A]" />}
                           <span>{ann.title}</span>
                         </p>
                         <p className="text-[10px] text-[#4A5E56]">
@@ -560,14 +561,14 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                             ann.is_pinned ? 'bg-[#F7EDD2] text-[#C29A3A]' : 'bg-white border border-[#E8E1D0] text-[#4A5E56]'
                           }`}
                         >
-                          <span className="material-symbols-outlined text-[14px]">push_pin</span>
+                          <Icon name="push_pin" className="text-[14px]" />
                         </button>
                         <button
                           onClick={() => handleDeleteAnnouncement(ann.id)}
                           title="Delete"
                           className="p-1.5 rounded-lg text-xs bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FCA5A5] transition flex items-center justify-center"
                         >
-                          <span className="material-symbols-outlined text-[14px]">close</span>
+                          <Icon name="close" className="text-[14px]" />
                         </button>
                       </div>
                     </div>
@@ -619,7 +620,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                 ))}
                 {leaves.length === 0 && (
                   <p className="text-center text-xs text-[#4A5E56] py-12 flex items-center justify-center gap-1.5">
-                    <span className="material-symbols-outlined text-[15px] text-[#11694A]">check_circle</span>
+                    <Icon name="check_circle" className="text-[15px] text-[#11694A]" />
                     <span>{tx('لا توجد طلبات إجازة معلقة.', 'All leave requests are cleared!')}</span>
                   </p>
                 )}
@@ -655,7 +656,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                       disabled={leaveProcessing}
                       className="flex-1 py-2.5 bg-[#11694A] hover:bg-[#0B3B2E] disabled:bg-[#60736C] text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5"
                     >
-                      <span className="material-symbols-outlined text-[15px]">check_circle</span>
+                      <Icon name="check_circle" className="text-[15px]" />
                       <span>{tx('قبول الإجازة', 'Approve')}</span>
                     </button>
                     <button
@@ -663,7 +664,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                       disabled={leaveProcessing}
                       className="flex-1 py-2.5 bg-[#B91C1C] hover:bg-[#991B1B] disabled:bg-[#60736C] text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5"
                     >
-                      <span className="material-symbols-outlined text-[15px]">close</span>
+                      <Icon name="close" className="text-[15px]" />
                       <span>{tx('رفض الإجازة', 'Reject')}</span>
                     </button>
                   </div>
@@ -687,7 +688,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
             </div>
             {pendingTutors.length === 0 ? (
               <p className="text-center text-xs text-[#4A5E56] py-12 flex items-center justify-center gap-1.5">
-                <span className="material-symbols-outlined text-[15px] text-[#11694A]">check_circle</span>
+                <Icon name="check_circle" className="text-[15px] text-[#11694A]" />
                 <span>{tx('لا توجد طلبات تسجيل معلمين جديدة.', 'No pending tutor registrations.')}</span>
               </p>
             ) : (
@@ -862,7 +863,7 @@ const PrincipalDashboard = ({ vpMode = false }) => {
                                     title={tx('حذف الحصة', 'Delete schedule')}
                                     aria-label={tx('حذف الحصة', 'Delete schedule')}
                                   >
-                                    <span className="material-symbols-outlined text-[13px]">close</span>
+                                    <Icon name="close" className="text-[13px]" />
                                   </button>
                                 )}
                               </div>

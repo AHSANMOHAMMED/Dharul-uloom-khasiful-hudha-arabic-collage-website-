@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { listFaculty, resolveContentUrl } from '../lib/contentApi'
 import KhatamPattern from '../components/KhatamPattern'
+import Icon from '../components/Icon'
 import { localized } from '../lib/localized';
 import { tx } from '../lib/tx';
 
@@ -172,7 +173,7 @@ export default function Faculty() {
           
           {/* Search Box */}
           <div className="max-w-md w-full bg-paper-white p-2 rounded-[14px] border border-sand-border shadow-xs flex items-center">
-            <span className="material-symbols-outlined text-ink-text-muted mx-3">{'search'}</span>
+            <Icon name="search" className="text-ink-text-muted mx-3" />
             <input
               type="text"
               value={searchQuery}
@@ -228,7 +229,7 @@ export default function Faculty() {
             </div>
           ) : filteredFaculty.length === 0 ? (
             <div className="p-12 text-center rounded-[14px] bg-paper-white border border-sand-border max-w-md mx-auto">
-              <span className="material-symbols-outlined text-4xl text-ink-text-muted mb-2 block">{'person_search'}</span>
+              <Icon name="person_search" className="text-4xl text-ink-text-muted mb-2 block mx-auto" />
               <p className="text-sm font-semibold text-ink-green-900 mb-1">{tx('لم يتم العثور على أساتذة', 'No faculty found')}</p>
               <p className="text-xs text-ink-text-secondary">{tx('جرّب البحث بكلمة أخرى أو إعادة تعيين القسم.', 'Try searching with a different term or resetting the department.')}</p>
             </div>
@@ -247,9 +248,7 @@ export default function Faculty() {
                       {member.image ? (
                         <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="material-symbols-outlined text-4xl text-emerald-700/70">
-                          {'account_circle'}
-                        </span>
+                        <Icon name="person" className="text-4xl text-emerald-700/70" />
                       )}
                     </div>
 
@@ -282,7 +281,7 @@ export default function Faculty() {
                       title={`${tx('مراسلة', 'Email')} ${member.name}`}
                       className="w-7 h-7 rounded-full border border-sand-border flex items-center justify-center hover:bg-emerald-700 hover:text-white transition-colors"
                     >
-                      <span className="material-symbols-outlined text-[15px]">{'mail'}</span>
+                      <Icon name="mail" className="text-[15px]" />
                     </a>}
                   </div>
                 </div>
@@ -309,7 +308,7 @@ export default function Faculty() {
                   aria-label={tx('إغلاق', 'Close')}
                   className="w-8 h-8 rounded-full border border-sand-border flex items-center justify-center text-ink-text-secondary hover:bg-sand-border/30"
                 >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  <Icon name="close" className="text-[16px]" />
                 </button>
               </div>
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { listNews, resolveContentUrl } from '../lib/contentApi'
 import KhatamPattern from '../components/KhatamPattern'
+import Icon from '../components/Icon'
 import { localized } from '../lib/localized';
 import { tx } from '../lib/tx';
 
@@ -155,9 +156,7 @@ export default function News() {
                       className="inline-flex items-center text-xs font-semibold text-emerald-700 hover:text-ink-green-900 gap-1"
                     >
                       <span>{tx('قراءة الخبر كاملاً', 'Read full dispatch')}</span>
-                      <span className="material-symbols-outlined text-[16px]">
-                        {arrowIcon}
-                      </span>
+                      <Icon name={arrowIcon} className="text-[16px]" />
                     </Link>
                   </div>
                 </div>
@@ -217,9 +216,7 @@ export default function News() {
                         className="inline-flex items-center text-xs font-semibold text-emerald-700 hover:text-ink-green-900 gap-1"
                       >
                         <span>{tx('قراءة الخبر', 'Read announcement')}</span>
-                        <span className="material-symbols-outlined text-[16px]">
-                          {arrowIcon}
-                        </span>
+                        <Icon name={arrowIcon} className="text-[16px]" />
                       </Link>
                     </div>
                   </article>

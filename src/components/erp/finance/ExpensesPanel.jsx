@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Icon, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
 import { query, rpc, insertRow, formatMoney, formatDate, today, downloadCsv } from '../../../lib/erp/rpc';
 import {
@@ -309,8 +309,8 @@ export default function ExpensesPanel() {
                       render: (e) => (
                         <div className="text-xs">
                           <div>{people[e.submitted_by]?.full_name || '—'}</div>
-                          {e.approved_by && <div className="text-gray-500 flex items-center gap-1"><span className="material-symbols-outlined text-[13px] text-emerald-500">check_circle</span><span>{people[e.approved_by]?.full_name || '—'}</span></div>}
-                          {e.paid_by && <div className="text-gray-500 flex items-center gap-1"><span className="material-symbols-outlined text-[13px] text-amber-500">payments</span><span>{people[e.paid_by]?.full_name || '—'}</span></div>}
+                          {e.approved_by && <div className="text-gray-500 flex items-center gap-1"><Icon name="check_circle" className="text-[13px] text-emerald-500" /><span>{people[e.approved_by]?.full_name || '—'}</span></div>}
+                          {e.paid_by && <div className="text-gray-500 flex items-center gap-1"><Icon name="payments" className="text-[13px] text-amber-500" /><span>{people[e.paid_by]?.full_name || '—'}</span></div>}
                         </div>
                       ),
                     },

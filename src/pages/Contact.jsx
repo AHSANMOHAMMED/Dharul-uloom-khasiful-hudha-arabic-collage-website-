@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { sendContactMessage } from '../lib/contentApi'
 import KhatamPattern from '../components/KhatamPattern'
+import Icon from '../components/Icon'
 import { tx } from '../lib/tx';
 
 /** Built at render so text follows the UI language. */
@@ -126,14 +127,14 @@ export default function Contact() {
 
               {submitted && (
                 <div className="p-4 rounded-xl bg-mint-wash-100 border border-emerald-700/20 text-emerald-800 text-xs font-medium mb-6 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-lg">{'check_circle'}</span>
+                  <Icon name="check_circle" className="text-lg" />
                   <span>{tx('تم استلام رسالتك بأمان. جزاكم الله خيراً.', 'Your message has been safely received. Jazakumullahu Khayran.')}</span>
                 </div>
               )}
 
               {error && (
                 <div className="p-4 rounded-xl bg-feedback-danger/5 border border-feedback-danger/30 text-feedback-danger text-xs font-medium mb-6 flex items-center gap-2" role="alert">
-                  <span className="material-symbols-outlined text-lg">{'error'}</span>
+                  <Icon name="error" className="text-lg" />
                   <span>{error}</span>
                 </div>
               )}

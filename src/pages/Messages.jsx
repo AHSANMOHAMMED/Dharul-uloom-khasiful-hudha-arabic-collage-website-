@@ -123,7 +123,7 @@ export default function Messages() {
       <div className="min-h-[60vh] bg-parchment-50 flex flex-col items-center justify-center gap-4 p-6">
         <PageNavBar home={{ to: '/platform', label: tx('لوحة المنصة', 'Super Admin console') }} crumbs={[{ label: tx('لوحة المنصة', 'Super Admin console'), to: '/platform' }, { label: tx('الرسائل', 'Messages') }]} />
         <div className="max-w-md rounded-[14px] border border-sand-border bg-paper-white p-6 text-center space-y-3 shadow-manuscript-sm">
-          <span className="material-symbols-outlined text-[32px] text-emerald-700" aria-hidden>{'forum'}</span>
+          <Icon name="forum" className="text-[32px] text-emerald-700 mx-auto" aria-hidden />
           <h1 className="font-serif text-xl font-semibold text-ink-green-900">{tx('المراسلة خاصة بكل مؤسسة', 'Messaging is per institution')}</h1>
           <p className="text-sm text-ink-text-secondary">
             {tx('لا يشارك مشرف المنصة في محادثات الكليات. لإرسال إشعار إلى المؤسسات استخدم البث في لوحة المنصة.', 'Platform operators are not part of college conversations. To reach institutions, use the broadcast in the Super Admin console.')}

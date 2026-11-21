@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
-import { AsyncView, Badge, Button, Card, Field, Input, Select, Stat, Table, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Icon, Input, Select, Stat, Table, useAsync, useLang } from '../ui';
 import { rpc, formatMoney, formatDate, today, downloadCsv } from '../../../lib/erp/rpc';
 import { printTable } from '../../../lib/printReport';
 import { CLASS_OPTIONS, num } from '../../../lib/erp/financeApi';
@@ -66,7 +66,7 @@ export default function FeeOutstanding() {
       actions={
         <>
           <Button size="sm" variant="secondary" disabled={!state.data?.length} onClick={onPrint}>
-            <span className="material-symbols-outlined text-[16px] align-middle me-1">print</span>
+            <Icon name="print" className="text-[16px] align-middle me-1" />
             {t('PDF / Print', 'PDF / طباعة')}
           </Button>
           <Button
@@ -75,7 +75,7 @@ export default function FeeOutstanding() {
             disabled={!state.data?.length}
             onClick={() => downloadCsv(`fee-outstanding-${cls || 'all'}-${asOf}.csv`, state.data)}
           >
-            <span className="material-symbols-outlined text-[16px] align-middle me-1">download</span>
+            <Icon name="download" className="text-[16px] align-middle me-1" />
             {t('Export CSV', 'تصدير CSV')}
           </Button>
           <Button size="sm" variant="secondary" onClick={reload}>

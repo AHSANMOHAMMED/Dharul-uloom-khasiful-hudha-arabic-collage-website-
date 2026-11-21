@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../context/AuthContext';
-import { Badge, Button, ErrorNote, Field, Input, Loading, Select, useLang } from '../ui';
+import { Badge, Button, ErrorNote, Field, Icon, Input, Loading, Select, useLang } from '../ui';
 import { ChipMultiSelect, Checkbox } from '../campus/common';
 import { STAFF_ROLES, toOptions } from '../../../lib/erp/campusApi';
 import {
@@ -264,7 +264,7 @@ export default function DocumentEditor({ docId, onClose }) {
       disabled={!canEdit}
       className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-ink-green-900 hover:bg-mint-wash-100 disabled:opacity-40"
     >
-      <span className="material-symbols-outlined text-[18px]" aria-hidden>{icon}</span>
+      <Icon name={icon} className="text-[18px]" aria-hidden />
     </button>
   );
 
@@ -272,7 +272,7 @@ export default function DocumentEditor({ docId, onClose }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="ghost" onClick={() => (!dirty || window.confirm(t('Discard unsaved changes?', 'تجاهل التغييرات غير المحفوظة؟'))) && onClose()}>
-          <span className="material-symbols-outlined text-[16px] align-[-3px] me-1" aria-hidden>{'arrow_back'}</span>
+          <Icon name="arrow_back" className="text-[16px] align-[-3px] me-1 rtl:rotate-180" aria-hidden />
           {t('Documents', 'المستندات')}
         </Button>
         <div className="flex-1 min-w-[200px]">
@@ -378,7 +378,7 @@ export default function DocumentEditor({ docId, onClose }) {
             {canEdit && (
               <>
                 <Button variant="ghost" onClick={() => importRef.current?.click()}>
-                  <span className="material-symbols-outlined text-[16px] align-[-3px] me-1" aria-hidden>{'upload_file'}</span>
+                  <Icon name="upload_file" className="text-[16px] align-[-3px] me-1" aria-hidden />
                   {t('Import from Word (.docx)', 'استيراد من Word (.docx)')}
                 </Button>
                 <input ref={importRef} type="file" accept=".docx" hidden onChange={(e) => importDocx(e.target.files?.[0])} />

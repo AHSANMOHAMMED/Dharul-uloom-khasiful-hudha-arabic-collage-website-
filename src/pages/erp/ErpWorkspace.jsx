@@ -180,12 +180,8 @@ export default function ErpWorkspace() {
     if (auth.loading) return;
     if (!auth.isAuthenticated) {
       navigate('/login', { replace: true, state: { from: `/erp${window.location.search}` } });
-      return;
     }
-    if (!auth.isEmployee && !auth.isLibrarian && !auth.isSuperAdmin) {
-      navigate(portalHomeFor(auth), { replace: true });
-    }
-  }, [auth.loading, auth.isAuthenticated, auth.isEmployee, auth.isLibrarian, auth.isSuperAdmin, auth, navigate]);
+  }, [auth.loading, auth.isAuthenticated, navigate]);
 
   if (auth.loading || featuresLoading || !auth.isAuthenticated) {
     return (
@@ -197,8 +193,19 @@ export default function ErpWorkspace() {
 
   if (!auth.isEmployee && !auth.isLibrarian && !auth.isSuperAdmin) {
     return (
-      <div className="min-h-screen bg-parchment-50 flex items-center justify-center">
-        <Loading />
+      <div className="min-h-screen bg-parchment-50 flex flex-col items-center justify-center gap-4 px-4">
+        <PageNavBar home={{ to: portalHomeFor(auth), label: t('My portal', 'بوابتي') }} crumbs={[{ label: t('My portal', 'بوابتي'), to: portalHomeFor(auth) }, { label: t('College ERP', 'نظام إدارة الكلية') }]} />
+        <div className="rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript-md p-8 text-center max-w-md space-y-4">
+          <p className="text-ink-text-secondary text-sm">
+            {t(
+              'The ERP workspace is available to approved staff accounts.',
+              'مساحة الإدارة متاحة لحسابات الموظفين المعتمدة.',
+            )}
+          </p>
+          <Link to={portalHomeFor(auth)} className="text-emerald-700 font-semibold underline text-sm">
+            {t('Go to my portal', 'الذهاب إلى بوابتي')}
+          </Link>
+        </div>
       </div>
     );
   }

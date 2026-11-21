@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { AsyncView, Button, Card, Field, Input, Stat, Table, useAsync, useLang } from '../ui';
+import { AsyncView, Button, Card, Field, Icon, Input, Stat, Table, useAsync, useLang } from '../ui';
 import { query, rpc, today } from '../../../lib/erp/rpc';
 import { printTable } from '../../../lib/printReport';
 import { ClassSelect } from './common';
@@ -110,7 +110,7 @@ export default function ClassAttendance() {
       title={t('Class attendance', 'حضور الصف')}
       actions={
         <Button size="sm" variant="secondary" disabled={!state.data?.length} onClick={printRegister}>
-          <span className="material-symbols-outlined text-[16px] align-middle me-1">print</span>
+          <Icon name="print" className="text-[16px] align-middle me-1" />
           {t('Print', 'طباعة')}
         </Button>
       }

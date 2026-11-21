@@ -127,6 +127,7 @@ export default function Icon({ name, className = '', size, ...props }) {
       case 'volunteer_activism':
       case 'welfare':
       case 'health_and_safety':
+      case 'self_improvement':
       case 'heart':
         return (
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -640,6 +641,157 @@ export default function Icon({ name, className = '', size, ...props }) {
             <line x1="7" y1="7" x2="15" y2="7" />
             <line x1="7" y1="11" x2="15" y2="11" />
             <line x1="7" y1="15" x2="12" y2="15" />
+          </>
+        );
+
+      case 'picture_as_pdf':
+      case 'pdf':
+        return (
+          <>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="9" y1="13" x2="15" y2="13" />
+            <line x1="9" y1="17" x2="13" y2="17" />
+          </>
+        );
+
+      case 'visibility':
+      case 'eye':
+      case 'view':
+        return (
+          <>
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </>
+        );
+
+      case 'visibility_off':
+      case 'eye_off':
+        return (
+          <>
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+            <line x1="1" y1="1" x2="23" y2="23" />
+          </>
+        );
+
+      case 'table_view':
+      case 'grid':
+      case 'spreadsheet':
+        return (
+          <>
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M3 15h18M9 9v12M15 9v12" />
+          </>
+        );
+
+      case 'share':
+        return (
+          <>
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+          </>
+        );
+
+      case 'photo_library':
+      case 'gallery':
+        return (
+          <>
+            <rect x="3" y="3" width="14" height="14" rx="2" />
+            <circle cx="7.5" cy="7.5" r="1.5" />
+            <path d="m17 13-4-4-6 6" />
+            <path d="M21 7v12a2 2 0 0 1-2 2H7" />
+          </>
+        );
+
+      case 'person_search':
+        return (
+          <>
+            <circle cx="10" cy="7" r="4" />
+            <path d="M4 21v-2a4 4 0 0 1 4-4h4" />
+            <circle cx="18" cy="16" r="3" />
+            <line x1="20.5" y1="18.5" x2="22" y2="20" />
+          </>
+        );
+
+      case 'mark_email_read':
+        return (
+          <>
+            <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h9" />
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+            <path d="m16 19 2 2 4-4" />
+          </>
+        );
+
+      case 'lock_reset':
+      case 'reset_password':
+        return (
+          <>
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+            <rect x="9" y="11" width="6" height="5" rx="1" />
+            <path d="M10 11V9a2 2 0 1 1 4 0v2" />
+          </>
+        );
+
+      case 'key':
+        return (
+          <>
+            <circle cx="7.5" cy="15.5" r="5.5" />
+            <path d="m12 11 8-8" />
+            <path d="m17 5 3 3" />
+            <path d="m15 7 2 2" />
+          </>
+        );
+
+      case 'help_outline':
+      case 'help':
+        return (
+          <>
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </>
+        );
+
+      case 'flag':
+        return (
+          <>
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+            <line x1="4" y1="22" x2="4" y2="15" />
+          </>
+        );
+
+      case 'cancel':
+      case 'dismiss':
+        return (
+          <>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </>
+        );
+
+      case 'article':
+        return (
+          <>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </>
+        );
+
+      case 'zoom_in':
+        return (
+          <>
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <line x1="11" y1="8" x2="11" y2="14" />
+            <line x1="8" y1="11" x2="14" y2="11" />
           </>
         );
 

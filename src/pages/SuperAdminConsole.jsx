@@ -38,6 +38,7 @@ import PageNavBar from '../components/PageNavBar';
 import { BroadcastTab, HealthTab, UserAuthActions } from '../components/platform/PlatformOps';
 import BreakGlassPanel from '../components/erp/ops/BreakGlassPanel';
 import JobRunsPanel from '../components/erp/ops/JobRunsPanel';
+import Icon from '../components/Icon';
 
 const NAV = [
   { id: 'overview', label: 'Overview', icon: 'dashboard' },
@@ -231,7 +232,7 @@ export default function SuperAdminConsole() {
         section === item.id ? 'bg-emerald-700 text-white' : 'text-ink-green-900 hover:bg-parchment-50'
       }`}
     >
-      <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
+      <Icon name={item.icon} className="text-[18px]" />
       {item.label}
     </button>
   );
@@ -257,7 +258,7 @@ export default function SuperAdminConsole() {
       <div className="flex-1 lg:ms-72 min-w-0 relative z-10">
         <header className="sticky top-0 z-20 border-b border-sand-border bg-paper-white/95 backdrop-blur px-4 py-3 flex items-center gap-3">
           <button type="button" className="lg:hidden rounded-lg border border-sand-border p-2" onClick={() => setMobileNav(true)} aria-label="Open menu">
-            <span className="material-symbols-outlined">menu</span>
+            <Icon name="menu" />
           </button>
           <div className="min-w-0">
             <h2 className="font-serif text-lg font-semibold text-ink-green-900 truncate">{NAV.find((n) => n.id === section)?.label || 'Overview'}</h2>
@@ -276,7 +277,7 @@ export default function SuperAdminConsole() {
               onClick={() => auth.logout()}
               className="inline-flex items-center gap-1 rounded-lg border border-[#991B1B]/20 bg-[#FEE2E2]/70 hover:bg-[#FEE2E2] px-2.5 py-1.5 text-xs font-bold text-[#991B1B]"
             >
-              <span className="material-symbols-outlined text-[16px]">logout</span>
+              <Icon name="logout" className="text-[16px]" />
               Sign out
             </button>
           </div>

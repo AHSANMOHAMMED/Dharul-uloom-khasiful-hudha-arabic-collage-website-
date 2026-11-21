@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../context/AuthContext';
-import { AsyncView, Badge, Button, Card, EmptyState, PageHeader, Stat, Table, Tabs, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, EmptyState, Icon, PageHeader, Stat, Table, Tabs, useAsync, useLang } from '../ui';
 import { Num } from '../finance/shared';
 import { formatDate, formatMoney } from '../../../lib/erp/rpc';
 import { PAYMENT_METHODS, labelOf, runAction } from '../../../lib/erp/financeApi';
@@ -193,9 +193,9 @@ function FinanceView({ data, months, canRemind }) {
           <TotalLine label={t('Total outstanding', 'إجمالي المتبقي')} value={formatMoney(ageing.total)} tone="text-white font-bold" />
           <div className="mt-2">
             {ageing.balanced ? (
-              <Badge tone="green"><span className="material-symbols-outlined text-[13px] align-middle me-1">check_circle</span>{t('Balanced', 'متوازن')}</Badge>
+              <Badge tone="green"><Icon name="check_circle" className="text-[13px] align-middle me-1" />{t('Balanced', 'متوازن')}</Badge>
             ) : (
-              <Badge tone="red"><span className="material-symbols-outlined text-[13px] align-middle me-1">warning</span>{t('Buckets differ from total — refresh', 'الفئات تختلف عن الإجمالي — حدّث')}</Badge>
+              <Badge tone="red"><Icon name="warning" className="text-[13px] align-middle me-1" />{t('Buckets differ from total — refresh', 'الفئات تختلف عن الإجمالي — حدّث')}</Badge>
             )}
           </div>
         </Card>
