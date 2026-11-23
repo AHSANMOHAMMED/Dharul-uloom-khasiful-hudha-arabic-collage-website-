@@ -2,7 +2,7 @@
 
 **Status:** Partial (template + product rules). **Legal review:** Needs institutional policy.  
 **Reference:** Sri Lanka DPA notices / Gazette 2498/16 — confirm duties with counsel before **1 January 2027** commencement provisions.  
-**Companion:** [GAP_STATUS_REGISTER.md](./GAP_STATUS_REGISTER.md)
+**Companion:** [GAP_STATUS_REGISTER.md](./GAP_STATUS_REGISTER.md) · [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md)
 
 This document is **not legal advice**. It is an operational register for engineers and college administrators.
 
@@ -67,6 +67,8 @@ Break-glass (`0057`) disclosures must be logged and time-boxed; **Needs institut
 ---
 
 ## 6. Open decisions (college + counsel)
+
+Use the signature templates in [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md) (§1 PDPA, §2 break-glass, §3 guardians, §4 welfare). Until signed:
 
 - Exact retention periods and archival media.  
 - Lawful basis per processing purpose.  

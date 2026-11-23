@@ -1,74 +1,90 @@
 # Gap Status Register
 
 **Source:** [Kashiful_Hudha_Real_World_Gap_Analysis.md](../Kashiful_Hudha_Real_World_Gap_Analysis.md)  
-**Companion logic:** [FEATURE_LOGIC_ANALYSIS.md](./FEATURE_LOGIC_ANALYSIS.md) · [PRIVACY_PDPA.md](./PRIVACY_PDPA.md) · [GO_LIVE.md](./GO_LIVE.md) · [OFFLINE_ATTENDANCE_SYNC.md](./OFFLINE_ATTENDANCE_SYNC.md)  
-**Updated:** Finish P0 + P1 real-world logic MVP sprint
+**Companion logic:** [FEATURE_LOGIC_ANALYSIS.md](./FEATURE_LOGIC_ANALYSIS.md) · [PRIVACY_PDPA.md](./PRIVACY_PDPA.md) · [GO_LIVE.md](./GO_LIVE.md) · [OFFLINE_ATTENDANCE_SYNC.md](./OFFLINE_ATTENDANCE_SYNC.md) · [OPS_DRILLS.md](./OPS_DRILLS.md) · [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md) · [APP_COMPLETION_ROADMAP.md](./APP_COMPLETION_ROADMAP.md)  
+**Updated:** 23 Nov 2026 — P0/P1 logic hardening via `0074_p0_p1_logic_hardening.sql`
 
 Statuses: `Already implemented` · `Partial` · `Missing` · `Needs institutional policy` · `Deferred(P2)` · `Tested in staging`
 
-Production verification is blank until ops signs off a live drill.
+**Production verification** stays blank until ops signs the drills in [OPS_DRILLS.md](./OPS_DRILLS.md). Do not treat “Already implemented” as production-ready without that column filled.
 
 ---
 
 ## P0 — Highest priority
 
-| Item | Priority | Status | Evidence | Owner notes |
-|------|----------|--------|----------|-------------|
-| Tenant + role RLS helpers (`is_admin`, `current_org_id`, `mfa_ok`) | P0 | Already implemented | `0015`, `0023`, `0026`; `docs/SECURITY.md` | Prove every table in ongoing tests |
-| Cross-tenant / cross-user AuthZ tests | P0 | Partial | `supabase/tests/rls_erp_test.sql` expanded for new RPCs | Continue per release |
-| Storage bucket AuthZ | P0 | Partial | `0004`, `0014`, `0031` policies; pgTAP negatives | Keep auditing new buckets |
-| SECURITY DEFINER RPC caller checks | P0 | Partial | Most RPCs set `search_path`; Edge `_shared/authz.ts` | Continue per-RPC review |
-| Break-glass emergency access | P0 | Partial (Needs institutional policy) | `0057` + `0067_break_glass_elevation.sql` (elevated SELECT) + Super Admin panel | Policy sign-off before production use |
-| Privacy data inventory / PDPA readiness | P0 | Partial (Needs institutional policy) | `PRIVACY_PDPA.md` + `0058_privacy_retention.sql` + Org admin panel | Editable days; no counsel-certified defaults |
-| Student lifecycle state machine | P0 | Partial | `0040` + StudentDetail UI | Full applicant→offer still policy |
-| Guardian verification + unlink | P0 | Partial | `0041` + StudentDetail/ParentDashboard | Custody playbook = policy |
-| Fee/payment idempotency (PayHere) | P0 | Already implemented | `apply_gateway_payment`, `payhere-notify` md5sig | Keep webhook audit trail |
-| PayHere checkout AuthZ + UX | P0 | Partial | `0054` + create-payment AuthZ/clients | Live sandbox drill still open |
-| Invoice credit / write-off / immutable lines | P0 | Partial | `0043` + FeeInvoiceDetail | — |
-| Fee bank recon MVP | P0 | Partial | `0060_bank_recon.sql` + Finance Hub Unmatched | Not full bank feed import |
-| Period lock | P0 | Already implemented | `books_locked_until`; tests §19 | — |
-| Exam publish lock | P0 | Already implemented | `0016` / `0028`, MarksEntry | — |
-| Post-publish result correction / appeals | P0 | Partial | `0042` + `0056_result_appeals.sql` + MarksEntry AppealsQueue | — |
-| Welfare confidential RLS | P0 | Already implemented | `0020`, WelfarePanel | Escalation playbook = policy |
-| Hostel occupancy + leave + emergency roll-call | P0 | Partial | `0044` + `0055_hostel_rollcall.sql` + HostelPanel Emergency | — |
-| Backup / restore / job monitoring | P0 | Partial | `0059_job_runs.sql` + Super Admin Job runs; `GO_LIVE.md` | Staging restore + RPO/RTO with college |
+| Item | Priority | Status | Evidence | Prod verified | Owner notes |
+|------|----------|--------|----------|---------------|-------------|
+| Tenant + role RLS helpers (`is_admin`, `current_org_id`, `mfa_ok`) | P0 | Already implemented | `0015`, `0023`, `0026`; `docs/SECURITY.md` | | Prove every table in ongoing tests |
+| Cross-tenant / cross-user AuthZ tests | P0 | Partial | `rls_erp_test.sql` §20–21 (lifecycle, guardian, break-glass, admissions, fee lines, bank, offline) | | Continue per release |
+| Storage bucket AuthZ | P0 | Partial | `0004`, `0014`, `0031`, `0046`; pgTAP storage negatives | | Keep auditing new buckets |
+| SECURITY DEFINER RPC caller checks | P0 | Partial | Fixed `search_path`; Edge `_shared/authz.ts`; `0068`/`0074` gates | | Continue per-RPC review |
+| Break-glass emergency access | P0 | Partial (Needs institutional policy) | `0057` + `0067` + Super Admin; [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md) §2 | | Policy sign-off before production use |
+| Privacy data inventory / PDPA readiness | P0 | Partial (Needs institutional policy) | `PRIVACY_PDPA.md` + `0058` + Org admin; [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md) §1 | | Counsel-certified defaults required |
+| Student lifecycle state machine | P0 | Partial | `0073` + **`0074` `transition_admission_stage`** + crmApi; enroll via `enroll_admission` | | Applicant→offer graph coded; policy for exceptions |
+| Guardian verification + unlink | P0 | Partial | `0041` + `0069` + UI; [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md) §3 | | Custody playbook = policy |
+| Fee/payment idempotency (PayHere) | P0 | Already implemented | `apply_gateway_payment`, `payhere-notify` md5sig | | Keep webhook audit trail |
+| PayHere checkout AuthZ + UX | P0 | Partial | `0054` + create-payment; [OPS_DRILLS.md](./OPS_DRILLS.md) §2 | | Live sandbox drill still open |
+| Invoice credit / write-off / immutable lines | P0 | Already implemented | `0043` + **`0074` GL via `_post_invoice_lines_journal`; direct line INSERT revoked** + FeeInvoiceDetail RPCs | | — |
+| Fee bank recon MVP | P0 | Partial | `0060` + **`0074` CSV import + `suggest_bank_matches`** + BankReconPanel | | Not full bank-feed API |
+| Period lock | P0 | Already implemented | `books_locked_until`; tests §19 | | — |
+| Exam publish lock | P0 | Already implemented | `0016` / `0028`, MarksEntry | | — |
+| Post-publish result correction / appeals | P0 | Already implemented | `0042` + `0056` + **`0074` accept → draft `result_corrections`** + AppealsQueue | | Apply marks via existing correction RPC |
+| Welfare confidential RLS | P0 | Already implemented | `0020`, WelfarePanel; [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md) §4 | | Escalation playbook = policy |
+| Hostel occupancy + leave + emergency roll-call | P0 | Partial | `0055` + **`0074` escalations log** + HostelPanel contact attempts | | Warden drill still ops |
+| Backup / restore / job monitoring | P0 | Partial | `0059` + Job runs UI; [OPS_DRILLS.md](./OPS_DRILLS.md) §1 | | Staging restore + RPO/RTO |
 
 ## P1 — Operational depth
 
-| Item | Priority | Status | Evidence | Owner notes |
-|------|----------|--------|----------|-------------|
-| Payroll EPF/ETF + effective-dated APIT | P1 | Partial | `0028`/`0048` + `0061_payroll_apit_tables.sql` + Payroll APIT tab | Confirm rates with HR/counsel |
-| Attendance session exceptions | P1 | Partial | `0062_attendance_exceptions.sql` + ClassAttendance correction | — |
-| Outbox quiet hours + Unicode cost preview | P1 | Partial | `0063` quiet hours + `send-outbound`; `smsCost.js` in Admin broadcast | — |
-| Purpose-level consent | P1 | Partial | `0063_notify_purposes.sql` + NotificationBell | Marketing default off |
-| Mobile offline sync contract | P1 | Partial | `0064` + `OFFLINE_ATTENDANCE_SYNC.md` + `mobile/lib/offlineAttendance.js` | Attendance drafts only |
-| EN/AR RTL + locale | P1 | Partial | `localeFormat.js`; Arabic `dir=rtl` shells | Tamil linguistic review not claimed |
-| Library copy circulation | P1 | Partial | `0065_library_loans.sql` + Librarian Circulation tab | — |
-| LMS quiz lifecycle | P1 | Partial | `0066_lms_quizzes.sql` + Tutor/Student LMS panels | Answer keys staff-only RLS |
+| Item | Priority | Status | Evidence | Prod verified | Owner notes |
+|------|----------|--------|----------|---------------|-------------|
+| Payroll EPF/ETF + effective-dated APIT | P1 | Partial | `0061` + ApitTaxPanel **bracket validation** + pgTAP compute | | Confirm rates with HR/counsel |
+| Attendance session exceptions | P1 | Already implemented | `0062`/`0068` + **`0074` `save_class_attendance_session`** + ClassAttendance | | Bulk upsert removed |
+| Outbox quiet hours + Unicode cost preview | P1 | Already implemented | `0063` + `smsCost.js` on Admin + **platform BroadcastTab** | | — |
+| Purpose-level consent | P1 | Partial | `0063` + **`0074` broadcast outbox `purpose=marketing`** + NotificationBell | | Marketing default off |
+| Mobile offline sync contract | P1 | Already implemented | `0064` + **`0074` conflict (not LWW)** + mobile conflict queue + OFFLINE doc | | Attendance drafts only |
+| EN/AR RTL + locale | P1 | Partial | `localeFormat.js`; `0070` preferred_locale; Arabic RTL shells | | Tamil linguistic review not claimed |
+| Library copy circulation | P1 | Partial | `0065` + **`0074` renew + lost** + Librarian Circulation | | No holds/fines suite |
+| LMS quiz lifecycle | P1 | Partial | `0066` + **`0074` max_attempts / time_limit** + Tutor/Student LMS panels | | Answer keys staff-only |
 
 ## P2 — Conditional expansion
 
-| Item | Priority | Status | Evidence | Owner notes |
-|------|----------|--------|----------|-------------|
-| Procurement / assets / catering / transport | P2 | Deferred(P2) | — | Only if institution operates them |
-| SaaS subscription billing automation | P2 | Partial | `/platform` orgs + ACL | Billing lifecycle Needs institutional policy |
+| Item | Priority | Status | Evidence | Prod verified | Owner notes |
+|------|----------|--------|----------|---------------|-------------|
+| Procurement / assets / catering / transport | P2 | Deferred(P2) | — | | Only if institution operates them |
+| SaaS subscription billing automation | P2 | Partial | `/platform` orgs + ACL | | Billing lifecycle Needs institutional policy |
 
 ---
 
-## Phase deliverables (this sprint)
+## Phase deliverables
 
-| Deliverable | Migration / path |
-|-------------|------------------|
-| Hostel emergency roll-call | `0055_hostel_rollcall.sql` |
-| Result appeals / resits | `0056_result_appeals.sql` |
-| Break-glass access | `0057_break_glass.sql` |
-| Privacy retention settings | `0058_privacy_retention.sql` |
-| Job / cron monitoring | `0059_job_runs.sql` |
-| Fee bank recon MVP | `0060_bank_recon.sql` |
-| Effective-dated APIT | `0061_payroll_apit_tables.sql` |
-| Attendance exceptions | `0062_attendance_exceptions.sql` |
-| Quiet hours + purpose consent | `0063_notify_purposes.sql` |
-| Offline attendance sync | `0064_offline_sync_queue.sql` |
-| Library loans | `0065_library_loans.sql` |
-| LMS quizzes | `0066_lms_quizzes.sql` |
-| PayHere checkout hygiene | `0054` (shipped earlier) |
+### Logic MVP (`0054`–`0066`) + hardening (`0067`–`0073`)
+
+See prior register history; migrations through `0073` remain required.
+
+### P0/P1 logic sprint (`0074`)
+
+| Deliverable | Path |
+|-------------|------|
+| Admissions stage RPC + guard | `0074` `transition_admission_stage`, stage trigger |
+| Fee GL + immutable lines | `0074` credit/write-off + drop finance INSERT policy |
+| Appeals → correction | `0074` `review_result_appeal` |
+| Class attendance session | `0074` `save_class_attendance_session` |
+| Hostel escalation log | `0074` `hostel_rollcall_escalations` |
+| Bank CSV + suggest match | `0074` `import_bank_statement_lines`, `suggest_bank_matches` |
+| Offline conflicts | `0074` `apply_offline_attendance_draft` |
+| Library renew/lost | `0074` RPCs + Circulation UI |
+| LMS retake/timer | `0074` quiz columns + start/submit |
+| Broadcast purpose tag | `0074` `tg_notification_broadcast_outbox` |
+| AuthZ negatives | `rls_erp_test.sql` §21 |
+
+---
+
+## Scorecard (engineering, not production)
+
+| Priority | Already implemented | Partial | Missing / Deferred |
+|----------|---------------------|---------|--------------------|
+| P0 (17) | 8 | 9 | 0 Missing |
+| P1 (8) | 4 | 4 | — |
+| P2 | — | 1 (SaaS billing) | Procurement Deferred |
+
+Trust for go-live: [MASTER_PRD.md](./MASTER_PRD.md) §2 + [APP_COMPLETION_ROADMAP.md](./APP_COMPLETION_ROADMAP.md) + [OPS_DRILLS.md](./OPS_DRILLS.md) + [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md). Ignore obsolete claims in root `PROJECT_SUMMARY.md`.

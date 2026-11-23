@@ -1461,6 +1461,192 @@ select tst.login('00000000-0000-0000-0000-000000000008'); -- student
 select tst.fails($$select public.mark_overdue_library_loans()$$, 'library: student cannot mark overdue');
 
 -- ---------------------------------------------------------------------------
+-- 20. AuthZ proof expansion (0067–0073): lifecycle, break-glass elevation,
+--     guardian_may, cross-tenant transition denial
+-- ---------------------------------------------------------------------------
+
+-- Lifecycle: only principal/admin may transition; invalid edges rejected.
+select tst.login('00000000-0000-0000-0000-000000000008'); -- student
+select tst.fails($$select public.transition_student_status('00000000-0000-0000-0000-000000000008', 'withdrawn', 'self exit', '{}'::jsonb)$$,
+                 'lifecycle: student cannot self-transition');
+select tst.login('00000000-0000-0000-0000-000000000006'); -- tutor
+select tst.fails($$select public.transition_student_status('00000000-0000-0000-0000-000000000008', 'suspended', 'tutor attempt', '{}'::jsonb)$$,
+                 'lifecycle: tutor cannot transition');
+select tst.login('00000000-0000-0000-0000-000000000013'); -- other-college admin
+select tst.fails($$select public.transition_student_status('00000000-0000-0000-0000-000000000008', 'suspended', 'cross tenant', '{}'::jsonb)$$,
+                 'lifecycle: other-org admin cannot transition college A student');
+
+select tst.as_service();
+update public.student_details
+   set status = 'active', status_reason = null
+ where profile_id = '00000000-0000-0000-0000-000000000008';
+select tst.login('00000000-0000-0000-0000-000000000002'); -- principal
+select tst.succeeds($$select public.transition_student_status('00000000-0000-0000-0000-000000000008', 'graduated', 'Completed programme', '{}'::jsonb)$$,
+                    'lifecycle: principal graduates student');
+select tst.fails($$select public.transition_student_status('00000000-0000-0000-0000-000000000008', 'suspended', 'illegal from graduated', '{}'::jsonb)$$,
+                 'lifecycle: graduated→suspended rejected');
+select tst.fails($$select public.transition_student_status('00000000-0000-0000-0000-000000000008', 'active', 'illegal reverse', '{}'::jsonb)$$,
+                 'lifecycle: graduated→active rejected (only alumni→active)');
+-- 0073 allows alumni→active only; graduated may not reverse. Reset for remaining suite via service.
+select tst.as_service();
+update public.student_details
+   set status = 'active', status_reason = 'test reset'
+ where profile_id = '00000000-0000-0000-0000-000000000008';
+select tst.login('00000000-0000-0000-0000-000000000002');
+select tst.succeeds($$select public.transition_student_status('00000000-0000-0000-0000-000000000008', 'alumni', 'Marked alumni', '{}'::jsonb)$$,
+                    'lifecycle: active→alumni allowed');
+select tst.succeeds($$select public.transition_student_status('00000000-0000-0000-0000-000000000008', 'active', 'Re-enrol', '{}'::jsonb)$$,
+                    'lifecycle: alumni→active re-enrolment');
+
+-- Break-glass: MFA-gated approve elevates finance SELECT for requester.
+select tst.login('00000000-0000-0000-0000-000000000006'); -- tutor
+select tst.ok((
+  select public.request_break_glass('pgTAP finance elevation', 'read_finance') is not null
+), 'break-glass: tutor requests read_finance');
+select tst.login_aal('00000000-0000-0000-0000-000000000001', 'aal2'); -- admin aal2
+select tst.succeeds($$
+  select public.decide_break_glass(
+    (select id from public.break_glass_requests
+      where requester_id = '00000000-0000-0000-0000-000000000006'
+        and scope = 'read_finance' and status = 'pending'
+      order by created_at desc limit 1),
+    true, 1, 'pgTAP approve')
+$$, 'break-glass: admin aal2 can approve');
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.ok(public.has_active_break_glass('read_finance'),
+              'break-glass: tutor has active finance grant after approval');
+select tst.ok((select count(*) >= 1 from public.student_fees
+               where student_id = '00000000-0000-0000-0000-000000000008'),
+              'break-glass: elevated SELECT reaches student_fees');
+select tst.as_service();
+update public.break_glass_requests
+   set status = 'expired', expires_at = now() - interval '1 minute'
+ where requester_id = '00000000-0000-0000-0000-000000000006'
+   and scope = 'read_finance'
+   and status = 'approved';
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.ok((select not public.has_active_break_glass('read_finance')),
+              'break-glass: expired grant no longer active');
+
+-- guardian_may helper mirrors permission JSON (0069).
+select tst.as_service();
+update public.parent_children
+   set permissions = '{"fees":false,"results":true,"attendance":true,"leave":true}'::jsonb,
+       status = 'active'
+ where parent_id = '00000000-0000-0000-0000-000000000010'
+   and child_id = '00000000-0000-0000-0000-000000000008';
+select tst.login('00000000-0000-0000-0000-000000000010');
+select tst.ok((select not public.guardian_may('00000000-0000-0000-0000-000000000008', 'fees')),
+              'guardian_may: fees=false returns false');
+select tst.ok(public.guardian_may('00000000-0000-0000-0000-000000000008', 'results'),
+              'guardian_may: results=true returns true');
+select tst.login('00000000-0000-0000-0000-000000000011'); -- unlinked parent
+select tst.ok((select not public.guardian_may('00000000-0000-0000-0000-000000000008', 'fees')),
+              'guardian_may: unlinked parent denied');
+select tst.as_service();
+update public.parent_children
+   set permissions = '{"fees":true,"results":true,"attendance":true,"leave":true}'::jsonb
+ where parent_id = '00000000-0000-0000-0000-000000000010'
+   and child_id = '00000000-0000-0000-0000-000000000008';
+
+-- Storage: student cannot list staff-docs / petty-cash private objects.
+select tst.login('00000000-0000-0000-0000-000000000008');
+do $$
+declare
+  n int;
+begin
+  begin
+    select count(*) into n from storage.objects where bucket_id = 'staff-docs';
+    perform tst.ok(n = 0, 'storage: student lists zero staff-docs');
+  exception when insufficient_privilege then
+    perform tst.ok(true, 'storage: student denied staff-docs privilege');
+  end;
+  begin
+    select count(*) into n from storage.objects where bucket_id = 'petty-cash';
+    perform tst.ok(n = 0, 'storage: student lists zero petty-cash');
+  exception when insufficient_privilege then
+    perform tst.ok(true, 'storage: student denied petty-cash privilege');
+  end;
+end $$;
+
+-- ---------------------------------------------------------------------------
+-- 21. P0/P1 logic hardening (0074): admissions, fee lines, attendance session,
+--     bank import AuthZ, offline conflict, library renew, APIT compute
+-- ---------------------------------------------------------------------------
+select tst.login('00000000-0000-0000-0000-000000000008'); -- student
+select tst.fails($$select public.transition_admission_stage(gen_random_uuid(), 'interview', 'nope')$$,
+                 'admissions: student cannot transition stage');
+select tst.fails($$select public.import_bank_statement_lines('[]'::jsonb)$$,
+                 'bank: student cannot import statement lines');
+select tst.fails($$select public.save_class_attendance_session(3, current_date, '[]'::jsonb, null)$$,
+                 'attendance: student cannot save class session');
+select tst.fails($$
+  insert into public.fee_invoice_lines (org_id, fee_id, kind, description, amount)
+  values (public.current_org_id(),
+          (select id from public.student_fees where student_id = '00000000-0000-0000-0000-000000000008' limit 1),
+          'charge', 'direct insert', 1)
+$$, 'fees: direct fee_invoice_lines insert denied for student');
+
+select tst.login('00000000-0000-0000-0000-000000000006'); -- tutor
+select tst.fails($$select public.transition_admission_stage(gen_random_uuid(), 'accepted', 'tutor')$$,
+                 'admissions: tutor without admissions staff cannot transition');
+
+-- Offline conflict: seed server attendance then apply differing draft
+select tst.as_service();
+insert into public.attendance (student_id, date, status, marked_by, org_id)
+values ('00000000-0000-0000-0000-000000000009', current_date - 3, 'present',
+        '00000000-0000-0000-0000-000000000006', public.default_org_id())
+on conflict (student_id, date) do update set status = 'present';
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.ok((
+  select (public.apply_offline_attendance_draft(
+    'pgtap-conflict-device', 'pgtap-conflict-key',
+    jsonb_build_object(
+      'student_id', '00000000-0000-0000-0000-000000000009',
+      'date', (current_date - 3)::text,
+      'status', 'absent'
+    )
+  ) ->> 'status') = 'conflict'
+), 'offline: differing draft returns conflict');
+
+-- Library renew AuthZ
+select tst.login('00000000-0000-0000-0000-000000000008');
+select tst.fails($$select public.renew_library_loan(gen_random_uuid(), null)$$,
+                 'library: student cannot renew');
+select tst.fails($$select public.mark_library_loan_lost(gen_random_uuid(), 'x')$$,
+                 'library: student cannot mark lost');
+
+-- Hostel escalation AuthZ
+select tst.login('00000000-0000-0000-0000-000000000006');
+select tst.fails($$select public.log_hostel_rollcall_escalation(gen_random_uuid(), '00000000-0000-0000-0000-000000000008', 'phone', 'attempted', null)$$,
+                 'hostel: tutor cannot log escalation without warden/admin');
+
+-- APIT compute (service/security definer; call as admin after upsert)
+select tst.login_aal('00000000-0000-0000-0000-000000000001', 'aal2');
+select tst.succeeds($$
+  select public.upsert_payroll_tax_table(
+    current_date,
+    '[{"up_to":100000,"rate":0},{"up_to":null,"rate":6}]'::jsonb,
+    'APIT-pgTAP')
+$$, 'apit: admin can upsert tax table');
+select tst.as_service();
+select tst.ok((
+  select public.compute_apit_amount(public.default_org_id(), current_date, 150000) > 0
+), 'apit: taxable above first bracket yields tax');
+select tst.ok((
+  select public.compute_apit_amount(public.default_org_id(), current_date, 50000) = 0
+), 'apit: income inside zero band is zero');
+
+-- Fee line insert denied for finance via RLS (must use RPC) — accountant
+select tst.login('00000000-0000-0000-0000-000000000004');
+select tst.fails($$
+  insert into public.fee_invoice_lines (org_id, fee_id, kind, description, amount)
+  values (public.current_org_id(),
+          (select id from public.student_fees limit 1),
+          'charge', 'bypass', 5)
+$$, 'fees: accountant cannot direct-insert invoice lines');
+
+-- ---------------------------------------------------------------------------
 select tst.logout();
 \echo '-----------------------------------------------'
 select count(*) filter (where ok) as passed, count(*) filter (where not ok) as failed from tst.results;

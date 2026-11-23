@@ -5,6 +5,7 @@ import {
   fetchOrgInvitations, fetchPlatformHealth, inviteOrgAdmin, platformBroadcast,
   platformUserAction, revokeInvitation, updatePlatformOrg,
 } from '../../lib/platformApi';
+import { smsEncodingInfo } from '../../lib/smsCost';
 import Icon from '../Icon';
 
 // The platform console is English + LTR by design (see SuperAdminConsole).
@@ -325,6 +326,7 @@ export function BroadcastTab({ organizations = [] }) {
   const [form, setForm] = useState({ title: '', message: '', audience: 'admins', orgs: [] });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
+  const smsInfo = smsEncodingInfo(`${form.title}\n${form.message}`);
   const send = async (e) => {
     e.preventDefault();
     const scope = form.orgs.length ? `${form.orgs.length} ${en('', 'selected college(s)')}` : en('', 'every active college');
@@ -351,6 +353,10 @@ export function BroadcastTab({ organizations = [] }) {
       <label className="block text-sm font-semibold text-ink-green-900">{en('', 'Message')}
         <textarea required rows={4} maxLength={4000} className={inputCls} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} />
       </label>
+      <p className="text-xs text-ink-text-muted">
+        {en('', 'SMS estimate')}: {smsInfo.encoding} · {smsInfo.segments} {en('', 'segment(s)')} · {smsInfo.length} {en('', 'chars')}
+        {' '}({en('', 'planning aid only — not a carrier invoice')})
+      </p>
       <label className="block text-sm font-semibold text-ink-green-900">{en('', 'Who receives it')}
         <select className={inputCls} value={form.audience} onChange={(e) => setForm((f) => ({ ...f, audience: e.target.value }))}>
           <option value="admins">{en('', 'College admins')}</option>

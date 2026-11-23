@@ -99,6 +99,10 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 | [docs/PLATFORM_GUIDE.md](docs/PLATFORM_GUIDE.md) | Current architecture, features, data flows |
 | [docs/UI_ENHANCEMENT_SPEC.md](docs/UI_ENHANCEMENT_SPEC.md) | Web + mobile UI enhancement brief |
 | [docs/GO_LIVE.md](docs/GO_LIVE.md) | Deploy / secrets / smoke checklist |
+| [docs/GAP_STATUS_REGISTER.md](docs/GAP_STATUS_REGISTER.md) | P0/P1/P2 gap tracker vs production readiness |
+| [docs/APP_COMPLETION_ROADMAP.md](docs/APP_COMPLETION_ROADMAP.md) | Eight-stage staging acceptance roadmap |
+| [docs/OPS_DRILLS.md](docs/OPS_DRILLS.md) | Backup/restore and PayHere sandbox drill sign-off |
+| [docs/POLICY_SIGN_OFF.md](docs/POLICY_SIGN_OFF.md) | PDPA, break-glass, guardian, welfare policy templates |
 | [docs/SECURITY.md](docs/SECURITY.md) | Two-step verification (DB-enforced), mobile fingerprint/PIN lock, password policy, rollout & recovery |
 | [docs/OPERATIONS_MODULES.md](docs/OPERATIONS_MODULES.md) | Reports & Excel/PDF export, bulk import, documents & letterheads, secure exam papers, cheque register, daily reminders |
 | [docs/ROLE_RLS_MATRIX.md](docs/ROLE_RLS_MATRIX.md) | Role × capability matrix |

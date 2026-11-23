@@ -2,10 +2,15 @@
 
 Code for the complete platform plan is in this repo. These steps apply it to **your** Supabase + Vercel + PayHere accounts.
 
-> **Credential boundary:** repository validation is complete, but Supabase, Vercel,
-> PayHere, notification-provider, and Expo/EAS account operations require credentials
-> owned by the deployment operator. Never commit those values or place service-role
-> keys in the frontend or mobile bundle.
+> **Credential boundary:** repository validation is engineering-complete for the
+> checked-in code, but Supabase, Vercel, PayHere, notification-provider, and Expo/EAS
+> account operations require credentials owned by the deployment operator. Never
+> commit those values or place service-role keys in the frontend or mobile bundle.
+>
+> **Production acceptance** also requires signed drills in [OPS_DRILLS.md](./OPS_DRILLS.md)
+> and institutional policy pack [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md). See
+> [GAP_STATUS_REGISTER.md](./GAP_STATUS_REGISTER.md) and
+> [APP_COMPLETION_ROADMAP.md](./APP_COMPLETION_ROADMAP.md).
 
 ## Required account-bound release steps
 
@@ -50,9 +55,9 @@ supabase link --project-ref YOUR_PROJECT_REF
 # 0. Back up production first (Dashboard → Database → Backups) and run the
 #    full suite locally: npm run test:db   (must print "DB TESTS PASSED")
 
-# Apply all migrations (0001–0022). 0015–0022 must be appliedied in one go and the
-# edge functions below deployed IMMEDIATELY after: 0018 makes student_fees
-# paid_amount ledger-controlled, so the OLD payhere-notify would fail.
+# Apply all migrations (through latest, including 0074+). 0015–0022 must be applied
+# in one go and the edge functions below deployed IMMEDIATELY after: 0018 makes
+# student_fees paid_amount ledger-controlled, so the OLD payhere-notify would fail.
 # NOTE: the stray 20240730000000 file is now a no-op; if the CLI complains that
 # local migrations sort before the last remote one, use:
 supabase db push --include-all

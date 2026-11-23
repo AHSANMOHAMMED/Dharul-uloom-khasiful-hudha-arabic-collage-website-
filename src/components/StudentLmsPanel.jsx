@@ -22,14 +22,17 @@ function StudentQuizTake({ classNumber }) {
 
   useEffect(() => {
     if (!classNumber) return;
-    supabase.from('lms_quizzes').select('id, title, subject, status, due_at, results_released_at')
+    supabase.from('lms_quizzes').select('id, title, subject, status, due_at, results_released_at, max_attempts, time_limit_minutes')
       .eq('class_number', classNumber).eq('status', 'published')
       .then(({ data }) => setQuizzes(data || []));
   }, [classNumber]);
 
   const start = async (quizId) => {
     const { data: aid, error } = await supabase.rpc('start_or_resume_quiz', { p_quiz: quizId });
-    if (error) return;
+    if (error) {
+      window.alert(error.message || tx('تعذر بدء الاختبار', 'Could not start quiz'));
+      return;
+    }
     const { data: qs } = await supabase.rpc('student_quiz_questions', { p_quiz: quizId });
     setAttemptId(aid);
     setQuestions(qs || []);
@@ -39,7 +42,10 @@ function StudentQuizTake({ classNumber }) {
 
   const submit = async () => {
     const { data, error } = await supabase.rpc('submit_quiz_attempt', { p_attempt: attemptId, p_answers: answers });
-    if (error) return;
+    if (error) {
+      window.alert(error.message || tx('تعذر التسليم', 'Could not submit'));
+      return;
+    }
     setResult(data);
     setActive(null);
   };
@@ -47,12 +53,23 @@ function StudentQuizTake({ classNumber }) {
   return (
     <div className="bg-[#FBF8F0] p-4 rounded-2xl border border-[#E8E1D0] space-y-2">
       <h3 className="font-bold text-sm text-[#0B3B2E]">{tx('الاختبارات', 'Quizzes')}</h3>
-      {!active && quizzes.map((q) => (
-        <button key={q.id} type="button" onClick={() => start(q.id)}
-          className="block w-full text-start text-xs p-2.5 bg-white border border-[#E8E1D0] rounded-xl hover:border-[#11694A]">
-          {q.title} · {q.subject}
-        </button>
-      ))}
+      {!active && quizzes.map((q) => {
+        const pastDue = q.due_at && new Date(q.due_at) < new Date();
+        return (
+          <button
+            key={q.id}
+            type="button"
+            disabled={pastDue}
+            onClick={() => start(q.id)}
+            className="block w-full text-start text-xs p-2.5 bg-white border border-[#E8E1D0] rounded-xl hover:border-[#11694A] disabled:opacity-50"
+          >
+            {q.title} · {q.subject}
+            {q.max_attempts ? ` · ${tx('محاولات', 'attempts')} ≤${q.max_attempts}` : ''}
+            {q.time_limit_minutes ? ` · ${q.time_limit_minutes} ${tx('د', 'min')}` : ''}
+            {pastDue ? ` · ${tx('انتهى الموعد', 'closed')}` : ''}
+          </button>
+        );
+      })}
       {!active && !quizzes.length && <p className="text-xs text-[#4A5E56]">{tx('لا اختبارات منشورة', 'No published quizzes')}</p>}
       {active && (
         <div className="space-y-3">

@@ -191,9 +191,18 @@ function EmergencyRollcall({ hostels, canManage }) {
   const [hostelId, setHostelId] = useState('');
   const [activeId, setActiveId] = useState('');
   const [snap, setSnap] = useState(null);
+  const [escNotes, setEscNotes] = useState({});
   const [list, reloadList] = useAsync(
     () => query('hostel_rollcalls', (q) => q.select('*').order('started_at', { ascending: false }).limit(20)),
     [],
+  );
+  const rollId = activeId || snap?.rollcall?.id;
+  const [escalations, reloadEsc] = useAsync(
+    () => (rollId
+      ? query('hostel_rollcall_escalations', (q) =>
+        q.select('*').eq('rollcall_id', rollId).order('attempt_at', { ascending: false }).limit(100))
+      : Promise.resolve([])),
+    [rollId],
   );
 
   const loadSnap = async (id) => {
@@ -227,8 +236,36 @@ function EmergencyRollcall({ hostels, canManage }) {
   const close = async () => {
     const id = activeId || snap?.rollcall?.id;
     if (!id) return;
+    const absent = (snap?.marks || []).filter((m) => m.status === 'absent');
+    const logged = new Set((escalations.data || []).map((e) => e.student_id));
+    const missingLog = absent.filter((m) => !logged.has(m.student_id));
+    if (missingLog.length) {
+      const ok = window.confirm(
+        t(
+          `${missingLog.length} absent student(s) have no contact attempt logged. Close anyway?`,
+          `${missingLog.length} غائب/غائبون بلا محاولة اتصال مسجّلة. الإغلاق على أي حال؟`,
+        ),
+      );
+      if (!ok) return;
+    }
     const res = await run(() => rpc('close_hostel_rollcall', { p_rollcall: id }), t('Roll-call closed', 'أُغلق النداء'));
     if (res.ok) { reloadList(); await loadSnap(id); }
+  };
+
+  const logEscalation = async (studentId) => {
+    const id = activeId || snap?.rollcall?.id;
+    if (!id) return;
+    const res = await run(() => rpc('log_hostel_rollcall_escalation', {
+      p_rollcall: id,
+      p_student: studentId,
+      p_channel: 'phone',
+      p_outcome: 'attempted',
+      p_notes: escNotes[studentId] || null,
+    }), t('Contact attempt logged', 'سُجّلت محاولة الاتصال'));
+    if (res.ok) {
+      setEscNotes((n) => ({ ...n, [studentId]: '' }));
+      reloadEsc();
+    }
   };
 
   const marks = snap?.marks || [];
@@ -323,13 +360,31 @@ function EmergencyRollcall({ hostels, canManage }) {
             {
               key: 'act', label: '',
               render: (m) => open && canManage ? (
-                <div className="flex gap-1">
+                <div className="flex flex-wrap gap-1 items-center">
                   <Button size="sm" disabled={busy} onClick={() => mark(m.student_id, 'present')}>{t('Present', 'حاضر')}</Button>
                   <Button size="sm" variant="danger" disabled={busy} onClick={() => mark(m.student_id, 'absent')}>{t('Absent', 'غائب')}</Button>
+                  {m.status === 'absent' && (
+                    <>
+                      <Input
+                        className="min-w-[8rem]"
+                        placeholder={t('Contact note', 'ملاحظة اتصال')}
+                        value={escNotes[m.student_id] || ''}
+                        onChange={(e) => setEscNotes((n) => ({ ...n, [m.student_id]: e.target.value }))}
+                      />
+                      <Button size="sm" variant="secondary" disabled={busy} onClick={() => logEscalation(m.student_id)}>
+                        {t('Log contact', 'تسجيل اتصال')}
+                      </Button>
+                    </>
+                  )}
                 </div>
               ) : null,
             },
           ]} />
+          {(escalations.data || []).length > 0 && (
+            <p className="text-xs text-gray-400 mt-3">
+              {t('Escalation log entries', 'سجلات التصعيد')}: {(escalations.data || []).length}
+            </p>
+          )}
         </Card>
       )}
     </div>

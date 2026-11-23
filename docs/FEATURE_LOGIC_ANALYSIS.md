@@ -267,17 +267,17 @@ Parity rule: **same RPCs and tables**; mobile may use simpler UI but must not in
 
 Track verifiable status in [GAP_STATUS_REGISTER.md](./GAP_STATUS_REGISTER.md) — do not treat “listed in a portal” as production-verified.
 
-Still open after Phase 1 P0:
+Still open after Phase 1 P0 + `0074` hardening:
 
 1. **Legacy dashboards** (`PrincipalDashboard`, `TreasurerDashboard`) — unused entry path; prefer portals.  
 2. **ERP panel token migration** — `.erp-theme` bridge; gradual cleanup.  
-3. **LMS quizzes / discussion** — foundation only.  
-4. **Bank reconciliation / budgeting UI** — Partial.  
+3. **LMS quizzes** — lifecycle + retake/timer in `0074`; discussion still foundation-only.  
+4. **Bank reconciliation** — CSV import + suggest-match MVP+ (`0074`); no full bank-feed API.  
 5. **Ops integrations** — PayHere live E2E, Twilio/Resend/Expo crons, EAS IDs.  
-6. **Exam appeals / resits** — Missing (corrections closed in P0).  
-7. **Hostel emergency roll-call** — Missing (overnight leave closed in P0).  
-8. **APIT / effective-dated payroll tables** — Missing.  
-9. **Mobile offline sync** — Missing (see §11.8).
+6. **Exam appeals / resits** — Shipped: accept → draft `result_corrections`; resit exam link (`0074`).  
+7. **Hostel emergency roll-call** — Shipped UI + escalation contact log (`0074`); warden drill = ops.  
+8. **APIT / effective-dated payroll tables** — Shipped engine + UI validation; rates need HR/counsel.  
+9. **Mobile offline sync** — Attendance drafts with **conflict** (not LWW) in `0074`; see §11.8.
 
 ---
 
@@ -351,11 +351,11 @@ Side effects on withdraw/transfer: end open hostel allocations. Fee cancel/credi
 
 ### 11.5 Assessment / result lifecycle
 
-`draft → scheduled → marking → published`. After publish, tutors cannot edit marks; controlled path = `result_corrections` + `apply_result_correction`. Appeals/resits = Missing (Phase 2).
+`draft → scheduled → marking → published`. After publish, tutors cannot edit marks; controlled path = `result_corrections` + `apply_result_correction`. Appeals: `file_result_appeal` / `review_result_appeal` — **accepted** creates a draft correction (`0074`); resit requires exam id.
 
 ### 11.6 Safeguarding / confidentiality
 
-Welfare cases: `is_confidential`, assignee, `is_welfare_staff()`. Do not put case detail in SMS/push. Escalation routes = Needs institutional policy. Hostel overnight leave tracked in `hostel_leave_passes`; emergency roll-call UI still Missing.
+Welfare cases: `is_confidential`, assignee, `is_welfare_staff()`. Do not put case detail in SMS/push. Escalation routes = Needs institutional policy. Hostel overnight leave in `hostel_leave_passes`; emergency roll-call + `hostel_rollcall_escalations` contact log (`0055`/`0074`).
 
 ### 11.7 Privacy register and retention
 
@@ -364,11 +364,11 @@ See [PRIVACY_PDPA.md](./PRIVACY_PDPA.md). Legal basis and retention numbers requ
 ### 11.8 Offline / mobile sync contract
 
 **Authoritative server required** for: payments, result publish/correction, role changes, welfare case closure, guardian link/unlink, fee adjustments.  
-**Future (Phase 2):** attendance draft offline with idempotency keys — not implemented. Never last-write-wins for marks/fees/safeguarding.
+**Attendance drafts offline:** `apply_offline_attendance_draft` with idempotency; **conflict** when server differs (no LWW) — see [OFFLINE_ATTENDANCE_SYNC.md](./OFFLINE_ATTENDANCE_SYNC.md). Never last-write-wins for marks/fees/safeguarding.
 
 ### 11.9 Outbox delivery contract
 
-Per-recipient rows: queued → processing → accepted/delivered/failed (see messaging migrations). Consent: `profiles.notify_*`. Quiet hours / Unicode segment cost preview = Missing.
+Per-recipient rows: queued → processing → accepted/delivered/failed (see messaging migrations). Consent: `profiles.notify_*` + purpose flags. Quiet hours + Unicode segment cost preview on Admin/platform compose. Broadcast outbox tagged `purpose=marketing` (`0074`).
 
 ### 11.10 Operational readiness
 

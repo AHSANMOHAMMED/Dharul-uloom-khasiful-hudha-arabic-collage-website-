@@ -1,17 +1,20 @@
 # Production deployment checklist
 
-Complete these steps after merging the website completion work.
+Engineering gate (repo): `npm run lint` and `npm run build` must pass.  
+Ops gate: [OPS_DRILLS.md](./OPS_DRILLS.md) + [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md).  
+Item tracker: [GAP_STATUS_REGISTER.md](./GAP_STATUS_REGISTER.md). Full steps: [GO_LIVE.md](./GO_LIVE.md).
 
 ## 1. Supabase database
 
-Apply migrations in order (`0001` through `0014`):
+1. Dashboard → Database → **Back up** before schema changes.
+2. Apply migrations through latest (`0001` … **`0074_p0_p1_logic_hardening.sql`**):
 
 ```bash
 supabase link --project-ref YOUR_PROJECT_REF
-supabase db push
+supabase db push --include-all
+# Optional local proof (needs Docker):
+npm run test:db
 ```
-
-Or paste each file from `supabase/migrations/` into the Supabase SQL editor in numeric order.
 
 ## 2. Environment variables
 
@@ -20,78 +23,48 @@ Or paste each file from `supabase/migrations/` into the Supabase SQL editor in n
 | Variable | Value |
 |----------|--------|
 | `VITE_SUPABASE_URL` | `https://YOUR_REF.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Anon key from Supabase dashboard |
+| `VITE_SUPABASE_ANON_KEY` | Anon/publishable key only |
+
+Never put the service-role key, PayHere secret, or DB password in `VITE_*`.
 
 ### Supabase Edge Function secrets
 
-Set in **Project Settings → Edge Functions → Secrets**:
-
 | Secret | Purpose |
 |--------|---------|
-| `SUPABASE_SERVICE_ROLE_KEY` | Auto-injected in hosted functions |
-| `PAYHERE_MERCHANT_ID` | PayHere merchant ID |
-| `PAYHERE_MERCHANT_SECRET` | PayHere secret |
-| `PAYHERE_SANDBOX` | `true` for testing, `false` for production |
-| `SITE_URL` | Production site URL (e.g. `https://your-domain.vercel.app`) |
-| `TWILIO_ACCOUNT_SID` | SMS / WhatsApp (optional until go-live) |
-| `TWILIO_AUTH_TOKEN` | Twilio auth token |
-| `TWILIO_FROM_NUMBER` | SMS from number |
-| `WHATSAPP_FROM` | e.g. `whatsapp:+14155238886` |
-| `RESEND_API_KEY` | Transactional email |
-| `MAIL_FROM` | From address for Resend |
-| `MAIL_NOTIFY_TO` | Inbox for contact form alerts |
+| `PAYHERE_MERCHANT_ID` / `PAYHERE_MERCHANT_SECRET` | Payments |
+| `PAYHERE_SANDBOX` | `true` until sandbox drill Pass, then `false` |
+| `SITE_URL` | Production site URL |
+| `TWILIO_*` / `WHATSAPP_FROM` | SMS / WhatsApp (optional until messaging go-live) |
+| `RESEND_API_KEY` / `MAIL_FROM` / `MAIL_NOTIFY_TO` | Email |
 
 ## 3. Deploy Edge Functions
 
 ```bash
-supabase functions deploy generate-monthly-fees
-supabase functions deploy create-payment
-supabase functions deploy payhere-notify
-supabase functions deploy send-outbound
-supabase functions deploy send-email
+npm run deploy:functions
+# or individually — include payhere-notify and create-payment immediately after fee migrations
 ```
 
-Configure PayHere **notify URL** to:
+PayHere **notify URL**: `https://YOUR_REF.supabase.co/functions/v1/payhere-notify`
 
-`https://YOUR_REF.supabase.co/functions/v1/payhere-notify`
+## 4. Frontend (Vercel)
 
-## 4. First admin user
-
-After registering, promote your account:
-
-```sql
-update public.profiles set role = 'admin' where email = 'you@example.com';
-```
-
-## 5. Seed content
-
-Use **Admin → Content CMS** to upload gallery photos and verify news/faculty/courses, or rely on migration seeds for course programs and gallery titles.
-
-## 6. PayHere go-live
-
-1. Register at [payhere.lk](https://www.payhere.lk/)
-2. Test with sandbox credentials (`PAYHERE_SANDBOX=true`)
-3. Switch to live credentials and set `PAYHERE_SANDBOX=false`
-
-## 7. Shamela library import (optional)
+Project is linked as `dharul-uloom-kashiful-hudha`. Prefer git push to `main` after commit, or:
 
 ```bash
-npm run import:shamela -- --dry-run --limit 20
-npm run import:shamela -- --limit 50
+vercel deploy --prod -y
 ```
 
-Requires `SHAMELA_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in `.env`.
+## 5. First admin / content
 
-## 8. Verify
+Promote admin in SQL if needed; seed CMS via Admin → Content.
 
-```bash
-npm run lint
-npm test
-npm run build
-```
+## 6. Acceptance before calling it “live”
 
-Smoke-test: login, admissions, library search, admin CMS, student fee pay flow (sandbox), PWA install on mobile.
+- [ ] `npm run lint` / `npm run build` green locally (or CI)
+- [ ] Migrations through `0074` on production Supabase
+- [ ] Edge functions + secrets deployed
+- [ ] [OPS_DRILLS.md](./OPS_DRILLS.md) §1 restore + §2 PayHere sandbox signed
+- [ ] [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md) PDPA / break-glass / guardian / welfare signed as required
+- [ ] College UAT (principal, finance, tutor, student, parent)
 
-## Legacy Express/Mongo backend
-
-The SPA no longer calls Express. Use `npm run dev:legacy` only if you need the old Mongo API for local tooling.
+Until the ops/policy boxes are checked, treat the site as **deployed engineering**, not institutional production acceptance.

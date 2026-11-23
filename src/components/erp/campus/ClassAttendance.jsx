@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { AsyncView, Button, Card, Field, Icon, Input, Stat, Table, useAsync, useLang } from '../ui';
-import { query, rpc, today } from '../../../lib/erp/rpc';
+import { rpc, today } from '../../../lib/erp/rpc';
 import { printTable } from '../../../lib/printReport';
 import { ClassSelect } from './common';
 import { useAction } from './hooks';
@@ -22,6 +22,7 @@ export default function ClassAttendance() {
   const [marks, setMarks] = useState({});
   const [correctId, setCorrectId] = useState('');
   const [correctReason, setCorrectReason] = useState('');
+  const [sessionReason, setSessionReason] = useState('');
   const [state, reload] = useAsync(() => rpc('class_attendance_sheet', { p_class: Number(cls), p_date: date }), [cls, date]);
 
   useEffect(() => {
@@ -44,13 +45,32 @@ export default function ClassAttendance() {
   const save = async () => {
     const rows = Object.entries(marks)
       .filter(([, v]) => v.status)
-      .map(([student_id, v]) => ({ student_id, date, status: v.status, excuse_note: v.excuse_note || null, marked_by: auth.user?.id }));
+      .map(([student_id, v]) => ({ student_id, status: v.status, excuse_note: v.excuse_note || null }));
     if (!rows.length) return;
+    const changingExisting = (state.data || []).some((r) => {
+      const next = marks[r.student_id];
+      return r.status && next?.status && (r.status !== next.status || (r.excuse_note || '') !== (next.excuse_note || ''));
+    });
+    if (changingExisting && !sessionReason.trim()) {
+      window.alert(t('A reason is required when changing saved attendance.', 'يلزم سبب عند تغيير حضور محفوظ.'));
+      return;
+    }
     const res = await run(
-      () => query('attendance', (q) => q.upsert(rows, { onConflict: 'student_id,date' }).select('id')),
-      (r) => `${r?.length ?? rows.length} ${t('attendance records saved', 'سجل حضور تم حفظه')}`
+      () => rpc('save_class_attendance_session', {
+        p_class: Number(cls),
+        p_date: date,
+        p_marks: rows,
+        p_correction_reason: sessionReason.trim() || null,
+      }),
+      (r) => {
+        const n = (r?.inserted || 0) + (r?.corrected || 0) + (r?.unchanged || 0);
+        return `${n} ${t('attendance records saved', 'سجل حضور تم حفظه')}`;
+      },
     );
-    if (res.ok) reload();
+    if (res.ok) {
+      setSessionReason('');
+      reload();
+    }
   };
 
   const correctOne = async () => {
@@ -119,6 +139,11 @@ export default function ClassAttendance() {
         <div className="w-40"><Field label={t('Class', 'الصف')}><ClassSelect value={cls} onChange={(v) => setCls(v || '1')} /></Field></div>
         <div className="w-48"><Field label={t('Date', 'التاريخ')}><Input type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value || today())} /></Field></div>
         <Button variant="secondary" onClick={() => markAll('present')}>{t('Mark unmarked as present', 'تحديد غير المسجلين كحاضرين')}</Button>
+        <div className="min-w-[12rem] flex-1">
+          <Field label={t('Change reason (if editing saved marks)', 'سبب التغيير (عند تعديل محفوظ)')}>
+            <Input value={sessionReason} onChange={(e) => setSessionReason(e.target.value)} placeholder={t('Required when changing existing rows', 'مطلوب عند تغيير صفوف موجودة')} />
+          </Field>
+        </div>
         <Button disabled={busy || !values.some((v) => v.status)} onClick={save}>{t('Save attendance', 'حفظ الحضور')}</Button>
       </div>
       <div className="flex flex-wrap gap-2 items-end mb-4 p-3 rounded-xl border border-sand-border bg-parchment-50">

@@ -45,7 +45,17 @@ function AppealsQueue({ canReview }) {
       p_notes: notes || null,
       p_resit_exam: resit,
     }), t('Appeal updated', 'تم تحديث الطعن'));
-    if (res.ok) reload();
+    if (res.ok) {
+      if (decision === 'accepted' && res.data?.correction_id) {
+        window.alert(
+          t(
+            `Accepted. Draft correction ${res.data.correction_id} created — set new marks via Apply correction on the marks grid.`,
+            `تم القبول. أُنشئ تصحيح مسودة ${res.data.correction_id} — عيّن العلامات الجديدة عبر تطبيق التصحيح.`,
+          ),
+        );
+      }
+      reload();
+    }
   };
   return (
     <Card title={t('Result appeals', 'طعون النتائج')} className="mt-6">
@@ -55,6 +65,17 @@ function AppealsQueue({ canReview }) {
             { key: 'student', label: t('Student', 'الطالب'), render: (r) => r.student?.full_name || '—' },
             { key: 'reason', label: t('Reason', 'السبب') },
             { key: 'status', label: t('Status', 'الحالة'), render: (r) => <Badge>{r.status}</Badge> },
+            {
+              key: 'corr',
+              label: t('Correction', 'التصحيح'),
+              render: (r) => (r.correction_id ? (
+                <span className="text-xs text-emerald-300 font-mono" title={r.correction_id}>
+                  {String(r.correction_id).slice(0, 8)}…
+                </span>
+              ) : r.resit_exam_id ? (
+                <Badge tone="amber">{t('Resit linked', 'إعادة مرتبطة')}</Badge>
+              ) : '—'),
+            },
             {
               key: 'act', label: '',
               render: (r) => (canReview && ['filed', 'under_review'].includes(r.status) ? (

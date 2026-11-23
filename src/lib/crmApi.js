@@ -40,39 +40,16 @@ export async function listCrmAdmissions() {
 
 export async function moveAdmissionStage(id, toStage, note = '') {
   if (!isSupabaseConfigured) throw new Error('Not configured');
-  const { data: current } = await supabase
-    .from('admissions')
-    .select('pipeline_stage, status')
-    .eq('id', id)
-    .single();
-
-  const statusMap = {
-    lead: 'lead',
-    submitted: 'pending',
-    interview: 'pending',
-    accepted: 'approved',
-    enrolled: 'enrolled',
-    rejected: 'rejected',
-  };
-
-  const { error } = await supabase
-    .from('admissions')
-    .update({
-      pipeline_stage: toStage,
-      status: statusMap[toStage] || toStage,
-      reviewed_at: new Date().toISOString(),
-    })
-    .eq('id', id);
-  if (error) throw error;
-
-  const { data: { user } } = await supabase.auth.getUser();
-  await supabase.from('admission_status_history').insert({
-    admission_id: id,
-    from_stage: current?.pipeline_stage || null,
-    to_stage: toStage,
-    changed_by: user?.id || null,
-    note: note || null,
+  if (toStage === 'enrolled') {
+    throw new Error('Use enrollAdmission to enrol an applicant');
+  }
+  const { data, error } = await supabase.rpc('transition_admission_stage', {
+    p_admission: id,
+    p_to_stage: toStage,
+    p_note: note || null,
   });
+  if (error) throw error;
+  return data;
 }
 
 export async function addAdmissionNote(admissionId, body) {

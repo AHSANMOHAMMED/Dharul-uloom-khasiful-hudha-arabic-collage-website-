@@ -19,6 +19,8 @@ function QuizManager({ classNumber }) {
   const [quizzes, setQuizzes] = useState([]);
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
+  const [maxAttempts, setMaxAttempts] = useState('1');
+  const [timeLimit, setTimeLimit] = useState('');
   const [qPrompt, setQPrompt] = useState('');
   const [qAnswer, setQAnswer] = useState('');
   const [selected, setSelected] = useState('');
@@ -33,7 +35,13 @@ function QuizManager({ classNumber }) {
   const create = async (e) => {
     e.preventDefault();
     const { data, error } = await supabase.rpc('create_lms_quiz', {
-      p_class: classNumber, p_subject: subject || 'General', p_title: title, p_instructions: null, p_due: null,
+      p_class: classNumber,
+      p_subject: subject || 'General',
+      p_title: title,
+      p_instructions: null,
+      p_due: null,
+      p_max_attempts: Math.max(1, Math.min(10, Number(maxAttempts) || 1)),
+      p_time_limit_minutes: timeLimit ? Number(timeLimit) : null,
     });
     if (error) return;
     setTitle('');
@@ -63,9 +71,11 @@ function QuizManager({ classNumber }) {
   return (
     <div className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3">
       <h3 className="font-bold text-sm text-[#0B3B2E]">{tx('اختبارات LMS', 'LMS quizzes')}</h3>
-      <form onSubmit={create} className="grid sm:grid-cols-3 gap-2">
+      <form onSubmit={create} className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2">
         <input className={inputCls} placeholder={tx('العنوان', 'Title')} value={title} onChange={(e) => setTitle(e.target.value)} required />
         <input className={inputCls} placeholder={tx('المادة', 'Subject')} value={subject} onChange={(e) => setSubject(e.target.value)} />
+        <input className={inputCls} type="number" min="1" max="10" placeholder={tx('محاولات', 'Attempts')} value={maxAttempts} onChange={(e) => setMaxAttempts(e.target.value)} />
+        <input className={inputCls} type="number" min="1" placeholder={tx('دقائق (اختياري)', 'Minutes (optional)')} value={timeLimit} onChange={(e) => setTimeLimit(e.target.value)} />
         <button type="submit" className="px-3 py-2 bg-[#11694A] text-white text-xs font-bold rounded-xl">{tx('إنشاء مسودة', 'Create draft')}</button>
       </form>
       {selected && (
@@ -79,7 +89,11 @@ function QuizManager({ classNumber }) {
         {quizzes.map((q) => (
           <li key={q.id} className="flex flex-wrap items-center gap-2 bg-white border border-[#E8E1D0] rounded-xl p-2.5">
             <button type="button" className="font-bold text-[#0B3B2E]" onClick={() => setSelected(q.id)}>{q.title}</button>
-            <span className="text-[#4A5E56]">{q.status}</span>
+            <span className="text-[#4A5E56]">
+              {q.status}
+              {q.max_attempts ? ` · ${tx('محاولات', 'attempts')} ${q.max_attempts}` : ''}
+              {q.time_limit_minutes ? ` · ${q.time_limit_minutes}m` : ''}
+            </span>
             {q.status === 'draft' && (
               <button type="button" className="text-[#11694A] font-bold" onClick={() => publish(q.id)}>{tx('نشر', 'Publish')}</button>
             )}

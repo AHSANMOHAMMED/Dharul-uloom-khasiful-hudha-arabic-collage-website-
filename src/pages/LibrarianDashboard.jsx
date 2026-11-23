@@ -583,6 +583,22 @@ function LibraryCirculationPanel({ books }) {
     load();
   };
 
+  const renew = async (id) => {
+    const { error } = await supabase.rpc('renew_library_loan', { p_loan: id, p_due: null });
+    if (error) { toast.error(error.message); return; }
+    toast.success(tx('تم التجديد', 'Renewed'));
+    load();
+  };
+
+  const markLost = async (id) => {
+    const reason = window.prompt(tx('سبب الفقدان', 'Lost reason'), '');
+    if (!reason?.trim()) return;
+    const { error } = await supabase.rpc('mark_library_loan_lost', { p_loan: id, p_reason: reason.trim() });
+    if (error) { toast.error(error.message); return; }
+    toast.success(tx('عُلّم مفقودًا', 'Marked lost'));
+    load();
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-[#E8E1D0] p-4 sm:p-6 space-y-4">
       <h2 className="font-serif font-bold text-[#0B3B2E] text-lg">{tx('إعارة وإرجاع', 'Checkout & return')}</h2>
@@ -611,9 +627,19 @@ function LibraryCirculationPanel({ books }) {
           <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 border border-[#E8E1D0] rounded-xl p-2.5">
             <div>
               <div className="font-bold text-[#0B3B2E]">{l.books?.title_ar || l.books?.title_en || l.book_id}</div>
-              <div className="text-[#4A5E56]">{l.profiles?.full_name || l.borrower_id} · {l.status} · {tx('الاستحقاق', 'due')} {l.due_at}</div>
+              <div className="text-[#4A5E56]">
+                {l.profiles?.full_name || l.borrower_id} · {l.status}
+                {' · '}{tx('الاستحقاق', 'due')} {l.due_at}
+                {l.renew_count != null ? ` · ${tx('تجديدات', 'renewals')} ${l.renew_count}` : ''}
+              </div>
             </div>
-            <button type="button" className="text-[#11694A] font-bold" onClick={() => ret(l.id)}>{tx('إرجاع', 'Return')}</button>
+            <div className="flex flex-wrap gap-2">
+              {l.status === 'out' && (
+                <button type="button" className="text-[#0B3B2E] font-bold" onClick={() => renew(l.id)}>{tx('تجديد', 'Renew')}</button>
+              )}
+              <button type="button" className="text-[#11694A] font-bold" onClick={() => ret(l.id)}>{tx('إرجاع', 'Return')}</button>
+              <button type="button" className="text-red-700 font-bold" onClick={() => markLost(l.id)}>{tx('مفقود', 'Lost')}</button>
+            </div>
           </li>
         ))}
         {!loans.length && <li className="text-[#4A5E56]">{tx('لا إعارات مفتوحة', 'No open loans')}</li>}

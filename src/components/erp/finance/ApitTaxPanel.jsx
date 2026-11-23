@@ -23,10 +23,46 @@ export default function ApitTaxPanel() {
     [],
   );
 
+  const validateBrackets = (brackets) => {
+    if (!Array.isArray(brackets) || !brackets.length) {
+      throw new Error(t('Brackets must be a non-empty array', 'يجب أن تكون الشرائح مصفوفة غير فارغة'));
+    }
+    let prev = null;
+    brackets.forEach((b, i) => {
+      const rate = Number(b.rate);
+      if (Number.isNaN(rate) || rate < 0 || rate > 100) {
+        throw new Error(t(`Invalid rate at tier ${i + 1}`, `معدل غير صالح في الشريحة ${i + 1}`));
+      }
+      const up = b.up_to == null ? null : Number(b.up_to);
+      if (up != null && (Number.isNaN(up) || up <= 0)) {
+        throw new Error(t(`Invalid up_to at tier ${i + 1}`, `حد أعلى غير صالح في الشريحة ${i + 1}`));
+      }
+      if (prev != null && up != null && up <= prev) {
+        throw new Error(t('Brackets must be strictly ascending by up_to', 'يجب أن تتصاعد الشرائح حسب up_to'));
+      }
+      if (prev != null && up == null && i !== brackets.length - 1) {
+        throw new Error(t('Only the last tier may have null up_to', 'الشريحة الأخيرة فقط قد تكون بلا حد أعلى'));
+      }
+      if (up != null) prev = up;
+    });
+    const last = brackets[brackets.length - 1];
+    if (last.up_to != null) {
+      throw new Error(t('Final tier should use null up_to (open-ended)', 'الشريحة الأخيرة يجب أن تكون مفتوحة (up_to: null)'));
+    }
+  };
+
   const save = async () => {
     let brackets;
     try { brackets = JSON.parse(bracketsText); }
-    catch { return; }
+    catch {
+      window.alert(t('Invalid JSON', 'JSON غير صالح'));
+      return;
+    }
+    try { validateBrackets(brackets); }
+    catch (e) {
+      window.alert(e.message || String(e));
+      return;
+    }
     const res = await run(() => rpc('upsert_payroll_tax_table', {
       p_effective_from: effectiveFrom,
       p_brackets: brackets,

@@ -83,7 +83,23 @@ native plugin config.
 
 ## Tests
 
-- `npm run test:db`: 20 database tests cover the gate (aal1 vs aal2, enrolled vs
-  not, org requirement, other-org isolation, the self-lockout guard).
+- `npm run test:db`: database suite in `supabase/tests/rls_erp_test.sql` covers
+  MFA (aal1 vs aal2), other-org isolation, storage negatives, lifecycle RPC
+  AuthZ, guardian permission gates, break-glass elevation, and PayHere
+  idempotency helpers. Expand negatives whenever a new `SECURITY DEFINER` RPC
+  or storage bucket lands.
 - `npm test`: `src/test/security.test.jsx` covers the gate, the code step,
   enrolment and the password policy.
+
+## Per-release AuthZ checklist (P0)
+
+Before treating a release as AuthZ-complete, record evidence for:
+
+1. **Tenant** — Org A actor cannot read/write Org B rows via table, RPC args, or storage path (`rls_erp_test.sql` other-college cases).
+2. **Role / relationship** — Student, parent (linked vs unlinked), tutor, finance, welfare scopes each have at least one deny case.
+3. **Record state** — Published exams, period lock, revoked guardians, expired break-glass refuse the privileged action.
+4. **SECURITY DEFINER RPCs** — Caller check + fixed `search_path`; no client-supplied role/org as authority. New RPCs get a pgTAP fail case.
+5. **Storage** — Private buckets deny anonymous, cross-tenant, and wrong-role listing.
+6. **Edge Functions** — Privileged paths use `supabase/functions/_shared/authz.ts` (`callerIsAdmin` / `callerIsEmployee` / `callerMfaOk`) with the caller JWT; never decide admin from a service-role profile lookup.
+
+Track open items in [GAP_STATUS_REGISTER.md](./GAP_STATUS_REGISTER.md). Production drills live in [OPS_DRILLS.md](./OPS_DRILLS.md).
