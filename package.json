@@ -41,7 +41,7 @@
     "exceljs": "^4.4.0",
     "i18next": "^23.7.6",
     "mammoth": "^1.13.0",
-    "react": "19.0.0",
+    "react": "19.3.1",
     "react-dom": "19.0.0",
     "react-helmet": "^6.1.0",
     "react-hook-form": "^7.66.0",
