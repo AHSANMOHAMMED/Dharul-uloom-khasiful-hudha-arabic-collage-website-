@@ -5,6 +5,7 @@ import { deleteRow, downloadCsv, formatDate, insertRow, query, queryAll, rpc, to
 import { useAction } from './hooks';
 import StaffRecord from './StaffRecord';
 import { useUrlState } from '../../../lib/useTabParam';
+import { appConfirm, appPrompt } from '../../../lib/appDialog';
 
 const ATT = ['present', 'half_day', 'leave', 'absent', 'holiday'];
 const ATT_LABEL = { present: ['Present', 'حاضر'], half_day: ['Half day', 'نصف يوم'], leave: ['Leave', 'إجازة'], absent: ['Absent', 'غائب'], holiday: ['Holiday', 'عطلة'] };
@@ -136,7 +137,10 @@ function LeaveQueue() {
     [status]
   );
   const review = async (r, approve) => {
-    const note = window.prompt(approve ? t('Approval note (optional):', 'ملاحظة الموافقة (اختياري):') : t('Reason for rejection:', 'سبب الرفض:'), '');
+    const note = await appPrompt({
+      title: approve ? t('Approve Leave', 'اعتماد الإجازة') : t('Reject Leave', 'رفض الإجازة'),
+      message: approve ? t('Approval note (optional):', 'ملاحظة الموافقة (اختياري):') : t('Reason for rejection:', 'سبب الرفض:'),
+    });
     if (note === null) return;
     const res = await run(() => rpc('review_staff_leave', { p_request: r.id, p_approve: approve, p_note: note || null }), approve ? t('Leave approved', 'تمت الموافقة') : t('Leave rejected', 'تم الرفض'));
     if (res.ok) reload();
@@ -181,7 +185,7 @@ function LeaveTypes({ canEdit }) {
     }
   };
   const remove = async (r) => {
-    if (!window.confirm(t(`Delete leave type ${r.name}? Types already used cannot be deleted — deactivate them instead.`, `حذف ${r.name}؟ الأنواع المستخدمة لا تحذف — عطلها بدلًا من ذلك.`))) return;
+    if (!(await appConfirm({ danger: true, message: t(`Delete leave type ${r.name}? Types already used cannot be deleted — deactivate them instead.`, `حذف ${r.name}؟ الأنواع المستخدمة لا تحذف — عطلها بدلًا من ذلك.`) }))) return;
     const res = await run(() => deleteRow('staff_leave_types', r.id), t('Deleted', 'تم الحذف'));
     if (res.ok) reload();
   };

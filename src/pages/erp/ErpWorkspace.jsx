@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { useFeatures } from '../../context/FeatureFlagsContext';
 import { Loading, useLang } from '../../components/erp/ui';
@@ -140,7 +141,7 @@ function ActingOrgBanner({ userId }) {
       window.location.reload();
     } catch (e) {
       setBusy(false);
-      window.alert(e.message || String(e));
+      toast.error(e.message || String(e));
     }
   };
   const name = (lang === 'ar' && org.name_ar) || org.name_en || org.slug;

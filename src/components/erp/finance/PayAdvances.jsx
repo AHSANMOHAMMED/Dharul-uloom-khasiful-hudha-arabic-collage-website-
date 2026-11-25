@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { appConfirm } from '../../../lib/appDialog';
 import { AsyncView, Button, Card, Field, Input, Modal, Select, StatusBadge, Table, Textarea, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
 import { query, rpc, formatMoney, formatDate } from '../../../lib/erp/rpc';
@@ -22,7 +23,7 @@ function AdvanceForm({ onClose, onSaved }) {
       ];
 
   const save = async () => {
-    if (!window.confirm(t(`Issue an advance of ${formatMoney(amount)}?`, `صرف سلفة بقيمة ${formatMoney(amount)}؟`))) return;
+    if (!(await appConfirm(t(`Issue an advance of ${formatMoney(amount)}?`, `صرف سلفة بقيمة ${formatMoney(amount)}؟`)))) return;
     setBusy(true);
     const ok = await runAction(
       () =>

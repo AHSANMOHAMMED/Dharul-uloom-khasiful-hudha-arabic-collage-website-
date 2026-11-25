@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { appConfirm } from '../../../lib/appDialog';
 import { AsyncView, Badge, Button, Card, Field, Input, Modal, PageHeader, Select, Stat, StatusBadge, Table, Textarea, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
 import { query, rpc, formatMoney, formatDate, today, downloadCsv } from '../../../lib/erp/rpc';
@@ -45,7 +46,7 @@ function DonationForm({ onClose, onSaved }) {
   const valid = num(form.amount) > 0 && form.date && (form.is_anonymous || form.donor_name.trim()) && (form.method === 'cash' || form.reference.trim());
 
   const save = async () => {
-    if (!window.confirm(t(`Record donation of ${formatMoney(num(form.amount))}?`, `تسجيل تبرع بقيمة ${formatMoney(num(form.amount))}؟`))) return;
+    if (!(await appConfirm(t(`Record donation of ${formatMoney(num(form.amount))}?`, `تسجيل تبرع بقيمة ${formatMoney(num(form.amount))}؟`)))) return;
     setBusy(true);
     const res = await runAction(() =>
       rpc('record_donation', {

@@ -8,6 +8,7 @@ import MfaEnroll from '../components/security/MfaEnroll';
 import KhatamPattern from '../components/KhatamPattern';
 import Icon from '../components/Icon';
 import { tx } from '../lib/tx';
+import { appConfirm } from '../lib/appDialog';
 import PageNavBar from '../components/PageNavBar';
 import { portalHomeFor } from '../lib/useHistoryNav';
 
@@ -55,7 +56,7 @@ export default function AccountSecurity() {
       toast.warn(tx('دورك يتطلب التحقق بخطوتين. أضف جهازاً آخر قبل إزالة هذا الجهاز.', 'Your role requires two-step verification. Add another device before removing this one.'));
       return;
     }
-    if (!window.confirm(tx('إزالة هذا الجهاز من التحقق بخطوتين؟', 'Remove this device from two-step verification?'))) return;
+    if (!(await appConfirm({ danger: true, message: tx('إزالة هذا الجهاز من التحقق بخطوتين؟', 'Remove this device from two-step verification?') }))) return;
     setBusy(true);
     try {
       await removeFactor(f.id);

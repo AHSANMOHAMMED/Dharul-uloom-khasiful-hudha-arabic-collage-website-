@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { appConfirm } from '../../../lib/appDialog';
 import { AsyncView, Badge, Button, Card, Field, Icon, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
 import { query, rpc, insertRow, updateRow, deleteRow, formatMoney, formatDate, today, downloadCsv } from '../../../lib/erp/rpc';
@@ -238,7 +239,7 @@ export default function ExpensesPanel() {
   }, [scope, filters.status, filters.from, filters.to, user?.id]);
 
   const approve = async (e) => {
-    if (!window.confirm(`${t('Approve', 'اعتماد')} ${e.expense_no} · ${formatMoney(e.amount)}?`)) return;
+    if (!(await appConfirm(`${t('Approve', 'اعتماد')} ${e.expense_no} · ${formatMoney(e.amount)}?`))) return;
     if (await runAction(() => rpc('approve_expense', { p_expense: e.id, p_approve: true }), t('Expense approved', 'تم اعتماد المصروف'))) reload();
   };
 

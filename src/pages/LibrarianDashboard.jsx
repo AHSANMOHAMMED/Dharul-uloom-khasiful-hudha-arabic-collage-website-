@@ -17,6 +17,7 @@ import RoleSwitcher from '../components/RoleSwitcher';
 import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
 import { assertSafeImage } from '../lib/contentApi';
+import { appConfirm, appPrompt } from '../lib/appDialog';
 
 const TaskBoard = lazy(() => import('../components/erp/governance/TaskBoard'));
 const MySelfServicePanel = lazy(() => import('../components/erp/campus/MySelfServicePanel'));
@@ -196,7 +197,7 @@ const LibrarianDashboard = () => {
   };
 
   const handleDelete = async (book) => {
-    if (!window.confirm(`${tx('هل أنت متأكد من حذف هذا الكتاب؟', 'Delete this book from the catalog?')} ${book.title_ar}`)) return;
+    if (!(await appConfirm({ danger: true, message: `${tx('هل أنت متأكد من حذف هذا الكتاب؟', 'Delete this book from the catalog?')} ${book.title_ar}` }))) return;
     const { error } = await supabase.from('books').delete().eq('id', book.id);
     if (error) {
       toast.error(error.message);
@@ -649,7 +650,7 @@ function LibraryCirculationPanel({ books }) {
   };
 
   const markLost = async (id) => {
-    const reason = window.prompt(tx('سبب الفقدان', 'Lost reason'), '');
+    const reason = await appPrompt({ title: tx('تسجيل كتاب مفقود', 'Mark Book Lost'), message: tx('سبب الفقدان', 'Lost reason') });
     if (!reason?.trim()) return;
     const { error } = await supabase.rpc('mark_library_loan_lost', { p_loan: id, p_reason: reason.trim() });
     if (error) { toast.error(error.message); return; }

@@ -187,5 +187,6 @@
   "Sent": "அனுப்பப்பட்டது",
   "Attach photo or PDF": "படம் அல்லது PDF இணை",
   "Attachment": "இணைப்பு",
-  "Could not send attachment": "இணைப்பை அனுப்ப முடியவில்லை"
+  "Could not send attachment": "இணைப்பை அனுப்ப முடியவில்லை",
+  "No data to export.": "ஏற்றுமதி செய்யத் தரவு இல்லை."
 }

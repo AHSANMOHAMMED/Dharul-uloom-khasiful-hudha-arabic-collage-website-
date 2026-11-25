@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 import { AsyncView, Button, Card, Field, Input, Table, Textarea, useAsync, useLang } from '../ui';
 import { formatDate, query, rpc, today } from '../../../lib/erp/rpc';
 import { useAction } from '../campus/hooks';
@@ -55,12 +56,12 @@ export default function ApitTaxPanel() {
     let brackets;
     try { brackets = JSON.parse(bracketsText); }
     catch {
-      window.alert(t('Invalid JSON', 'JSON غير صالح'));
+      toast.error(t('Invalid JSON', 'JSON غير صالح'));
       return;
     }
     try { validateBrackets(brackets); }
     catch (e) {
-      window.alert(e.message || String(e));
+      toast.error(e.message || String(e));
       return;
     }
     const res = await run(() => rpc('upsert_payroll_tax_table', {

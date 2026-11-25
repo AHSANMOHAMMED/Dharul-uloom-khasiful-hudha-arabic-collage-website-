@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 import { AsyncView, Badge, Button, Card, Field, Input, Select, Table, Textarea, useAsync, useLang } from '../ui';
 import { formatDate, formatMoney, query, rpc, today } from '../../../lib/erp/rpc';
 import { useAction } from '../campus/hooks';
@@ -83,7 +84,7 @@ export default function BankReconPanel() {
   const importCsv = async () => {
     const rows = parseBankCsv(csvText);
     if (!rows.length) {
-      window.alert(t('No valid CSV rows (need date,amount[,reference,description]).', 'لا صفوف CSV صالحة.'));
+      toast.error(t('No valid CSV rows (need date,amount[,reference,description]).', 'لا صفوف CSV صالحة.'));
       return;
     }
     const res = await run(

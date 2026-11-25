@@ -10,9 +10,12 @@
  * @param {Array<Object>} data   - Array of flat objects (rows)
  * @param {string}        filename - e.g. "fee_report_2026-06.csv"
  */
+import { toast } from 'react-toastify';
+import { tx } from './tx';
+
 export function exportToCSV(data, filename = 'export.csv') {
   if (!data || data.length === 0) {
-    alert('No data to export.');
+    toast.info(tx('لا توجد بيانات للتصدير.', 'No data to export.'));
     return;
   }
 

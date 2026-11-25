@@ -9,6 +9,7 @@ import OfflineIndicator from './components/OfflineIndicator'
 import InstallPrompt from './components/InstallPrompt'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { AppDialogHost } from './lib/appDialog'
 import { tx } from './lib/tx';
 import MfaGate from './components/security/MfaGate';
 
@@ -115,6 +116,7 @@ function AppShell({ children }) {
         <OfflineIndicator />
         <InstallPrompt />
         <ToastContainer position="bottom-center" theme="colored" autoClose={5000} />
+        <AppDialogHost />
       </div>
     );
   }
@@ -128,6 +130,7 @@ function AppShell({ children }) {
       <OfflineIndicator />
       <InstallPrompt />
       <ToastContainer position="bottom-center" theme="colored" autoClose={5000} />
+      <AppDialogHost />
     </div>
   );
 }

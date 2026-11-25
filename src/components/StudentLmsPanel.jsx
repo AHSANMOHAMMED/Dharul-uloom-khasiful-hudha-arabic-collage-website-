@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -30,7 +31,7 @@ function StudentQuizTake({ classNumber }) {
   const start = async (quizId) => {
     const { data: aid, error } = await supabase.rpc('start_or_resume_quiz', { p_quiz: quizId });
     if (error) {
-      window.alert(error.message || tx('تعذر بدء الاختبار', 'Could not start quiz'));
+      toast.error(error.message || tx('تعذر بدء الاختبار', 'Could not start quiz'));
       return;
     }
     const { data: qs } = await supabase.rpc('student_quiz_questions', { p_quiz: quizId });
@@ -43,7 +44,7 @@ function StudentQuizTake({ classNumber }) {
   const submit = async () => {
     const { data, error } = await supabase.rpc('submit_quiz_attempt', { p_attempt: attemptId, p_answers: answers });
     if (error) {
-      window.alert(error.message || tx('تعذر التسليم', 'Could not submit'));
+      toast.error(error.message || tx('تعذر التسليم', 'Could not submit'));
       return;
     }
     setResult(data);

@@ -36,7 +36,7 @@ export async function copyReceiptLink(token, t) {
     await navigator.clipboard.writeText(url);
     toast.success(t('Receipt link copied', 'تم نسخ رابط الإيصال'));
   } catch {
-    window.prompt(t('Copy this link', 'انسخ هذا الرابط'), url);
+    toast.info(url);
   }
 }
 

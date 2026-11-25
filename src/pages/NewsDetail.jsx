@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getNewsById, listNews, resolveContentUrl } from '../lib/contentApi';
@@ -158,7 +159,7 @@ export default function NewsDetail() {
             onClick={() => {
               if (navigator.clipboard) {
                 navigator.clipboard.writeText(window.location.href);
-                alert(tx('تم نسخ رابط الخبر', 'Article URL copied to clipboard'));
+                toast.success(tx('تم نسخ رابط الخبر', 'Article URL copied to clipboard'));
               }
             }}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sand-border hover:bg-paper-white text-ink-text-secondary transition-colors"
