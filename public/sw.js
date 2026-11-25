@@ -8,7 +8,7 @@
 //   - Supabase API calls: Network-Only
 // =============================================================================
 
-const CACHE_VERSION = 'v1.1.0';
+const CACHE_VERSION = 'v1.1.1';
 const STATIC_CACHE = `kashiful-hudha-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `kashiful-hudha-runtime-${CACHE_VERSION}`;
 
@@ -57,8 +57,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   if (
-    url.hostname.includes('supabase.co') ||
-    url.hostname.includes('googleapis.com') ||
+    url.origin !== self.location.origin ||
     url.pathname.startsWith('/api/')
   ) {
     return;
