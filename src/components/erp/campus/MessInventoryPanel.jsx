@@ -627,7 +627,7 @@ export default function MessInventoryPanel() {
       </AsyncView>
 
       {itemModal && (
-        <Modal title={itemModal.id ? t('Edit Store Item', 'تعديل صنف المخزن') : t('Add Store Item', 'إضافة صنف للمخزن')} onClose={() => setItemModal(null)}>
+        <Modal open={Boolean(itemModal)} title={itemModal.id ? t('Edit Store Item', 'تعديل صنف المخزن') : t('Add Store Item', 'إضافة صنف للمخزن')} onClose={() => setItemModal(null)}>
           <form onSubmit={saveItem} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label={t('Item Name', 'اسم الصنف')}>
@@ -674,7 +674,7 @@ export default function MessInventoryPanel() {
       )}
 
       {mealModal && (
-        <Modal title={t('Daily Meal Plan', 'خطة الوجبة اليومية')} onClose={() => setMealModal(null)}>
+        <Modal open={Boolean(mealModal)} title={t('Daily Meal Plan', 'خطة الوجبة اليومية')} onClose={() => setMealModal(null)}>
           <form onSubmit={saveMeal} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label={t('Date', 'التاريخ')}>

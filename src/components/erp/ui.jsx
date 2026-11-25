@@ -130,11 +130,11 @@ export function Textarea(props) {
   return <textarea className={inputCls} rows={3} {...props} />;
 }
 
-export function Select({ options = [], placeholder, ...props }) {
+export function Select({ options = [], placeholder, children, ...props }) {
   return (
     <select className={inputCls} {...props}>
       {placeholder !== undefined && <option value="">{placeholder}</option>}
-      {options.map((o) => (
+      {children || options.map((o) => (
         <option key={o.value} value={o.value}>
           {o.label}
         </option>
