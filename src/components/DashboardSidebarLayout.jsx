@@ -70,7 +70,9 @@ export default function DashboardSidebarLayout({
   if (!isParent && isApproved && enabled('library') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian) && location.pathname !== '/library') {
     defaultQuickLinks.push({ to: '/library', label_en: 'Digital Maktabah', label_ar: 'المكتبة الرقمية', icon: 'auto_stories' });
   }
-  defaultQuickLinks.push({ to: '/', label_en: 'College Homepage', label_ar: 'بوابة الكلية العامة', icon: 'public' });
+  if (!onPortalDashboard) {
+    defaultQuickLinks.push({ to: '/', label_en: 'College Homepage', label_ar: 'بوابة الكلية العامة', icon: 'public' });
+  }
 
   const effectiveQuickLinks = quickLinks.length > 0 ? quickLinks : defaultQuickLinks;
 
