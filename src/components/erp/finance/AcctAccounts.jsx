@@ -5,28 +5,41 @@ import { insertRow, updateRow } from '../../../lib/erp/rpc';
 import { ACCOUNT_SUBTYPES, ACCOUNT_TYPES, labelOf, listAccounts, runAction, toOptions } from '../../../lib/erp/financeApi';
 import { ConfirmModal, FilterBar } from './shared';
 
-function AccountForm({ accounts, onClose, onSaved }) {
+function AccountForm({ initial, accounts, onClose, onSaved }) {
   const { t } = useLang();
-  const [form, setForm] = useState({ code: '', name: '', name_ar: '', type: 'expense', subtype: 'other', parent_id: '', description: '' });
+  const [form, setForm] = useState(
+    initial
+      ? {
+          code: initial.code || '',
+          name: initial.name || '',
+          name_ar: initial.name_ar || '',
+          type: initial.type || 'expense',
+          subtype: initial.subtype || 'other',
+          parent_id: initial.parent_id || '',
+          description: initial.description || '',
+        }
+      : { code: '', name: '', name_ar: '', type: 'expense', subtype: 'other', parent_id: '', description: '' },
+  );
   const [busy, setBusy] = useState(false);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
-  const codeTaken = accounts.some((a) => a.code === form.code.trim());
+  const codeTaken = accounts.some((a) => a.code === form.code.trim() && a.id !== initial?.id);
   const valid = form.code.trim() && form.name.trim() && !codeTaken;
 
   const save = async () => {
     setBusy(true);
+    const payload = {
+      name: form.name.trim(),
+      name_ar: form.name_ar.trim() || null,
+      subtype: form.subtype || null,
+      parent_id: form.parent_id || null,
+      description: form.description.trim() || null,
+    };
     const ok = await runAction(
       () =>
-        insertRow('accounts', {
-          code: form.code.trim(),
-          name: form.name.trim(),
-          name_ar: form.name_ar.trim() || null,
-          type: form.type,
-          subtype: form.subtype || null,
-          parent_id: form.parent_id || null,
-          description: form.description.trim() || null,
-        }),
-      t('Account created', 'تم إنشاء الحساب'),
+        initial?.id
+          ? updateRow('accounts', initial.id, payload)
+          : insertRow('accounts', { ...payload, code: form.code.trim(), type: form.type }),
+      initial?.id ? t('Account updated', 'تم تحديث الحساب') : t('Account created', 'تم إنشاء الحساب'),
     );
     setBusy(false);
     if (ok) onSaved();
@@ -35,7 +48,7 @@ function AccountForm({ accounts, onClose, onSaved }) {
   return (
     <Modal
       open
-      title={t('New account', 'حساب جديد')}
+      title={initial?.id ? t('Edit account', 'تعديل الحساب') : t('New account', 'حساب جديد')}
       onClose={onClose}
       footer={
         <>
@@ -50,10 +63,10 @@ function AccountForm({ accounts, onClose, onSaved }) {
     >
       <div className="grid grid-cols-2 gap-3">
         <Field label={t('Code', 'الرمز')} hint={codeTaken ? t('Code already in use', 'الرمز مستخدم') : undefined}>
-          <Input value={form.code} onChange={(e) => set({ code: e.target.value })} placeholder="5950" />
+          <Input value={form.code} onChange={(e) => set({ code: e.target.value })} placeholder="5950" disabled={Boolean(initial?.id)} />
         </Field>
         <Field label={t('Type', 'النوع')}>
-          <Select value={form.type} onChange={(e) => set({ type: e.target.value })} options={toOptions(ACCOUNT_TYPES, t)} />
+          <Select value={form.type} onChange={(e) => set({ type: e.target.value })} options={toOptions(ACCOUNT_TYPES, t)} disabled={Boolean(initial?.id)} />
         </Field>
         <Field label={t('Name (English)', 'الاسم (إنجليزي)')}>
           <Input value={form.name} onChange={(e) => set({ name: e.target.value })} />
@@ -85,7 +98,7 @@ export default function AcctAccounts() {
   const { isAccountant } = useAuth();
   const [type, setType] = useState('');
   const [search, setSearch] = useState('');
-  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [toggling, setToggling] = useState(null);
   const [state, reload] = useAsync(() => listAccounts(), []);
 
@@ -101,7 +114,7 @@ export default function AcctAccounts() {
       title={t('Chart of accounts', 'دليل الحسابات')}
       actions={
         isAccountant && (
-          <Button size="sm" onClick={() => setCreating(true)} disabled={!state.data}>
+          <Button size="sm" onClick={() => setEditing({})} disabled={!state.data}>
             + {t('New account', 'حساب جديد')}
           </Button>
         )
@@ -150,21 +163,27 @@ export default function AcctAccounts() {
                 render: (a) =>
                   isAccountant &&
                   !a.is_system && (
-                    <Button size="sm" variant="ghost" onClick={() => setToggling(a)}>
-                      {a.is_active ? t('Deactivate', 'تعطيل') : t('Activate', 'تفعيل')}
-                    </Button>
+                    <div className="flex flex-wrap gap-1 justify-end">
+                      <Button size="sm" variant="ghost" onClick={() => setEditing(a)}>
+                        {t('Edit', 'تعديل')}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setToggling(a)}>
+                        {a.is_active ? t('Deactivate', 'تعطيل') : t('Activate', 'تفعيل')}
+                      </Button>
+                    </div>
                   ),
               },
             ]}
           />
         )}
       </AsyncView>
-      {creating && (
+      {editing && (
         <AccountForm
+          initial={editing.id ? editing : null}
           accounts={state.data || []}
-          onClose={() => setCreating(false)}
+          onClose={() => setEditing(null)}
           onSaved={() => {
-            setCreating(false);
+            setEditing(null);
             reload();
           }}
         />

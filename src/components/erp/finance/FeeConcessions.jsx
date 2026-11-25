@@ -1,13 +1,25 @@
 import { useState } from 'react';
 import { AsyncView, Badge, Button, Card, Field, Input, Modal, Select, Table, Textarea, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
-import { query, insertRow, updateRow, formatDate, formatMoney, today } from '../../../lib/erp/rpc';
+import { query, insertRow, updateRow, deleteRow, formatDate, formatMoney, today } from '../../../lib/erp/rpc';
 import { num, profilesMap, runAction } from '../../../lib/erp/financeApi';
 import { ConfirmModal, StudentPicker } from './shared';
 
-function ConcessionForm({ categories, onClose, onSaved }) {
+function ConcessionForm({ initial, categories, onClose, onSaved }) {
   const { t } = useLang();
-  const [form, setForm] = useState({ student_id: null, fee_category_id: '', kind: 'percent', value: '', reason: '', valid_from: today(), valid_to: '' });
+  const [form, setForm] = useState(
+    initial
+      ? {
+          student_id: initial.student_id,
+          fee_category_id: initial.fee_category_id || '',
+          kind: initial.kind || 'percent',
+          value: String(initial.value ?? ''),
+          reason: initial.reason || '',
+          valid_from: initial.valid_from || today(),
+          valid_to: initial.valid_to || '',
+        }
+      : { student_id: null, fee_category_id: '', kind: 'percent', value: '', reason: '', valid_from: today(), valid_to: '' },
+  );
   const [busy, setBusy] = useState(false);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const value = num(form.value);
@@ -21,18 +33,20 @@ function ConcessionForm({ categories, onClose, onSaved }) {
 
   const save = async () => {
     setBusy(true);
+    const payload = {
+      fee_category_id: form.fee_category_id || null,
+      kind: form.kind,
+      value,
+      reason: form.reason.trim(),
+      valid_from: form.valid_from,
+      valid_to: form.valid_to || null,
+    };
     const ok = await runAction(
       () =>
-        insertRow('student_fee_concessions', {
-          student_id: form.student_id,
-          fee_category_id: form.fee_category_id || null,
-          kind: form.kind,
-          value,
-          reason: form.reason.trim(),
-          valid_from: form.valid_from,
-          valid_to: form.valid_to || null,
-        }),
-      t('Concession created', 'تم إنشاء الإعفاء'),
+        initial?.id
+          ? updateRow('student_fee_concessions', initial.id, payload)
+          : insertRow('student_fee_concessions', { ...payload, student_id: form.student_id }),
+      initial?.id ? t('Concession updated', 'تم تحديث الإعفاء') : t('Concession created', 'تم إنشاء الإعفاء'),
     );
     setBusy(false);
     if (ok) onSaved();
@@ -41,7 +55,7 @@ function ConcessionForm({ categories, onClose, onSaved }) {
   return (
     <Modal
       open
-      title={t('New concession', 'إعفاء جديد')}
+      title={initial?.id ? t('Edit concession', 'تعديل الإعفاء') : t('New concession', 'إعفاء جديد')}
       onClose={onClose}
       footer={
         <>
@@ -54,7 +68,7 @@ function ConcessionForm({ categories, onClose, onSaved }) {
         </>
       }
     >
-      <StudentPicker value={form.student_id} onChange={(v) => set({ student_id: v })} />
+      {!initial?.id && <StudentPicker value={form.student_id} onChange={(v) => set({ student_id: v })} />}
       <Field label={t('Applies to', 'ينطبق على')}>
         <Select
           value={form.fee_category_id}
@@ -99,8 +113,9 @@ export default function FeeConcessions() {
   const { isAccountant, isPrincipal } = useAuth();
   const canManage = isAccountant || isPrincipal;
   const [showInactive, setShowInactive] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [deactivating, setDeactivating] = useState(null);
+  const [deleting, setDeleting] = useState(null);
 
   const [state, reload] = useAsync(async () => {
     const [rows, categories] = await Promise.all([
@@ -124,7 +139,7 @@ export default function FeeConcessions() {
             {t('Show inactive', 'إظهار غير النشطة')}
           </label>
           {canManage && (
-            <Button size="sm" onClick={() => setCreating(true)}>
+            <Button size="sm" onClick={() => setEditing({})}>
               + {t('New concession', 'إعفاء جديد')}
             </Button>
           )}
@@ -164,21 +179,29 @@ export default function FeeConcessions() {
                     key: 'actions',
                     label: '',
                     render: (r) =>
-                      canManage &&
-                      r.is_active && (
-                        <Button size="sm" variant="ghost" onClick={() => setDeactivating(r)}>
-                          {t('Deactivate', 'تعطيل')}
-                        </Button>
+                      canManage && (
+                        <div className="flex flex-wrap gap-1 justify-end">
+                          <Button size="sm" variant="ghost" onClick={() => setEditing(r)}>
+                            {t('Edit', 'تعديل')}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setDeactivating(r)}>
+                            {r.is_active ? t('Deactivate', 'تعطيل') : t('Activate', 'تفعيل')}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setDeleting(r)}>
+                            {t('Delete', 'حذف')}
+                          </Button>
+                        </div>
                       ),
                   },
                 ]}
               />
-              {creating && (
+              {editing && (
                 <ConcessionForm
+                  initial={editing.id ? editing : null}
                   categories={categories}
-                  onClose={() => setCreating(false)}
+                  onClose={() => setEditing(null)}
                   onSaved={() => {
-                    setCreating(false);
+                    setEditing(null);
                     reload();
                   }}
                 />
@@ -189,14 +212,34 @@ export default function FeeConcessions() {
       </AsyncView>
       <ConfirmModal
         open={Boolean(deactivating)}
-        title={t('Deactivate concession', 'تعطيل الإعفاء')}
-        message={t('Future invoices will no longer receive this concession. Existing invoices are unchanged.', 'لن تحصل الفواتير المستقبلية على هذا الإعفاء. الفواتير الحالية لا تتغير.')}
-        confirmLabel={t('Deactivate', 'تعطيل')}
+        title={deactivating?.is_active ? t('Deactivate concession', 'تعطيل الإعفاء') : t('Activate concession', 'تفعيل الإعفاء')}
+        message={
+          deactivating?.is_active
+            ? t('Future invoices will no longer receive this concession. Existing invoices are unchanged.', 'لن تحصل الفواتير المستقبلية على هذا الإعفاء. الفواتير الحالية لا تتغير.')
+            : t('Re-enable this concession for future invoices?', 'إعادة تفعيل هذا الإعفاء للفواتير المستقبلية؟')
+        }
+        confirmLabel={deactivating?.is_active ? t('Deactivate', 'تعطيل') : t('Activate', 'تفعيل')}
         onClose={() => setDeactivating(null)}
         onConfirm={async () => {
           const ok = await runAction(
-            () => updateRow('student_fee_concessions', deactivating.id, { is_active: false }),
-            t('Concession deactivated', 'تم تعطيل الإعفاء'),
+            () => updateRow('student_fee_concessions', deactivating.id, { is_active: !deactivating.is_active }),
+            deactivating.is_active ? t('Concession deactivated', 'تم تعطيل الإعفاء') : t('Concession activated', 'تم تفعيل الإعفاء'),
+          );
+          if (ok) reload();
+          return ok;
+        }}
+      />
+      <ConfirmModal
+        open={Boolean(deleting)}
+        danger
+        title={t('Delete concession', 'حذف الإعفاء')}
+        message={t('Permanently remove this concession record?', 'حذف سجل الإعفاء هذا نهائياً؟')}
+        confirmLabel={t('Delete', 'حذف')}
+        onClose={() => setDeleting(null)}
+        onConfirm={async () => {
+          const ok = await runAction(
+            () => deleteRow('student_fee_concessions', deleting.id),
+            t('Concession deleted', 'تم حذف الإعفاء'),
           );
           if (ok) reload();
           return ok;

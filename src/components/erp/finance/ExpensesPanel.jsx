@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AsyncView, Badge, Button, Card, Field, Icon, Input, Modal, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { useAuth } from '../../../context/AuthContext';
-import { query, rpc, insertRow, formatMoney, formatDate, today, downloadCsv } from '../../../lib/erp/rpc';
+import { query, rpc, insertRow, updateRow, deleteRow, formatMoney, formatDate, today, downloadCsv } from '../../../lib/erp/rpc';
 import {
   EXPENSE_STATUSES,
   PAYMENT_METHODS,
@@ -44,9 +44,22 @@ function useClaimDuties() {
 
 const METHODS = ['cash', 'bank_transfer', 'cheque', 'online', 'other'];
 
-function ExpenseForm({ onClose, onSaved }) {
+function ExpenseForm({ initial, onClose, onSaved }) {
   const { t, ar, lang } = useLang();
-  const [form, setForm] = useState({ account_id: '', payee: '', description: '', amount: '', expense_date: today(), reference: '', payment_method: 'cash', duty_role_id: '' });
+  const [form, setForm] = useState(
+    initial
+      ? {
+          account_id: initial.account_id || '',
+          payee: initial.payee || '',
+          description: initial.description || '',
+          amount: String(initial.amount ?? ''),
+          expense_date: initial.expense_date || today(),
+          reference: initial.reference || '',
+          payment_method: initial.payment_method || 'cash',
+          duty_role_id: initial.duty_role_id || '',
+        }
+      : { account_id: '', payee: '', description: '', amount: '', expense_date: today(), reference: '', payment_method: 'cash', duty_role_id: '' },
+  );
   const duties = useClaimDuties();
   const [busy, setBusy] = useState(false);
   const [accounts] = useAsync(() => listAccounts((q) => q.eq('type', 'expense').eq('is_active', true)), []);
@@ -55,20 +68,22 @@ function ExpenseForm({ onClose, onSaved }) {
 
   const save = async () => {
     setBusy(true);
+    const payload = {
+      account_id: form.account_id,
+      payee: form.payee.trim(),
+      description: form.description.trim(),
+      amount: Math.round(num(form.amount) * 100) / 100,
+      expense_date: form.expense_date,
+      reference: form.reference.trim() || null,
+      payment_method: form.payment_method,
+      duty_role_id: form.duty_role_id || null,
+    };
     const ok = await runAction(
       () =>
-        insertRow('expenses', {
-          account_id: form.account_id,
-          payee: form.payee.trim(),
-          description: form.description.trim(),
-          amount: Math.round(num(form.amount) * 100) / 100,
-          expense_date: form.expense_date,
-          reference: form.reference.trim() || null,
-          payment_method: form.payment_method,
-          duty_role_id: form.duty_role_id || null,
-          status: 'submitted',
-        }),
-      t('Expense claim submitted', 'تم تقديم طلب المصروف'),
+        initial?.id
+          ? updateRow('expenses', initial.id, payload)
+          : insertRow('expenses', { ...payload, status: 'submitted' }),
+      initial?.id ? t('Expense claim updated', 'تم تحديث طلب المصروف') : t('Expense claim submitted', 'تم تقديم طلب المصروف'),
     );
     setBusy(false);
     if (ok) onSaved();
@@ -77,7 +92,7 @@ function ExpenseForm({ onClose, onSaved }) {
   return (
     <Modal
       open
-      title={t('Submit expense claim', 'تقديم طلب مصروف')}
+      title={initial?.id ? t('Edit expense claim', 'تعديل طلب مصروف') : t('Submit expense claim', 'تقديم طلب مصروف')}
       onClose={onClose}
       footer={
         <>
@@ -199,7 +214,8 @@ export default function ExpensesPanel() {
   // In the URL (?scope=) so Back/Forward and links reach this tab.
   const [scope, setScope] = useUrlState('scope', isFinanceViewer ? 'all' : 'mine');
   const [filters, setFilters] = useState({ status: '', from: '', to: '' });
-  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [deleting, setDeleting] = useState(null);
   const [paying, setPaying] = useState(null);
   const [rejecting, setRejecting] = useState(null);
   const [voiding, setVoiding] = useState(null);
@@ -236,7 +252,7 @@ export default function ExpensesPanel() {
       <PageHeader
         title={t('Expenses', 'المصروفات')}
         subtitle={t('Submit claims, approve, pay and post to the ledger.', 'تقديم الطلبات واعتمادها ودفعها وترحيلها.')}
-        actions={<Button onClick={() => setCreating(true)}>+ {t('New expense claim', 'طلب مصروف جديد')}</Button>}
+        actions={<Button onClick={() => setEditing({})}>+ {t('New expense claim', 'طلب مصروف جديد')}</Button>}
       />
       <Tabs tabs={tabs} active={scope} onChange={setScope} />
       <Card
@@ -322,6 +338,16 @@ export default function ExpensesPanel() {
                         const own = e.submitted_by === user?.id;
                         return (
                           <div className="flex flex-wrap gap-1 justify-end">
+                            {e.status === 'submitted' && (own || isAccountant || isAdmin) && (
+                              <>
+                                <Button size="sm" variant="ghost" onClick={() => setEditing(e)}>
+                                  {t('Edit', 'تعديل')}
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => setDeleting(e)}>
+                                  {t('Delete', 'حذف')}
+                                </Button>
+                              </>
+                            )}
                             {e.status === 'submitted' && canApprove && (!own || isAdmin) && (
                               <>
                                 <Button size="sm" onClick={() => approve(e)}>
@@ -359,15 +385,29 @@ export default function ExpensesPanel() {
         </AsyncView>
       </Card>
 
-      {creating && (
+      {editing && (
         <ExpenseForm
-          onClose={() => setCreating(false)}
+          initial={editing.id ? editing : null}
+          onClose={() => setEditing(null)}
           onSaved={() => {
-            setCreating(false);
+            setEditing(null);
             reload();
           }}
         />
       )}
+      <ConfirmModal
+        open={Boolean(deleting)}
+        danger
+        title={t('Delete expense claim', 'حذف طلب المصروف')}
+        message={deleting ? `${deleting.expense_no || ''} · ${deleting.payee} · ${formatMoney(deleting.amount)}` : ''}
+        confirmLabel={t('Delete', 'حذف')}
+        onClose={() => setDeleting(null)}
+        onConfirm={async () => {
+          const ok = await runAction(() => deleteRow('expenses', deleting.id), t('Expense claim deleted', 'تم حذف طلب المصروف'));
+          if (ok) reload();
+          return ok;
+        }}
+      />
       {paying && (
         <PayModal
           expense={paying}

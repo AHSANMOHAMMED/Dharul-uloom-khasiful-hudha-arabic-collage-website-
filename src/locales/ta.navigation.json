@@ -127,5 +127,18 @@
   "Finance Reports": "நிதி அறிக்கைகள்",
   "Finance Analytics": "நிதி பகுப்பாய்வு",
   "Reports & Audit": "அறிக்கைகள் மற்றும் தணிக்கை",
-  "My Duties": "என் பொறுப்புகள்"
+  "My Duties": "என் பொறுப்புகள்",
+  "Edit concession": "சலுகையைத் திருத்து",
+  "Concession updated": "சலுகை புதுப்பிக்கப்பட்டது",
+  "Activate concession": "சலுகையை இயக்கு",
+  "Re-enable this concession for future invoices?": "எதிர்கால விலைப்பட்டியல்களுக்கு இந்தச் சலுகையை மீண்டும் இயக்கவா?",
+  "Concession activated": "சலுகை இயக்கப்பட்டது",
+  "Delete concession": "சலுகையை நீக்கு",
+  "Permanently remove this concession record?": "இந்தச் சலுகை பதிவை நிரந்தரமாக நீக்கவா?",
+  "Concession deleted": "சலுகை நீக்கப்பட்டது",
+  "Edit expense claim": "செலவு கோரிக்கையைத் திருத்து",
+  "Expense claim updated": "செலவு கோரிக்கை புதுப்பிக்கப்பட்டது",
+  "Delete expense claim": "செலவு கோரிக்கையை நீக்கு",
+  "Expense claim deleted": "செலவு கோரிக்கை நீக்கப்பட்டது",
+  "Edit account": "கணக்கைத் திருத்து"
 }
