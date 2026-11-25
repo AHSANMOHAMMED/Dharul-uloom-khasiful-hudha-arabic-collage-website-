@@ -13,8 +13,8 @@
     margin: 0;
     padding: 0;
     overflow-x: clip;
-    background-color: #FBF8F0;
-    color: #14201B;
+    background-color: #F8FAFC;
+    color: #0F172A;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -158,7 +158,7 @@ html[lang="ta"] td {
 
 /* Modern Manuscript Helper Utilities */
 .khatam-pattern {
-  background-image: radial-gradient(#0B3B2E 0.75px, transparent 0.75px), radial-gradient(#C29A3A 0.75px, #FBF8F0 0.75px);
+  background-image: radial-gradient(#0B3B2E 0.75px, transparent 0.75px), radial-gradient(#C29A3A 0.75px, #F8FAFC 0.75px);
   background-size: 30px 30px;
   background-position: 0 0, 15px 15px;
 }

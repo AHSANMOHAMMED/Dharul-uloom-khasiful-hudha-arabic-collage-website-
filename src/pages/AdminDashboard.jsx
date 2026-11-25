@@ -394,7 +394,7 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FBF8F0]">
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 mx-auto rounded-full border-2 border-[#11694A] border-t-transparent animate-spin"></div>
           <p className="text-sm font-sans text-[#4A5E56]">
@@ -482,7 +482,7 @@ const AdminDashboard = () => {
         <button
           onClick={handleTriggerFeeReminder}
           title={tx('إرسال تذكير بالرسوم', 'Trigger Fee Reminders')}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E2E8F0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#F8FAFC] shadow-xs"
         >
           <Icon name="notifications_active" className="text-[16px] text-[#C29A3A]" />
           <span className="hidden md:inline">{tx('تذكير الرسوم', 'Fee Reminders')}</span>
@@ -498,7 +498,7 @@ const AdminDashboard = () => {
 
         {/* Welcome Executive Header — only on overview */}
         {activeTab === 'overview' && (
-        <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-7 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 sm:p-7 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-[#11694A]"></div>
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -523,11 +523,11 @@ const AdminDashboard = () => {
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 to="/erp"
-                className="text-xs font-semibold text-emerald-700 border border-[#E8E1D0] rounded-lg px-3 py-1.5 bg-[#FBF8F0] hover:bg-white"
+                className="text-xs font-semibold text-emerald-700 border border-[#E2E8F0] rounded-lg px-3 py-1.5 bg-[#F8FAFC] hover:bg-white"
               >
                 {tx('فتح ERP الكامل', 'Open full ERP')}
               </Link>
-              <span className="text-xs font-semibold text-[#0B3B2E] bg-[#FBF8F0] border border-[#E8E1D0] px-3 py-1.5 rounded-xl">
+              <span className="text-xs font-semibold text-[#0B3B2E] bg-[#F8FAFC] border border-[#E2E8F0] px-3 py-1.5 rounded-xl">
                 {tx('العام الأكاديمي: ٢٠٢٦', 'Academic Year: 2026')}
               </span>
             </div>
@@ -594,7 +594,7 @@ const AdminDashboard = () => {
                 </div>
               </>
             );
-            const cls = 'bg-white rounded-2xl border border-[#E8E1D0] p-5 flex items-center gap-4 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] text-start hover:ring-2 hover:ring-emerald-600/40 transition w-full';
+            const cls = 'bg-white rounded-2xl border border-[#E2E8F0] p-5 flex items-center gap-4 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] text-start hover:ring-2 hover:ring-emerald-600/40 transition w-full';
             if (kpi.href) {
               return (
                 <Link key={kpi.label_en} to={kpi.href} className={cls}>
@@ -613,14 +613,14 @@ const AdminDashboard = () => {
 
         {/* Overview = live ERP dashboard. Tile clicks open the full module tab (not a preview). */}
         {activeTab === 'overview' && (
-          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
             <ErpPane><ErpDashboard /></ErpPane>
           </div>
         )}
 
         {/* Full feature panels — replace overview when a tab is selected */}
         {activeTab !== 'overview' && (
-        <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] min-h-[480px]">
+        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] min-h-[480px]">
 
           {activeTab === 'mashoora' && <ErpPane><MashooraPanel /></ErpPane>}
           {activeTab === 'tasks' && <ErpPane><TaskBoard /></ErpPane>}
@@ -664,16 +664,16 @@ const AdminDashboard = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="text-left text-[#4A5E56] font-bold uppercase tracking-wider border-b border-[#E8E1D0]">
+                      <tr className="text-left text-[#4A5E56] font-bold uppercase tracking-wider border-b border-[#E2E8F0]">
                         <th className="py-2.5 px-4">{tx('اسم الطالب', 'Student')}</th>
                         <th className="py-2.5 px-4">{tx('ولي الأمر', 'Parent')}</th>
                         <th className="py-2.5 px-4">{tx('الدورة', 'Course')}</th>
                         <th className="py-2.5 px-4 text-center">{tx('الإجراء', 'Actions')}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#E8E1D0]">
+                    <tbody className="divide-y divide-[#E2E8F0]">
                       {admissions.map((admission) => (
-                        <tr key={admission._id} className="hover:bg-[#FBF8F0] transition">
+                        <tr key={admission._id} className="hover:bg-[#F8FAFC] transition">
                           <td className="py-3 px-4 font-bold text-[#0B3B2E]">
                             {admission.studentName}
                             {(admission.dateOfBirth || admission.age != null) && (
@@ -723,7 +723,7 @@ const AdminDashboard = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="text-left text-[#4A5E56] font-bold uppercase tracking-wider border-b border-[#E8E1D0]">
+                      <tr className="text-left text-[#4A5E56] font-bold uppercase tracking-wider border-b border-[#E2E8F0]">
                         <th className="py-2.5 px-4">{tx('الاسم', 'Name')}</th>
                         <th className="py-2.5 px-4">{tx('البريد الإلكتروني', 'Email')}</th>
                         <th className="py-2.5 px-4">{tx('نوع الدور', 'Role Type')}</th>
@@ -731,9 +731,9 @@ const AdminDashboard = () => {
                         <th className="py-2.5 px-4 text-center">{tx('الإجراء', 'Actions')}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#E8E1D0]">
+                    <tbody className="divide-y divide-[#E2E8F0]">
                       {pendingApprovals.map((profile) => (
-                        <tr key={profile.id} className="hover:bg-[#FBF8F0] transition">
+                        <tr key={profile.id} className="hover:bg-[#F8FAFC] transition">
                           <td className="py-3 px-4 font-bold text-[#0B3B2E]">{profile.full_name}</td>
                           <td className="py-3 px-4 font-mono text-[#4A5E56]">{profile.email}</td>
                           <td className="py-3 px-4">
@@ -773,14 +773,14 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 {/* Assign Special Role */}
-                <form onSubmit={handleAssignTutorRole} className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3">
+                <form onSubmit={handleAssignTutorRole} className="bg-[#F8FAFC] p-5 rounded-2xl border border-[#E2E8F0] space-y-3">
                   <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('تعيين دور إداري خاص', 'Assign Special Administrative Role')}</h3>
                   <div>
                     <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('اختر عضو هيئة التدريس', 'Select Faculty Member')}</label>
                     <select
                       value={selectedTutorId}
                       onChange={(e) => setSelectedTutorId(e.target.value)}
-                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none"
+                      className="w-full bg-white border border-[#E2E8F0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none"
                       required
                     >
                       <option value="">{tx('-- اختر المعلم --', '-- Choose Tutor --')}</option>
@@ -794,7 +794,7 @@ const AdminDashboard = () => {
                     <select
                       value={assignedRole}
                       onChange={(e) => setAssignedRole(e.target.value)}
-                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none"
+                      className="w-full bg-white border border-[#E2E8F0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none"
                     >
                       <option value="none">{tx('لا شيء (معلم عادي)', 'NONE (Regular Tutor)')}</option>
                       <option value="principal">{tx('المدير', 'PRINCIPAL')}</option>
@@ -811,14 +811,14 @@ const AdminDashboard = () => {
                 </form>
 
                 {/* Annual Responsibility Job */}
-                <form onSubmit={handleAddTutorJob} className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3">
+                <form onSubmit={handleAddTutorJob} className="bg-[#F8FAFC] p-5 rounded-2xl border border-[#E2E8F0] space-y-3">
                   <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('تعيين مسؤولية وظيفية سنوية', 'Assign Annual Job Responsibility')}</h3>
                   <div>
                     <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('اختر المعلم', 'Select Tutor')}</label>
                     <select
                       value={selectedTutorId}
                       onChange={(e) => setSelectedTutorId(e.target.value)}
-                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none"
+                      className="w-full bg-white border border-[#E2E8F0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none"
                       required
                     >
                       <option value="">{tx('-- اختر المعلم --', '-- Choose Tutor --')}</option>
@@ -834,7 +834,7 @@ const AdminDashboard = () => {
                       value={jobTitle}
                       onChange={(e) => setJobTitle(e.target.value)}
                       placeholder={tx('مثال: مربي الصف الخامس، عميد الدراسات القرآنية', 'e.g. Class 5 Master, Dean of Quranic Studies')}
-                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
+                      className="w-full bg-white border border-[#E2E8F0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                       required
                     />
                   </div>
@@ -844,7 +844,7 @@ const AdminDashboard = () => {
                       value={jobDesc}
                       onChange={(e) => setJobDesc(e.target.value)}
                       placeholder={tx('المهام السنوية...', 'Annual duties...')}
-                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none resize-none h-14"
+                      className="w-full bg-white border border-[#E2E8F0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none resize-none h-14"
                     />
                   </div>
                   <button
@@ -871,14 +871,14 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 {/* Compose Broadcast Notification */}
-                <form onSubmit={handleSendBroadcast} className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3">
+                <form onSubmit={handleSendBroadcast} className="bg-[#F8FAFC] p-5 rounded-2xl border border-[#E2E8F0] space-y-3">
                   <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('إنشاء إشعار بث', 'Compose Broadcast Notification')}</h3>
                   <div>
                     <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('الجمهور المستهدف', 'Target Audience')}</label>
                     <select
                       value={broadcastTarget}
                       onChange={(e) => setBroadcastTarget(e.target.value)}
-                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
+                      className="w-full bg-white border border-[#E2E8F0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                     >
                       <option value="all">{tx('جميع المستخدمين', 'ALL USERS')}</option>
                       <option value="students">{tx('الطلاب فقط', 'STUDENTS ONLY')}</option>
@@ -893,7 +893,7 @@ const AdminDashboard = () => {
                       value={broadcastTitle}
                       onChange={(e) => setBroadcastTitle(e.target.value)}
                       placeholder={tx('عنوان الإشعار...', 'Notification title...')}
-                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
+                      className="w-full bg-white border border-[#E2E8F0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                       required
                     />
                   </div>
@@ -903,7 +903,7 @@ const AdminDashboard = () => {
                       value={broadcastMsg}
                       onChange={(e) => setBroadcastMsg(e.target.value)}
                       placeholder={tx('محتوى الرسالة...', 'Message content...')}
-                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none resize-none h-20"
+                      className="w-full bg-white border border-[#E2E8F0] text-xs text-[#14201B] rounded-xl p-2.5 focus:outline-none resize-none h-20"
                       required
                     />
                     {(() => {
@@ -929,14 +929,14 @@ const AdminDashboard = () => {
                 </form>
 
                 {/* Tuition monthly reminders */}
-                <div className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] flex flex-col justify-between space-y-4">
+                <div className="bg-[#F8FAFC] p-5 rounded-2xl border border-[#E2E8F0] flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('إدارة تذكيرات الرسوم الشهرية', 'Monthly Fee Reminders Manager')}</h3>
                     <p className="text-xs text-[#4A5E56] leading-relaxed">
                       {tx('إنشاء فواتير الشهر الحالي (هياكل الرسوم، السكن، الإعفاءات) وإشعار الطلاب وأولياء الأمور المرتبطين بالتزامات الدفع.', 'Generate this month\'s invoices (fee structures, hostel, concessions) and notify students and linked parents about payment obligations.')}{' '}
                       {tx('العملية آمنة للتكرار — لا تُنشأ فواتير مكررة.', 'Safe to run twice — no duplicate invoices are created.')}
                     </p>
-                    <div className="p-3 bg-white text-[#C29A3A] text-xs rounded-xl border border-[#E8E1D0] font-medium">
+                    <div className="p-3 bg-white text-[#C29A3A] text-xs rounded-xl border border-[#E2E8F0] font-medium">
                       &quot;{tx('سيتم تحديث ملفات أمين الصندوق وأولياء الأمور فوراً لعرض المستحقات وحالة الفواتير.', 'Treasurer and parent profiles will be updated instantly showing outstanding dues and invoice status.')}&quot;
                     </div>
                   </div>
@@ -955,7 +955,7 @@ const AdminDashboard = () => {
           {/* Tab: Content CMS */}
           {activeTab === 'content' && (
             <div className="space-y-4">
-              <div className="flex flex-wrap gap-2 pb-2 border-b border-[#E8E1D0]">
+              <div className="flex flex-wrap gap-2 pb-2 border-b border-[#E2E8F0]">
                 {[
                   { id: 'news', en: 'News', ar: 'الأخبار' },
                   { id: 'faculty', en: 'Faculty', ar: 'الأساتذة' },
@@ -968,7 +968,7 @@ const AdminDashboard = () => {
                     type="button"
                     onClick={() => setContentSection(s.id)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                      contentSection === s.id ? 'bg-[#0B3B2E] text-white' : 'bg-[#FBF8F0] text-[#4A5E56] hover:text-[#0B3B2E] border border-[#E8E1D0]'
+                      contentSection === s.id ? 'bg-[#0B3B2E] text-white' : 'bg-[#F8FAFC] text-[#4A5E56] hover:text-[#0B3B2E] border border-[#E2E8F0]'
                     }`}
                   >
                     {tx(s.ar, s.en)}
@@ -985,7 +985,7 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Preseed form */}
-                <form onSubmit={handleAddIndexNumber} className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] space-y-3 md:col-span-1">
+                <form onSubmit={handleAddIndexNumber} className="bg-[#F8FAFC] p-5 rounded-2xl border border-[#E2E8F0] space-y-3 md:col-span-1">
                   <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('إضافة قيد طالب', 'Add Student Index')}</h3>
                   <div>
                     <label className="block text-[11px] text-[#4A5E56] font-bold uppercase tracking-wider mb-1">{tx('رقم القيد', 'Index Number')}</label>
@@ -994,7 +994,7 @@ const AdminDashboard = () => {
                       value={newIndexNumber}
                       onChange={(e) => setNewIndexNumber(e.target.value)}
                       placeholder={tx('مثال: KASHIF-2026-101', 'e.g., KASHIF-2026-101')}
-                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
+                      className="w-full bg-white border border-[#E2E8F0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                       required
                     />
                   </div>
@@ -1005,7 +1005,7 @@ const AdminDashboard = () => {
                       value={newStudentName}
                       onChange={(e) => setNewStudentName(e.target.value)}
                       placeholder={tx('الاسم الكامل...', 'Full name...')}
-                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
+                      className="w-full bg-white border border-[#E2E8F0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                       required
                     />
                   </div>
@@ -1014,7 +1014,7 @@ const AdminDashboard = () => {
                     <select
                       value={newIndexClass}
                       onChange={(e) => setNewIndexClass(parseInt(e.target.value))}
-                      className="w-full bg-white border border-[#E8E1D0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
+                      className="w-full bg-white border border-[#E2E8F0] text-xs text-[#14201B] p-2.5 rounded-xl focus:outline-none"
                     >
                       {[1, 2, 3, 4, 5, 6, 7].map(num => (
                         <option key={num} value={num}>{tx('الصف {n}', 'Class {n}').replace('{n}', num)}</option>
@@ -1030,19 +1030,19 @@ const AdminDashboard = () => {
                 </form>
 
                 {/* Preseeded Index numbers list */}
-                <div className="bg-[#FBF8F0] p-5 rounded-2xl border border-[#E8E1D0] md:col-span-2 space-y-3">
+                <div className="bg-[#F8FAFC] p-5 rounded-2xl border border-[#E2E8F0] md:col-span-2 space-y-3">
                   <h3 className="font-serif font-bold text-[#0B3B2E] text-base">{tx('أرقام القيد المسجلة مسبقاً', 'Pre-registered Index Numbers')}</h3>
                   <div className="overflow-x-auto max-h-80">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="text-[#4A5E56] border-b border-[#E8E1D0]">
+                        <tr className="text-[#4A5E56] border-b border-[#E2E8F0]">
                           <th className="py-2 text-left">{tx('القيد', 'Index')}</th>
                           <th className="py-2 text-left">{tx('اسم الطالب', 'Student Name')}</th>
                           <th className="py-2 text-center">{tx('الصف', 'Class')}</th>
                           <th className="py-2 text-center">{tx('مسجل', 'Registered')}</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#E8E1D0] font-mono">
+                      <tbody className="divide-y divide-[#E2E8F0] font-mono">
                         {indexList.map(idx => (
                           <tr key={idx.index_number}>
                             <td className="py-2 font-bold text-[#0B3B2E]">{idx.index_number}</td>

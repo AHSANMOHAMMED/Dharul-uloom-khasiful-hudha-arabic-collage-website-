@@ -8,20 +8,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Modern Manuscript Design System Tokens
+        // Clean White-Office & Deep Emerald Design System Tokens
         'ink-green-900': '#0B3B2E',
         'emerald-700': '#11694A',
         'emerald-500': '#1E8A63',
         'mint-wash-100': '#E3F1EA',
         'brass-gold-500': '#C29A3A',
-        'gold-wash-100': '#F7EDD2',
-        'parchment-50': '#FBF8F0',
+        'gold-wash-100': '#FEF3C7',
+        'parchment-50': '#F8FAFC',
         'paper-white': '#FFFFFF',
-        'sand-border': '#E8E1D0',
-        'sand-200': '#E8E1D0',
-        'ink-text-primary': '#14201B',
-        'ink-text-secondary': '#4B5A53',
-        'ink-text-muted': '#7C8A83',
+        'sand-border': '#E2E8F0',
+        'sand-200': '#E2E8F0',
+        'ink-text-primary': '#0F172A',
+        'ink-text-secondary': '#475569',
+        'ink-text-muted': '#64748B',
 
         // Feedback / Semantic
         'feedback-success': '#1F8A4C',

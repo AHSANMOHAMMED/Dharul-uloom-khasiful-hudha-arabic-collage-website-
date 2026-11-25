@@ -18,14 +18,14 @@ const BLUE = '#0F7C86';
 const GRID = '#E8E1D0';
 const AXIS = '#4A5E56';
 
-function Tile({ label, value, hint, tone, module, go }) {
-  const inner = <Stat label={label} value={value} hint={hint} tone={tone} className="w-full" />;
+function Tile({ label, value, hint, tone, icon, module, go }) {
+  const inner = <Stat label={label} value={value} hint={hint} tone={tone} icon={icon} className="w-full" />;
   if (!module) return <div className="h-full">{inner}</div>;
   return (
     <button
       type="button"
       onClick={() => go(module)}
-      className="h-full w-full flex flex-col text-start rounded-2xl hover:ring-2 hover:ring-emerald-600/60 transition"
+      className="h-full w-full flex flex-col text-start rounded-2xl hover:ring-2 hover:ring-emerald-600/50 transition"
     >
       {inner}
     </button>
@@ -165,18 +165,19 @@ export default function ErpDashboard() {
                   <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('People', 'الأشخاص')}</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 items-stretch">
                     {canStudents && (
-                      <Tile go={go} module="students" label={t('Students', 'الطلاب')} value={s.students ?? 0} hint={t('Approved students', 'الطلاب المعتمدون')} />
+                      <Tile go={go} module="students" icon="school" label={t('Students', 'الطلاب')} value={s.students ?? 0} hint={t('Approved students', 'الطلاب المعتمدون')} />
                     )}
                     {canHr && (
-                      <Tile go={go} module="hr" label={t('Employees', 'الموظفون')} value={s.employees ?? 0} hint={t('Active staff & tutors', 'الموظفون والمعلمون')} tone="blue" />
+                      <Tile go={go} module="hr" icon="badge" label={t('Employees', 'الموظفون')} value={s.employees ?? 0} hint={t('Active staff & tutors', 'الموظفون والمعلمون')} tone="blue" />
                     )}
                     {canStudents && (
-                      <Tile go={go} module="students" label={t('Parents', 'أولياء الأمور')} value={s.parents ?? 0} hint={t('Linked guardians', 'أولياء الأمور المسجلون')} tone="gray" />
+                      <Tile go={go} module="students" icon="groups" label={t('Parents', 'أولياء الأمور')} value={s.parents ?? 0} hint={t('Linked guardians', 'أولياء الأمور المسجلون')} tone="gray" />
                     )}
                     {canStudents && (
                       <Tile
                         go={go}
                         module="students"
+                        icon="pending_actions"
                         label={t('Pending approvals', 'بانتظار الموافقة')}
                         value={s.pending_approvals ?? 0}
                         hint={`${s.pending_parent_links ?? 0} ${t('parent link requests', 'طلبات ربط')}`}
@@ -187,6 +188,7 @@ export default function ErpDashboard() {
                       <Tile
                         go={go}
                         module="academics"
+                        icon="event_available"
                         label={t('Attendance today', 'حضور اليوم')}
                         value={att.rate != null ? `${att.rate}%` : '—'}
                         hint={`${att.present ?? 0}/${att.marked ?? 0} ${t('marked', 'مسجل')}`}
@@ -196,6 +198,7 @@ export default function ErpDashboard() {
                       <Tile
                         go={go}
                         module="hr"
+                        icon="event_busy"
                         label={t('Leave pending', 'إجازات معلقة')}
                         value={(s.staff_leave_pending ?? 0) + (s.student_leave_pending ?? 0)}
                         hint={`${t('Staff', 'موظفون')} ${s.staff_leave_pending ?? 0} · ${t('Students', 'طلاب')} ${s.student_leave_pending ?? 0}`}

@@ -59,7 +59,7 @@ export function Card({ title, actions, children, className = '' }) {
   );
 }
 
-export function Stat({ label, value, hint, tone = 'emerald', className = '' }) {
+export function Stat({ label, value, hint, tone = 'emerald', icon = null, className = '' }) {
   const tones = {
     emerald: 'text-emerald-700',
     amber: 'text-amber-700',
@@ -67,13 +67,27 @@ export function Stat({ label, value, hint, tone = 'emerald', className = '' }) {
     blue: 'text-feedback-info',
     gray: 'text-ink-text-primary',
   };
+  const iconTones = {
+    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200/70',
+    amber: 'bg-amber-50 text-amber-700 border-amber-200/70',
+    red: 'bg-red-50 text-red-700 border-red-200/70',
+    blue: 'bg-sky-50 text-sky-700 border-sky-200/70',
+    gray: 'bg-slate-100 text-slate-700 border-slate-200',
+  };
   return (
-    <div className={`h-full flex flex-col justify-between rounded-2xl bg-paper-white p-4 border border-sand-border shadow-manuscript-sm ${className}`}>
-      <div>
-        <div className="text-xs uppercase tracking-wide text-ink-text-muted">{label}</div>
-        <div className={`text-2xl font-extrabold mt-1 ${tones[tone] || tones.emerald}`}>{value}</div>
+    <div className={`h-full flex flex-col justify-between rounded-2xl bg-white p-4 border border-slate-200/90 shadow-xs ${className}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 truncate">{label}</div>
+          <div className={`text-2xl font-extrabold mt-1 tracking-tight ${tones[tone] || tones.emerald}`}>{value}</div>
+        </div>
+        {icon && (
+          <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${iconTones[tone] || iconTones.emerald}`}>
+            <Icon name={icon} className="text-[18px]" />
+          </span>
+        )}
       </div>
-      <div className="text-xs text-ink-text-muted mt-1.5 min-h-[1rem]">{hint || '\u00A0'}</div>
+      <div className="text-xs text-slate-500 mt-2 min-h-[1rem]">{hint || '\u00A0'}</div>
     </div>
   );
 }

@@ -36,7 +36,7 @@ export default function OverviewBanner({
   const heading = tx(greeting_ar, greeting_en).replace('{name}', name);
 
   return (
-    <div className="rounded-[14px] border border-[#E8E1D0] bg-white p-5 sm:p-6 shadow-xs relative overflow-hidden">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs relative overflow-hidden">
       <div className={`absolute top-0 left-0 right-0 h-1 ${a.bar}`} />
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div
@@ -51,13 +51,13 @@ export default function OverviewBanner({
           </span>
           <h1 className="font-serif text-xl sm:text-2xl font-bold text-[#0B3B2E]">{heading}</h1>
           {(hint_en || hint_ar) && (
-            <p className="text-xs sm:text-sm text-[#4A5E56] mt-1 leading-relaxed">{tx(hint_ar, hint_en)}</p>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">{tx(hint_ar, hint_en)}</p>
           )}
         </div>
         {erpLink && (
           <Link
             to="/erp"
-            className="shrink-0 text-xs font-semibold text-emerald-700 hover:text-emerald-500 border border-[#E8E1D0] rounded-lg px-3 py-2 bg-[#FBF8F0]"
+            className="shrink-0 text-xs font-semibold text-emerald-700 hover:text-emerald-600 border border-slate-200 rounded-xl px-3.5 py-2 bg-slate-50 hover:bg-white transition"
           >
             {tx('فتح ERP الكامل', 'Open full ERP')}
           </Link>

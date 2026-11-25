@@ -14,9 +14,9 @@ import Icon from './Icon';
  * DashboardSidebarLayout
  * Unified institutional sidebar layout for all role-based workspaces.
  * Complies with Modern Manuscript design system:
- * - #FBF8F0 Parchment background
+ * - #F8FAFC Parchment background
  * - #FFFFFF Paper cards
- * - #E8E1D0 Sand borders
+ * - #E2E8F0 Sand borders
  * - #0B3B2E Ink green & #11694A Emerald
  * - #C29A3A Brass gold
  * - Zero emojis (Material Symbols Outlined only)
@@ -104,13 +104,13 @@ export default function DashboardSidebarLayout({
         }`}
       >
         {/* Sidebar Header: College Crest & Institutional Title */}
-        <div className="p-5 border-b border-[#E8E1D0] relative overflow-hidden">
+        <div className="p-5 border-b border-[#E2E8F0] relative overflow-hidden">
           <div className="flex items-center gap-3.5">
             <Link to="/" className="shrink-0 group" title={tx('الصفحة الرئيسية', 'Home')}>
               <img
                 src="/images/logo.svg"
                 alt={tx('شعار دار العلوم كاشف الهدى', 'D.U. Kashiful Hudha Arabic College Crest')}
-                className="w-12 h-12 object-contain rounded-xl border border-[#E8E1D0] p-0.5 bg-[#FBF8F0] shadow-xs group-hover:border-[#11694A] transition-colors"
+                className="w-12 h-12 object-contain rounded-xl border border-[#E2E8F0] p-0.5 bg-[#F8FAFC] shadow-xs group-hover:border-[#11694A] transition-colors"
               />
             </Link>
 
@@ -138,7 +138,7 @@ export default function DashboardSidebarLayout({
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
-              className="lg:hidden p-1 rounded-lg text-[#4A5E56] hover:bg-[#FBF8F0] hover:text-[#0B3B2E]"
+              className="lg:hidden p-1 rounded-lg text-[#4A5E56] hover:bg-[#F8FAFC] hover:text-[#0B3B2E]"
               aria-label={tx('إغلاق القائمة الجانبية', 'Close sidebar')}
             >
               <Icon name="close" className="text-[20px]" />
@@ -148,7 +148,7 @@ export default function DashboardSidebarLayout({
 
         {/* Multi-role Switcher (if assigned) */}
         {roleSwitcher && (
-          <div className="px-4 py-2 bg-[#FBF8F0] border-b border-[#E8E1D0]">
+          <div className="px-4 py-2 bg-[#F8FAFC] border-b border-[#E2E8F0]">
             {roleSwitcher}
           </div>
         )}
@@ -181,7 +181,7 @@ export default function DashboardSidebarLayout({
                   className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-start transition-all ${
                     isActive
                       ? 'bg-[#0B3B2E] text-white shadow-xs'
-                      : 'text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-[#FBF8F0]'
+                      : 'text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-[#F8FAFC]'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -214,7 +214,7 @@ export default function DashboardSidebarLayout({
 
           {/* Institutional Shortcuts (ERP, Maktabah, Admin) */}
           {effectiveQuickLinks.length > 0 && (
-            <div className="pt-4 mt-2 border-t border-[#E8E1D0]">
+            <div className="pt-4 mt-2 border-t border-[#E2E8F0]">
               <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#4A5E56] font-sans">
                 {tx('الروابط المؤسسية', 'Institutional Workspaces')}
               </div>
@@ -222,7 +222,7 @@ export default function DashboardSidebarLayout({
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-[#FBF8F0] transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-[#F8FAFC] transition-colors"
                 >
                   <Icon name={link.icon} className="text-[18px] text-[#11694A]" />
                   <span>{tx(link.label_ar, link.label_en)}</span>
@@ -272,14 +272,14 @@ export default function DashboardSidebarLayout({
       <div className="flex-1 flex flex-col min-w-0 lg:ms-72 relative z-10">
         
         {/* Top Utility Header */}
-        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E8E1D0] px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
           
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Mobile Hamburger Button */}
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden shrink-0 p-2 rounded-xl border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]"
+              className="lg:hidden shrink-0 p-2 rounded-xl border border-[#E2E8F0] text-[#0B3B2E] hover:bg-[#F8FAFC]"
               aria-label={tx('فتح القائمة الجانبية', 'Open sidebar menu')}
             >
               <Icon name="menu" className="text-[20px]" />
@@ -292,7 +292,7 @@ export default function DashboardSidebarLayout({
               </span>
               {currentNav && (
                 <>
-                  <span className="text-[#E8E1D0] font-bold hidden sm:inline">/</span>
+                  <span className="text-[#E2E8F0] font-bold hidden sm:inline">/</span>
                   <span className="text-[#11694A] font-semibold hidden sm:inline truncate">
                     {tx(currentNav.label_ar, currentNav.label_en)}
                   </span>
@@ -317,7 +317,7 @@ export default function DashboardSidebarLayout({
                 <button
                   type="button"
                   onClick={() => onSelect('messages')}
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[#E8E1D0] bg-white text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[#E2E8F0] bg-white text-[#0B3B2E] hover:bg-[#F8FAFC] shadow-xs"
                   title={tx('الرسائل', 'Messages')}
                   aria-label={tx('الرسائل', 'Messages')}
                 >
@@ -326,7 +326,7 @@ export default function DashboardSidebarLayout({
               ) : (
                 <Link
                   to="/messages"
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[#E8E1D0] bg-white text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[#E2E8F0] bg-white text-[#0B3B2E] hover:bg-[#F8FAFC] shadow-xs"
                   title={tx('الرسائل', 'Messages')}
                   aria-label={tx('الرسائل', 'Messages')}
                 >
@@ -338,7 +338,7 @@ export default function DashboardSidebarLayout({
             {!isParent && isApproved && enabled('library') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian) && (
               <Link
                 to="/library"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E2E8F0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#F8FAFC] shadow-xs"
               >
                 <Icon name="auto_stories" className="text-[16px] text-[#11694A]" />
                 <span>{tx('المكتبة', 'Library')}</span>
