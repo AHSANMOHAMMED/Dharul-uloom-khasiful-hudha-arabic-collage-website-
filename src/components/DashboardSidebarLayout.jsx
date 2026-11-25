@@ -302,7 +302,7 @@ export default function DashboardSidebarLayout({
               </Link>
             )}
 
-            {!isParent && (
+            {!isParent && isApproved && enabled('library') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian) && (
               <Link
                 to="/library"
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"

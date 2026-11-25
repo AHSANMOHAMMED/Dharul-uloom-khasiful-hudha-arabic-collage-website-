@@ -4,9 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import BookReader from '../components/library/BookReader';
 import Icon from '../components/Icon';
+import PageNavBar from '../components/PageNavBar';
 import { getBook } from '../lib/booksApi';
 import { tx } from '../lib/tx';
 import { useAuth } from '../context/AuthContext';
+import { useFeatures } from '../context/FeatureFlagsContext';
+import { portalHomeFor } from '../lib/useHistoryNav';
 
 function MetaCell({ label, value, arabic = false, accent = false }) {
   return (
@@ -25,11 +28,16 @@ function MetaCell({ label, value, arabic = false, accent = false }) {
 export default function BookReaderPage() {
   const { id } = useParams();
   const { i18n } = useTranslation();
-  const { loading: authLoading, isAuthenticated, isParent } = useAuth();
+  const auth = useAuth();
+  const { loading: authLoading, isAuthenticated, isParent, isApproved, isEmployee, isAdmin, isLibrarian, user } = auth;
+  const { enabled } = useFeatures();
 
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const libraryBlocked = !authLoading && (!isAuthenticated || isParent);
+  const isGuestBlocked = user?.accountType === 'guest' && !isEmployee && !isAdmin && !isLibrarian;
+  const readerDisabled = !enabled('library') || !enabled('library_reader');
+  const portalUrl = portalHomeFor(auth);
 
   useEffect(() => {
     if (libraryBlocked) return undefined;
@@ -48,6 +56,37 @@ export default function BookReaderPage() {
 
   if (libraryBlocked) {
     return <Navigate to={isParent ? '/dashboard' : '/login'} replace state={{ from: `/library/${id}` }} />;
+  }
+
+  if (!authLoading && (!isApproved || isGuestBlocked || readerDisabled)) {
+    return (
+      <div className="min-h-screen bg-parchment-50 py-6">
+        <div className="max-w-[900px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <PageNavBar
+            home={{ to: portalUrl, label: tx('بوابتي', 'My portal') }}
+            crumbs={[
+              { label: tx('بوابتي', 'My portal'), to: portalUrl },
+              { label: tx('المكتبة الرقمية', 'Digital Library'), to: '/library' },
+              { label: tx('قارئ الكتب', 'Book Reader') },
+            ]}
+          />
+          <div className="rounded-[16px] bg-paper-white border border-sand-border p-8 text-center shadow-manuscript space-y-3">
+            <Icon name="lock" className="text-[36px] text-brass-gold-600 mx-auto" />
+            <h1 className="text-lg font-bold text-ink-green-900">
+              {readerDisabled
+                ? tx('قارئ الكتب غير مفعّل حالياً', 'Book Reader is currently disabled')
+                : tx('الحساب غير مفعّل لقراءة الكتب', 'Book Reader access pending approval')}
+            </h1>
+            <Link
+              to={portalUrl}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-ink-green-900 text-gold-wash-100 text-xs font-semibold hover:bg-emerald-800 transition-colors"
+            >
+              {tx('العودة إلى بوابتي', 'Return to My Portal')}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {
@@ -93,7 +132,17 @@ export default function BookReaderPage() {
 
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
-        {/* Navigation Breadcrumb */}
+        {/* Portal Navigation Breadcrumb */}
+        <PageNavBar
+          home={{ to: portalUrl, label: tx('بوابتي', 'My portal') }}
+          crumbs={[
+            { label: tx('بوابتي', 'My portal'), to: portalUrl },
+            { label: tx('المكتبة الرقمية', 'Digital Library'), to: '/library' },
+            { label: tx(book.title_ar, book.title_en) || book.title_ar || tx('الكتاب', 'Book') },
+          ]}
+        />
+
+        {/* Secondary Reader Actions */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-sand-border">
           <Link
             to="/library"

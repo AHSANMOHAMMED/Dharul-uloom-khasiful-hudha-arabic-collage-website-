@@ -18,8 +18,8 @@ export default function Navbar() {
   const { enabled } = useFeatures()
   const canMessage = isAuthenticated && isApproved && !isSuperAdmin && enabled('messaging') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian)
   const canManageLibrary = isAdmin || isLibrarian
-  // E-library is for campus accounts only — not the public site, and not parents.
-  const showLibrary = isAuthenticated && !isParent && (isStudent || isTutor || isLibrarian || isAdmin || isEmployee || isSuperAdmin)
+  // E-library is for approved campus accounts only — not the public site, and not parents.
+  const showLibrary = isAuthenticated && isApproved && !isParent && enabled('library') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian) && (isStudent || isTutor || isLibrarian || isAdmin || isEmployee || isSuperAdmin)
 
   // A section is active on its own page and on any detail page beneath it (/news/:id, /library/:id).
   const isActive = (path) =>

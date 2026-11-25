@@ -4,6 +4,7 @@ import { useTabParam } from '../lib/useTabParam';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
+import { useFeatures } from '../context/FeatureFlagsContext';
 import { supabase } from '../lib/supabaseClient';
 import PayFeeButton from '../components/PayFeeButton';
 import ReceiptsArrears from '../components/ReceiptsArrears';
@@ -22,6 +23,7 @@ const STUDENT_TABS = ['overview', 'attendance', 'results', 'fees', 'lms', 'query
 
 export default function StudentDashboard() {
   const { user, isStudent, loading: authLoading } = useAuth();
+  const { enabled } = useFeatures();
   useTranslation();
   // Section lives in ?tab= so Back/Forward, refresh and links work.
   const [activeTab, selectTab] = useTabParam(STUDENT_TABS, 'overview');
@@ -442,11 +444,22 @@ export default function StudentDashboard() {
         {activeTab === 'query' && (
           <PortalTabChrome title_en="Message Class Tutor" title_ar="مراسلة المشرف" onBack={() => selectTab('overview')}>
             <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-3">
-              <p className="text-xs text-ink-text-muted">
-                {tutorProfile?.full_name
-                  ? `${tx('إلى:', 'To:')} ${tutorProfile.full_name}`
-                  : tx('لا يوجد مشرف معيّن لصفك حالياً.', 'No tutor is assigned to your class yet.')}
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-ink-text-muted">
+                  {tutorProfile?.full_name
+                    ? `${tx('إلى:', 'To:')} ${tutorProfile.full_name}`
+                    : tx('لا يوجد مشرف معيّن لصفك حالياً.', 'No tutor is assigned to your class yet.')}
+                </p>
+                {enabled('messaging') && (
+                  <Link
+                    to="/messages"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sand-border bg-parchment-50 text-xs font-semibold text-ink-green-900 hover:bg-mint-wash-100 transition-colors"
+                  >
+                    <Icon name="chat" className="text-[15px] text-emerald-700" />
+                    <span>{tx('صندوق الرسائل', 'Open Messages Inbox')}</span>
+                  </Link>
+                )}
+              </div>
               {querySuccess && <p className="text-xs text-emerald-700 font-semibold">{tx('تم إرسال الرسالة للمشرف.', 'Message dispatched to tutor.')}</p>}
               <form onSubmit={handleQuerySubmit} className="space-y-2">
                 <textarea

@@ -98,5 +98,16 @@
   "Match": "பொருத்து",
   "Suggest": "பரிந்துரை",
   "Select receipt": "ரசீதைத் தேர்ந்தெடு",
-  "Ignore": "புறக்கணி"
+  "Ignore": "புறக்கணி",
+  "Digital Library is currently disabled": "டிஜிட்டல் நூலகம் தற்போது முடக்கப்பட்டுள்ளது",
+  "Digital Library access pending approval": "டிஜிட்டல் நூலக அணுகல் ஒப்புதலுக்காகக் காத்திருக்கிறது",
+  "This module has been temporarily disabled by administration.": "இந்தப் பகுதி நிர்வாகத்தால் தற்காலிகமாக முடக்கப்பட்டுள்ளது.",
+  "Please wait for account approval from administration to access the Digital Library.": "டிஜிட்டல் நூலகத்தை அணுக நிர்வாகத்தின் கணக்கு ஒப்புதலுக்காகக் காத்திருக்கவும்.",
+  "Return to My Portal": "என் போர்ட்டலுக்குத் திரும்பு",
+  "Book Reader is currently disabled": "புத்தக வாசிப்பான் தற்போது முடக்கப்பட்டுள்ளது",
+  "Book Reader access pending approval": "புத்தக வாசிப்பான் அணுகல் ஒப்புதலுக்காகக் காத்திருக்கிறது",
+  "Book Reader": "புத்தக வாசிப்பான்",
+  "Book": "புத்தகம்",
+  "Digital Library is currently disabled.": "டிஜிட்டல் நூலகம் தற்போது முடக்கப்பட்டுள்ளது.",
+  "Open Messages Inbox": "செய்தி இன்பாக்ஸைத் திற"
 }

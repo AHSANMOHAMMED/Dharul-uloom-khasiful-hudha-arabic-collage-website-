@@ -21,6 +21,7 @@ const DASHBOARD_ROUTES = [
   '/admin',
   '/platform',
   '/dashboard',
+  '/library',
   '/library-admin',
   '/erp',
   '/messages',
@@ -35,7 +36,7 @@ const DASHBOARD_ROUTES = [
 ];
 
 /** Routes that require a signed-in user (public receipt/verify links excluded). */
-const PROTECTED_ROUTES = ['/admin', '/platform', '/dashboard', '/library-admin', '/erp', '/messages', '/account'];
+const PROTECTED_ROUTES = ['/admin', '/platform', '/dashboard', '/library', '/library-admin', '/erp', '/messages', '/account'];
 
 function isDashboardPath(pathname) {
   return DASHBOARD_ROUTES.some((r) => pathname === r || pathname.startsWith(r));

@@ -3,6 +3,9 @@ import { Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
+import { useFeatures } from '../context/FeatureFlagsContext';
+import { portalHomeFor } from '../lib/useHistoryNav';
+import PageNavBar from '../components/PageNavBar';
 import { supabase } from '../lib/supabaseClient';
 import { buildDrivePreviewUrl, getDriveFileIdFromUrl, searchBooks } from '../lib/booksApi';
 import { exportToCSV } from '../lib/exportUtils';
@@ -31,7 +34,9 @@ const emptyForm = {
 };
 
 const LibrarianDashboard = () => {
-  const { user, isAdmin, isLibrarian, loading: authLoading } = useAuth();
+  const auth = useAuth();
+  const { user, isAdmin, isLibrarian, loading: authLoading } = auth;
+  const { enabled } = useFeatures();
   const { i18n } = useTranslation();
   const dir = { ar: 'rtl' }[i18n.language] || 'ltr';
   const [activeTab, setActiveTab] = useTabParam(['catalog', 'add', 'loans', 'dictionary'], 'catalog');
@@ -78,10 +83,34 @@ const LibrarianDashboard = () => {
     return <Navigate to="/login" replace state={{ from: '/library-admin' }} />;
   }
 
-  if (!canManage) {
+  const libraryDisabled = !enabled('library');
+
+  if (!canManage || !auth.isApproved || libraryDisabled) {
+    const portalUrl = portalHomeFor(auth);
     return (
-      <div className="min-h-screen bg-[#FBF8F0] py-20 text-center text-[#4A5E56]">
-        {tx('ليس لديك صلاحية الوصول إلى هذه الصفحة.', 'You do not have permission to access this page.')}
+      <div className="min-h-screen bg-[#FBF8F0] py-6">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-6">
+          <PageNavBar
+            home={{ to: portalUrl, label: tx('بوابتي', 'My portal') }}
+            crumbs={[
+              { label: tx('بوابتي', 'My portal'), to: portalUrl },
+              { label: tx('إدارة المكتبة', 'Maktabah Admin') },
+            ]}
+          />
+          <div className="rounded-2xl bg-white border border-[#E8E1D0] p-8 text-center text-[#4A5E56] space-y-3">
+            <p className="font-semibold text-[#0B3B2E]">
+              {libraryDisabled
+                ? tx('المكتبة الرقمية غير مفعّلة حالياً.', 'Digital Library is currently disabled.')
+                : tx('ليس لديك صلاحية الوصول إلى هذه الصفحة.', 'You do not have permission to access this page.')}
+            </p>
+            <Link
+              to={portalUrl}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0B3B2E] text-[#F5ECD5] text-xs font-semibold"
+            >
+              {tx('العودة إلى بوابتي', 'Return to My Portal')}
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

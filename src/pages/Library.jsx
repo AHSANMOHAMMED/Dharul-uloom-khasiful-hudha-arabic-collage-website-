@@ -8,14 +8,19 @@ import { getCategories, searchBooks } from '../lib/booksApi';
 import { isSupabaseConfigured } from '../lib/supabaseClient';
 import KhatamPattern from '../components/KhatamPattern';
 import Icon from '../components/Icon';
+import PageNavBar from '../components/PageNavBar';
 import { tx } from '../lib/tx';
 import { useAuth } from '../context/AuthContext';
+import { useFeatures } from '../context/FeatureFlagsContext';
+import { portalHomeFor } from '../lib/useHistoryNav';
 
 const PAGE_SIZE = 24;
 
 export default function Library() {
   useTranslation(); // subscribe: re-render on language change
-  const { loading: authLoading, isAuthenticated, isParent } = useAuth();
+  const auth = useAuth();
+  const { loading: authLoading, isAuthenticated, isParent, isApproved, isEmployee, isAdmin, isLibrarian, user } = auth;
+  const { enabled } = useFeatures();
   const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState({
     query: searchParams.get('q') || '',
@@ -30,7 +35,10 @@ export default function Library() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const sentinelRef = useRef(null);
+  const isGuestBlocked = user?.accountType === 'guest' && !isEmployee && !isAdmin && !isLibrarian;
+  const libraryDisabled = !enabled('library');
   const libraryBlocked = !authLoading && (!isAuthenticated || isParent);
+  const portalUrl = portalHomeFor(auth);
 
   // ar = Arabic category name stored on the books (the filter value); en = display label
   const featuredDisciplines = [
@@ -92,6 +100,41 @@ export default function Library() {
     return <Navigate to={isParent ? '/dashboard' : '/login'} replace state={{ from: '/library' }} />;
   }
 
+  if (!authLoading && (!isApproved || isGuestBlocked || libraryDisabled)) {
+    return (
+      <div className="w-full bg-parchment-50 text-ink-text-primary min-h-screen">
+        <div className="max-w-[900px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          <PageNavBar
+            home={{ to: portalUrl, label: tx('بوابتي', 'My portal') }}
+            crumbs={[
+              { label: tx('بوابتي', 'My portal'), to: portalUrl },
+              { label: tx('المكتبة الرقمية', 'Digital Library') },
+            ]}
+          />
+          <div className="rounded-[16px] bg-paper-white border border-sand-border p-8 text-center shadow-manuscript space-y-3">
+            <Icon name="lock" className="text-[36px] text-brass-gold-600 mx-auto" />
+            <h1 className="text-lg font-bold text-ink-green-900">
+              {libraryDisabled
+                ? tx('المكتبة الرقمية غير مفعّلة حالياً', 'Digital Library is currently disabled')
+                : tx('الحساب غير مفعّل للمكتبة الرقمية', 'Digital Library access pending approval')}
+            </h1>
+            <p className="text-sm text-ink-text-muted max-w-md mx-auto">
+              {libraryDisabled
+                ? tx('تم إيقاف هذه الميزة مؤقتاً من قِبل الإدارة.', 'This module has been temporarily disabled by administration.')
+                : tx('يرجى انتظار اعتماد حسابك من الإدارة للوصول إلى المكتبة الرقمية.', 'Please wait for account approval from administration to access the Digital Library.')}
+            </p>
+            <Link
+              to={portalUrl}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-ink-green-900 text-gold-wash-100 text-xs font-semibold hover:bg-emerald-800 transition-colors"
+            >
+              {tx('العودة إلى بوابتي', 'Return to My Portal')}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-parchment-50 text-ink-text-primary min-h-screen">
       <Helmet>
@@ -102,6 +145,17 @@ export default function Library() {
         />
       </Helmet>
 
+      {/* Portal Navigation Bar */}
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-3">
+        <PageNavBar
+          home={{ to: portalUrl, label: tx('بوابتي', 'My portal') }}
+          crumbs={[
+            { label: tx('بوابتي', 'My portal'), to: portalUrl },
+            { label: tx('المكتبة الرقمية', 'Digital Library') },
+          ]}
+        />
+      </div>
+
       {/* 1. Compact Ink-Green Header with campus crop */}
       <section className="relative w-full bg-ink-green-900 text-paper-white py-14 overflow-hidden border-b border-sand-border/20">
         <img src="/images/campus/building.jpg" alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-25" />
@@ -110,7 +164,7 @@ export default function Library() {
         
         <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <nav className="flex items-center gap-2 text-xs text-dark-text-primary/70" aria-label={tx('مسار التنقل', 'Breadcrumb')}>
-            <Link to="/" className="hover:text-gold-wash-100 transition-colors">{tx('الرئيسية', 'Home')}</Link>
+            <Link to={portalUrl} className="hover:text-gold-wash-100 transition-colors">{tx('بوابتي', 'My portal')}</Link>
             <span>/</span>
             <span className="text-brass-gold-500 font-medium">{tx('المكتبة الرقمية', 'Digital Library')}</span>
           </nav>
