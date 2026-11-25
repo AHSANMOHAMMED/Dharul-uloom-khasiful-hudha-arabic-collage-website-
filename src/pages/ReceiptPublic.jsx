@@ -8,7 +8,8 @@ import { printReceipt, receiptPdfUrl } from '../lib/receiptPrint';
 import { printSlip } from '../lib/slip/slipRender';
 import { feeReceiptSlip } from '../lib/slip/slipModels';
 import ReceiptSlip from '../components/ReceiptSlip';
-import KhatamPattern from '../components/KhatamPattern';
+import PageNavBar from '../components/PageNavBar';
+import { portalHomeFor } from '../lib/useHistoryNav';
 import Icon from '../components/Icon';
 
 /**
@@ -18,7 +19,8 @@ import Icon from '../components/Icon';
 export default function ReceiptPublic() {
   useTranslation();
   const { token, id } = useParams();
-  const { user, loading: authLoading } = useAuth();
+  const auth = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = auth;
   const [state, setState] = useState({ loading: true, receipt: null, error: null });
 
   const load = useCallback(async () => {
@@ -50,12 +52,20 @@ export default function ReceiptPublic() {
 
   const r = state.receipt;
   const pdf = r ? receiptPdfUrl(r.public_token) : null;
+  const portalUrl = isAuthenticated ? portalHomeFor(auth) : '/';
+  const homeLabel = isAuthenticated ? tx('بوابتي', 'My portal') : tx('الرئيسية', 'Home');
 
   return (
-    <div className="min-h-screen bg-parchment-50 px-4 pb-16 pt-24 relative overflow-hidden" dir={tx('rtl', 'ltr')}>
-      <KhatamPattern className="opacity-[0.04]" strokeColor="#0B3B2E" id="receipt-public-khatam" />
-
+    <div className="min-h-screen bg-[#F8FAFC] px-4 pb-16 pt-6 sm:pt-8 relative overflow-hidden" dir={tx('rtl', 'ltr')}>
       <div className="mx-auto max-w-3xl space-y-6 relative z-10">
+        <PageNavBar
+          className="print:hidden"
+          home={{ to: portalUrl, label: homeLabel }}
+          crumbs={[
+            { label: homeLabel, to: portalUrl },
+            { label: r?.receipt_no ? `${tx('إيصال', 'Receipt')} ${r.receipt_no}` : tx('إيصال تحصيل الرسوم', 'Fee Receipt') },
+          ]}
+        />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 block mb-0.5">

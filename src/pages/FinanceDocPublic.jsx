@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { fetchFinanceDocumentByToken } from '../lib/financeHubApi';
+import { useAuth } from '../context/AuthContext';
+import PageNavBar from '../components/PageNavBar';
+import { portalHomeFor } from '../lib/useHistoryNav';
 import { tx } from '../lib/tx';
 
 export default function FinanceDocPublic() {
   const { token } = useParams();
+  const auth = useAuth();
+  const portalUrl = auth.isAuthenticated ? portalHomeFor(auth) : '/';
+  const homeLabel = auth.isAuthenticated ? tx('بوابتي', 'My portal') : tx('الرئيسية', 'Home');
   const [doc, setDoc] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -46,10 +52,18 @@ export default function FinanceDocPublic() {
   const title = `${(doc.doc_type || 'document').replace('_', ' ')} ${doc.doc_number || ''}`.trim();
 
   return (
-    <main className="min-h-screen bg-[#fbf8f0] text-[#14201B] print:bg-white">
+    <main className="min-h-screen bg-[#F8FAFC] text-[#14201B] print:bg-white">
       <Helmet><title>{`${title} — ${tx('كاشف الهدى', 'Kashiful Hudha')}`}</title></Helmet>
-      <div className="mx-auto max-w-[210mm] px-4 py-8 print:py-0">
-        <article className="min-h-[297mm] rounded-xl border border-[#E8E1D0] bg-white p-8 shadow-sm print:border-0 print:shadow-none print:rounded-none">
+      <div className="mx-auto max-w-[210mm] px-4 py-6 sm:py-8 print:py-0">
+        <PageNavBar
+          className="mb-4 print:hidden"
+          home={{ to: portalUrl, label: homeLabel }}
+          crumbs={[
+            { label: homeLabel, to: portalUrl },
+            { label: title },
+          ]}
+        />
+        <article className="min-h-[297mm] rounded-xl border border-slate-200 bg-white p-8 shadow-sm print:border-0 print:shadow-none print:rounded-none">
           <header className="border-b border-[#E8E1D0] pb-4 mb-6">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#C29A3A]">{doc.organization?.name_en || tx('دار العلوم كاشف الهدى العربية', 'D.U. Kashiful Hudha Arabic College')}</p>
             {(doc.organization?.address || doc.organization?.phone) && (

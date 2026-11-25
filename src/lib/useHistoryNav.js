@@ -56,10 +56,10 @@ export function useHistoryNav() {
   }, [location.key, location.search, type]);
 
   const back = useCallback(() => {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
+    if (idx > 0) {
       navigate(-1);
     }
-  }, [navigate]);
+  }, [navigate, idx]);
 
   const forward = useCallback(() => {
     if (idx < maxIdx) {
@@ -67,7 +67,7 @@ export function useHistoryNav() {
     }
   }, [navigate, idx, maxIdx]);
 
-  const canBack = idx > 0 || (typeof window !== 'undefined' && window.history.length > 1);
+  const canBack = idx > 0;
   const canForward = idx < maxIdx;
 
   return { canBack, canForward, back, forward };
