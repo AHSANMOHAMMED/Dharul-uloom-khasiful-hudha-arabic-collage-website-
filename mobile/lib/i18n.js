@@ -46,6 +46,8 @@ const en = {
   'common.more': 'More',
   'common.all': 'All',
   'common.share': 'Share',
+  'common.add': 'Add',
+  'common.search': 'Search…',
 
   'lang.toggle': 'العربية',
   'lang.label': 'Language',
@@ -953,6 +955,8 @@ const ar = {
   'common.more': 'المزيد',
   'common.all': 'الكل',
   'common.share': 'مشاركة',
+  'common.add': 'إضافة',
+  'common.search': 'بحث…',
 
   'lang.toggle': 'தமிழ்',
   'lang.label': 'اللغة',
@@ -1859,6 +1863,8 @@ const ta = {
   "common.more": "மேலும்",
   "common.all": "அனைத்தும்",
   "common.share": "பகிர்",
+  "common.add": "சேர்",
+  "common.search": "தேடுக…",
   "lang.toggle": "English",
   "lang.label": "மொழி",
   "lang.en": "ஆங்கிலம்",

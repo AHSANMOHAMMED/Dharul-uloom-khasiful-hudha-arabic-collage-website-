@@ -21,11 +21,21 @@ describe('mobile role capabilities', () => {
     expect(homeRouteFor({ role: 'staff', account_type: 'staff', is_approved: false })).toBe('/pending')
   })
 
-  it('de-duplicates and merges assigned and extra roles', () => {
+  it('de-duplicates and merges assigned, extra, and active duty roles', () => {
     expect(staffRoles({
       assigned_tutor_role: 'warden',
       extra_roles: ['warden', 'counselor'],
-    })).toEqual(['warden', 'counselor'])
+    }, ['treasurer', 'counselor'])).toEqual(['warden', 'counselor', 'treasurer'])
+
+    const caps = getCaps({
+      role: 'user',
+      account_type: 'tutor',
+      is_approved: true,
+      assigned_tutor_role: 'none',
+      extra_roles: [],
+    }, ['treasurer'])
+    expect(caps.isFinanceStaff).toBe(true)
+    expect(caps.isFinanceViewer).toBe(true)
   })
 
   it('filters announcements by account and staff audience', () => {

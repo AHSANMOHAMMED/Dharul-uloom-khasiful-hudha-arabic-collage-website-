@@ -20,13 +20,7 @@ import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supa
 import { callerIsEmployee } from '../_shared/authz.ts';
 import { base64, buildReceiptPdf } from '../_shared/receiptPdf.ts';
 import { isDialable, normalizeLkPhone } from '../_shared/phone.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-const json = (b: unknown, status = 200) =>
-  new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+import { corsHeadersFor, getRequestId, jsonResponse, logJson } from '../_shared/http.ts';
 
 type Result = { ok: boolean; id?: string; error?: string; skipped?: boolean; blocked?: boolean; staleToken?: boolean };
 type OutboxRow = {
@@ -209,8 +203,11 @@ async function reconcileExpoReceipts(admin: SupabaseClient<any, 'public', any>) 
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const requestId = getRequestId(req);
+  const json = (b: unknown, status = 200) => jsonResponse(req, requestId, b, status);
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeadersFor(req), 'X-Request-ID': requestId } });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  logJson('info', 'send-outbound', 'invoked', { requestId });
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;

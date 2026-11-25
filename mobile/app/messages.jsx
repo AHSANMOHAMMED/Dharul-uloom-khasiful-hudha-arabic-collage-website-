@@ -12,7 +12,13 @@ import { Screen, Txt, Button, ErrorBanner } from '../components';
 
 export default function MessagesScreen() {
   const { t, row } = useI18n();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const chatAllowed = Boolean(
+    user
+    && profile?.is_approved
+    && profile?.role !== 'super_admin'
+    && (profile?.account_type !== 'guest' || profile?.role === 'admin' || profile?.role === 'librarian')
+  );
   const params = useLocalSearchParams();
   const conversationId = Array.isArray(params.conversation) ? params.conversation[0] : params.conversation;
   const [conversations, setConversations] = useState([]);
@@ -27,24 +33,26 @@ export default function MessagesScreen() {
   const listRef = useRef(null);
   const active = conversations.find((c) => c.conversation_id === conversationId);
 
-  useLiveTable({ table: 'chat_conversations', enabled: !!user, onChange: reloadConversations });
-
   const reloadConversations = useCallback(async () => {
+    if (!chatAllowed) { setLoading(false); return; }
     try { setConversations(await chatConversations()); setError(''); }
     catch (e) { setError(e.message || t('chat.error')); }
     finally { setLoading(false); }
-  }, [t]);
+  }, [chatAllowed, t]);
+
+  useLiveTable({ table: 'chat_conversations', enabled: chatAllowed, onChange: reloadConversations });
 
   useEffect(() => { reloadConversations(); }, [reloadConversations]);
 
   useEffect(() => {
+    if (!chatAllowed) { setContacts([]); return undefined; }
     let alive = true;
     const timer = setTimeout(async () => {
       try { const rows = await chatContacts(search); if (alive) setContacts(rows); }
       catch (e) { if (alive && search.trim()) setError(e.message || t('chat.error')); }
     }, 250);
     return () => { alive = false; clearTimeout(timer); };
-  }, [search, t]);
+  }, [chatAllowed, search, t]);
 
   const reloadMessages = useCallback(async (id) => {
     if (!id) return;
@@ -101,14 +109,14 @@ export default function MessagesScreen() {
         {search.trim() ? contacts.map((p) => (
           <Pressable key={p.user_id} onPress={() => selectContact(p)} disabled={sending} style={[styles.row, row]}>
             <Avatar name={p.full_name} />
-            <View style={styles.flex}><Txt variant="strong">{p.full_name}</Txt><Txt variant="small">{typeLabel(p.account_type, t)}{p.class_number ? ` · ${t('common.class')} ${p.class_number}` : ''}</Txt></View>
+            <View style={styles.flex}><Txt variant="strong">{p.full_name}</Txt><Txt variant="small">{typeLabel(p.account_type, t, p.role, p.assigned_tutor_role)}{p.class_number ? ` · ${t('common.class')} ${p.class_number}` : ''}</Txt></View>
             <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.primary} />
           </Pressable>
         )) : null}
         {!search.trim() && conversations.map((c) => (
           <Pressable key={c.conversation_id} onPress={() => router.push({ pathname: '/messages', params: { conversation: c.conversation_id } })} style={[styles.row, row]}>
             <Avatar name={c.other_user_name} />
-            <View style={styles.flex}><Txt variant="strong">{c.other_user_name}</Txt><Txt variant="muted" numberOfLines={1}>{c.last_message || typeLabel(c.other_account_type, t)}</Txt></View>
+            <View style={styles.flex}><Txt variant="strong">{c.other_user_name}</Txt><Txt variant="muted" numberOfLines={1}>{c.last_message || typeLabel(c.other_account_type, t, c.other_role, c.other_assigned_tutor_role)}</Txt></View>
             {Number(c.unread_count) > 0 ? <View style={styles.badge}><Text style={styles.badgeText}>{c.unread_count}</Text></View> : null}
           </Pressable>
         ))}
@@ -124,7 +132,7 @@ export default function MessagesScreen() {
       <View style={[styles.header, row]}>
         <Pressable onPress={() => router.replace('/messages')} style={styles.back}><Ionicons name="arrow-back" size={22} color={colors.primaryDark} /></Pressable>
         <Avatar name={active?.other_user_name || ''} />
-        <View style={styles.flex}><Txt variant="strong">{active?.other_user_name || t('chat.title')}</Txt><Txt variant="small">{typeLabel(active?.other_account_type, t)}</Txt></View>
+        <View style={styles.flex}><Txt variant="strong">{active?.other_user_name || t('chat.title')}</Txt><Txt variant="small">{typeLabel(active?.other_account_type, t, active?.other_role, active?.other_assigned_tutor_role)}</Txt></View>
       </View>
       {error ? <ErrorBanner message={error} /> : null}
       <FlatList
@@ -162,7 +170,9 @@ function Avatar({ name }) {
   return <View style={styles.avatar}><Text style={styles.avatarText}>{(name || '?').trim().slice(0, 1).toUpperCase()}</Text></View>;
 }
 
-function typeLabel(type, t) {
+function typeLabel(type, t, role, assignedTutorRole) {
+  if (role === 'admin') return t('account.admin');
+  if (role === 'librarian' || (assignedTutorRole && assignedTutorRole !== 'none')) return t('chat.staff');
   return ({ student: t('chat.student'), parent: t('chat.parent'), tutor: t('chat.tutor'), staff: t('chat.staff') })[type] || '';
 }
 

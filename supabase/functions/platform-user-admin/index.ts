@@ -6,18 +6,18 @@
 // database's 2FA gate applies. Super admin accounts cannot be targeted.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { bearerOf, callerIsSuperAdmin } from '../_shared/authz.ts';
-
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
+import { checkRateLimit, clientIpOf, corsHeadersFor, getRequestId, jsonResponse, logJson } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  const requestId = getRequestId(req);
+  const json = (body: unknown, status = 200) => jsonResponse(req, requestId, body, status);
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeadersFor(req), 'X-Request-ID': requestId } });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  const rl = checkRateLimit(`pua:${clientIpOf(req)}`, 30, 60_000);
+  if (!rl.allowed) {
+    logJson('warn', 'platform-user-admin', 'rate_limited', { requestId });
+    return json({ error: 'Too many requests' }, 429);
+  }
 
   const token = bearerOf(req);
   if (!(await callerIsSuperAdmin(token))) return json({ error: 'Only the platform super admin can do this' }, 403);

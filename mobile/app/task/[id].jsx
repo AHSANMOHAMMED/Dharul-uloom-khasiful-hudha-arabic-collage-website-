@@ -18,7 +18,7 @@ import {
   isOverdue,
   moveTask,
 } from '../../lib/governance';
-import { Badge, Button, Card, EmptyState, Field, KeyValue, ListItem, LiveIndicator, Row, Screen, SectionHeader, Txt } from '../../components';
+import { Badge, Button, Card, Chips, EmptyState, Field, KeyValue, ListItem, LiveIndicator, Row, Screen, SectionHeader, Txt } from '../../components';
 
 export default function TaskDetail() {
   const { id } = useLocalSearchParams();
@@ -27,7 +27,15 @@ export default function TaskDetail() {
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
   const [moving, setMoving] = useState(null);
+  const [reassigning, setReassigning] = useState(false);
   const enabled = !!id && !!user && caps.isEmployee;
+  const canReassign = !!(caps?.isGovernance);
+
+  const staffQuery = useAsync(
+    () => must(supabase.from('profiles').select('id, full_name').in('account_type', ['tutor', 'staff']).eq('is_approved', true).order('full_name')),
+    [],
+    { enabled: enabled && canReassign },
+  );
 
   const q = useAsync(
     async () => {
@@ -160,6 +168,28 @@ export default function TaskDetail() {
           </View>
           {task.status === 'review' && task.assignee_id === user?.id && !canMoveTask(task, 'done', user?.id, caps) ? (
             <Txt variant="small">{t('task.awaitingReview')}</Txt>
+          ) : null}
+
+          {canReassign && (staffQuery.data || []).length ? (
+            <Card>
+              <Txt variant="label">{t('task.assignee')}</Txt>
+              <Chips
+                options={(staffQuery.data || []).map((s) => ({ value: s.id, label: s.full_name }))}
+                value={task.assignee_id}
+                onChange={async (nextAssignee) => {
+                  if (reassigning || nextAssignee === task.assignee_id) return;
+                  setReassigning(true);
+                  try {
+                    await must(supabase.from('tasks').update({ assignee_id: nextAssignee }).eq('id', task.id));
+                    q.reload();
+                  } catch (e) {
+                    Alert.alert(t('common.error'), e.message);
+                  } finally {
+                    setReassigning(false);
+                  }
+                }}
+              />
+            </Card>
           ) : null}
 
           <SectionHeader title={t('task.comments')} />

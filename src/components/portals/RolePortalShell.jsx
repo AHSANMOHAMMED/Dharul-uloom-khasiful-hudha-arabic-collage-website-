@@ -116,6 +116,8 @@ export default function RolePortalShell({
     label_en: t.label_en,
     label_ar: t.label_ar,
     icon: t.icon,
+    group: t.group,
+    group_ar: t.group_ar,
     badge: t.badge,
     badgeTone: t.badgeTone,
   }));

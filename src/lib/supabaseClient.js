@@ -43,8 +43,12 @@ export function fetchWithTimeout(input, init = {}, timeoutMs = REQUEST_TIMEOUT_M
     timeout.name = 'TimeoutError';
     controller.abort(timeout);
   }, timeoutMs);
+  const headers = new Headers(init.headers || {});
+  if (!headers.has('x-request-id') && typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    headers.set('x-request-id', crypto.randomUUID());
+  }
   controller.signal.addEventListener('abort', cleanup, { once: true });
-  return fetch(input, { ...init, signal: controller.signal }).then((response) => {
+  return fetch(input, { ...init, headers, signal: controller.signal }).then((response) => {
     // Keep the deadline active until the response body has been consumed too;
     // fetch() itself resolves as soon as headers arrive.
     if (!response.body) {

@@ -31,6 +31,14 @@ export async function listChatMessages(conversationId, limit = 100) {
   return (data || []).reverse();
 }
 
+export async function listOlderChatMessages(conversationId, before, limit = 100) {
+  const { data, error } = await requireClient().rpc('chat_messages_page', {
+    p_conversation: conversationId, p_before: before, p_limit: Math.min(100, Math.max(1, limit)),
+  });
+  if (error) throw error;
+  return (data || []).reverse();
+}
+
 export async function sendChatMessage(conversationId, body) {
   const { data, error } = await requireClient().rpc('send_chat_message', {
     p_conversation: conversationId,

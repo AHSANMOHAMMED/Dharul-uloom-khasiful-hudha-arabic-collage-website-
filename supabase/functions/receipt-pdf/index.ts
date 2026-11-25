@@ -5,11 +5,17 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { buildReceiptPdf, pdfSafe } from '../_shared/receiptPdf.ts';
 
-const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type' };
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { buildReceiptPdf, pdfSafe } from '../_shared/receiptPdf.ts';
+import { checkRateLimit, clientIpOf, corsHeadersFor, getRequestId } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
+  const requestId = getRequestId(req);
+  const cors = { ...corsHeadersFor(req), 'X-Request-ID': requestId };
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   if (req.method !== 'GET') return new Response('Method not allowed', { status: 405, headers: cors });
+  const rl = checkRateLimit(`receipt:${clientIpOf(req)}`, 60, 60_000);
+  if (!rl.allowed) return new Response('Too many requests', { status: 429, headers: cors });
 
   const token = new URL(req.url).searchParams.get('t') || '';
   if (!/^[0-9a-f]{32}$/.test(token)) return new Response('Invalid receipt link', { status: 400, headers: cors });

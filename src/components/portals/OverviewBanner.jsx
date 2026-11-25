@@ -33,7 +33,7 @@ export default function OverviewBanner({
   const { user } = useAuth();
   const a = ACCENTS[accent] || ACCENTS.emerald;
   const name = user?.username || user?.email || tx('الموظف', 'Colleague');
-  const heading = tx(greeting_ar.replace('{name}', name), greeting_en.replace('{name}', name));
+  const heading = tx(greeting_ar, greeting_en).replace('{name}', name);
 
   return (
     <div className="rounded-[14px] border border-[#E8E1D0] bg-white p-5 sm:p-6 shadow-xs relative overflow-hidden">

@@ -1,5 +1,8 @@
 import { supabase, isSupabaseConfigured, fetchWithTimeout } from './supabaseClient';
 import { getSiteOrgId } from './siteOrg';
+import { TtlCache, withRetry } from './resilience';
+
+const publicContentCache = new TtlCache({ maxEntries: 50, defaultTtlMs: 60_000 });
 
 /**
  * Public content data layer (replaces the Express /api/news, /api/faculty,
@@ -28,16 +31,20 @@ function forSite(query, orgId) {
 export async function listNews() {
   if (!isSupabaseConfigured) return [];
   const siteOrg = await getSiteOrgId();
-  const { data, error } = await forSite(supabase
-    .from('news')
-    .select('id, title_en, title_ar, title_ta, content_en, content_ar, content_ta, author, image, category, date')
-    .eq('is_published', true), siteOrg)
-    .order('date', { ascending: false });
-  if (error) {
-    console.error('[contentApi] listNews', error);
-    return [];
-  }
-  return (data ?? []).map(mapNewsRow);
+  return publicContentCache.getOrLoad(`news:${siteOrg || 'default'}`, async () => {
+    const { data, error } = await withRetry(() =>
+      forSite(supabase
+        .from('news')
+        .select('id, title_en, title_ar, title_ta, content_en, content_ar, content_ta, author, image, category, date')
+        .eq('is_published', true), siteOrg)
+        .order('date', { ascending: false }),
+    );
+    if (error) {
+      console.error('[contentApi] listNews', error);
+      return [];
+    }
+    return (data ?? []).map(mapNewsRow);
+  });
 }
 
 function mapNewsRow(row) {

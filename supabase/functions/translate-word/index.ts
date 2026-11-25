@@ -20,13 +20,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Anthropic from 'npm:@anthropic-ai/sdk';
 import { z } from 'npm:zod@4';
 import { zodOutputFormat } from 'npm:@anthropic-ai/sdk/helpers/zod';
-
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-const json = (b: unknown, status = 200) =>
-  new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
+import { checkRateLimit, clientIpOf, corsHeadersFor, getRequestId, jsonResponse, logJson } from '../_shared/http.ts';
 
 const ARABIC = /^[؀-ۿݐ-ݿ\s]{1,40}$/;
 
@@ -50,8 +44,15 @@ Rules:
 - Keep Tamil concise (dictionary style), no transliteration unless it is an Islamic technical term.`;
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  const requestId = getRequestId(req);
+  const json = (b: unknown, status = 200) => jsonResponse(req, requestId, b, status);
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeadersFor(req), 'X-Request-ID': requestId } });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  const rl = checkRateLimit(`translate:${clientIpOf(req)}`, 40, 60_000);
+  if (!rl.allowed) {
+    logJson('warn', 'translate-word', 'rate_limited', { requestId, ip: clientIpOf(req) });
+    return json({ error: 'Too many requests' }, 429);
+  }
   const started = Date.now();
 
   let body: { word?: string; context?: string } = {};

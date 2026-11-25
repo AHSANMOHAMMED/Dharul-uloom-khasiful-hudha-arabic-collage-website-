@@ -11,6 +11,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [dutyCodes, setDutyCodes] = useState([]);
   const [loading, setLoading] = useState(isConfigured);
   const [profileError, setProfileError] = useState(null);
   const profileIdRef = useRef(null);
@@ -33,6 +34,16 @@ export function AuthProvider({ children }) {
     else setProfileError(null);
     setProfile(data || null);
     profileIdRef.current = data?.id || null;
+    if (data?.is_approved && (data.account_type === 'tutor' || data.account_type === 'staff')) {
+      const { data: dutyRows } = await supabase
+        .from('duty_assignments')
+        .select('duty:duty_roles(code)')
+        .eq('assignee_id', userId)
+        .eq('status', 'active');
+      setDutyCodes((dutyRows || []).map((d) => d.duty?.code).filter(Boolean));
+    } else {
+      setDutyCodes([]);
+    }
     return data || null;
   }, []);
 
@@ -106,7 +117,7 @@ export function AuthProvider({ children }) {
       profile,
       profileError,
       loading,
-      caps: getCaps(profile),
+      caps: getCaps(profile, dutyCodes),
       aal,
       mfaPending: Boolean(session) && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2',
       refreshAal: loadAal,
@@ -128,7 +139,7 @@ export function AuthProvider({ children }) {
         setSession(null);
       },
     }),
-    [session, profile, profileError, loading, loadProfile, aal, loadAal],
+    [session, profile, profileError, loading, loadProfile, aal, loadAal, dutyCodes],
   );
 
   return createElement(AuthContext.Provider, { value }, children);

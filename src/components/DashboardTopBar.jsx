@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useFeatures } from '../context/FeatureFlagsContext';
 import NotificationBell from './NotificationBell';
 import LanguageSelect from './LanguageSelect';
 import Icon from './Icon';
 import { tx } from '../lib/tx';
 
 export default function DashboardTopBar() {
-  const { user, isAdmin, isSuperAdmin, isLibrarian, isTutor, isStudent, isParent, isTreasurer, isPrincipal, isVP, isEmployee, logout } = useAuth();
+  const { user, isAdmin, isSuperAdmin, isLibrarian, isTutor, isStudent, isParent, isTreasurer, isPrincipal, isVP, isEmployee, isApproved, logout } = useAuth();
+  const { enabled } = useFeatures();
+  const canMessage = !isSuperAdmin && isApproved && enabled('messaging') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian);
   useTranslation(); // re-render on language change
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -139,7 +142,7 @@ export default function DashboardTopBar() {
         {/* Right: Trilingual Switcher, Notifications, User Badge & Logout */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <LanguageSelect className="text-xs bg-white border border-[#E8E1D0] text-[#0B3B2E] py-1 px-2 rounded-lg" />
-          {!isSuperAdmin && (
+          {canMessage && (
             <Link to="/messages" aria-label={tx('الرسائل', 'Messages')} title={tx('الرسائل', 'Messages')} className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]">
               <Icon name="forum" className="text-[18px]" />
             </Link>

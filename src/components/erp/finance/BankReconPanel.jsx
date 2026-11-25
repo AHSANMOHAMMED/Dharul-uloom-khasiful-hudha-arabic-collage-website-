@@ -127,7 +127,7 @@ export default function BankReconPanel() {
         <p className="text-sm text-gray-400 mb-2">
           {t('Columns: date, amount, reference, description (header optional).', 'الأعمدة: date, amount, reference, description.')}
         </p>
-        <Textarea rows={4} value={csvText} onChange={(e) => setCsvText(e.target.value)} placeholder="2026-11-01,2500.00,REF1,Tuition" />
+        <Textarea rows={4} value={csvText} onChange={(e) => setCsvText(e.target.value)} placeholder={t('2026-11-01,2500.00,REF1,Tuition', '2026-11-01,2500.00,REF1,الرسوم')} />
         <div className="mt-2">
           <Button disabled={busy || !csvText.trim()} onClick={importCsv}>{t('Import lines', 'استيراد الأسطر')}</Button>
         </div>

@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useFeatures } from '../context/FeatureFlagsContext';
 import KhatamPattern from '../components/KhatamPattern';
+import LanguageSelect from '../components/LanguageSelect';
+import { tx } from '../lib/tx';
 import PlatformPanel from '../components/erp/campus/PlatformPanel';
 import {
   FEATURE_META,
@@ -41,21 +44,21 @@ import JobRunsPanel from '../components/erp/ops/JobRunsPanel';
 import Icon from '../components/Icon';
 
 const NAV = [
-  { id: 'overview', label: 'Overview', icon: 'dashboard' },
-  { id: 'tenants', label: 'Institutions', icon: 'apartment' },
-  { id: 'users', label: 'Users & roles', icon: 'group' },
-  { id: 'features', label: 'Feature access', icon: 'tune' },
-  { id: 'communities', label: 'Communities', icon: 'diversity_3' },
-  { id: 'erp', label: 'ERP workspace', icon: 'domain' },
-  { id: 'finance', label: 'Finance hub', icon: 'account_balance' },
-  { id: 'audit', label: 'Audit & deletes', icon: 'history_edu' },
-  { id: 'history', label: 'Control log', icon: 'history' },
-  { id: 'health', label: 'Health', icon: 'monitor_heart' },
-  { id: 'jobs', label: 'Job runs', icon: 'schedule' },
-  { id: 'breakglass', label: 'Break-glass', icon: 'emergency' },
+  { id: 'overview', label: 'Overview', label_ar: 'نظرة عامة', icon: 'dashboard' },
+  { id: 'tenants', label: 'Institutions', label_ar: 'المؤسسات', icon: 'apartment' },
+  { id: 'users', label: 'Users & roles', label_ar: 'المستخدمون والأدوار', icon: 'group' },
+  { id: 'features', label: 'Feature access', label_ar: 'صلاحيات الميزات', icon: 'tune' },
+  { id: 'communities', label: 'Communities', label_ar: 'المجتمعات', icon: 'diversity_3' },
+  { id: 'erp', label: 'ERP workspace', label_ar: 'مساحة ERP', icon: 'domain' },
+  { id: 'finance', label: 'Finance hub', label_ar: 'مركز المالية', icon: 'account_balance' },
+  { id: 'audit', label: 'Audit & deletes', label_ar: 'التدقيق والمحذوفات', icon: 'history_edu' },
+  { id: 'history', label: 'Control log', label_ar: 'سجل التحكم', icon: 'history' },
+  { id: 'health', label: 'Health', label_ar: 'الحالة الصحية', icon: 'monitor_heart' },
+  { id: 'jobs', label: 'Job runs', label_ar: 'تشغيل المهام', icon: 'schedule' },
+  { id: 'breakglass', label: 'Break-glass', label_ar: 'الطوارئ', icon: 'emergency' },
   // Institution chat is per college (the database refuses it for super admins);
   // platform-wide notices go out through Broadcast.
-  { id: 'broadcast', label: 'Broadcast', icon: 'campaign' },
+  { id: 'broadcast', label: 'Broadcast', label_ar: 'البث العام', icon: 'campaign' },
 ];
 
 const GROUPS = [
@@ -85,6 +88,7 @@ function Toggle({ checked, disabled, onChange, label }) {
 }
 
 export default function SuperAdminConsole() {
+  useTranslation();
   const auth = useAuth();
   const { refreshFeatures } = useFeatures();
   const navigate = useNavigate();
@@ -233,44 +237,47 @@ export default function SuperAdminConsole() {
       }`}
     >
       <Icon name={item.icon} className="text-[18px]" />
-      {item.label}
+      {tx(item.label_ar || item.label, item.label)}
     </button>
   );
 
+  const activeNav = NAV.find((n) => n.id === section);
+
   return (
-    <div dir="ltr" lang="en" className="min-h-screen bg-parchment-50 text-ink-text-primary flex relative overflow-hidden">
+    <div dir={tx('rtl', 'ltr')} className="erp-theme min-h-screen bg-parchment-50 text-ink-text-primary flex relative overflow-hidden">
       <KhatamPattern className="opacity-[0.03]" strokeColor="#0B3B2E" id="sa-console-khatam" />
 
       {mobileNav && <div className="fixed inset-0 z-40 bg-ink-green-900/40 lg:hidden" onClick={() => setMobileNav(false)} aria-hidden />}
 
       <aside className={`fixed inset-y-0 start-0 z-50 w-72 border-e border-sand-border bg-paper-white flex flex-col transition-transform lg:translate-x-0 ${mobileNav ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="border-b border-sand-border bg-ink-green-900 text-paper-white p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brass-gold-500">Platform operator</p>
-          <h1 className="font-serif text-xl font-semibold mt-1">Super Admin</h1>
-          <p className="text-xs text-white/70 mt-1">Full control across colleges, users, ACL, communities & ERP.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brass-gold-500">{tx('مشغل المنصة', 'Platform operator')}</p>
+          <h1 className="font-serif text-xl font-semibold mt-1">{tx('المدير العام', 'Super Admin')}</h1>
+          <p className="text-xs text-white/70 mt-1">{tx('تحكم كامل عبر الكليات والمستخدمين والصلاحيات والمجتمعات ونظام ERP.', 'Full control across colleges, users, ACL, communities & ERP.')}</p>
         </div>
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">{NAV.map(navBtn)}</nav>
         <div className="border-t border-sand-border p-3 space-y-2">
-          <button type="button" disabled={busy} onClick={reloadAll} className="w-full rounded-lg border border-sand-border px-3 py-2 text-xs font-semibold">Refresh</button>
+          <LanguageSelect className="w-full rounded-lg border border-sand-border bg-paper-white px-2.5 py-1.5 text-xs text-ink-green-900" />
+          <button type="button" disabled={busy} onClick={reloadAll} className="w-full rounded-lg border border-sand-border px-3 py-2 text-xs font-semibold">{tx('تحديث', 'Refresh')}</button>
         </div>
       </aside>
 
       <div className="flex-1 lg:ms-72 min-w-0 relative z-10">
         <header className="sticky top-0 z-20 border-b border-sand-border bg-paper-white/95 backdrop-blur px-4 py-3 flex items-center gap-3">
-          <button type="button" className="lg:hidden rounded-lg border border-sand-border p-2" onClick={() => setMobileNav(true)} aria-label="Open menu">
+          <button type="button" className="lg:hidden rounded-lg border border-sand-border p-2" onClick={() => setMobileNav(true)} aria-label={tx('فتح القائمة', 'Open menu')}>
             <Icon name="menu" />
           </button>
           <div className="min-w-0">
-            <h2 className="font-serif text-lg font-semibold text-ink-green-900 truncate">{NAV.find((n) => n.id === section)?.label || 'Overview'}</h2>
+            <h2 className="font-serif text-lg font-semibold text-ink-green-900 truncate">{activeNav ? tx(activeNav.label_ar || activeNav.label, activeNav.label) : tx('نظرة عامة', 'Overview')}</h2>
           </div>
           <div className="ms-auto flex flex-wrap gap-2 items-center">
             <select className="rounded-lg border border-sand-border px-2 py-1.5 text-xs" value={orgId} onChange={(e) => setOrgId(e.target.value)}>
               {(controls?.organizations || []).map((o) => (
-                <option key={o.org_id} value={o.org_id}>{o.name_en}</option>
+                <option key={o.org_id} value={o.org_id}>{tx(o.name_ar || o.name_en, o.name_en)}</option>
               ))}
             </select>
             <button type="button" className="rounded-lg bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white" onClick={() => enterCollege('dashboard')}>
-              Manage college
+              {tx('إدارة الكلية', 'Manage college')}
             </button>
             <button
               type="button"
@@ -278,16 +285,16 @@ export default function SuperAdminConsole() {
               className="inline-flex items-center gap-1 rounded-lg border border-[#991B1B]/20 bg-[#FEE2E2]/70 hover:bg-[#FEE2E2] px-2.5 py-1.5 text-xs font-bold text-[#991B1B]"
             >
               <Icon name="logout" className="text-[16px]" />
-              Sign out
+              {tx('تسجيل الخروج', 'Sign out')}
             </button>
           </div>
         </header>
 
         <main className="p-4 sm:p-6 space-y-6 max-w-[1400px]">
           <PageNavBar
-            home={{ onClick: () => setSection('overview'), label: 'Overview' }}
+            home={{ onClick: () => setSection('overview'), label: tx('نظرة عامة', 'Overview') }}
             crumbs={[
-              { label: 'Super Admin', onClick: () => setSection('overview') },
+              { label: tx('المدير العام', 'Super Admin'), onClick: () => setSection('overview') },
               ...(section === 'overview' ? [] : [{ label: NAV.find((n) => n.id === section)?.label || section }]),
             ]}
           />

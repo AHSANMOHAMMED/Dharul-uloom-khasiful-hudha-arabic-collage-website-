@@ -3,18 +3,18 @@
 
 const LEADERSHIP = ['principal', 'vice_principal'];
 
-export function staffRoles(profile) {
+export function staffRoles(profile, activeDutyCodes = []) {
   if (!profile) return [];
-  const roles = [...(profile.extra_roles || [])];
+  const roles = [...(profile.extra_roles || []), ...(activeDutyCodes || [])];
   if (profile.assigned_tutor_role && profile.assigned_tutor_role !== 'none') roles.unshift(profile.assigned_tutor_role);
   return [...new Set(roles)];
 }
 
-export function getCaps(profile) {
+export function getCaps(profile, activeDutyCodes = []) {
   const p = profile || {};
   const isAdmin = p.role === 'admin' || p.role === 'super_admin';
   const isEmployeeAccount = (p.account_type === 'tutor' || p.account_type === 'staff') && p.is_approved;
-  const roles = isEmployeeAccount ? staffRoles(p) : [];
+  const roles = isEmployeeAccount ? staffRoles(p, activeDutyCodes) : [];
   const has = (list) => roles.some((r) => list.includes(r));
 
   const isTutor = p.account_type === 'tutor' && !!p.is_approved;

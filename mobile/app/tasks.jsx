@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -8,10 +8,11 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
   useWindowDimensions,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { supabase, must } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { useAsync } from '../lib/useAsync';
@@ -92,27 +93,53 @@ function TaskCard({ task, showAssignee, busy, onMove }) {
   );
 }
 
-/** "Add my own task" form (tasks for others are assigned at the mashoora / by managers). */
-function AddTaskModal({ visible, onClose, onCreated }) {
+/** Add task form (governance managers can assign to any staff, duty, and Mashoora meeting). */
+function AddTaskModal({ visible, initialMeetingId, onClose, onCreated }) {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
+  const { user, caps } = useAuth();
+  const canAssignOthers = !!caps?.isGovernance;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('normal');
   const [due, setDue] = useState('');
   const [dutyId, setDutyId] = useState(null);
+  const [assigneeId, setAssigneeId] = useState(user?.id || null);
+  const [meetingId, setMeetingId] = useState(initialMeetingId || null);
   const [saving, setSaving] = useState(false);
 
-  const duties = useAsync(
-    () =>
-      must(
+  useEffect(() => {
+    if (visible) {
+      setAssigneeId(user?.id || null);
+      setMeetingId(initialMeetingId || null);
+    }
+  }, [visible, user?.id, initialMeetingId]);
+
+  const meta = useAsync(
+    async () => {
+      if (canAssignOthers) {
+        const [roles, assignments, staff, meetings] = await Promise.all([
+          must(supabase.from('duty_roles').select('id, code, name_en, name_ar, name_ta').eq('is_active', true).order('name_en')),
+          must(supabase.from('duty_assignments').select('duty_role_id, assignee_id, is_lead').eq('status', 'active')),
+          must(supabase.from('profiles').select('id, full_name').in('account_type', ['tutor', 'staff']).eq('is_approved', true).order('full_name')),
+          must(supabase.from('mashoora_meetings').select('id, title, meeting_date').order('meeting_date', { ascending: false }).limit(12)),
+        ]);
+        return { roles, assignments, staff, meetings };
+      }
+      const my = await must(
         supabase
           .from('duty_assignments')
           .select('id, duty:duty_roles(id, code, name_en, name_ar, name_ta)')
           .eq('assignee_id', user.id)
           .eq('status', 'active'),
-      ),
-    [user?.id, visible],
+      );
+      return {
+        roles: (my || []).map((a) => a.duty).filter(Boolean),
+        assignments: [],
+        staff: [],
+        meetings: [],
+      };
+    },
+    [user?.id, canAssignOthers, visible],
     { enabled: !!user && visible, reloadOnFocus: false },
   );
 
@@ -122,6 +149,17 @@ function AddTaskModal({ visible, onClose, onCreated }) {
     setPriority('normal');
     setDue('');
     setDutyId(null);
+    setAssigneeId(user?.id || null);
+    setMeetingId(null);
+  };
+
+  const onDutyPick = (nextDutyId) => {
+    setDutyId(nextDutyId);
+    if (canAssignOthers && nextDutyId) {
+      const holders = (meta.data?.assignments || []).filter((a) => a.duty_role_id === nextDutyId);
+      const lead = holders.find((h) => h.is_lead) || holders[0];
+      if (lead?.assignee_id) setAssigneeId(lead.assignee_id);
+    }
   };
 
   const save = async () => {
@@ -136,7 +174,8 @@ function AddTaskModal({ visible, onClose, onCreated }) {
           priority,
           due_date: due.trim() || null,
           duty_role_id: dutyId,
-          assignee_id: user.id,
+          assignee_id: canAssignOthers ? (assigneeId || user.id) : user.id,
+          meeting_id: canAssignOthers ? (meetingId || null) : null,
         }),
       );
       reset();
@@ -148,14 +187,16 @@ function AddTaskModal({ visible, onClose, onCreated }) {
     }
   };
 
-  const myDuties = (duties.data || []).map((a) => a.duty).filter(Boolean);
+  const allDuties = meta.data?.roles || [];
+  const staffList = meta.data?.staff || [];
+  const meetingsList = meta.data?.meetings || [];
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView style={styles.modal} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled">
-          <Txt variant="title">{t('task.addOwn')}</Txt>
-          <Txt variant="muted">{t('task.addOwnHint')}</Txt>
+          <Txt variant="title">{canAssignOthers ? t('task.create') : t('task.addOwn')}</Txt>
+          {!canAssignOthers ? <Txt variant="muted">{t('task.addOwnHint')}</Txt> : null}
           <Field label={t('task.title')} value={title} onChangeText={setTitle} placeholder={t('task.titlePlaceholder')} />
           <Field label={t('task.description')} value={description} onChangeText={setDescription} multiline />
           <Txt variant="label">{t('task.priority')}</Txt>
@@ -168,13 +209,33 @@ function AddTaskModal({ visible, onClose, onCreated }) {
             autoCapitalize="none"
             hint={t('common.optional')}
           />
-          {myDuties.length ? (
+          {allDuties.length ? (
             <>
               <Txt variant="label">{t('task.duty')}</Txt>
               <Chips
-                options={[{ value: null, label: t('task.noDuty') }, ...myDuties.map((d) => ({ value: d.id, label: dutyName(d, lang) }))]}
+                options={[{ value: null, label: t('task.noDuty') }, ...allDuties.map((d) => ({ value: d.id, label: dutyName(d, lang) }))]}
                 value={dutyId}
-                onChange={setDutyId}
+                onChange={onDutyPick}
+              />
+            </>
+          ) : null}
+          {canAssignOthers && staffList.length ? (
+            <>
+              <Txt variant="label">{t('task.assignee')}</Txt>
+              <Chips
+                options={staffList.map((s) => ({ value: s.id, label: s.full_name }))}
+                value={assigneeId}
+                onChange={setAssigneeId}
+              />
+            </>
+          ) : null}
+          {canAssignOthers && meetingsList.length ? (
+            <>
+              <Txt variant="label">{t('mashoora.title')}</Txt>
+              <Chips
+                options={[{ value: null, label: t('common.none') }, ...meetingsList.map((m) => ({ value: m.id, label: m.title }))]}
+                value={meetingId}
+                onChange={setMeetingId}
               />
             </>
           ) : null}
@@ -189,11 +250,14 @@ function AddTaskModal({ visible, onClose, onCreated }) {
 export default function TasksBoard() {
   const { t, row } = useI18n();
   const { user, caps } = useAuth();
+  const params = useLocalSearchParams();
+  const initialMeetingId = Array.isArray(params.meeting) ? params.meeting[0] : params.meeting;
   const { width } = useWindowDimensions();
   const [scope, setScope] = useState('mine');
   const [col, setCol] = useState('todo');
+  const [search, setSearch] = useState('');
   const [busyId, setBusyId] = useState(null);
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState(Boolean(initialMeetingId));
   const pager = useRef(null);
   const enabled = !!user && caps.isEmployee;
 
@@ -224,7 +288,15 @@ export default function TasksBoard() {
   // Columns in visual (left → right) order, so swiping matches the segment bar in RTL too.
   const flip = row.flexDirection === 'row-reverse';
   const pages = flip ? [...TASK_STATUSES].reverse() : TASK_STATUSES;
-  const tasks = q.data || [];
+  const needle = search.trim().toLowerCase();
+  const tasks = (q.data || []).filter(
+    (x) =>
+      !needle
+      || x.title?.toLowerCase().includes(needle)
+      || x.assignee?.full_name?.toLowerCase().includes(needle)
+      || x.duty?.name_en?.toLowerCase().includes(needle)
+      || x.duty?.name_ar?.toLowerCase().includes(needle),
+  );
   const byStatus = Object.fromEntries(TASK_STATUSES.map((s) => [s, tasks.filter((x) => x.status === s)]));
 
   const goTo = (status) => {
@@ -278,7 +350,16 @@ export default function TasksBoard() {
             );
           })}
         </View>
-        <Button small variant="gold" icon="add-outline" title={t('task.addOwn')} onPress={() => setAdding(true)} />
+        <Row style={styles.between}>
+          <Button small variant="gold" icon="add-outline" title={caps.isGovernance ? t('task.create') : t('task.addOwn')} onPress={() => setAdding(true)} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder={t('common.search')}
+            placeholderTextColor={colors.muted}
+            style={styles.searchInput}
+          />
+        </Row>
         {q.error ? <ErrorBanner message={q.error} onRetry={q.refresh} /> : null}
       </View>
 
@@ -316,6 +397,7 @@ export default function TasksBoard() {
 
       <AddTaskModal
         visible={adding}
+        initialMeetingId={initialMeetingId}
         onClose={() => setAdding(false)}
         onCreated={() => {
           setAdding(false);
@@ -351,4 +433,15 @@ const styles = StyleSheet.create({
   review: { color: colors.warning, fontWeight: '600' },
   modal: { flex: 1, backgroundColor: colors.bg },
   modalContent: { padding: space.lg, paddingTop: 48, gap: space.md, paddingBottom: 40 },
+  searchInput: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    color: colors.text,
+    fontSize: 13,
+  },
 });

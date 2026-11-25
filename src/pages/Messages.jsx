@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { supabase, subscribeTableWithFallback } from '../lib/supabaseClient';
-import { listChatConversations, listChatMessages, markChatRead, openChatConversation, searchChatContacts, sendChatMessage, subscribeToChat } from '../lib/chatApi';
+import { useFeatures } from '../context/FeatureFlagsContext';
+import { subscribeTableWithFallback } from '../lib/supabaseClient';
+import { listChatConversations, listChatMessages, listOlderChatMessages, markChatRead, openChatConversation, searchChatContacts, sendChatMessage, subscribeToChat } from '../lib/chatApi';
 import { tx } from '../lib/tx';
 import PageNavBar from '../components/PageNavBar';
 import Icon from '../components/Icon';
@@ -13,9 +14,12 @@ const dateLabel = (value) => value ? new Date(value).toLocaleDateString([], { mo
 
 export default function Messages() {
   const auth = useAuth();
-  const { user, isAuthenticated, loading, isParent, isSuperAdmin } = auth;
-  // Institution chat is per-college; the database refuses it for platform operators.
-  const chatAllowed = isAuthenticated && !isSuperAdmin;
+  const { user, isAuthenticated, loading, isApproved, isStudent, isParent, isEmployee, isAdmin, isLibrarian, isSuperAdmin } = auth;
+  const { enabled, loading: featuresLoading } = useFeatures();
+  const isVisitor = isAuthenticated && user?.accountType === 'guest' && !isEmployee && !isAdmin && !isLibrarian;
+  const messagingEnabled = enabled('messaging');
+  // Institution chat is per-college for approved non-guest members when enabled.
+  const chatAllowed = isAuthenticated && !loading && !featuresLoading && isApproved && !isSuperAdmin && !isVisitor && messagingEnabled;
   const [params, setParams] = useSearchParams();
   const selectedId = params.get('conversation');
   const [conversations, setConversations] = useState([]);
@@ -95,9 +99,13 @@ export default function Messages() {
         setMessages((current) => current.map((m) => m.id === incoming.id ? { ...m, ...incoming } : m));
       } else {
         setMessages((current) => current.some((m) => m.id === incoming.id) ? current : [...current, incoming]);
-        if (incoming.sender_id !== user?.id) markChatRead(selectedId).then(refreshConversations).catch(() => {});
+        if (incoming.sender_id !== user?.id && eventType !== 'POLL') {
+          markChatRead(selectedId).then(refreshConversations).catch(() => {});
+        }
       }
-      refreshConversations();
+      if (eventType !== 'POLL') {
+        refreshConversations();
+      }
     });
     return () => stop();
   }, [selectedId, chatAllowed, user?.id, refreshMessages, refreshConversations]);
@@ -110,7 +118,7 @@ export default function Messages() {
     if (!chatAllowed || !user?.id) return undefined;
     return subscribeTableWithFallback({
       table: 'chat_conversations',
-      event: 'UPDATE',
+      event: '*',
       channelName: `chat-list:${user.id}`,
       onChange: refreshConversations,
       onFallback: refreshConversations,
@@ -129,6 +137,40 @@ export default function Messages() {
             {tx('لا يشارك مشرف المنصة في محادثات الكليات. لإرسال إشعار إلى المؤسسات استخدم البث في لوحة المنصة.', 'Platform operators are not part of college conversations. To reach institutions, use the broadcast in the Super Admin console.')}
           </p>
           <Link to="/platform?tab=broadcast" className="inline-flex h-10 items-center px-4 rounded-[10px] bg-emerald-700 text-white text-sm font-semibold">{tx('فتح لوحة المنصة', 'Open Super Admin console')}</Link>
+        </div>
+      </div>
+    );
+  }
+  if (!loading && !featuresLoading && !messagingEnabled) {
+    return (
+      <div className="min-h-[60vh] bg-parchment-50 flex flex-col items-center justify-center gap-4 p-6">
+        <PageNavBar home={{ to: portalHomeFor(auth), label: tx('بوابتي', 'My portal') }} crumbs={[{ label: tx('بوابتي', 'My portal'), to: portalHomeFor(auth) }, { label: tx('الرسائل', 'Messages') }]} />
+        <div className="max-w-md rounded-[14px] border border-sand-border bg-paper-white p-6 text-center space-y-3 shadow-manuscript-sm">
+          <Icon name="forum" className="text-[32px] text-emerald-700 mx-auto" aria-hidden />
+          <h1 className="font-serif text-xl font-semibold text-ink-green-900">{tx('المراسلة غير مفعّلة حالياً', 'Messaging is currently disabled')}</h1>
+          <p className="text-sm text-ink-text-secondary">
+            {tx('عطّل مدير المنصة ميزة الرسائل الخاصة لهذه المؤسسة.', 'The platform operator turned off private messaging for this institution.')}
+          </p>
+          <Link to={portalHomeFor(auth)} className="inline-flex h-10 items-center px-4 rounded-[10px] bg-emerald-700 text-white text-sm font-semibold">{tx('العودة إلى البوابة', 'Back to my portal')}</Link>
+        </div>
+      </div>
+    );
+  }
+  if (!loading && (!isApproved || isVisitor)) {
+    return (
+      <div className="min-h-[60vh] bg-parchment-50 flex flex-col items-center justify-center gap-4 p-6">
+        <PageNavBar home={{ to: portalHomeFor(auth), label: tx('بوابتي', 'My portal') }} crumbs={[{ label: tx('بوابتي', 'My portal'), to: portalHomeFor(auth) }, { label: tx('الرسائل', 'Messages') }]} />
+        <div className="max-w-md rounded-[14px] border border-sand-border bg-paper-white p-6 text-center space-y-3 shadow-manuscript-sm">
+          <Icon name="lock" className="text-[32px] text-brass-gold-500 mx-auto" aria-hidden />
+          <h1 className="font-serif text-xl font-semibold text-ink-green-900">
+            {!isApproved ? tx('الحساب قيد الاعتماد', 'Account pending approval') : tx('المراسلة للطلاب وأولياء الأمور والموظفين', 'Messaging is for campus members')}
+          </h1>
+          <p className="text-sm text-ink-text-secondary">
+            {!isApproved
+              ? tx('تتوفر المحادثات الخاصة بعد اعتماد حسابك من إدارة الكلية.', 'Private conversations are available once college administration approves your account.')
+              : tx('تتوفر المحادثات الخاصة للطلاب وأولياء الأمور والموظفين المعتمدين.', 'Private conversations are available to approved students, parents, and staff.')}
+          </p>
+          <Link to={portalHomeFor(auth)} className="inline-flex h-10 items-center px-4 rounded-[10px] bg-emerald-700 text-white text-sm font-semibold">{tx('العودة إلى البوابة', 'Back to my portal')}</Link>
         </div>
       </div>
     );
@@ -192,7 +234,7 @@ export default function Messages() {
           </header>
           <div className="p-3">
             <label className="sr-only" htmlFor="chat-search">{tx('ابحث عن مستخدم', 'Find a user')}</label>
-            <input id="chat-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={isParent ? tx('ابحث عن إدارة أو مدرّس أو موظف…', 'Find admin, tutor, or staff…') : tx('ابحث عن طالب أو ولي أمر أو موظف…', 'Find a student, parent, or staff…')} className="w-full rounded-xl border border-[#E8E1D0] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#11694A]" />
+            <input id="chat-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={(isParent || isStudent) ? tx('ابحث عن إدارة أو مدرّس أو موظف…', 'Find admin, tutor, or staff…') : tx('ابحث عن طالب أو ولي أمر أو موظف…', 'Find a student, parent, or staff…')} className="w-full rounded-xl border border-[#E8E1D0] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#11694A]" />
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
             {search.trim() ? (
@@ -201,7 +243,7 @@ export default function Messages() {
                 {contacts.map((person) => (
                   <button key={person.user_id} type="button" disabled={busy} onClick={() => chooseContact(person)} className="flex w-full items-center gap-3 px-4 py-3 text-start hover:bg-white disabled:opacity-50">
                     <Avatar name={person.full_name} />
-                    <span className="min-w-0 flex-1"><b className="block truncate text-sm text-[#0B3B2E]">{person.full_name}</b><small className="text-[#60736C]">{roleName(person.account_type)}{person.class_number ? ` · ${tx('الصف', 'Class')} ${person.class_number}` : ''}</small></span>
+                    <span className="min-w-0 flex-1"><b className="block truncate text-sm text-[#0B3B2E]">{person.full_name}</b><small className="text-[#60736C]">{roleName(person.account_type, person.role, person.assigned_tutor_role)}{person.class_number ? ` · ${tx('الصف', 'Class')} ${person.class_number}` : ''}</small></span>
                     <Icon name="chat" className="text-[#11694A] text-lg" />
                   </button>
                 ))}
@@ -213,7 +255,7 @@ export default function Messages() {
                 {conversations.map((c) => (
                   <button key={c.conversation_id} type="button" onClick={() => selectConversation(c.conversation_id)} className={`flex w-full items-center gap-3 border-b border-[#E8E1D0]/70 px-4 py-3 text-start hover:bg-white ${selectedId === c.conversation_id ? 'bg-white' : ''}`}>
                     <Avatar name={c.other_user_name} />
-                    <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><b className="truncate text-sm text-[#0B3B2E]">{c.other_user_name}</b><small className="shrink-0 text-[10px] text-[#60736C]">{dateLabel(c.last_message_at)}</small></span><span className="flex items-center justify-between gap-2"><small className="truncate text-xs text-[#60736C]">{c.last_message || roleName(c.other_account_type)}</small>{Number(c.unread_count) > 0 && <b className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#11694A] px-1 text-[10px] text-white">{c.unread_count}</b>}</span></span>
+                    <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><b className="truncate text-sm text-[#0B3B2E]">{c.other_user_name}</b><small className="shrink-0 text-[10px] text-[#60736C]">{dateLabel(c.last_message_at)}</small></span><span className="flex items-center justify-between gap-2"><small className="truncate text-xs text-[#60736C]">{c.last_message || roleName(c.other_account_type, c.other_role, c.other_assigned_tutor_role)}</small>{Number(c.unread_count) > 0 && <b className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#11694A] px-1 text-[10px] text-white">{c.unread_count}</b>}</span></span>
                   </button>
                 ))}
                 {!loadingList && !conversations.length && <p className="px-5 py-8 text-center text-sm text-[#60736C]">{tx('لا توجد محادثات بعد. ابحث عن شخص لبدء محادثة.', 'No conversations yet. Search for someone to start one.')}</p>}
@@ -230,7 +272,7 @@ export default function Messages() {
               <header className="flex items-center gap-3 border-b border-[#E8E1D0] bg-white px-4 py-3 shadow-sm">
                 <button type="button" aria-label={tx('المحادثات', 'Chats')} onClick={() => setMobileListOpen(true)} className="rounded-lg p-1 text-[#11694A] md:hidden"><Icon name="arrow_back" className="text-lg rtl:rotate-180" /></button>
                 <Avatar name={active.other_user_name} />
-                <div className="min-w-0"><b className="block truncate text-sm text-[#0B3B2E]">{active.other_user_name}</b><small className="text-[#60736C]">{roleName(active.other_account_type)}</small></div>
+                <div className="min-w-0"><b className="block truncate text-sm text-[#0B3B2E]">{active.other_user_name}</b><small className="text-[#60736C]">{roleName(active.other_account_type, active.other_role, active.other_assigned_tutor_role)}</small></div>
                 <span className="ms-auto text-xs text-[#60736C]">{tx('رسائل مباشرة', 'Direct messages')}</span>
               </header>
               <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-[#F5F2EB] px-3 py-4 sm:px-8">
@@ -243,14 +285,12 @@ export default function Messages() {
                 {hasOlder && <button type="button" onClick={async () => {
                   const before = messages[0]?.created_at;
                   if (!before) return;
-                  const { data, error: pageError } = await supabase.rpc('chat_messages_page', {
-                    p_conversation: selectedId, p_before: before, p_limit: 100,
-                  });
-                  if (pageError) setError(pageError.message);
-                  else {
-                    const page = [...(data || [])].reverse();
+                  try {
+                    const page = await listOlderChatMessages(selectedId, before, 100);
                     setMessages((current) => [...page, ...current]);
                     setHasOlder(page.length === 100);
+                  } catch (pageError) {
+                    setError(pageError.message || tx('تعذر تحميل المحادثة', 'Could not load conversation'));
                   }
                 }} className="self-center rounded-full bg-white px-4 py-2 text-xs text-[#11694A] shadow">{tx('تحميل رسائل أقدم', 'Load older messages')}</button>}
                 <div ref={endRef} />
@@ -261,7 +301,7 @@ export default function Messages() {
               </form>
             </>
           ) : (
-            <div className="hidden flex-1 flex-col items-center justify-center bg-[#F5F2EB] px-8 text-center md:flex"><Icon name="forum" className="text-6xl text-[#11694A]/50 mb-2" /><h1 className="mt-2 text-xl font-bold text-[#0B3B2E]">{tx('رسائل الكلية', 'College messages')}</h1><p className="mt-2 max-w-md text-sm text-[#60736C]">{isParent ? tx('اختر محادثة أو ابحث عن إدارة الكلية أو مدرّس لبدء مراسلة خاصة.', 'Choose a chat or search for college admin or a tutor to start a private conversation.') : tx('اختر محادثة أو ابحث عن طالب أو ولي أمر أو موظف لبدء مراسلة خاصة وآمنة.', 'Choose a chat or search for a student, parent, or staff member to start a private conversation.')}</p></div>
+            <div className="hidden flex-1 flex-col items-center justify-center bg-[#F5F2EB] px-8 text-center md:flex"><Icon name="forum" className="text-6xl text-[#11694A]/50 mb-2" /><h1 className="mt-2 text-xl font-bold text-[#0B3B2E]">{tx('رسائل الكلية', 'College messages')}</h1><p className="mt-2 max-w-md text-sm text-[#60736C]">{(isParent || isStudent) ? tx('اختر محادثة أو ابحث عن إدارة الكلية أو مدرّس لبدء مراسلة خاصة.', 'Choose a chat or search for college admin or a tutor to start a private conversation.') : tx('اختر محادثة أو ابحث عن طالب أو ولي أمر أو موظف لبدء مراسلة خاصة وآمنة.', 'Choose a chat or search for a student, parent, or staff member to start a private conversation.')}</p></div>
           )}
         </section>
       </section>
@@ -274,6 +314,24 @@ function Avatar({ name }) {
   return <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DCEBE2] font-bold text-[#11694A]">{(name || '?').trim().slice(0, 1).toUpperCase()}</span>;
 }
 
-function roleName(type) {
+function roleName(type, role, assignedTutorRole) {
+  if (role === 'admin') return tx('إدارة الكلية', 'College Admin');
+  if (role === 'librarian') return tx('أمين المكتبة', 'Librarian');
+  const dutyLabels = {
+    principal: tx('المدير', 'Principal'),
+    vice_principal: tx('نائب المدير', 'Vice Principal'),
+    treasurer: tx('أمين الصندوق', 'Treasurer'),
+    accountant: tx('المحاسب', 'Accountant'),
+    hr_manager: tx('الموارد البشرية', 'HR Manager'),
+    admissions_officer: tx('مسؤول القبول', 'Admissions Officer'),
+    warden: tx('مشرف السكن', 'Warden'),
+    counselor: tx('المرشد', 'Counselor'),
+    exam_officer: tx('مسؤول الامتحانات', 'Exam Officer'),
+    it_officer: tx('مسؤول التقنية', 'IT Officer'),
+    librarian: tx('أمين المكتبة', 'Librarian'),
+  };
+  if (assignedTutorRole && assignedTutorRole !== 'none' && dutyLabels[assignedTutorRole]) {
+    return dutyLabels[assignedTutorRole];
+  }
   return ({ student: tx('طالب', 'Student'), parent: tx('ولي أمر', 'Parent'), tutor: tx('مدرس', 'Tutor'), staff: tx('موظف', 'Staff') })[type] || tx('مستخدم', 'User');
 }

@@ -13,16 +13,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { bearerOf, callerMfaOk } from '../_shared/authz.ts';
 import { checkoutHash, checkoutSignature, checkoutUrl } from '../_shared/payhere.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-
-const fail = (status: number, code: string, error: string) => json({ error, code }, status);
+import { checkRateLimit, clientIpOf, corsHeadersFor, getRequestId, jsonResponse, logJson } from '../_shared/http.ts';
 
 /** Malformed JSON ⇒ deny. Missing `fees` key ⇒ allow (matches DB default). Explicit false ⇒ deny. */
 function feesPermissionAllowed(permissions: unknown): boolean {
@@ -50,8 +41,16 @@ async function orgPaymentsEnabled(admin: any, orgId: string): Promise<boolean> {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  const requestId = getRequestId(req);
+  const json = (body: unknown, status = 200) => jsonResponse(req, requestId, body, status);
+  const fail = (status: number, code: string, error: string) => {
+    logJson(status >= 500 ? 'error' : 'warn', 'create-payment', code, { requestId, status });
+    return json({ error, code }, status);
+  };
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: { ...corsHeadersFor(req), 'X-Request-ID': requestId } });
   if (req.method !== 'POST') return fail(405, 'method_not_allowed', 'Method not allowed');
+  const rl = checkRateLimit(`pay:${clientIpOf(req)}`, 20, 60_000);
+  if (!rl.allowed) return fail(429, 'rate_limited', 'Too many payment requests. Please wait a moment.');
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;

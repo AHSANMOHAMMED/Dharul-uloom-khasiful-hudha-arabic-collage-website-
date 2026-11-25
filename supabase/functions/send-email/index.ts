@@ -1,19 +1,17 @@
 // Generic transactional email via Resend (contact form / admissions).
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { callerIsAdmin } from '../_shared/authz.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { checkRateLimit, clientIpOf, corsHeadersFor, getRequestId, jsonResponse, logJson } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
+  const requestId = getRequestId(req);
+  const corsHeaders = { ...corsHeadersFor(req), 'X-Request-ID': requestId };
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+  if (req.method !== 'POST') return jsonResponse(req, requestId, { error: 'Method not allowed' }, 405);
+  const rl = checkRateLimit(`email:${clientIpOf(req)}`, 15, 60_000);
+  if (!rl.allowed) {
+    logJson('warn', 'send-email', 'rate_limited', { requestId, ip: clientIpOf(req) });
+    return jsonResponse(req, requestId, { error: 'Too many requests' }, 429);
   }
 
   const apiKey = Deno.env.get('RESEND_API_KEY');

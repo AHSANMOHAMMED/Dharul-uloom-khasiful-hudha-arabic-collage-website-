@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useFeatures } from '../context/FeatureFlagsContext';
 import NotificationBell from './NotificationBell';
 import LanguageSelect from './LanguageSelect';
 import KhatamPattern from './KhatamPattern';
@@ -35,7 +36,9 @@ export default function DashboardSidebarLayout({
   children,
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, logout, isAdmin, isSuperAdmin, isEmployee, isLibrarian, isParent } = useAuth();
+  const { user, logout, isAdmin, isSuperAdmin, isEmployee, isLibrarian, isParent, isApproved } = useAuth();
+  const { enabled } = useFeatures();
+  const canMessage = !isSuperAdmin && isApproved && enabled('messaging') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian);
   useTranslation();
   const location = useLocation();
 
@@ -54,7 +57,7 @@ export default function DashboardSidebarLayout({
     }
   }
 
-  if (!isSuperAdmin && location.pathname !== '/messages') {
+  if (canMessage && location.pathname !== '/messages') {
     defaultQuickLinks.push({ to: '/messages', label_en: 'Messages & Chat', label_ar: 'الرسائل والمحادثات', icon: 'forum' });
   }
   if (location.pathname !== '/library') {
@@ -68,7 +71,7 @@ export default function DashboardSidebarLayout({
   const currentNav = navItems.find((n) => n.id === activeItem);
 
   return (
-    <div className="min-h-screen bg-[#FBF8F0] text-[#14201B] flex relative overflow-hidden" dir={tx('rtl', 'ltr')}>
+    <div className="erp-theme min-h-screen bg-[#FBF8F0] text-[#14201B] flex relative overflow-hidden" dir={tx('rtl', 'ltr')}>
       
       {/* Background Watermark (Page-Wide) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -143,50 +146,60 @@ export default function DashboardSidebarLayout({
 
         {/* Sidebar Nav Items (Scrollable) */}
         <div className="flex-1 overflow-y-auto p-3 space-y-1 hide-scrollbar">
-          <div className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#4A5E56] font-sans">
-            {tx('أقسام وميزات البوابة', 'Workspace Features')}
-          </div>
+          {!navItems.some((n) => n.group) && (
+            <div className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-[#4A5E56] font-sans">
+              {tx('أقسام وميزات البوابة', 'Workspace Features')}
+            </div>
+          )}
 
-          {navItems.map((item) => {
+          {navItems.map((item, idx) => {
+            const prevGroup = idx > 0 ? navItems[idx - 1].group : null;
+            const showGroup = item.group && item.group !== prevGroup;
             const isActive = activeItem === item.id;
             return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  if (onSelect) onSelect(item.id);
-                  setMobileOpen(false);
-                }}
-                className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-start transition-all ${
-                  isActive
-                    ? 'bg-[#0B3B2E] text-white shadow-xs'
-                    : 'text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-[#FBF8F0]'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <Icon
-                    name={item.icon || 'circle'}
-                    className={`text-[19px] shrink-0 ${
-                      isActive ? 'text-[#C29A3A]' : 'text-[#4A5E56]'
-                    }`}
-                  />
-                  <span className="truncate">{tx(item.label_ar, item.label_en)}</span>
-                </div>
-
-                {typeof item.badge === 'number' && item.badge > 0 && (
-                  <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold shrink-0 ${
-                      isActive
-                        ? 'bg-[#C29A3A] text-[#0B3B2E]'
-                        : item.badgeTone === 'emerald'
-                        ? 'bg-[#E3F1EA] text-[#11694A]'
-                        : 'bg-[#FEE2E2] text-[#B91C1C]'
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
+              <div key={item.id} className="space-y-1">
+                {showGroup && (
+                  <div className={`px-3 ${idx === 0 ? 'pt-1' : 'pt-3'} pb-1 text-[10px] font-bold uppercase tracking-wider text-[#4A5E56] font-sans`}>
+                    {tx(item.group_ar || item.group, item.group)}
+                  </div>
                 )}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onSelect) onSelect(item.id);
+                    setMobileOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-start transition-all ${
+                    isActive
+                      ? 'bg-[#0B3B2E] text-white shadow-xs'
+                      : 'text-[#4A5E56] hover:text-[#0B3B2E] hover:bg-[#FBF8F0]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Icon
+                      name={item.icon || 'circle'}
+                      className={`text-[19px] shrink-0 ${
+                        isActive ? 'text-[#C29A3A]' : 'text-[#4A5E56]'
+                      }`}
+                    />
+                    <span className="truncate">{tx(item.label_ar, item.label_en)}</span>
+                  </div>
+
+                  {typeof item.badge === 'number' && item.badge > 0 && (
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold shrink-0 ${
+                        isActive
+                          ? 'bg-[#C29A3A] text-[#0B3B2E]'
+                          : item.badgeTone === 'emerald'
+                          ? 'bg-[#E3F1EA] text-[#11694A]'
+                          : 'bg-[#FEE2E2] text-[#B91C1C]'
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              </div>
             );
           })}
 
@@ -278,7 +291,7 @@ export default function DashboardSidebarLayout({
 
             <NotificationBell />
 
-            {!isSuperAdmin && (
+            {canMessage && (
               <Link
                 to="/messages"
                 className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[#E8E1D0] bg-white text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"

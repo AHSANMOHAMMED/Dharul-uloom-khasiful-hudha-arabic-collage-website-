@@ -28,7 +28,7 @@ export default function UserDashboard() {
     hasRole,
     logout, loading: authLoading,
   } = useAuth();
-  const { enabled } = useFeatures();
+  const { enabled, loading: featuresLoading } = useFeatures();
   useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -62,7 +62,7 @@ export default function UserDashboard() {
     }
   }, [authLoading, isAuthenticated, isAdmin, isSuperAdmin, navigate, searchParams]);
 
-  if (authLoading) {
+  if (authLoading || featuresLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-parchment-50 text-ink-text-primary">
         <div className="w-8 h-8 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin" />
@@ -152,19 +152,19 @@ export default function UserDashboard() {
 
   const portalForView = (v) => {
     if (v === 'admin' && isAdmin) return <Navigate to="/admin" replace />;
-    if (v === 'parent' && isParent) return <ParentDashboard />;
-    if (v === 'student' && isStudent) return <StudentDashboard />;
-    if (v === 'treasurer' && isTreasurer) return <TreasurerPortal />;
-    if (v === 'principal' && isPrincipal) return <PrincipalPortal vpMode={false} />;
-    if (v === 'vp' && isVP) return <PrincipalPortal vpMode />;
-    if (v === 'accountant' && isAccountantRole) return <AccountantPortal />;
-    if (v === 'hr' && isHr) return <HrPortal />;
-    if (v === 'admissions' && isAdmissions) return <AdmissionsPortal />;
-    if (v === 'warden' && (isWarden || hasRole?.('warden'))) return <WardenPortal />;
-    if (v === 'counselor' && isCounselor) return <CounselorPortal />;
-    if (v === 'exam' && isExam) return <ExamPortal />;
-    if (v === 'librarian' && isLibrarian) return <LibrarianDashboard />;
-    if (v === 'tutor' && isTutor) return <TutorDashboard />;
+    if (v === 'parent' && isParent) return enabled('parent_portal') ? <ParentDashboard /> : featureBlocked('parent_portal');
+    if (v === 'student' && isStudent) return enabled('student_portal') ? <StudentDashboard /> : featureBlocked('student_portal');
+    if (v === 'treasurer' && isTreasurer) return enabled('staff_portal') ? <TreasurerPortal /> : featureBlocked('staff_portal');
+    if (v === 'principal' && isPrincipal) return enabled('staff_portal') ? <PrincipalPortal vpMode={false} /> : featureBlocked('staff_portal');
+    if (v === 'vp' && isVP) return enabled('staff_portal') ? <PrincipalPortal vpMode /> : featureBlocked('staff_portal');
+    if (v === 'accountant' && isAccountantRole) return enabled('staff_portal') ? <AccountantPortal /> : featureBlocked('staff_portal');
+    if (v === 'hr' && isHr) return enabled('staff_portal') ? <HrPortal /> : featureBlocked('staff_portal');
+    if (v === 'admissions' && isAdmissions) return enabled('staff_portal') ? <AdmissionsPortal /> : featureBlocked('staff_portal');
+    if (v === 'warden' && (isWarden || hasRole?.('warden'))) return enabled('staff_portal') ? <WardenPortal /> : featureBlocked('staff_portal');
+    if (v === 'counselor' && isCounselor) return enabled('staff_portal') ? <CounselorPortal /> : featureBlocked('staff_portal');
+    if (v === 'exam' && isExam) return enabled('staff_portal') ? <ExamPortal /> : featureBlocked('staff_portal');
+    if (v === 'librarian' && isLibrarian) return enabled('library') ? <LibrarianDashboard /> : featureBlocked('library');
+    if (v === 'tutor' && isTutor) return enabled('staff_portal') ? <TutorDashboard /> : featureBlocked('staff_portal');
     return null;
   };
 

@@ -39,6 +39,14 @@ const PayrollPanel = lazy(() => import('../components/erp/finance/PayrollPanel')
 const WelfarePanel = lazy(() => import('../components/erp/campus/WelfarePanel'));
 const HostelPanel = lazy(() => import('../components/erp/campus/HostelPanel'));
 const CertificatesPanel = lazy(() => import('../components/erp/campus/CertificatesPanel'));
+const TaskBoard = lazy(() => import('../components/erp/governance/TaskBoard'));
+const MashooraPanel = lazy(() => import('../components/erp/governance/MashooraPanel'));
+const DutiesPanel = lazy(() => import('../components/erp/governance/DutiesPanel'));
+const PettyCashPanel = lazy(() => import('../components/erp/governance/PettyCashPanel'));
+const ChequesPanel = lazy(() => import('../components/erp/finance/ChequesPanel'));
+const AuditLogPanel = lazy(() => import('../components/erp/finance/AuditLogPanel'));
+const DocumentsPanel = lazy(() => import('../components/erp/docs/DocumentsPanel'));
+const ReportsPanel = lazy(() => import('../components/erp/ops/ReportsPanel'));
 
 /** Every ErpDashboard tile module → admin tab id */
 const ERP_TILE_TO_TAB = {
@@ -49,6 +57,14 @@ const ERP_TILE_TO_TAB = {
   expenses: 'expenses',
   donations: 'donations',
   payroll: 'payroll',
+  cheques: 'cheques',
+  pettycash: 'pettycash',
+  tasks: 'tasks',
+  mashoora: 'mashoora',
+  duties: 'duties',
+  documents: 'documents',
+  reports: 'reports',
+  audit: 'audit',
   crm: 'crm',
   welfare: 'welfare',
   hostel: 'hostel',
@@ -60,10 +76,12 @@ const ERP_TILE_TO_TAB = {
 };
 
 const ADMIN_TABS = [
-  'overview', 'admissions', 'crm', 'students', 'academics', 'hrm',
-  'fees', 'financehub', 'accounting', 'expenses', 'donations', 'payroll',
-  'hostel', 'welfare', 'certificates',
-  'imports', 'org', 'approvals', 'tutors', 'broadcast', 'content', 'indexes', 'analytics',
+  'overview', 'mashoora', 'tasks', 'duties',
+  'admissions', 'crm', 'students', 'academics', 'hrm',
+  'fees', 'financehub', 'accounting', 'cheques', 'expenses', 'donations', 'payroll', 'pettycash',
+  'hostel', 'welfare', 'certificates', 'documents',
+  'reports', 'analytics', 'audit',
+  'imports', 'org', 'approvals', 'tutors', 'broadcast', 'content', 'indexes',
 ];
 
 function ErpPane({ children }) {
@@ -391,29 +409,37 @@ const AdminDashboard = () => {
   };
 
   const tabs = [
-    { id: 'overview', label_en: 'Overview', label_ar: 'نظرة عامة', icon: 'dashboard' },
-    { id: 'admissions', label_en: 'Inquiries', label_ar: 'الطلبات', icon: 'inbox', badge: admissions.length },
-    { id: 'crm', label_en: 'CRM Pipeline', label_ar: 'مسار القبول', icon: 'filter_alt' },
-    { id: 'students', label_en: 'Students', label_ar: 'الطلاب', icon: 'groups' },
-    { id: 'academics', label_en: 'Academics', label_ar: 'الأكاديميات', icon: 'menu_book' },
-    { id: 'hrm', label_en: 'Staff HR', label_ar: 'الموارد البشرية', icon: 'badge' },
-    { id: 'fees', label_en: 'Fees', label_ar: 'الرسوم', icon: 'payments' },
-    { id: 'financehub', label_en: 'Finance Hub', label_ar: 'مركز المالية', icon: 'hub' },
-    { id: 'accounting', label_en: 'Accounting', label_ar: 'المحاسبة', icon: 'account_balance' },
-    { id: 'expenses', label_en: 'Expenses', label_ar: 'المصروفات', icon: 'receipt_long' },
-    { id: 'donations', label_en: 'Donations', label_ar: 'التبرعات', icon: 'volunteer_activism' },
-    { id: 'payroll', label_en: 'Payroll', label_ar: 'الرواتب', icon: 'payments' },
-    { id: 'hostel', label_en: 'Hostel', label_ar: 'السكن', icon: 'apartment' },
-    { id: 'welfare', label_en: 'Welfare', label_ar: 'الرعاية', icon: 'health_and_safety' },
-    { id: 'certificates', label_en: 'Certificates', label_ar: 'الشهادات', icon: 'workspace_premium' },
-    { id: 'imports', label_en: 'Shamela Import', label_ar: 'استيراد الشاملة', icon: 'upload_file' },
-    { id: 'org', label_en: 'Organization', label_ar: 'المؤسسة', icon: 'corporate_fare' },
-    { id: 'approvals', label_en: 'Signups', label_ar: 'الموافقات', icon: 'verified_user', badge: pendingApprovals.length },
-    { id: 'tutors', label_en: 'Tutors & Roles', label_ar: 'المعلمون والوظائف', icon: 'school' },
-    { id: 'broadcast', label_en: 'Broadcast', label_ar: 'البث', icon: 'campaign' },
-    { id: 'content', label_en: 'Content CMS', label_ar: 'إدارة المحتوى', icon: 'post_add' },
-    { id: 'indexes', label_en: 'Index Pre-seed', label_ar: 'أرقام القيد', icon: 'pin' },
-    { id: 'analytics', label_en: 'Analytics', label_ar: 'التحليلات', icon: 'analytics' },
+    { id: 'overview', label_en: 'Overview', label_ar: 'نظرة عامة', icon: 'dashboard', group: 'Workspace', group_ar: 'المساحة' },
+    { id: 'mashoora', label_en: 'Mashoora', label_ar: 'الشورى', icon: 'diversity_3', group: 'Governance', group_ar: 'الإدارة والشورى' },
+    { id: 'tasks', label_en: 'Task Board', label_ar: 'لوحة المهام', icon: 'view_kanban', group: 'Governance', group_ar: 'الإدارة والشورى' },
+    { id: 'duties', label_en: 'Duties', label_ar: 'المسؤوليات', icon: 'assignment_ind', group: 'Governance', group_ar: 'الإدارة والشورى' },
+    { id: 'admissions', label_en: 'Inquiries', label_ar: 'الطلبات', icon: 'inbox', badge: admissions.length, group: 'Academic & People', group_ar: 'الأكاديمي والموظفون' },
+    { id: 'crm', label_en: 'CRM Pipeline', label_ar: 'مسار القبول', icon: 'filter_alt', group: 'Academic & People', group_ar: 'الأكاديمي والموظفون' },
+    { id: 'students', label_en: 'Students', label_ar: 'الطلاب', icon: 'groups', group: 'Academic & People', group_ar: 'الأكاديمي والموظفون' },
+    { id: 'academics', label_en: 'Academics', label_ar: 'الأكاديميات', icon: 'menu_book', group: 'Academic & People', group_ar: 'الأكاديمي والموظفون' },
+    { id: 'hrm', label_en: 'Staff HR', label_ar: 'الموارد البشرية', icon: 'badge', group: 'Academic & People', group_ar: 'الأكاديمي والموظفون' },
+    { id: 'fees', label_en: 'Fees', label_ar: 'الرسوم', icon: 'payments', group: 'Finance', group_ar: 'المالية' },
+    { id: 'financehub', label_en: 'Finance Hub', label_ar: 'مركز المالية', icon: 'hub', group: 'Finance', group_ar: 'المالية' },
+    { id: 'accounting', label_en: 'Accounting', label_ar: 'المحاسبة', icon: 'account_balance', group: 'Finance', group_ar: 'المالية' },
+    { id: 'cheques', label_en: 'Cheques', label_ar: 'الشيكات', icon: 'request_quote', group: 'Finance', group_ar: 'المالية' },
+    { id: 'expenses', label_en: 'Expenses', label_ar: 'المصروفات', icon: 'receipt_long', group: 'Finance', group_ar: 'المالية' },
+    { id: 'donations', label_en: 'Donations', label_ar: 'التبرعات', icon: 'volunteer_activism', group: 'Finance', group_ar: 'المالية' },
+    { id: 'payroll', label_en: 'Payroll', label_ar: 'الرواتب', icon: 'payments', group: 'Finance', group_ar: 'المالية' },
+    { id: 'pettycash', label_en: 'Petty Cash', label_ar: 'النثرية', icon: 'account_balance_wallet', group: 'Finance', group_ar: 'المالية' },
+    { id: 'hostel', label_en: 'Hostel', label_ar: 'السكن', icon: 'apartment', group: 'Campus', group_ar: 'الحرم' },
+    { id: 'welfare', label_en: 'Welfare', label_ar: 'الرعاية', icon: 'health_and_safety', group: 'Campus', group_ar: 'الحرم' },
+    { id: 'certificates', label_en: 'Certificates', label_ar: 'الشهادات', icon: 'workspace_premium', group: 'Campus', group_ar: 'الحرم' },
+    { id: 'documents', label_en: 'Documents', label_ar: 'المستندات', icon: 'description', group: 'Campus', group_ar: 'الحرم' },
+    { id: 'reports', label_en: 'Reports', label_ar: 'التقارير', icon: 'summarize', group: 'Insights & Audit', group_ar: 'التقارير والتدقيق' },
+    { id: 'analytics', label_en: 'Analytics', label_ar: 'التحليلات', icon: 'analytics', group: 'Insights & Audit', group_ar: 'التقارير والتدقيق' },
+    { id: 'audit', label_en: 'Audit Log', label_ar: 'سجل التدقيق', icon: 'history_edu', group: 'Insights & Audit', group_ar: 'التقارير والتدقيق' },
+    { id: 'approvals', label_en: 'Signups', label_ar: 'الموافقات', icon: 'verified_user', badge: pendingApprovals.length, group: 'Administration', group_ar: 'الإدارة' },
+    { id: 'tutors', label_en: 'Tutors & Roles', label_ar: 'المعلمون والوظائف', icon: 'school', group: 'Administration', group_ar: 'الإدارة' },
+    { id: 'indexes', label_en: 'Index Pre-seed', label_ar: 'أرقام القيد', icon: 'pin', group: 'Administration', group_ar: 'الإدارة' },
+    { id: 'broadcast', label_en: 'Broadcast', label_ar: 'البث', icon: 'campaign', group: 'Administration', group_ar: 'الإدارة' },
+    { id: 'content', label_en: 'Content CMS', label_ar: 'إدارة المحتوى', icon: 'post_add', group: 'Administration', group_ar: 'الإدارة' },
+    { id: 'imports', label_en: 'Shamela Import', label_ar: 'استيراد الشاملة', icon: 'upload_file', group: 'Administration', group_ar: 'الإدارة' },
+    { id: 'org', label_en: 'Organization', label_ar: 'المؤسسة', icon: 'corporate_fare', group: 'Administration', group_ar: 'الإدارة' },
   ];
 
   const portalNav = {
@@ -590,6 +616,9 @@ const AdminDashboard = () => {
         {activeTab !== 'overview' && (
         <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] min-h-[480px]">
 
+          {activeTab === 'mashoora' && <ErpPane><MashooraPanel /></ErpPane>}
+          {activeTab === 'tasks' && <ErpPane><TaskBoard /></ErpPane>}
+          {activeTab === 'duties' && <ErpPane><DutiesPanel /></ErpPane>}
           {activeTab === 'crm' && <ErpPane><CrmPanel /></ErpPane>}
           {activeTab === 'hrm' && <ErpPane><StaffHrPanel /></ErpPane>}
           {activeTab === 'students' && <ErpPane><StudentsPanel /></ErpPane>}
@@ -597,12 +626,17 @@ const AdminDashboard = () => {
           {activeTab === 'fees' && <ErpPane><FeeManagement embedded /></ErpPane>}
           {activeTab === 'financehub' && <ErpPane><FinanceHubPanel /></ErpPane>}
           {activeTab === 'accounting' && <ErpPane><AccountingPanel /></ErpPane>}
+          {activeTab === 'cheques' && <ErpPane><ChequesPanel /></ErpPane>}
           {activeTab === 'expenses' && <ErpPane><ExpensesPanel /></ErpPane>}
           {activeTab === 'donations' && <ErpPane><DonationsPanel /></ErpPane>}
           {activeTab === 'payroll' && <ErpPane><PayrollPanel /></ErpPane>}
+          {activeTab === 'pettycash' && <ErpPane><PettyCashPanel /></ErpPane>}
           {activeTab === 'hostel' && <ErpPane><HostelPanel /></ErpPane>}
           {activeTab === 'welfare' && <ErpPane><WelfarePanel /></ErpPane>}
           {activeTab === 'certificates' && <ErpPane><CertificatesPanel /></ErpPane>}
+          {activeTab === 'documents' && <ErpPane><DocumentsPanel /></ErpPane>}
+          {activeTab === 'reports' && <ErpPane><ReportsPanel /></ErpPane>}
+          {activeTab === 'audit' && <ErpPane><AuditLogPanel /></ErpPane>}
 
           {activeTab === 'imports' && <ImportJobsPanel />}
           {activeTab === 'org' && <OrgAdminPanel />}

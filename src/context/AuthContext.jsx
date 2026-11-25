@@ -57,10 +57,20 @@ export const AuthProvider = ({ children }) => {
       .eq('id', authUser.id)
       .maybeSingle();
     profile = data;
-    const staffRoles = [
+    let activeDutyCodes = [];
+    if (profile?.is_approved && (profile?.account_type === 'tutor' || profile?.account_type === 'staff')) {
+      const { data: dutyRows } = await supabase
+        .from('duty_assignments')
+        .select('duty:duty_roles(code)')
+        .eq('assignee_id', authUser.id)
+        .eq('status', 'active');
+      activeDutyCodes = (dutyRows || []).map((d) => d.duty?.code).filter(Boolean);
+    }
+    const staffRoles = [...new Set([
       ...(profile?.assigned_tutor_role && profile.assigned_tutor_role !== 'none' ? [profile.assigned_tutor_role] : []),
       ...(profile?.extra_roles || []),
-    ];
+      ...activeDutyCodes,
+    ])];
     return {
       id: authUser.id,
       email: authUser.email ?? profile?.email ?? '',
@@ -257,7 +267,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     isSuperAdmin,
     isAdmin,
-    isLibrarian: user?.role === 'librarian' || hasRole('librarian'),
+    isLibrarian: (user?.role === 'librarian' && Boolean(user?.isApproved)) || hasRole('librarian'),
     // "staff" = organization administrator (librarians use isLibrarian)
     isStaff: isAdmin,
     isStudent: user?.accountType === 'student',

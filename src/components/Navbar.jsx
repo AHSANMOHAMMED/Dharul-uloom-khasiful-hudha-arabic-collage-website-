@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import { useFeatures } from '../context/FeatureFlagsContext'
 import NotificationBell from './NotificationBell'
 import LanguageSelect from './LanguageSelect'
 import Icon from './Icon'
@@ -13,7 +14,9 @@ export default function Navbar() {
   const [mobileExploreOpen, setMobileExploreOpen] = useState(false)
   const { t } = useTranslation()
   const location = useLocation()
-  const { isAuthenticated, isAdmin, isSuperAdmin, isLibrarian, isEmployee, isParent, isStudent, isTutor, logout } = useAuth()
+  const { user, isAuthenticated, isAdmin, isSuperAdmin, isLibrarian, isEmployee, isParent, isStudent, isTutor, isApproved, logout } = useAuth()
+  const { enabled } = useFeatures()
+  const canMessage = isAuthenticated && isApproved && !isSuperAdmin && enabled('messaging') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian)
   const canManageLibrary = isAdmin || isLibrarian
   // E-library is for campus accounts only — not the public site, and not parents.
   const showLibrary = isAuthenticated && !isParent && (isStudent || isTutor || isLibrarian || isAdmin || isEmployee || isSuperAdmin)
@@ -217,7 +220,7 @@ export default function Navbar() {
           {/* Authenticated State vs Public CTA */}
           {isAuthenticated ? (
             <div className="flex items-center gap-2 sm:gap-2.5">
-              {!isSuperAdmin && (
+              {canMessage && (
                 <Link
                   to="/messages"
                   aria-label={tx('الرسائل', 'Messages')}

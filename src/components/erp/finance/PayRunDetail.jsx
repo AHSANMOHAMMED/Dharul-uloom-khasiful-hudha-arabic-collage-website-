@@ -3,6 +3,7 @@ import { AsyncView, Button, Field, Input, Modal, Select, Stat, StatusBadge, Tabl
 import { useAuth } from '../../../context/AuthContext';
 import { query, rpc, formatMoney, formatDate, downloadCsv } from '../../../lib/erp/rpc';
 import { accountLabel, listCashBankAccounts, num, runAction, useOrg } from '../../../lib/erp/financeApi';
+import { flushOutbound } from '../../../lib/notifyApi';
 import { ConfirmModal, Num } from './shared';
 import { printPayslip, printPayslips } from './payslipPrint';
 
@@ -87,6 +88,9 @@ function PayModal({ run, onClose, onDone }) {
       () => rpc('pay_payroll', { p_run: run.id, p_account_code: code, p_reference: reference.trim() || null }),
       t('Payroll paid — staff notified', 'تم دفع الرواتب وإشعار الموظفين'),
     );
+    if (ok) {
+      flushOutbound(50).catch(() => {});
+    }
     setBusy(false);
     if (ok) onDone();
   };

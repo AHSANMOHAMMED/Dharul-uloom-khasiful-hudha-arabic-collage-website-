@@ -14,10 +14,28 @@ vi.mock('../lib/mfaApi', () => ({
   startTotpEnrollment: (...a) => startTotpEnrollment(...a),
   verifyTotp: (...a) => verifyTotp(...a),
 }))
-vi.mock('../lib/supabaseClient', () => ({ supabase: null, isSupabaseConfigured: false }))
+vi.mock('../lib/supabaseClient', () => ({ supabase: null, isSupabaseConfigured: false, subscribeTableWithFallback: vi.fn(() => () => {}) }))
+
+let featureFlagsState = { features: {}, loading: false, enabled: () => true, refreshFeatures: vi.fn() }
+vi.mock('../context/FeatureFlagsContext', () => ({ useFeatures: () => featureFlagsState }))
+
+const listChatConversations = vi.fn(async () => [])
+const searchChatContacts = vi.fn(async () => [])
+vi.mock('../lib/chatApi', () => ({
+  listChatConversations: (...a) => listChatConversations(...a),
+  searchChatContacts: (...a) => searchChatContacts(...a),
+  listChatMessages: vi.fn(async () => []),
+  listOlderChatMessages: vi.fn(async () => []),
+  openChatConversation: vi.fn(async () => 'c1'),
+  sendChatMessage: vi.fn(async () => 'm1'),
+  markChatRead: vi.fn(async () => 0),
+  subscribeToChat: vi.fn(() => () => {}),
+}))
 
 const { default: MfaGate } = await import('../components/security/MfaGate')
 const { default: MfaChallenge } = await import('../components/security/MfaChallenge')
+const { default: Messages } = await import('../pages/Messages')
+const { default: UserDashboard } = await import('../pages/UserDashboard')
 
 const base = () => ({
   mfaChallengeNeeded: false,
@@ -28,9 +46,12 @@ const base = () => ({
 
 beforeEach(() => {
   authState = base()
+  featureFlagsState = { features: {}, loading: false, enabled: () => true, refreshFeatures: vi.fn() }
   verifySignInCode.mockReset()
   startTotpEnrollment.mockReset()
   verifyTotp.mockReset()
+  listChatConversations.mockClear()
+  searchChatContacts.mockClear()
 })
 
 describe('password policy', () => {
@@ -90,5 +111,55 @@ describe('MfaChallenge', () => {
     fireEvent.click(screen.getByRole('button', { name: /^verify$/i }))
     expect(await screen.findByRole('alert')).toHaveTextContent(/incorrect or expired/i)
     expect(screen.getByLabelText(/verification code/i)).toHaveValue('')
+  })
+})
+
+describe('Messages RBAC & gating', () => {
+  it('blocks unapproved users without calling chat RPCs', () => {
+    authState = { ...base(), isAuthenticated: true, loading: false, isApproved: false, user: { id: 'u1', accountType: 'student' } }
+    render(<MemoryRouter><Messages /></MemoryRouter>)
+    expect(screen.getByText(/Account pending approval/i)).toBeInTheDocument()
+    expect(listChatConversations).not.toHaveBeenCalled()
+    expect(searchChatContacts).not.toHaveBeenCalled()
+  })
+
+  it('blocks guest visitors without calling chat RPCs', () => {
+    authState = { ...base(), isAuthenticated: true, loading: false, isApproved: true, user: { id: 'u2', accountType: 'guest' } }
+    render(<MemoryRouter><Messages /></MemoryRouter>)
+    expect(screen.getByText(/Messaging is for campus members/i)).toBeInTheDocument()
+    expect(listChatConversations).not.toHaveBeenCalled()
+  })
+
+  it('blocks when messaging feature flag is disabled', () => {
+    featureFlagsState = { ...featureFlagsState, enabled: (k) => k !== 'messaging' }
+    authState = { ...base(), isAuthenticated: true, loading: false, isApproved: true, isStudent: true, user: { id: 'u3', accountType: 'student' } }
+    render(<MemoryRouter><Messages /></MemoryRouter>)
+    expect(screen.getByText(/Messaging is currently disabled/i)).toBeInTheDocument()
+    expect(listChatConversations).not.toHaveBeenCalled()
+  })
+
+  it('shows student-scoped search placeholder for approved students', async () => {
+    authState = { ...base(), isAuthenticated: true, loading: false, isApproved: true, isStudent: true, user: { id: 'u4', accountType: 'student' } }
+    render(<MemoryRouter><Messages /></MemoryRouter>)
+    expect(await screen.findByPlaceholderText(/Find admin, tutor, or staff/i)).toBeInTheDocument()
+    await waitFor(() => expect(listChatConversations).toHaveBeenCalled())
+  })
+})
+
+describe('UserDashboard multi-hat feature gating', () => {
+  it('blocks multi-hat staff portal when staff_portal feature is disabled', () => {
+    featureFlagsState = { ...featureFlagsState, enabled: (k) => k !== 'staff_portal' }
+    authState = {
+      ...base(),
+      isAuthenticated: true,
+      loading: false,
+      isApproved: true,
+      isTutor: true,
+      isTreasurer: true,
+      hasRole: (r) => r === 'treasurer',
+      user: { id: 't1', accountType: 'tutor', staffRoles: ['treasurer'] },
+    }
+    render(<MemoryRouter><UserDashboard /></MemoryRouter>)
+    expect(screen.getByText(/This portal is currently disabled/i)).toBeInTheDocument()
   })
 })
