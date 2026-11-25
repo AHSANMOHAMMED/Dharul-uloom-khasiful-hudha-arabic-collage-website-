@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { useFeatures } from '../context/FeatureFlagsContext';
 import { subscribeTableWithFallback } from '../lib/supabaseClient';
@@ -306,7 +307,9 @@ export default function Messages({ embedded = false } = {}) {
       setEditingDraft('');
       refreshConversations();
     } catch (err) {
-      setError(err.message || tx('تعذر تعديل الرسالة', 'Could not edit message'));
+      const msg = err.message || tx('تعذر تعديل الرسالة', 'Could not edit message');
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSavingEdit(false);
     }
@@ -323,7 +326,9 @@ export default function Messages({ embedded = false } = {}) {
       setDeleteModalMsg(null);
       refreshConversations();
     } catch (err) {
-      setError(err.message || tx('تعذر حذف الرسالة', 'Could not delete message'));
+      const msg = err.message || tx('تعذر حذف الرسالة', 'Could not delete message');
+      setError(msg);
+      toast.error(msg);
     } finally {
       setDeleting(false);
     }
@@ -340,7 +345,9 @@ export default function Messages({ embedded = false } = {}) {
       setDeleteModalMsg(null);
       refreshConversations();
     } catch (err) {
-      setError(err.message || tx('تعذر حذف الرسالة للجميع', 'Could not delete message for everyone'));
+      const msg = err.message || tx('تعذر حذف الرسالة للجميع', 'Could not delete message for everyone');
+      setError(msg);
+      toast.error(msg);
     } finally {
       setDeleting(false);
     }
@@ -444,7 +451,7 @@ export default function Messages({ embedded = false } = {}) {
                 return (
                   <div key={m.id} className={`group flex items-end gap-1.5 ${mine ? 'justify-end' : 'justify-start'}`}>
                     {mine && !isEditing && (
-                      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 opacity-80 sm:opacity-45 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                         {!isDeletedForAll && (
                           <button
                             type="button"
@@ -532,7 +539,7 @@ export default function Messages({ embedded = false } = {}) {
                         onClick={() => setDeleteModalMsg(m)}
                         title={tx('حذف لي', 'Delete for me')}
                         aria-label={tx('حذف لي', 'Delete for me')}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 shadow-xs hover:bg-red-50 hover:text-red-700 transition-opacity"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 opacity-80 sm:opacity-45 sm:group-hover:opacity-100 focus:opacity-100 shadow-xs hover:bg-red-50 hover:text-red-700 transition-opacity"
                       >
                         <Icon name="delete" className="text-[14px]" />
                       </button>
