@@ -162,8 +162,8 @@ export default function ErpDashboard() {
             <div className="space-y-6">
               {showPeople && (
                 <section>
-                  <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('People', 'الأشخاص')}</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 items-stretch">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{t('People', 'الأشخاص')}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
                     {canStudents && (
                       <Tile go={go} module="students" icon="school" label={t('Students', 'الطلاب')} value={s.students ?? 0} hint={t('Approved students', 'الطلاب المعتمدون')} />
                     )}
@@ -211,35 +211,47 @@ export default function ErpDashboard() {
 
               {canFinance && (
                 <section>
-                  <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('Finance', 'المالية')} · {fees.month}</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 items-stretch">
-                    <Tile go={go} module="fees" label={t('Fees invoiced', 'الرسوم المفوترة')} value={formatMoney(fees.invoiced)} hint={t('Current month', 'الشهر الحالي')} tone="gray" />
-                    <Tile go={go} module="fees" label={t('Fees collected', 'الرسوم المحصلة')} value={formatMoney(fees.collected)} hint={t('Current month', 'الشهر الحالي')} />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{t('Finance', 'المالية')} · {fees.month}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+                    <Tile go={go} module="fees" icon="receipt_long" label={t('Fees invoiced', 'الرسوم المفوترة')} value={formatMoney(fees.invoiced)} hint={t('Current month', 'الشهر الحالي')} tone="gray" />
+                    <Tile go={go} module="fees" icon="payments" label={t('Fees collected', 'الرسوم المحصلة')} value={formatMoney(fees.collected)} hint={t('Current month', 'الشهر الحالي')} />
                     <Tile
                       go={go}
                       module="fees"
+                      icon="warning"
                       label={t('Outstanding (month)', 'المتبقي (الشهر)')}
                       value={formatMoney(fees.outstanding)}
                       hint={`${t('All time', 'الإجمالي')}: ${formatMoney(s.fees_outstanding_total)}`}
                       tone="red"
                     />
-                    <Tile go={go} module="fees" label={t('Collections 30 days', 'تحصيل 30 يومًا')} value={formatMoney(s.collections_30d)} hint={t('Posted receipts', 'إيصالات مرحلة')} />
+                    <Tile go={go} module="fees" icon="trending_up" label={t('Collections 30 days', 'تحصيل 30 يومًا')} value={formatMoney(s.collections_30d)} hint={t('Posted receipts', 'إيصالات مرحلة')} />
                     <Tile
                       go={go}
                       module={canExpenses ? 'expenses' : undefined}
+                      icon="money_off"
                       label={t('Expenses (month)', 'المصروفات (الشهر)')}
                       value={formatMoney(s.expenses_month)}
                       hint={`${s.expenses_pending ?? 0} ${t('awaiting approval', 'بانتظار الموافقة')}`}
                       tone="amber"
                     />
-                    <Tile go={go} module="donations" label={t('Donations (month)', 'التبرعات (الشهر)')} value={formatMoney(s.donations_month)} hint={t('Recorded this month', 'المسجلة هذا الشهر')} tone="blue" />
+                    <Tile go={go} module="donations" icon="volunteer_activism" label={t('Donations (month)', 'التبرعات (الشهر)')} value={formatMoney(s.donations_month)} hint={t('Recorded this month', 'المسجلة هذا الشهر')} tone="blue" />
                     <Tile
                       go={go}
                       module={canPayroll ? 'payroll' : undefined}
+                      icon="badge"
                       label={t('Last payroll', 'آخر رواتب')}
                       value={pay ? formatMoney(pay.net) : '—'}
                       hint={pay ? `${pay.period} · ${pay.status} · ${pay.staff} ${t('staff', 'موظف')}` : t('No payroll yet', 'لا رواتب بعد')}
                       tone="gray"
+                    />
+                    <Tile
+                      go={go}
+                      module="accounting"
+                      icon="account_balance"
+                      label={t('Net Cashflow (month)', 'صافي التدفق (الشهر)')}
+                      value={formatMoney(Number(fees.collected || 0) + Number(s.donations_month || 0) - Number(s.expenses_month || 0))}
+                      hint={t('Collected + Donations − Expenses', 'المحصل + التبرعات − المصروفات')}
+                      tone={Number(fees.collected || 0) + Number(s.donations_month || 0) - Number(s.expenses_month || 0) >= 0 ? 'emerald' : 'red'}
                     />
                   </div>
                 </section>
@@ -248,39 +260,41 @@ export default function ErpDashboard() {
               {canFinance && (
                 <section>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm uppercase tracking-wide text-ink-text-muted">{t('Cheques register overview', 'نظرة عامة على الشيكات')}</h3>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('Cheques register overview', 'نظرة عامة على الشيكات')}</h3>
                     <Button size="sm" variant="ghost" onClick={() => go('cheques')}>{t('Open Cheques', 'فتح الشيكات')} →</Button>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-stretch">
-                    <Tile go={go} module="cheques" label={t('Cheques in hand', 'شيكات بالحوزة')} value={formatMoney(cheques.in_hand)} hint={`${cheques.in_hand_count ?? 0} ${t('pending', 'معلقة')}`} tone="amber" />
-                    <Tile go={go} module="cheques" label={t('Due today / overdue', 'مستحقة اليوم / متأخرة')} value={formatMoney(cheques.due_today)} hint={`${cheques.due_today_count ?? 0} ${t('cheques due', 'شيك مستحق')}`} tone={Number(cheques.due_today) > 0 ? 'red' : 'gray'} />
-                    <Tile go={go} module="cheques" label={t('Deposited / cleared (month)', 'مودعة / مصروفة (الشهر)')} value={formatMoney(Number(cheques.deposited || 0) + Number(cheques.cleared_month || 0))} hint={`${t('Cleared', 'مصروف')}: ${formatMoney(cheques.cleared_month)}`} tone="blue" />
-                    <Tile go={go} module="cheques" label={t('Bounced cheques', 'شيكات مرتجعة')} value={formatMoney(cheques.bounced)} hint={`${cheques.bounced_count ?? 0} ${t('bounced', 'مرتجع')}`} tone={Number(cheques.bounced) > 0 ? 'red' : 'emerald'} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+                    <Tile go={go} module="cheques" icon="request_quote" label={t('Cheques in hand', 'شيكات بالحوزة')} value={formatMoney(cheques.in_hand)} hint={`${cheques.in_hand_count ?? 0} ${t('pending', 'معلقة')}`} tone="amber" />
+                    <Tile go={go} module="cheques" icon="event_busy" label={t('Due today / overdue', 'مستحقة اليوم / متأخرة')} value={formatMoney(cheques.due_today)} hint={`${cheques.due_today_count ?? 0} ${t('cheques due', 'شيك مستحق')}`} tone={Number(cheques.due_today) > 0 ? 'red' : 'gray'} />
+                    <Tile go={go} module="cheques" icon="account_balance" label={t('Deposited / cleared', 'مودعة / مصروفة')} value={formatMoney(Number(cheques.deposited || 0) + Number(cheques.cleared_month || 0))} hint={`${t('Cleared', 'مصروف')}: ${formatMoney(cheques.cleared_month)}`} tone="blue" />
+                    <Tile go={go} module="cheques" icon="cancel" label={t('Bounced cheques', 'شيكات مرتجعة')} value={formatMoney(cheques.bounced)} hint={`${cheques.bounced_count ?? 0} ${t('bounced', 'مرتجع')}`} tone={Number(cheques.bounced) > 0 ? 'red' : 'emerald'} />
                   </div>
                 </section>
               )}
 
               {showCampus && (
                 <section>
-                  <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('Campus & admissions', 'الحرم والقبول')}</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 items-stretch">
-                    {canCrm && <Tile go={go} module="crm" label={t('Overdue follow-ups', 'متابعات متأخرة')} value={s.followups_overdue ?? 0} hint={t('CRM leads', 'متابعات القبول')} tone={s.followups_overdue ? 'red' : 'gray'} />}
-                    {canWelfare && <Tile go={go} module="welfare" label={t('Open discipline cases', 'حالات انضباط مفتوحة')} value={s.discipline_open ?? 0} hint={t('Student welfare', 'رعاية الطلاب')} tone="amber" />}
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{t('Campus & admissions', 'الحرم والقبول')}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-stretch">
+                    {canCrm && <Tile go={go} module="crm" icon="explore" label={t('Overdue follow-ups', 'متابعات متأخرة')} value={s.followups_overdue ?? 0} hint={t('CRM leads', 'متابعات القبول')} tone={s.followups_overdue ? 'red' : 'gray'} />}
+                    {canWelfare && <Tile go={go} module="welfare" icon="health_and_safety" label={t('Open discipline cases', 'حالات انضباط مفتوحة')} value={s.discipline_open ?? 0} hint={t('Student welfare', 'رعاية الطلاب')} tone="amber" />}
                     {canHostel && (
                       <Tile
                         go={go}
                         module="hostel"
+                        icon="apartment"
                         label={t('Hostel occupancy', 'إشغال السكن')}
                         value={occRate != null ? `${occRate}%` : '—'}
                         hint={`${hostel.occupied ?? 0}/${hostel.beds ?? 0} ${t('beds', 'سرير')}`}
                         tone="blue"
                       />
                     )}
-                    {canCertificates && <Tile go={go} module="certificates" label={t('Document requests', 'طلبات الوثائق')} value={s.document_requests_pending ?? 0} hint={t('Pending review', 'بانتظار المراجعة')} tone="amber" />}
+                    {canCertificates && <Tile go={go} module="certificates" icon="workspace_premium" label={t('Document requests', 'طلبات الوثائق')} value={s.document_requests_pending ?? 0} hint={t('Pending review', 'بانتظار المراجعة')} tone="amber" />}
                     {canStore && (
                       <Tile
                         go={go}
                         module="inventory"
+                        icon="inventory_2"
                         label={t('Store Low Stock', 'نواقص المخزن')}
                         value={s.mess?.low_stock_count ?? 0}
                         hint={`${s.mess?.total_items ?? 0} ${t('store items', 'صنف')}`}

@@ -4,7 +4,6 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { useFeatures } from '../../context/FeatureFlagsContext';
 import { Loading, useLang } from '../../components/erp/ui';
-import KhatamPattern from '../../components/KhatamPattern';
 import PageNavBar from '../../components/PageNavBar';
 import Icon from '../../components/Icon';
 import { portalHomeFor } from '../../lib/useHistoryNav';
@@ -241,22 +240,25 @@ export default function ErpWorkspace() {
     .filter((x) => x.items.length);
 
   return (
-    <div className="erp-theme min-h-screen bg-parchment-50 text-ink-text-primary pt-6 relative overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
-      <KhatamPattern className="opacity-[0.03]" strokeColor="#0B3B2E" id="erp-bg-khatam" />
-
+    <div className="erp-theme min-h-screen bg-[#F8FAFC] text-slate-900 pt-6 relative overflow-hidden" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <div className="max-w-[1600px] mx-auto px-4 lg:px-6 flex flex-col lg:flex-row gap-6 pb-12 relative z-10">
         <aside className="lg:w-64 shrink-0">
-          <div className="rounded-[14px] bg-paper-white border border-sand-border p-3.5 shadow-manuscript-sm lg:sticky lg:top-20 space-y-2">
-            <div className="px-3 py-2 border-b border-sand-border/60">
-              <div className="text-[11px] uppercase tracking-wider text-emerald-700 font-bold font-serif">
-                {t('College ERP', 'نظام إدارة الكلية')}
+          <div className="rounded-2xl bg-white border border-slate-200 p-3.5 shadow-xs lg:sticky lg:top-6 space-y-2">
+            <div className="px-3 py-2.5 border-b border-slate-200 flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-xl bg-[#0B3B2E] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                DU
               </div>
-              <div className="text-xs text-ink-text-muted truncate mt-0.5">{auth.user?.username}</div>
+              <div className="min-w-0">
+                <div className="text-xs uppercase tracking-wider text-[#0B3B2E] font-bold">
+                  {t('College ERP', 'نظام إدارة الكلية')}
+                </div>
+                <div className="text-[11px] text-slate-500 truncate">{auth.user?.username}</div>
+              </div>
             </div>
             <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible">
               {grouped.map(({ g, items }) => (
                 <div key={g} className="flex lg:flex-col gap-1 lg:mb-2">
-                  <div className="hidden lg:block px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-text-muted">
+                  <div className="hidden lg:block px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     {GROUPS[g](t)}
                   </div>
                   {items.map((m) => {
@@ -274,10 +276,10 @@ export default function ErpWorkspace() {
                           setParams(next);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className={`flex items-center gap-2.5 whitespace-nowrap rounded-[10px] px-3 py-2 text-xs text-start transition font-medium ${
+                        className={`flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs text-start transition font-medium ${
                           isSelected
-                            ? 'bg-mint-wash-100 text-emerald-700 font-semibold border border-emerald-700/20'
-                            : 'text-ink-text-secondary hover:bg-parchment-50 hover:text-ink-green-900'
+                            ? 'bg-[#0B3B2E] text-white font-semibold shadow-xs'
+                            : 'text-slate-600 hover:bg-slate-50 hover:text-[#0B3B2E]'
                         }`}
                       >
                         <Icon name={m.icon} className="text-[18px]" />

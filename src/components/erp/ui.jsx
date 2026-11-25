@@ -75,19 +75,19 @@ export function Stat({ label, value, hint, tone = 'emerald', icon = null, classN
     gray: 'bg-slate-100 text-slate-700 border-slate-200',
   };
   return (
-    <div className={`h-full flex flex-col justify-between rounded-2xl bg-white p-4 border border-slate-200/90 shadow-xs ${className}`}>
-      <div className="flex items-start justify-between gap-2">
+    <div className={`h-full flex flex-col justify-between rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/90 shadow-xs ${className}`}>
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 truncate">{label}</div>
-          <div className={`text-2xl font-extrabold mt-1 tracking-tight ${tones[tone] || tones.emerald}`}>{value}</div>
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 leading-snug">{label}</div>
+          <div className={`text-xl sm:text-2xl font-extrabold mt-1.5 tracking-tight tabular-nums ${tones[tone] || tones.emerald}`}>{value}</div>
         </div>
         {icon && (
-          <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${iconTones[tone] || iconTones.emerald}`}>
-            <Icon name={icon} className="text-[18px]" />
+          <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${iconTones[tone] || iconTones.emerald}`}>
+            <Icon name={icon} className="text-[20px]" />
           </span>
         )}
       </div>
-      <div className="text-xs text-slate-500 mt-2 min-h-[1rem]">{hint || '\u00A0'}</div>
+      <div className="text-xs text-slate-500 mt-2.5 min-h-[1rem]">{hint || '\u00A0'}</div>
     </div>
   );
 }
