@@ -4,9 +4,6 @@
 // capability (same model as a bank's e-receipt link).
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { buildReceiptPdf, pdfSafe } from '../_shared/receiptPdf.ts';
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { buildReceiptPdf, pdfSafe } from '../_shared/receiptPdf.ts';
 import { checkRateLimit, clientIpOf, corsHeadersFor, getRequestId } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
