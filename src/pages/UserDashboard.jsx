@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams, Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useFeatures } from '../context/FeatureFlagsContext';
-import RoleSwitcher from '../components/RoleSwitcher';
 import StudentDashboard from './StudentDashboard';
 import ParentDashboard from './ParentDashboard';
 import TutorDashboard from './TutorDashboard';
@@ -142,21 +141,13 @@ export default function UserDashboard() {
                             : null;
   const activeView = view || defaultSpecialView || 'tutor';
 
-  // RolePortalShell embeds RoleSwitcher; Tutor/Librarian keep a top bar.
-  const wrapWithSwitcher = (dashboard, { topBar = false } = {}) => (
-    <div className="w-full bg-parchment-50 min-h-screen">
-      {topBar ? <RoleSwitcher /> : null}
-      {dashboard}
-    </div>
-  );
-
   const portalForView = (v) => {
     if (v === 'admin' && isAdmin) return <Navigate to="/admin" replace />;
     if (v === 'parent' && isParent) return enabled('parent_portal') ? <ParentDashboard /> : featureBlocked('parent_portal');
     if (v === 'student' && isStudent) return enabled('student_portal') ? <StudentDashboard /> : featureBlocked('student_portal');
     if (v === 'treasurer' && isTreasurer) return enabled('staff_portal') ? <TreasurerPortal /> : featureBlocked('staff_portal');
-    if (v === 'principal' && isPrincipal) return enabled('staff_portal') ? <PrincipalPortal vpMode={false} /> : featureBlocked('staff_portal');
-    if (v === 'vp' && isVP) return enabled('staff_portal') ? <PrincipalPortal vpMode /> : featureBlocked('staff_portal');
+    if (v === 'principal' && isPrincipal) return enabled('staff_portal') ? <PrincipalPortal key="principal" vpMode={false} /> : featureBlocked('staff_portal');
+    if (v === 'vp' && isVP) return enabled('staff_portal') ? <PrincipalPortal key="vp" vpMode /> : featureBlocked('staff_portal');
     if (v === 'accountant' && isAccountantRole) return enabled('staff_portal') ? <AccountantPortal /> : featureBlocked('staff_portal');
     if (v === 'hr' && isHr) return enabled('staff_portal') ? <HrPortal /> : featureBlocked('staff_portal');
     if (v === 'admissions' && isAdmissions) return enabled('staff_portal') ? <AdmissionsPortal /> : featureBlocked('staff_portal');
@@ -188,8 +179,7 @@ export default function UserDashboard() {
 
   if (multiHat) {
     const chosen = portalForView(activeView);
-    const needsTopBar = activeView === 'tutor' || activeView === 'librarian';
-    if (chosen) return wrapWithSwitcher(chosen, { topBar: needsTopBar });
+    if (chosen) return chosen;
     const fallback =
       portalForView('admin') ||
       portalForView('treasurer') ||
@@ -205,11 +195,7 @@ export default function UserDashboard() {
       portalForView('tutor') ||
       portalForView('parent') ||
       portalForView('student');
-    if (fallback) {
-      return wrapWithSwitcher(fallback, {
-        topBar: !portalForView(activeView) && (isTutor || isLibrarian) && !(isTreasurer || isPrincipal || isVP || isAccountantRole),
-      });
-    }
+    if (fallback) return fallback;
   }
 
   if (isLibrarian) {

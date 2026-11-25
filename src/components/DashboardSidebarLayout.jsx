@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
@@ -41,6 +41,10 @@ export default function DashboardSidebarLayout({
   const canMessage = !isSuperAdmin && isApproved && enabled('messaging') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian);
   useTranslation();
   const location = useLocation();
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname, location.search]);
 
   // Standard institutional quick links across workspaces
   const defaultQuickLinks = [];
@@ -90,8 +94,8 @@ export default function DashboardSidebarLayout({
 
       {/* ── Fixed Sidebar ─────────────────────────────────────────────────── */}
       <aside
-        className={`fixed top-0 bottom-0 start-0 z-50 w-72 bg-white border-e border-[#E8E1D0] flex flex-col shadow-[2px_0_12px_rgba(11,59,46,0.04)] transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        className={`fixed top-0 bottom-0 start-0 z-50 w-72 bg-white border-e border-[#E8E1D0] flex flex-col shadow-[2px_0_12px_rgba(11,59,46,0.04)] transition-transform duration-300 ease-in-out lg:translate-x-0 rtl:lg:translate-x-0 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full lg:translate-x-0 rtl:lg:translate-x-0'
         }`}
       >
         {/* Sidebar Header: College Crest & Institutional Title */}
@@ -253,32 +257,32 @@ export default function DashboardSidebarLayout({
         {/* Top Utility Header */}
         <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E8E1D0] px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Mobile Hamburger Button */}
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-2 rounded-xl border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]"
+              className="lg:hidden shrink-0 p-2 rounded-xl border border-[#E8E1D0] text-[#0B3B2E] hover:bg-[#FBF8F0]"
               aria-label={tx('فتح القائمة الجانبية', 'Open sidebar menu')}
             >
               <Icon name="menu" className="text-[20px]" />
             </button>
 
             {/* Breadcrumb / Title */}
-            <div className="flex items-center gap-2 text-xs font-sans">
-              <span className="font-serif font-bold text-sm sm:text-base text-[#0B3B2E]">
+            <div className="flex items-center gap-2 text-xs font-sans min-w-0">
+              <span className="font-serif font-bold text-sm sm:text-base text-[#0B3B2E] truncate">
                 {tx(title_ar, title_en)}
               </span>
               {currentNav && (
                 <>
-                  <span className="text-[#E8E1D0] font-bold">/</span>
-                  <span className="text-[#11694A] font-semibold hidden sm:inline">
+                  <span className="text-[#E8E1D0] font-bold hidden sm:inline">/</span>
+                  <span className="text-[#11694A] font-semibold hidden sm:inline truncate">
                     {tx(currentNav.label_ar, currentNav.label_en)}
                   </span>
                 </>
               )}
               {roleBadge && (
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${roleBadge.color || 'bg-[#E3F1EA] text-[#0B3B2E] border-[#0B3B2E]/20'}`}>
+                <span className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${roleBadge.color || 'bg-[#E3F1EA] text-[#0B3B2E] border-[#0B3B2E]/20'}`}>
                   {tx(roleBadge.text_ar, roleBadge.text_en)}
                 </span>
               )}
