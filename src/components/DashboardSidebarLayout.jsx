@@ -232,26 +232,38 @@ export default function DashboardSidebarLayout({
           )}
         </div>
 
-        {/* Sidebar Footer: Profile Card + Tools + Logout */}
-        <div className="p-3 border-t border-[#E8E1D0] bg-[#FDFBF7] space-y-2.5">
+        {/* Sidebar Footer: Profile Card + Language + Sign Out */}
+        <div className="p-3.5 border-t border-[#E8E1D0] bg-[#FDFBF7] space-y-2.5">
           {/* User Profile Card */}
-          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-[#E8E1D0]">
+          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-[#E8E1D0] shadow-2xs">
             <div className="w-9 h-9 rounded-lg bg-[#E3F1EA] text-[#11694A] font-serif font-bold text-sm flex items-center justify-center shrink-0 border border-[#11694A]/20">
               {(user?.username || user?.email || 'U')[0].toUpperCase()}
             </div>
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 flex-1">
               <span className="text-xs font-bold text-[#0B3B2E] truncate leading-tight">
                 {user?.username || user?.email}
               </span>
-              <span className="text-[10px] text-[#4A5E56] font-mono truncate leading-none mt-0.5">
+              <span className="text-[10px] text-[#4A5E56] font-mono truncate leading-none mt-1">
                 {user?.indexNumber || user?.role || 'authorized'}
               </span>
             </div>
           </div>
 
-          {/* Language only here — Sign out lives once in the sticky header (was duplicated). */}
-          <div className="pt-1">
-            <LanguageSelect className="w-full text-[11px] bg-white border border-[#E8E1D0] text-[#0B3B2E] py-1.5 px-2 rounded-lg" />
+          {/* Language Selector & Sign Out */}
+          <div className="grid grid-cols-2 gap-2 items-center">
+            <div className="relative flex items-center">
+              <Icon name="translate" className="text-[15px] text-[#11694A] absolute start-2.5 pointer-events-none" />
+              <LanguageSelect className="w-full ps-8 pe-2 py-2 text-[11px] rounded-xl" />
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              title={tx('تسجيل الخروج', 'Sign out')}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#FEF2F2] hover:bg-[#FEE2E2] text-[#991B1B] text-[11px] font-bold border border-[#991B1B]/20 transition-colors"
+            >
+              <Icon name="logout" className="text-[15px]" />
+              <span className="truncate">{tx('تسجيل الخروج', 'Sign out')}</span>
+            </button>
           </div>
         </div>
       </aside>
@@ -332,21 +344,11 @@ export default function DashboardSidebarLayout({
                 <span>{tx('المكتبة', 'Library')}</span>
               </Link>
             )}
-
-            <button
-              type="button"
-              onClick={logout}
-              title={tx('تسجيل الخروج', 'Sign out')}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FEE2E2]/70 hover:bg-[#FEE2E2] text-[#991B1B] text-xs font-bold border border-[#991B1B]/20 transition-colors"
-            >
-              <Icon name="logout" className="text-[16px]" />
-              <span className="hidden sm:inline">{tx('خروج', 'Logout')}</span>
-            </button>
           </div>
         </header>
 
         {/* Scrollable Content Workspace — erp-theme so embedded ERP panels use the official light manuscript palette */}
-        <main className="erp-theme flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto text-ink-text-primary">
+        <main className="erp-theme flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 space-y-5 max-w-7xl w-full mx-auto text-ink-text-primary">
           {(() => {
             // Back / Forward / Home + "Portal › Section" on every section.
             const homeId = homeItem || navItems[0]?.id;
