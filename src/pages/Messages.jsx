@@ -3,7 +3,24 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useFeatures } from '../context/FeatureFlagsContext';
 import { subscribeTableWithFallback } from '../lib/supabaseClient';
-import { listChatConversations, listChatMessages, listOlderChatMessages, markChatDelivered, markChatRead, openChatConversation, searchChatContacts, sendChatMessage, subscribeOrgPresence, subscribeToChat, touchMyPresence, uploadChatAttachment, getChatAttachmentUrl } from '../lib/chatApi';
+import {
+  deleteChatMessageForEveryone,
+  deleteChatMessageForMe,
+  editChatMessage,
+  getChatAttachmentUrl,
+  listChatConversations,
+  listChatMessages,
+  listOlderChatMessages,
+  markChatDelivered,
+  markChatRead,
+  openChatConversation,
+  searchChatContacts,
+  sendChatMessage,
+  subscribeOrgPresence,
+  subscribeToChat,
+  touchMyPresence,
+  uploadChatAttachment,
+} from '../lib/chatApi';
 import { tx } from '../lib/tx';
 import PageNavBar from '../components/PageNavBar';
 import Icon from '../components/Icon';
@@ -34,9 +51,23 @@ export default function Messages({ embedded = false } = {}) {
   const [error, setError] = useState('');
   const [mobileListOpen, setMobileListOpen] = useState(true);
   const [onlineIds, setOnlineIds] = useState(() => new Set());
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editingDraft, setEditingDraft] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deleteModalMsg, setDeleteModalMsg] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const attachRef = useRef(null);
   const endRef = useRef(null);
   const active = useMemo(() => conversations.find((c) => c.conversation_id === selectedId) || null, [conversations, selectedId]);
+
+  const setConversationParam = useCallback((id) => {
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (id) next.set('conversation', id);
+      else next.delete('conversation');
+      return next;
+    });
+  }, [setParams]);
 
   const refreshConversations = useCallback(async () => {
     try {
@@ -107,9 +138,14 @@ export default function Messages({ embedded = false } = {}) {
     if (!selectedId || !chatAllowed) return undefined;
     refreshMessages(selectedId);
     const stop = subscribeToChat(selectedId, (incoming, eventType) => {
+      const hiddenForMe = Array.isArray(incoming.deleted_for_user_ids) && incoming.deleted_for_user_ids.includes(user?.id);
       if (eventType === 'UPDATE') {
-        setMessages((current) => current.map((m) => m.id === incoming.id ? { ...m, ...incoming } : m));
-      } else {
+        if (hiddenForMe) {
+          setMessages((current) => current.filter((m) => m.id !== incoming.id));
+        } else {
+          setMessages((current) => current.map((m) => m.id === incoming.id ? { ...m, ...incoming } : m));
+        }
+      } else if (!hiddenForMe) {
         setMessages((current) => current.some((m) => m.id === incoming.id) ? current : [...current, incoming]);
         if (incoming.sender_id !== user?.id && eventType !== 'POLL') {
           markChatRead(selectedId).then(refreshConversations).catch(() => {});
@@ -194,7 +230,7 @@ export default function Messages({ embedded = false } = {}) {
     try {
       const id = await openChatConversation(contact.user_id);
       await refreshConversations();
-      setParams({ conversation: id });
+      setConversationParam(id);
       setMobileListOpen(false);
       setSearch('');
     } catch (e) {
@@ -240,8 +276,74 @@ export default function Messages({ embedded = false } = {}) {
   };
 
   const selectConversation = (id) => {
-    setParams({ conversation: id });
+    setConversationParam(id);
     setMobileListOpen(false);
+    setEditingMessageId(null);
+    setEditingDraft('');
+  };
+
+  const startEdit = (msg) => {
+    setEditingMessageId(msg.id);
+    setEditingDraft(msg.body || msg.attachment_name || '');
+    setError('');
+  };
+
+  const cancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingDraft('');
+  };
+
+  const saveEdit = async (e) => {
+    e?.preventDefault();
+    const trimmed = editingDraft.trim();
+    if (!editingMessageId || !trimmed || savingEdit) return;
+    setSavingEdit(true);
+    setError('');
+    try {
+      const updated = await editChatMessage(editingMessageId, trimmed);
+      setMessages((current) => current.map((m) => m.id === editingMessageId ? { ...m, ...updated } : m));
+      setEditingMessageId(null);
+      setEditingDraft('');
+      refreshConversations();
+    } catch (err) {
+      setError(err.message || tx('تعذر تعديل الرسالة', 'Could not edit message'));
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const confirmDeleteForMe = async () => {
+    if (!deleteModalMsg || deleting) return;
+    setDeleting(true);
+    setError('');
+    try {
+      await deleteChatMessageForMe(deleteModalMsg.id);
+      setMessages((current) => current.filter((m) => m.id !== deleteModalMsg.id));
+      if (editingMessageId === deleteModalMsg.id) cancelEdit();
+      setDeleteModalMsg(null);
+      refreshConversations();
+    } catch (err) {
+      setError(err.message || tx('تعذر حذف الرسالة', 'Could not delete message'));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const confirmDeleteForEveryone = async () => {
+    if (!deleteModalMsg || deleting) return;
+    setDeleting(true);
+    setError('');
+    try {
+      const updated = await deleteChatMessageForEveryone(deleteModalMsg.id);
+      setMessages((current) => current.map((m) => m.id === deleteModalMsg.id ? { ...m, ...updated } : m));
+      if (editingMessageId === deleteModalMsg.id) cancelEdit();
+      setDeleteModalMsg(null);
+      refreshConversations();
+    } catch (err) {
+      setError(err.message || tx('تعذر حذف الرسالة للجميع', 'Could not delete message for everyone'));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const otherOnline = active ? onlineIds.has(active.other_user_id) : false;
@@ -296,7 +398,9 @@ export default function Messages({ embedded = false } = {}) {
                       </span>
                       <span className="flex items-center justify-between gap-2">
                         <small className="truncate text-xs text-slate-500">
-                          {c.last_message || roleName(c.other_account_type, c.other_role, c.other_assigned_tutor_role)}
+                          {c.last_message === 'This message was deleted'
+                            ? tx('تم حذف هذه الرسالة', 'This message was deleted')
+                            : (c.last_message || roleName(c.other_account_type, c.other_role, c.other_assigned_tutor_role))}
                         </small>
                         {Number(c.unread_count) > 0 && <b className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#11694A] px-1 text-[10px] text-white">{c.unread_count}</b>}
                       </span>
@@ -335,16 +439,104 @@ export default function Messages({ embedded = false } = {}) {
               {!loadingMessages && messages.length === 0 && <div className="m-auto max-w-xs rounded-2xl border border-slate-200 bg-white px-5 py-4 text-center text-sm text-slate-500">{tx('ابدأ المحادثة برسالة خاصة إلى', 'Start a private conversation with')} {active.other_user_name}.</div>}
               {messages.map((m) => {
                 const mine = m.sender_id === user?.id;
+                const isDeletedForAll = Boolean(m.deleted_for_everyone_at);
+                const isEditing = editingMessageId === m.id;
                 return (
-                  <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                  <div key={m.id} className={`group flex items-end gap-1.5 ${mine ? 'justify-end' : 'justify-start'}`}>
+                    {mine && !isEditing && (
+                      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                        {!isDeletedForAll && (
+                          <button
+                            type="button"
+                            onClick={() => startEdit(m)}
+                            title={tx('تعديل الرسالة', 'Edit message')}
+                            aria-label={tx('تعديل الرسالة', 'Edit message')}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-xs hover:bg-slate-50 hover:text-[#0B3B2E]"
+                          >
+                            <Icon name="edit" className="text-[14px]" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setDeleteModalMsg(m)}
+                          title={tx('حذف الرسالة', 'Delete message')}
+                          aria-label={tx('حذف الرسالة', 'Delete message')}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-xs hover:bg-red-50 hover:text-red-700"
+                        >
+                          <Icon name="delete" className="text-[14px]" />
+                        </button>
+                      </div>
+                    )}
                     <div className={`max-w-[85%] rounded-2xl px-3.5 py-2 shadow-xs sm:max-w-[70%] ${mine ? 'rounded-br-sm bg-[#E3F1EA] text-[#0B3B2E] border border-[#11694A]/15' : 'rounded-bl-sm bg-white text-slate-800 border border-slate-200'}`}>
-                      {m.attachment_url && <AttachmentPreview msg={m} />}
-                      {m.body && <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{m.body}</p>}
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-slate-500">
+                      {isDeletedForAll ? (
+                        <p className="flex items-center gap-1.5 text-xs italic text-slate-500">
+                          <Icon name="delete" className="text-[14px] text-slate-400" />
+                          <span>{tx('تم حذف هذه الرسالة', 'This message was deleted')}</span>
+                        </p>
+                      ) : (
+                        <>
+                          {m.attachment_url && <AttachmentPreview msg={m} />}
+                          {isEditing ? (
+                            <form onSubmit={saveEdit} className="mt-1 space-y-2 min-w-[220px]">
+                              <textarea
+                                value={editingDraft}
+                                onChange={(e) => setEditingDraft(e.target.value.slice(0, 4000))}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    saveEdit();
+                                  } else if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    cancelEdit();
+                                  }
+                                }}
+                                rows={2}
+                                autoFocus
+                                maxLength={4000}
+                                className="w-full rounded-xl border border-[#11694A]/40 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#11694A]"
+                              />
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={cancelEdit}
+                                  disabled={savingEdit}
+                                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                                >
+                                  {tx('إلغاء', 'Cancel')}
+                                </button>
+                                <button
+                                  type="submit"
+                                  disabled={savingEdit || !editingDraft.trim()}
+                                  className="rounded-lg bg-[#11694A] px-3 py-1 text-xs font-semibold text-white hover:bg-[#0B3B2E] disabled:opacity-40"
+                                >
+                                  {savingEdit ? tx('جارٍ الحفظ…', 'Saving…') : tx('حفظ', 'Save')}
+                                </button>
+                              </div>
+                            </form>
+                          ) : (
+                            m.body && <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{m.body}</p>
+                          )}
+                        </>
+                      )}
+                      <div className="mt-1 flex items-center justify-end gap-1.5 text-[10px] text-slate-500">
+                        {m.edited_at && !isDeletedForAll && (
+                          <span className="italic text-slate-500">{tx('تم التعديل', 'Edited')}</span>
+                        )}
                         <span>{timeLabel(m.created_at)}</span>
-                        {mine && <MessageReceipt msg={m} />}
+                        {mine && !isDeletedForAll && <MessageReceipt msg={m} />}
                       </div>
                     </div>
+                    {!mine && !isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => setDeleteModalMsg(m)}
+                        title={tx('حذف لي', 'Delete for me')}
+                        aria-label={tx('حذف لي', 'Delete for me')}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 shadow-xs hover:bg-red-50 hover:text-red-700 transition-opacity"
+                      >
+                        <Icon name="delete" className="text-[14px]" />
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -375,11 +567,12 @@ export default function Messages({ embedded = false } = {}) {
                 type="button"
                 disabled={busy}
                 onClick={() => attachRef.current?.click()}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-[#11694A] hover:bg-slate-100 disabled:opacity-40"
+                className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 text-xs font-semibold text-[#0B3B2E] shadow-xs hover:border-[#11694A] hover:bg-slate-50 disabled:opacity-40"
                 title={tx('إرفاق صورة أو ملف PDF', 'Attach photo or PDF')}
                 aria-label={tx('إرفاق صورة أو ملف PDF', 'Attach photo or PDF')}
               >
-                <Icon name="attach_file" className="text-lg" />
+                <Icon name="attach_file" className="text-[18px] text-[#11694A]" />
+                <span className="hidden sm:inline">{tx('إرفاق', 'Attach')}</span>
               </button>
               <textarea value={draft} onChange={(e) => setDraft(e.target.value.slice(0, 4000))} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} rows={1} maxLength={4000} placeholder={tx('اكتب رسالة…', 'Type a message…')} className="max-h-32 min-h-11 flex-1 resize-y rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#11694A] focus:bg-white" />
               <button type="submit" disabled={busy || !draft.trim()} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#11694A] text-white shadow-sm hover:bg-[#0B3B2E] disabled:cursor-not-allowed disabled:opacity-40" aria-label={tx('إرسال', 'Send')}><Icon name="send" className="text-lg" /></button>
@@ -389,6 +582,54 @@ export default function Messages({ embedded = false } = {}) {
           <div className="hidden flex-1 flex-col items-center justify-center bg-[#F8FAFC] px-8 text-center md:flex"><Icon name="forum" className="text-6xl text-[#11694A]/40 mb-2" /><h1 className="mt-2 text-xl font-bold text-[#0B3B2E]">{tx('رسائل الكلية', 'College messages')}</h1><p className="mt-2 max-w-md text-sm text-slate-500">{(isParent || isStudent) ? tx('اختر محادثة أو ابحث عن إدارة الكلية أو مدرّس لبدء مراسلة خاصة.', 'Choose a chat or search for college admin or a tutor to start a private conversation.') : tx('اختر محادثة أو ابحث عن طالب أو ولي أمر أو موظف لبدء مراسلة خاصة وآمنة.', 'Choose a chat or search for a student, parent, or staff member to start a private conversation.')}</p></div>
         )}
       </section>
+      {deleteModalMsg && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[1px]"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => !deleting && setDeleteModalMsg(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+              <h2 className="text-base font-bold text-[#0B3B2E]">{tx('حذف الرسالة', 'Delete message')}</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                {tx('اختر كيف تريد حذف هذه الرسالة:', 'Choose how you want to delete this message:')}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {deleteModalMsg.sender_id === user?.id && !deleteModalMsg.deleted_for_everyone_at && (
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={confirmDeleteForEveryone}
+                  className="w-full rounded-xl bg-[#B3261E] px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-50"
+                >
+                  {tx('حذف للجميع', 'Delete for everyone')}
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={confirmDeleteForMe}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-50"
+              >
+                {tx('حذف لي فقط', 'Delete for me')}
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteModalMsg(null)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              >
+                {tx('إلغاء', 'Cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 

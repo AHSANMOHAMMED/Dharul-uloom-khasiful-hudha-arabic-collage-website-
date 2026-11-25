@@ -97,6 +97,31 @@ export async function markChatDelivered(conversationId = null) {
   return data || 0;
 }
 
+export async function editChatMessage(messageId, body) {
+  const { data, error } = await requireClient().rpc('edit_chat_message', {
+    p_message_id: messageId,
+    p_body: body,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteChatMessageForEveryone(messageId) {
+  const { data, error } = await requireClient().rpc('delete_chat_message_for_everyone', {
+    p_message_id: messageId,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteChatMessageForMe(messageId) {
+  const { data, error } = await requireClient().rpc('delete_chat_message_for_me', {
+    p_message_id: messageId,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function touchMyPresence() {
   try {
     await requireClient().rpc('touch_my_presence');

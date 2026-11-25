@@ -795,6 +795,38 @@ export default function Icon({ name, className = '', size, ...props }) {
           </>
         );
 
+      case 'attach_file':
+      case 'attachment':
+        return (
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+        );
+
+      case 'edit':
+        return (
+          <>
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </>
+        );
+
+      case 'more_vert':
+        return (
+          <>
+            <circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" />
+            <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+            <circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none" />
+          </>
+        );
+
+      case 'image':
+        return (
+          <>
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none" />
+            <polyline points="21 15 16 10 5 21" />
+          </>
+        );
+
       // Clean default geometric glyph: crisp bullet circle (NEVER text)
       case 'circle':
       default:
