@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { AsyncView, Badge, Button, Card, Input, PageHeader, Select, StatusBadge, Table, Tabs, useAsync, useLang } from '../ui';
 import { downloadCsv, queryAll } from '../../../lib/erp/rpc';
+import { useUrlState } from '../../../lib/useTabParam';
 import { ClassSelect } from './common';
 import StudentDetail from './StudentDetail';
 import StudentEnrolment from './StudentEnrolment';
@@ -86,7 +87,7 @@ function Directory() {
 export default function StudentsPanel() {
   const { t } = useLang();
   const auth = useAuth();
-  const [tab, setTab] = useState('directory');
+  const [tab, setTab] = useUrlState('sttab', 'directory');
   const canApprove = auth.isAdmin || auth.isPrincipal || auth.isVP;
   const tabs = [
     { id: 'directory', label: t('Directory', 'الدليل') },

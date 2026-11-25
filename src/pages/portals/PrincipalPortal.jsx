@@ -3,9 +3,11 @@ import RolePortalShell from '../../components/portals/RolePortalShell';
 import { ROLE_BADGE } from '../../lib/roleTheme';
 
 const ErpDashboard = lazy(() => import('../../components/erp/campus/ErpDashboard'));
+const FinanceTodayPanel = lazy(() => import('../../components/erp/ops/FinanceTodayPanel'));
 const Timetable = lazy(() => import('../../components/erp/campus/Timetable'));
 const FeeManagement = lazy(() => import('../../components/erp/finance/FeeManagement'));
 const FinanceHubPanel = lazy(() => import('../../components/erp/finance/FinanceHubPanel'));
+const BankReconPanel = lazy(() => import('../../components/erp/finance/BankReconPanel'));
 const AccountingPanel = lazy(() => import('../../components/erp/finance/AccountingPanel'));
 const ChequesPanel = lazy(() => import('../../components/erp/finance/ChequesPanel'));
 const AuditLogPanel = lazy(() => import('../../components/erp/finance/AuditLogPanel'));
@@ -22,6 +24,8 @@ const PettyCashPanel = lazy(() => import('../../components/erp/governance/PettyC
 const DocumentsPanel = lazy(() => import('../../components/erp/docs/DocumentsPanel'));
 const ReportsPanel = lazy(() => import('../../components/erp/ops/ReportsPanel'));
 const AnalyticsPanel = lazy(() => import('../../components/erp/ops/AnalyticsPanel'));
+const ActivitiesPanel = lazy(() => import('../../components/erp/ops/ActivitiesPanel'));
+const ImportPanel = lazy(() => import('../../components/erp/ops/ImportPanel'));
 const CrmPanel = lazy(() => import('../../components/erp/campus/CrmPanel'));
 const ExpensesPanel = lazy(() => import('../../components/erp/finance/ExpensesPanel'));
 const DonationsPanel = lazy(() => import('../../components/erp/finance/DonationsPanel'));
@@ -36,14 +40,18 @@ export default function PrincipalPortal({ vpMode = false }) {
     { id: 'mashoora', label_en: 'Mashoora', label_ar: 'الشورى', icon: 'diversity_3', group: 'Leadership', group_ar: 'القيادة', embed: MashooraPanel },
     { id: 'tasks', label_en: 'Task Board', label_ar: 'لوحة المهام', icon: 'view_kanban', group: 'Leadership', group_ar: 'القيادة', embed: TaskBoard },
     { id: 'duties', label_en: 'Duties', label_ar: 'المسؤوليات', icon: 'assignment_ind', group: 'Leadership', group_ar: 'القيادة', embed: DutiesPanel },
+    { id: 'activities', label_en: 'Activities', label_ar: 'الأنشطة', icon: 'event', group: 'Leadership', group_ar: 'القيادة', embed: ActivitiesPanel },
     { id: 'academics', label_en: 'Academics', label_ar: 'الأكاديميات', icon: 'school', group: 'Academic', group_ar: 'الأكاديمي', embed: AcademicsPanel },
     { id: 'timetable', label_en: 'Timetable', label_ar: 'الجدول', icon: 'calendar_month', group: 'Academic', group_ar: 'الأكاديمي', embed: Timetable },
     { id: 'students', label_en: 'Students', label_ar: 'الطلاب', icon: 'groups', group: 'Academic', group_ar: 'الأكاديمي', embed: StudentsPanel },
     { id: 'staff', label_en: 'Staff HR', label_ar: 'الموظفون', icon: 'badge', group: 'Academic', group_ar: 'الأكاديمي', embed: StaffHrPanel },
     { id: 'pipeline', label_en: 'Admissions CRM', label_ar: 'مسار القبول', icon: 'filter_alt', group: 'Academic', group_ar: 'الأكاديمي', embed: CrmPanel },
+    { id: 'import', label_en: 'Bulk Import', label_ar: 'الاستيراد الجماعي', icon: 'upload_file', group: 'Academic', group_ar: 'الأكاديمي', embed: ImportPanel },
+    { id: 'today', label_en: 'Today & Reminders', label_ar: 'اليوم والتذكيرات', icon: 'today', group: 'Finance', group_ar: 'المالية', embed: FinanceTodayPanel },
     { id: 'fees', label_en: 'Fees', label_ar: 'الرسوم', icon: 'payments', group: 'Finance', group_ar: 'المالية', embed: FeeManagement, embedProps: { embedded: true } },
     { id: 'financehub', label_en: 'Finance Hub', label_ar: 'مركز المالية', icon: 'hub', group: 'Finance', group_ar: 'المالية', embed: FinanceHubPanel },
-    { id: 'accounting', label_en: 'Accounting', label_ar: 'المحاسبة', icon: 'account_balance', group: 'Finance', group_ar: 'المالية', embed: AccountingPanel },
+    { id: 'bankrecon', label_en: 'Bank Reconciliation', label_ar: 'المطابقة البنكية', icon: 'account_balance', group: 'Finance', group_ar: 'المالية', embed: BankReconPanel },
+    { id: 'accounting', label_en: 'Accounting', label_ar: 'المحاسبة', icon: 'menu_book', group: 'Finance', group_ar: 'المالية', embed: AccountingPanel },
     { id: 'cheques', label_en: 'Cheques', label_ar: 'الشيكات', icon: 'request_quote', group: 'Finance', group_ar: 'المالية', embed: ChequesPanel },
     { id: 'expenses', label_en: 'Expenses', label_ar: 'المصروفات', icon: 'receipt_long', group: 'Finance', group_ar: 'المالية', embed: ExpensesPanel },
     { id: 'donations', label_en: 'Donations', label_ar: 'التبرعات', icon: 'volunteer_activism', group: 'Finance', group_ar: 'المالية', embed: DonationsPanel },

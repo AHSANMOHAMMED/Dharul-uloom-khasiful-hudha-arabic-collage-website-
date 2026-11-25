@@ -60,6 +60,7 @@ function Directory() {
             ) },
             { key: 'status', label: t('Status', 'الحالة'), render: (p) => (hrOf(p) ? <StatusBadge status={hrOf(p).status} /> : <Badge>{t('no record', 'بدون سجل')}</Badge>) },
             { key: 'is_approved', label: t('Access', 'الوصول'), render: (p) => (p.is_approved ? <Badge tone="green">{t('approved', 'معتمد')}</Badge> : <Badge tone="amber">{t('pending', 'معلق')}</Badge>) },
+            { key: 'act', label: '', render: (p) => <Button size="sm" variant="ghost" onClick={() => setSelectedId(p.id)}>{t('Open', 'فتح')}</Button> },
           ]} />
         )}
       </AsyncView>
