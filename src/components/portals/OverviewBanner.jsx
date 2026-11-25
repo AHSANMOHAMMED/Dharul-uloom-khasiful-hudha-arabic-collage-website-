@@ -39,11 +39,19 @@ export default function OverviewBanner({
     <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs relative overflow-hidden">
       <div className={`absolute top-0 left-0 right-0 h-1 ${a.bar}`} />
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div
-          className={`w-12 h-12 rounded-xl flex items-center justify-center font-serif text-xl font-bold shrink-0 border ${a.avatar}`}
-        >
-          {(name[0] || 'د').toUpperCase()}
-        </div>
+        {user?.avatarUrl ? (
+          <img
+            src={user.avatarUrl}
+            alt={name}
+            className="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-200 shadow-xs"
+          />
+        ) : (
+          <div
+            className={`w-12 h-12 rounded-xl flex items-center justify-center font-serif text-xl font-bold shrink-0 border ${a.avatar}`}
+          >
+            {(name[0] || 'د').toUpperCase()}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border mb-1.5 ${a.chip}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${a.dot}`} />

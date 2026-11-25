@@ -244,17 +244,25 @@ export default function ErpWorkspace() {
       <div className="max-w-[1600px] mx-auto px-4 lg:px-6 flex flex-col lg:flex-row gap-6 pb-12 relative z-10">
         <aside className="lg:w-64 shrink-0">
           <div className="rounded-2xl bg-white border border-slate-200 p-3.5 shadow-xs lg:sticky lg:top-6 space-y-2">
-            <div className="px-3 py-2.5 border-b border-slate-200 flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-xl bg-[#0B3B2E] text-white flex items-center justify-center font-bold text-sm shrink-0">
-                DU
-              </div>
+            <Link
+              to="/profile"
+              title={t('Profile & Settings', 'الملف الشخصي والإعدادات')}
+              className="px-3 py-2.5 border-b border-slate-200 flex items-center gap-2.5 hover:bg-slate-50 rounded-xl transition-colors"
+            >
+              {auth.user?.avatarUrl ? (
+                <img src={auth.user.avatarUrl} alt={auth.user?.username || 'Profile'} className="h-9 w-9 rounded-xl object-cover border border-slate-200 shrink-0" />
+              ) : (
+                <div className="h-9 w-9 rounded-xl bg-[#0B3B2E] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                  {(auth.user?.username || 'DU').slice(0, 2).toUpperCase()}
+                </div>
+              )}
               <div className="min-w-0">
                 <div className="text-xs uppercase tracking-wider text-[#0B3B2E] font-bold">
                   {t('College ERP', 'نظام إدارة الكلية')}
                 </div>
-                <div className="text-[11px] text-slate-500 truncate">{auth.user?.username}</div>
+                <div className="text-[11px] text-slate-500 truncate">{auth.user?.username} · {t('Profile', 'الملف')}</div>
               </div>
-            </div>
+            </Link>
             <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible">
               {grouped.map(({ g, items }) => (
                 <div key={g} className="flex lg:flex-col gap-1 lg:mb-2">

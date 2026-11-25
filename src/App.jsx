@@ -34,10 +34,11 @@ const DASHBOARD_ROUTES = [
   '/q/',
   '/b/',
   '/account',
+  '/profile',
 ];
 
 /** Routes that require a signed-in user (public receipt/verify links excluded). */
-const PROTECTED_ROUTES = ['/admin', '/platform', '/dashboard', '/library', '/library-admin', '/erp', '/messages', '/account'];
+const PROTECTED_ROUTES = ['/admin', '/platform', '/dashboard', '/library', '/library-admin', '/erp', '/messages', '/account', '/profile'];
 
 function isDashboardPath(pathname) {
   return DASHBOARD_ROUTES.some((r) => pathname === r || pathname.startsWith(r));
@@ -73,6 +74,7 @@ const VerifyCertificate = lazy(() => import('./pages/erp/VerifyCertificate'))
 const ReceiptPublic = lazy(() => import('./pages/ReceiptPublic'))
 const FinanceDocPublic = lazy(() => import('./pages/FinanceDocPublic'))
 const AccountSecurity = lazy(() => import('./pages/AccountSecurity'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const Messages = lazy(() => import('./pages/Messages'))
 
 /**
@@ -190,6 +192,8 @@ function App() {
                 <Route path="/fees"       element={<Navigate to="/dashboard?tab=fees" replace />} />
                 <Route path="/erp"        element={<ErpWorkspace />} />
                 <Route path="/messages"   element={<Messages />} />
+                <Route path="/profile"    element={<ProfilePage />} />
+                <Route path="/account"    element={<ProfilePage />} />
                 <Route path="/account/security" element={<AccountSecurity />} />
                 <Route path="/verify"     element={<VerifyCertificate />} />
                 <Route path="/verify/:code" element={<VerifyCertificate />} />

@@ -86,6 +86,8 @@ export const AuthProvider = ({ children }) => {
       classNumber: profile?.class_number || null,
       orgId: profile?.org_id || null,
       phone: profile?.phone || '',
+      avatarUrl: profile?.avatar_url || '',
+      preferredLanguage: profile?.preferred_language || '',
     };
   }, []);
 

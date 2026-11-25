@@ -234,20 +234,28 @@ export default function DashboardSidebarLayout({
 
         {/* Sidebar Footer: Profile Card + Language + Sign Out */}
         <div className="p-3.5 border-t border-slate-200 bg-white space-y-2.5">
-          {/* User Profile Card */}
-          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-            <div className="w-9 h-9 rounded-lg bg-[#E3F1EA] text-[#11694A] font-serif font-bold text-sm flex items-center justify-center shrink-0 border border-[#11694A]/20">
-              {(user?.username || user?.email || 'U')[0].toUpperCase()}
-            </div>
+          {/* User Profile Card -> /profile */}
+          <Link
+            to="/profile"
+            title={tx('الملف الشخصي والإعدادات', 'Profile & Settings')}
+            className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition-colors"
+          >
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt={user?.username || 'Profile'} className="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0" />
+            ) : (
+              <div className="w-9 h-9 rounded-lg bg-[#E3F1EA] text-[#11694A] font-serif font-bold text-sm flex items-center justify-center shrink-0 border border-[#11694A]/20">
+                {(user?.username || user?.email || 'U')[0].toUpperCase()}
+              </div>
+            )}
             <div className="flex flex-col min-w-0 flex-1">
               <span className="text-xs font-bold text-[#0B3B2E] truncate leading-tight">
                 {user?.username || user?.email}
               </span>
               <span className="text-[10px] text-[#4A5E56] font-mono truncate leading-none mt-1">
-                {user?.indexNumber || user?.role || 'authorized'}
+                {user?.indexNumber || user?.role || 'authorized'} · {tx('الملف', 'Profile')}
               </span>
             </div>
-          </div>
+          </Link>
 
           {/* Language Selector & Sign Out */}
           <div className="grid grid-cols-2 gap-2 items-center">
@@ -344,6 +352,23 @@ export default function DashboardSidebarLayout({
                 <span>{tx('المكتبة', 'Library')}</span>
               </Link>
             )}
+
+            <Link
+              to="/profile"
+              title={tx('الملف الشخصي والإعدادات', 'Profile & Settings')}
+              className="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] shadow-xs transition-colors"
+            >
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user?.username || 'Profile'} className="w-7 h-7 rounded-lg object-cover border border-slate-200 shrink-0" />
+              ) : (
+                <span className="w-7 h-7 rounded-lg bg-[#E3F1EA] text-[#11694A] text-xs font-bold flex items-center justify-center shrink-0">
+                  {(user?.username || user?.email || 'U')[0].toUpperCase()}
+                </span>
+              )}
+              <span className="hidden md:inline text-xs font-semibold text-[#0B3B2E] max-w-[120px] truncate">
+                {user?.username || tx('ملفي', 'Profile')}
+              </span>
+            </Link>
           </div>
         </header>
 
