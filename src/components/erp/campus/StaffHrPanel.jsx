@@ -111,7 +111,7 @@ function AttendanceRegister() {
               <div className="flex flex-wrap gap-1">
                 {ATT.map((s) => (
                   <button key={s} type="button" onClick={() => setMarks((m) => ({ ...m, [e.id]: { ...m[e.id], status: s } }))}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${marks[e.id]?.status === s ? 'bg-emerald-700 border-emerald-500 text-white' : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-white'}`}>
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${marks[e.id]?.status === s ? 'bg-emerald-700 border-emerald-600 text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-[#0B3B2E]'}`}>
                     {t(...ATT_LABEL[s])}
                   </button>
                 ))}

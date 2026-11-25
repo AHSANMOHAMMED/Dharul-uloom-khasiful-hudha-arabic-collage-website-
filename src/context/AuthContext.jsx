@@ -290,6 +290,8 @@ export const AuthProvider = ({ children }) => {
     isAdmissionsStaff: isAdmin || hasRole('admissions_officer', 'principal', 'vice_principal'),
     isWelfareStaff: isAdmin || hasRole('principal', 'vice_principal', 'counselor', 'warden'),
     isHostelStaff: isAdmin || hasRole('warden', 'principal', 'vice_principal'),
+    isStoreManager: hasRole('store_manager'),
+    isStoreStaff: isAdmin || isFinanceStaff || hasRole('store_manager', 'warden', 'principal', 'vice_principal'),
     isApproved: user?.isApproved ?? false,
     mfa,
     // Signed in with a password but the account has 2FA: ask for the code.

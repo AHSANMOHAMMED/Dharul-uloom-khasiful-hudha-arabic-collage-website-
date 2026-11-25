@@ -39,6 +39,7 @@ const DonationsPanel = lazy(() => import('../components/erp/finance/DonationsPan
 const PayrollPanel = lazy(() => import('../components/erp/finance/PayrollPanel'));
 const WelfarePanel = lazy(() => import('../components/erp/campus/WelfarePanel'));
 const HostelPanel = lazy(() => import('../components/erp/campus/HostelPanel'));
+const MessInventoryPanel = lazy(() => import('../components/erp/campus/MessInventoryPanel'));
 const CertificatesPanel = lazy(() => import('../components/erp/campus/CertificatesPanel'));
 const TaskBoard = lazy(() => import('../components/erp/governance/TaskBoard'));
 const MashooraPanel = lazy(() => import('../components/erp/governance/MashooraPanel'));
@@ -69,6 +70,7 @@ const ERP_TILE_TO_TAB = {
   crm: 'crm',
   welfare: 'welfare',
   hostel: 'hostel',
+  inventory: 'inventory',
   certificates: 'certificates',
   accounting: 'accounting',
   financehub: 'financehub',
@@ -81,7 +83,7 @@ const ADMIN_TABS = [
   'overview', 'mashoora', 'tasks', 'duties',
   'admissions', 'crm', 'students', 'academics', 'hrm',
   'fees', 'financehub', 'bankrecon', 'accounting', 'cheques', 'expenses', 'donations', 'payroll', 'pettycash',
-  'hostel', 'welfare', 'certificates', 'documents',
+  'hostel', 'inventory', 'welfare', 'certificates', 'documents',
   'reports', 'analytics', 'audit',
   'imports', 'org', 'approvals', 'tutors', 'broadcast', 'content', 'indexes',
 ];
@@ -430,6 +432,7 @@ const AdminDashboard = () => {
     { id: 'payroll', label_en: 'Payroll', label_ar: 'الرواتب', icon: 'payments', group: 'Finance', group_ar: 'المالية' },
     { id: 'pettycash', label_en: 'Petty Cash', label_ar: 'النثرية', icon: 'account_balance_wallet', group: 'Finance', group_ar: 'المالية' },
     { id: 'hostel', label_en: 'Hostel', label_ar: 'السكن', icon: 'apartment', group: 'Campus', group_ar: 'الحرم' },
+    { id: 'inventory', label_en: 'Meals & Store', label_ar: 'الوجبات والمخزن', icon: 'inventory_2', group: 'Campus', group_ar: 'الحرم' },
     { id: 'welfare', label_en: 'Welfare', label_ar: 'الرعاية', icon: 'health_and_safety', group: 'Campus', group_ar: 'الحرم' },
     { id: 'certificates', label_en: 'Certificates', label_ar: 'الشهادات', icon: 'workspace_premium', group: 'Campus', group_ar: 'الحرم' },
     { id: 'documents', label_en: 'Documents', label_ar: 'المستندات', icon: 'description', group: 'Campus', group_ar: 'الحرم' },
@@ -636,6 +639,7 @@ const AdminDashboard = () => {
           {activeTab === 'payroll' && <ErpPane><PayrollPanel /></ErpPane>}
           {activeTab === 'pettycash' && <ErpPane><PettyCashPanel /></ErpPane>}
           {activeTab === 'hostel' && <ErpPane><HostelPanel /></ErpPane>}
+          {activeTab === 'inventory' && <ErpPane><MessInventoryPanel /></ErpPane>}
           {activeTab === 'welfare' && <ErpPane><WelfarePanel /></ErpPane>}
           {activeTab === 'certificates' && <ErpPane><CertificatesPanel /></ErpPane>}
           {activeTab === 'documents' && <ErpPane><DocumentsPanel /></ErpPane>}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../context/AuthContext';
 import { openChatConversation } from '../../../lib/chatApi';
@@ -25,14 +25,14 @@ const money = (key) => (r) => bold(r, <Num>{formatMoney(r[key])}</Num>);
 
 function PeriodPicker({ value, onChange, options }) {
   return (
-    <div className="flex gap-1 rounded-xl bg-gray-900 border border-gray-800 p-1" role="group">
+    <div className="flex gap-1 rounded-xl bg-slate-100 border border-slate-200 p-1" role="group">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`px-3 py-1 rounded-lg text-xs font-semibold ${value === o.value ? 'bg-emerald-600 text-white' : 'text-gray-400 hover:text-white'}`}
+          className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${value === o.value ? 'bg-[#11694A] text-white shadow-xs' : 'text-slate-600 hover:text-[#0B3B2E]'}`}
         >
           {o.label}
         </button>
@@ -393,6 +393,51 @@ function AcademicView({ data }) {
         <Stat label={t('Tasks done (30 days)', 'مهام منجزة (30 يومًا)')} value={n(tasks.done_30d)} />
       </div>
 
+      {overallAtt !== null && (
+        <Card title={t('Attendance Overview Gauge', 'مؤشر الحضور العام')}>
+          <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-4">
+            <div className="h-48 relative" dir="ltr">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: t('Present / Late', 'حاضر / متأخر'), value: Number(overallAtt.toFixed(1)), color: '#11694A' },
+                      { name: t('Absent / Excused', 'غائب / بعذر'), value: Number(Math.max(0, 100 - overallAtt).toFixed(1)), color: '#E2E8F0' },
+                    ]}
+                    dataKey="value"
+                    cx="50%"
+                    cy="80%"
+                    startAngle={180}
+                    endAngle={0}
+                    innerRadius={65}
+                    outerRadius={92}
+                    paddingAngle={2}
+                  >
+                    <Cell fill="#11694A" />
+                    <Cell fill="#E2E8F0" />
+                  </Pie>
+                  <Tooltip formatter={(v) => `${v}%`} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-x-0 bottom-5 text-center">
+                <div className="text-2xl font-extrabold text-[#0B3B2E]">{pct(overallAtt)}</div>
+                <div className="text-xs text-ink-text-muted">{t('Overall Attendance', 'نسبة الحضور')}</div>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">
+                <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[#11694A]" />{t('Present / Late', 'حاضر / متأخر')}</span>
+                <b>{pct(overallAtt)}</b>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">
+                <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-slate-300" />{t('Absent / Excused', 'غائب / بعذر')}</span>
+                <b>{pct(Math.max(0, 100 - overallAtt))}</b>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <ChartCard
           title={t('Attendance trend', 'اتجاه الحضور')}
@@ -511,7 +556,7 @@ function AcademicView({ data }) {
                   <span>{r.name}</span>
                   <span className="tabular-nums font-semibold text-gray-100">{r.count}</span>
                 </div>
-                <div className="h-1.5 rounded-full bg-gray-800 overflow-hidden mt-1">
+                <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden mt-1">
                   <div className="h-full rounded-full" style={{ width: `${(r.count * 100) / funnelMax}%`, background: SERIES[0] }} />
                 </div>
               </div>

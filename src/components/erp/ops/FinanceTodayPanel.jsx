@@ -123,7 +123,7 @@ function TodayView({ data, canAct }) {
                 label: '',
                 render: (r) => (
                   <div className="flex gap-1 justify-end flex-wrap">
-                    <Link to={`/receipt/${r.id}`} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-gray-300 hover:bg-gray-800">
+                    <Link to={`/receipt/${r.id}`} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-emerald-700 hover:bg-emerald-50">
                       {t('Open', 'فتح')}
                     </Link>
                     <Button size="sm" variant="ghost" onClick={() => printReceiptById(r.id, { payer_name: r.student })}>

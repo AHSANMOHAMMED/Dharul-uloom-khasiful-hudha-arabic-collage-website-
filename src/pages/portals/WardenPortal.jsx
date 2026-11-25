@@ -4,6 +4,7 @@ import { ROLE_BADGE } from '../../lib/roleTheme';
 
 const HostelPanel = lazy(() => import('../../components/erp/campus/HostelPanel'));
 const WelfarePanel = lazy(() => import('../../components/erp/campus/WelfarePanel'));
+const MessInventoryPanel = lazy(() => import('../../components/erp/campus/MessInventoryPanel'));
 
 function DisciplineEmbed() {
   return <WelfarePanel initialTab="discipline" />;
@@ -16,6 +17,7 @@ function WelfareEmbed() {
 export default function WardenPortal() {
   const tabs = [
     { id: 'hostel', label_en: 'Hostel', label_ar: 'السكن', icon: 'apartment', embed: HostelPanel },
+    { id: 'inventory', label_en: 'Meals & Store', label_ar: 'الوجبات والمخزن', icon: 'inventory_2', embed: MessInventoryPanel },
     { id: 'discipline', label_en: 'Discipline', label_ar: 'الانضباط', icon: 'gavel', embed: DisciplineEmbed },
     { id: 'welfare', label_en: 'Welfare', label_ar: 'الرعاية', icon: 'volunteer_activism', embed: WelfareEmbed },
   ];

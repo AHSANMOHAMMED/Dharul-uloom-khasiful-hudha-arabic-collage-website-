@@ -13,6 +13,7 @@ const FinanceHubPanel = lazy(() => import('../../components/erp/finance/FinanceH
 const BankReconPanel = lazy(() => import('../../components/erp/finance/BankReconPanel'));
 const PayrollPanel = lazy(() => import('../../components/erp/finance/PayrollPanel'));
 const PettyCashPanel = lazy(() => import('../../components/erp/governance/PettyCashPanel'));
+const MessInventoryPanel = lazy(() => import('../../components/erp/campus/MessInventoryPanel'));
 const ReportsPanel = lazy(() => import('../../components/erp/ops/ReportsPanel'));
 const AnalyticsPanel = lazy(() => import('../../components/erp/ops/AnalyticsPanel'));
 const AuditLogPanel = lazy(() => import('../../components/erp/finance/AuditLogPanel'));
@@ -29,6 +30,7 @@ export default function TreasurerPortal() {
     { id: 'donations', label_en: 'Donations & Sadaqah', label_ar: 'التبرعات والصدقات', icon: 'volunteer_activism', group: 'Treasury & Ledger', group_ar: 'الخزينة والمحاسبة', embed: DonationsPanel },
     { id: 'expenses', label_en: 'Expenses & Vouchers', label_ar: 'المصروفات والسندات', icon: 'money_off', group: 'Treasury & Ledger', group_ar: 'الخزينة والمحاسبة', embed: ExpensesPanel },
     { id: 'pettycash', label_en: 'Petty Cash', label_ar: 'النثرية', icon: 'account_balance_wallet', group: 'Treasury & Ledger', group_ar: 'الخزينة والمحاسبة', embed: PettyCashPanel },
+    { id: 'inventory', label_en: 'Meals & Store', label_ar: 'الوجبات والمخزن', icon: 'inventory_2', group: 'Treasury & Ledger', group_ar: 'الخزينة والمحاسبة', embed: MessInventoryPanel },
     { id: 'payroll', label_en: 'Payroll & Payslips', label_ar: 'الرواتب والقسائم', icon: 'payments', group: 'Staff Payroll', group_ar: 'رواتب الموظفين', embed: PayrollPanel },
     { id: 'reports', label_en: 'Finance Reports', label_ar: 'التقارير المالية', icon: 'summarize', group: 'Reports & Audit', group_ar: 'التقارير والتدقيق', embed: ReportsPanel },
     { id: 'analytics', label_en: 'Finance Analytics', label_ar: 'التحليلات المالية', icon: 'analytics', group: 'Reports & Audit', group_ar: 'التقارير والتدقيق', embed: AnalyticsPanel },

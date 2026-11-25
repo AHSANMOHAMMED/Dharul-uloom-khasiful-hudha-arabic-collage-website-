@@ -16,6 +16,7 @@ const StaffHrPanel = lazy(() => import('../../components/erp/campus/StaffHrPanel
 const AcademicsPanel = lazy(() => import('../../components/erp/campus/AcademicsPanel'));
 const WelfarePanel = lazy(() => import('../../components/erp/campus/WelfarePanel'));
 const HostelPanel = lazy(() => import('../../components/erp/campus/HostelPanel'));
+const MessInventoryPanel = lazy(() => import('../../components/erp/campus/MessInventoryPanel'));
 const CertificatesPanel = lazy(() => import('../../components/erp/campus/CertificatesPanel'));
 const DutiesPanel = lazy(() => import('../../components/erp/governance/DutiesPanel'));
 const MashooraPanel = lazy(() => import('../../components/erp/governance/MashooraPanel'));
@@ -58,6 +59,7 @@ export default function PrincipalPortal({ vpMode = false }) {
     { id: 'payroll', label_en: 'Payroll', label_ar: 'الرواتب', icon: 'payments', group: 'Finance', group_ar: 'المالية', embed: PayrollPanel },
     { id: 'pettycash', label_en: 'Petty Cash', label_ar: 'النثرية', icon: 'account_balance_wallet', group: 'Finance', group_ar: 'المالية', embed: PettyCashPanel },
     { id: 'hostel', label_en: 'Hostel', label_ar: 'السكن', icon: 'apartment', group: 'Campus', group_ar: 'الحرم', embed: HostelPanel },
+    { id: 'inventory', label_en: 'Meals & Store', label_ar: 'الوجبات والمخزن', icon: 'inventory_2', group: 'Campus', group_ar: 'الحرم', embed: MessInventoryPanel },
     { id: 'welfare', label_en: 'Welfare', label_ar: 'الرعاية', icon: 'health_and_safety', group: 'Campus', group_ar: 'الحرم', embed: WelfarePanel },
     { id: 'certificates', label_en: 'Certificates', label_ar: 'الشهادات', icon: 'workspace_premium', group: 'Campus', group_ar: 'الحرم', embed: CertificatesPanel },
     { id: 'documents', label_en: 'Documents', label_ar: 'المستندات', icon: 'description', group: 'Campus', group_ar: 'الحرم', embed: DocumentsPanel },

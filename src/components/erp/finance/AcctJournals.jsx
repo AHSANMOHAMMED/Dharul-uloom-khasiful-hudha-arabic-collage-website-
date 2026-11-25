@@ -16,7 +16,7 @@ function JournalLines({ lines }) {
   const { t } = useLang();
   return (
     <table className="w-full text-xs mt-2 border border-gray-800 rounded-lg overflow-hidden">
-      <thead className="bg-gray-900 text-gray-400">
+      <thead className="bg-slate-100 text-slate-600">
         <tr>
           <th className="px-2 py-1 text-start">{t('Account', 'الحساب')}</th>
           <th className="px-2 py-1 text-start">{t('Memo', 'ملاحظة')}</th>

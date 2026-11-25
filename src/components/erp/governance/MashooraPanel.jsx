@@ -251,7 +251,7 @@ function MeetingDetail({ meeting, isGov, onClose, onEdit, onChanged }) {
     text ? (
       <div>
         <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">{label}</div>
-        <div className="whitespace-pre-wrap text-sm text-gray-200 rounded-xl bg-gray-900/50 border border-gray-800 p-3">{text}</div>
+        <div className="whitespace-pre-wrap text-sm text-slate-800 rounded-xl bg-slate-50 border border-slate-200 p-3">{text}</div>
       </div>
     ) : null;
 

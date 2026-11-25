@@ -108,7 +108,7 @@ export function RateBar({ value }) {
   const v = Math.max(0, Math.min(100, Number(value) || 0));
   return (
     <span className="inline-flex items-center gap-2 w-full min-w-28">
-      <span className="flex-1 h-1.5 rounded-full bg-gray-800 overflow-hidden">
+      <span className="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
         <span className="block h-full rounded-full" style={{ width: `${v}%`, background: SERIES[0] }} />
       </span>
       <span className="tabular-nums text-xs text-gray-200 w-12 text-end">{v.toFixed(1)}%</span>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../../../context/AuthContext';
-import { AsyncView, Badge, Button, Card, Input, PageHeader, Stat, Table, Tabs, useAsync, useLang } from '../ui';
+import { AsyncView, Badge, Button, Card, Field, Input, PageHeader, Stat, Table, Tabs, useAsync, useLang } from '../ui';
 import { currentMonth, formatDate, formatMoney, query, rpc, today } from '../../../lib/erp/rpc';
 import { DAYS, DAYS_AR, monthRange } from '../../../lib/erp/campusApi';
 import { useAction } from './hooks';
@@ -58,11 +59,11 @@ function AttendanceTab({ user }) {
 
   return (
     <div className="space-y-6">
-      <Card title={t('Today', 'اليوم')} actions={<span className="text-sm text-gray-400">{formatDate(today())}</span>}>
+      <Card title={t('Today', 'اليوم')} actions={<span className="text-sm text-slate-500">{formatDate(today())}</span>}>
         <div className="flex flex-wrap items-center gap-4">
           <Button onClick={checkIn} disabled={busy || Boolean(todayRow?.check_in)}>{t('Check in', 'تسجيل الحضور')}</Button>
           <Button variant="secondary" onClick={checkOut} disabled={busy || !todayRow?.check_in}>{t('Check out', 'تسجيل الانصراف')}</Button>
-          <div className="text-sm text-gray-300">
+          <div className="text-sm text-slate-700">
             {todayRow ? (
               <>
                 <StatusBadge status={todayRow.status} />
@@ -70,7 +71,7 @@ function AttendanceTab({ user }) {
                 <span className="ms-3">{t('Out', 'خروج')}: {todayRow.check_out || '—'}</span>
               </>
             ) : (
-              <span className="text-gray-500">{t('Not checked in yet today.', 'لم تسجل الحضور اليوم بعد.')}</span>
+              <span className="text-slate-500">{t('Not checked in yet today.', 'لم تسجل الحضور اليوم بعد.')}</span>
             )}
           </div>
         </div>
@@ -309,6 +310,118 @@ function DutiesTab({ user }) {
   );
 }
 
+function ProfileTab({ user }) {
+  const { t } = useLang();
+  const { refreshUser } = useAuth();
+  const [state, reload] = useAsync(
+    () => query('profiles', (q) => q.select('*').eq('id', user.id).maybeSingle()),
+    [user.id],
+  );
+  const [form, setForm] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const profile = state.data;
+  const activeForm = form || {
+    full_name: profile?.full_name || user.username || '',
+    phone: profile?.phone || user.phone || '',
+  };
+
+  const save = async (e) => {
+    e.preventDefault();
+    if (!activeForm.full_name.trim()) return;
+    setSaving(true);
+    try {
+      await query('profiles', (q) =>
+        q.update({ full_name: activeForm.full_name.trim(), phone: activeForm.phone.trim() || null }).eq('id', user.id),
+      );
+      toast.success(t('Profile updated', 'تم تحديث الملف الشخصي'));
+      setForm(null);
+      await Promise.all([reload(), refreshUser?.()]);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <AsyncView state={state}>
+      {() => (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card title={t('Account & Roles', 'الحساب والأدوار')}>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-2xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center font-bold text-lg">
+                  {(profile?.full_name || user.username || '?').slice(0, 1).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <div className="font-bold text-ink-green-900 truncate">{profile?.full_name || user.username}</div>
+                  <div className="text-xs text-ink-text-muted truncate" dir="ltr">{user.email}</div>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-sand-border space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-ink-text-muted">{t('Account type', 'نوع الحساب')}</span>
+                  <Badge tone="green">{profile?.account_type || user.accountType || 'staff'}</Badge>
+                </div>
+                {user.indexNumber && (
+                  <div className="flex justify-between">
+                    <span className="text-ink-text-muted">{t('Index / Staff ID', 'رقم القيد / الموظف')}</span>
+                    <span className="font-mono font-semibold text-ink-text-primary">{user.indexNumber}</span>
+                  </div>
+                )}
+                {user.staffRoles?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {user.staffRoles.map((r) => <Badge key={r} tone="blue">{r}</Badge>)}
+                  </div>
+                )}
+              </div>
+              <div className="pt-3 border-t border-sand-border">
+                <Link to="/account" className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:underline">
+                  {t('Password, 2FA & Notification Settings', 'كلمة المرور والمصادقة الثنائية والإشعارات')} →
+                </Link>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="lg:col-span-2" title={t('Edit Personal Profile', 'تعديل الملف الشخصي')}>
+            <form onSubmit={save} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label={t('Full Name', 'الاسم الكامل')}>
+                  <Input
+                    required
+                    value={activeForm.full_name}
+                    onChange={(e) => setForm({ ...activeForm, full_name: e.target.value })}
+                  />
+                </Field>
+                <Field label={t('Phone / WhatsApp', 'رقم الهاتف / واتساب')}>
+                  <Input
+                    dir="ltr"
+                    value={activeForm.phone}
+                    onChange={(e) => setForm({ ...activeForm, phone: e.target.value })}
+                    placeholder="+94..."
+                  />
+                </Field>
+                <Field label={t('Email (login)', 'البريد الإلكتروني')}>
+                  <Input value={user.email} disabled />
+                </Field>
+                <Field label={t('Role', 'الدور')}>
+                  <Input value={profile?.role || user.role || 'user'} disabled />
+                </Field>
+              </div>
+              <div className="flex justify-end">
+                <Button type="submit" disabled={saving}>
+                  {saving ? t('Saving…', 'جارٍ الحفظ…') : t('Save Profile', 'حفظ الملف الشخصي')}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+    </AsyncView>
+  );
+}
+
 export default function MySelfServicePanel() {
   const { t } = useLang();
   const { user } = useAuth();
@@ -325,6 +438,7 @@ export default function MySelfServicePanel() {
         onChange={setTab}
         tabs={[
           { id: 'attendance', label: t('Attendance', 'الحضور') },
+          { id: 'profile', label: t('My Profile', 'ملفي الشخصي') },
           { id: 'leave', label: t('Leave', 'الإجازات') },
           { id: 'payslips', label: t('Payslips', 'قسائم الراتب') },
           { id: 'timetable', label: t('My classes', 'حصصي') },
@@ -333,6 +447,7 @@ export default function MySelfServicePanel() {
         ]}
       />
       {tab === 'attendance' && <AttendanceTab user={user} />}
+      {tab === 'profile' && <ProfileTab user={user} />}
       {tab === 'leave' && <SelfLeave user={user} />}
       {tab === 'payslips' && <SelfPayslips user={user} />}
       {tab === 'timetable' && <TimetableTab user={user} />}

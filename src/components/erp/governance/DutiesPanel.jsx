@@ -78,7 +78,7 @@ function CurrentTab({ isGov }) {
               {!cards.length && <EmptyState text={t('No duties match.', 'لا توجد مسؤوليات مطابقة.')} />}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {cards.map(({ d, holders }) => (
-                  <div key={d.id} className="rounded-2xl border border-gray-800 bg-gray-900/40 p-4 space-y-3">
+                  <div key={d.id} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 shadow-xs">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="font-bold text-white">{dutyName(d, lang)}</div>

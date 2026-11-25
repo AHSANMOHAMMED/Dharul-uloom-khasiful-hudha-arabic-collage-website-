@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Badge, Button, ErrorNote, Field, Icon, Input, Loading, PageHeader, Select, Tabs, Textarea, useAsync, useLang } from '../ui';
+import { Badge, Button, ErrorNote, Field, Icon, Input, Loading, PageHeader, Select, Stat, Table, Tabs, Textarea, useAsync, useLang } from '../ui';
 import { FilterBar } from '../finance/shared';
 import { WideModal } from '../campus/common';
 import { formatDate, today } from '../../../lib/erp/rpc';
@@ -33,7 +33,7 @@ import { useGovernance, useStaff } from './common';
 
 const PRIORITY_TONE = { low: 'gray', normal: 'blue', high: 'amber', urgent: 'red' };
 const PRIORITY_RANK = { urgent: 0, high: 1, normal: 2, low: 3 };
-const COLUMN_TONE = { todo: 'border-gray-700', in_progress: 'border-sky-800', review: 'border-amber-800', done: 'border-emerald-800' };
+const COLUMN_TONE = { todo: 'border-slate-200', in_progress: 'border-sky-200', review: 'border-amber-200', done: 'border-emerald-200' };
 
 /** Translate the task-board rule messages raised by the database trigger. */
 function useTaskError() {
@@ -236,7 +236,7 @@ function CommentsTab({ task, people }) {
       ) : (
         <ul className="space-y-2 max-h-72 overflow-y-auto">
           {(state.data || []).map((c) => (
-            <li key={c.id} className="rounded-xl bg-gray-900/60 border border-gray-800 p-3">
+            <li key={c.id} className="rounded-xl bg-slate-50 border border-slate-200 p-3">
               <div className="flex justify-between text-xs text-gray-500">
                 <span className="font-semibold text-gray-300">{nameOf(c.author_id)}</span>
                 <span>{new Date(c.created_at).toLocaleString('en-GB')}</span>
@@ -562,7 +562,20 @@ export default function TaskBoard() {
     move(task, status, maxPos + 1);
   };
 
-  const columns = useMemo(() => Object.fromEntries(TASK_STATUSES.map((s) => [s, sortTasks(tasks.filter((x) => x.status === s))])), [tasks]);
+  const [viewMode, setViewMode] = useState('board');
+  const [overdueOnly, setOverdueOnly] = useState(false);
+
+  const visibleTasks = useMemo(() => {
+    if (!overdueOnly) return tasks;
+    const t0 = today();
+    return tasks.filter((x) => x.status !== 'done' && x.due_date && x.due_date < t0);
+  }, [tasks, overdueOnly]);
+
+  const columns = useMemo(() => Object.fromEntries(TASK_STATUSES.map((s) => [s, sortTasks(visibleTasks.filter((x) => x.status === s))])), [visibleTasks]);
+  const overdueCount = useMemo(() => {
+    const t0 = today();
+    return tasks.filter((x) => x.status !== 'done' && x.due_date && x.due_date < t0).length;
+  }, [tasks]);
   const openTask = tasks.find((x) => x.id === openId);
   const thisWeek = weekStartOf(today());
   const meetingFilterLabel = filters.meeting
@@ -570,7 +583,7 @@ export default function TaskBoard() {
     : null;
 
   return (
-    <div>
+    <div className="space-y-4">
       <PageHeader
         title={t('Task board', 'لوحة المهام')}
         subtitle={
@@ -579,7 +592,7 @@ export default function TaskBoard() {
             : t('Tasks from the mashoora and managers: To do → In progress → Review → Done.', 'مهام من الشورى والإدارة: للتنفيذ ← قيد التنفيذ ← للمراجعة ← منجز.')
         }
         actions={
-          <>
+          <div className="flex flex-wrap items-center gap-2">
             {filters.meeting && (
               <Button
                 variant="ghost"
@@ -591,11 +604,37 @@ export default function TaskBoard() {
                 {t('Clear mashoora filter', 'إزالة تصفية الشورى')}
               </Button>
             )}
+            <div className="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-0.5">
+              <button
+                type="button"
+                onClick={() => setViewMode('board')}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg ${viewMode === 'board' ? 'bg-white text-[#0B3B2E] shadow-xs' : 'text-slate-600'}`}
+              >
+                {t('Kanban', 'لوحة')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1 text-xs font-semibold rounded-lg ${viewMode === 'list' ? 'bg-white text-[#0B3B2E] shadow-xs' : 'text-slate-600'}`}
+              >
+                {t('List', 'قائمة')}
+              </button>
+            </div>
             <Button variant="secondary" onClick={load}>{t('Refresh', 'تحديث')}</Button>
             <Button onClick={() => setCreating(true)}>+ {t('New task', 'مهمة جديدة')}</Button>
-          </>
+          </div>
         }
       />
+
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 items-stretch">
+        <Stat label={t('Total Tasks', 'إجمالي المهام')} value={tasks.length} hint={t('Current scope', 'النطاق الحالي')} tone="gray" />
+        <Stat label={t('To Do', 'للتنفيذ')} value={tasks.filter((x) => x.status === 'todo').length} hint={t('Queued tasks', 'مهام منتظرة')} tone="gray" />
+        <Stat label={t('In Progress', 'قيد التنفيذ')} value={tasks.filter((x) => x.status === 'in_progress').length} hint={t('Active work', 'عمل جارٍ')} tone="blue" />
+        <Stat label={t('In Review', 'للمراجعة')} value={tasks.filter((x) => x.status === 'review').length} hint={t('Awaiting sign-off', 'بانتظار الاعتماد')} tone="amber" />
+        <Stat label={t('Overdue', 'متأخرة')} value={overdueCount} hint={overdueCount ? t('Past due date', 'تجاوزت الموعد') : t('On schedule', 'في الموعد')} tone={overdueCount ? 'red' : 'emerald'} />
+        <Stat label={t('Completed', 'منجزة')} value={tasks.filter((x) => x.status === 'done').length} hint={t('Finished tasks', 'مهام مكتملة')} tone="emerald" />
+      </div>
+
       <Tabs
         active={scope}
         onChange={(s) => {
@@ -639,10 +678,27 @@ export default function TaskBoard() {
         <Field label={t('Priority', 'الأولوية')}>
           <Select value={filters.priority} onChange={(e) => setFilters((f) => ({ ...f, priority: e.target.value }))} placeholder={t('All', 'الكل')} options={pairOptions(TASK_PRIORITIES, t)} />
         </Field>
+        <div className="flex items-end">
+          <Button size="sm" variant={overdueOnly ? 'danger' : 'secondary'} onClick={() => setOverdueOnly((v) => !v)}>
+            {overdueOnly ? t('Showing Overdue', 'المتأخرة فقط') : t('Overdue Only', 'المتأخرة فقط')}
+          </Button>
+        </div>
       </FilterBar>
       <ErrorNote error={error} />
       {loading && !tasks.length ? (
         <Loading />
+      ) : viewMode === 'list' ? (
+        <Table
+          rows={sortTasks(visibleTasks)}
+          empty={t('No tasks match this filter.', 'لا توجد مهام مطابقة.')}
+          columns={[
+            { key: 'title', label: t('Task', 'المهمة'), render: (r) => <button type="button" onClick={() => setOpenId(r.id)} className="font-semibold text-[#0B3B2E] hover:underline text-start">{r.title}</button> },
+            { key: 'status', label: t('Status', 'الحالة'), render: (r) => <Badge tone={{ todo: 'gray', in_progress: 'blue', review: 'amber', done: 'green' }[r.status] || 'gray'}>{pairLabel(TASK_STATUS_LABELS, r.status, t)}</Badge> },
+            { key: 'priority', label: t('Priority', 'الأولوية'), render: (r) => <Badge tone={PRIORITY_TONE[r.priority] || 'gray'}>{pairLabel(TASK_PRIORITIES, r.priority, t)}</Badge> },
+            { key: 'assignee_id', label: t('Assignee', 'المكلف'), render: (r) => people[r.assignee_id]?.full_name || '—' },
+            { key: 'due_date', label: t('Due Date', 'تاريخ الاستحقاق'), render: (r) => formatDate(r.due_date) },
+          ]}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {TASK_STATUSES.map((s) => (
@@ -654,17 +710,17 @@ export default function TaskBoard() {
               }}
               onDragLeave={() => setDragOver((d) => (d === s ? null : d))}
               onDrop={(e) => onDrop(e, s)}
-              className={`rounded-2xl border-2 ${dragOver === s ? 'border-emerald-500 bg-emerald-950/20' : COLUMN_TONE[s]} bg-gray-900/40 p-3 min-h-[12rem]`}
+              className={`rounded-2xl border ${dragOver === s ? 'border-emerald-500 bg-emerald-50/60' : COLUMN_TONE[s]} bg-slate-50/80 p-3 min-h-[12rem]`}
             >
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-white">{pairLabel(TASK_STATUS_LABELS, s, t)}</h3>
+                <h3 className="font-bold text-[#0B3B2E]">{pairLabel(TASK_STATUS_LABELS, s, t)}</h3>
                 <Badge>{columns[s].length}</Badge>
               </div>
               <div className="space-y-2">
                 {columns[s].map((task) => (
                   <TaskCard key={task.id} task={task} people={people} canMove={canMove(task)} canReview={canReview(task)} onOpen={(x) => setOpenId(x.id)} onMove={(x, st) => move(x, st)} onDragStart={onDragStart} />
                 ))}
-                {!columns[s].length && <div className="text-xs text-gray-600 text-center py-6">{t('Drop tasks here', 'أفلت المهام هنا')}</div>}
+                {!columns[s].length && <div className="text-xs text-slate-400 text-center py-6">{t('Drop tasks here', 'أفلت المهام هنا')}</div>}
               </div>
             </section>
           ))}

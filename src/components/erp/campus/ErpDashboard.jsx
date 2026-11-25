@@ -53,7 +53,13 @@ export default function ErpDashboard() {
   const navigate = useNavigate();
   const [, setParams] = useSearchParams();
   const portalNav = usePortalNav();
-  const [state, reload] = useAsync(async () => (await rpc('org_dashboard_stats')) ?? {}, []);
+  const [state, reload] = useAsync(async () => {
+    const [stats, mess] = await Promise.all([
+      rpc('org_dashboard_stats'),
+      auth.isStoreStaff ? rpc('mess_inventory_summary').catch(() => null) : Promise.resolve(null),
+    ]);
+    return { ...(stats ?? {}), mess };
+  }, [auth.isStoreStaff]);
   const [messagingId, setMessagingId] = useState(null);
 
   const canStudents = Boolean(auth.isAdmin || auth.isAcademicAdmin || auth.isAdmissionsStaff || auth.isTutor || auth.isHostelStaff || auth.isWelfareStaff);
@@ -66,6 +72,7 @@ export default function ErpDashboard() {
   const canCertificates = Boolean(auth.isAcademicAdmin || auth.isAdmin);
   const canPayroll = Boolean(auth.isHrStaff || auth.isFinanceViewer);
   const canExpenses = Boolean(auth.isFinanceViewer || auth.isFinanceStaff);
+  const canStore = Boolean(auth.isStoreStaff);
   const canRemind = Boolean(auth.isFinanceStaff || auth.isAdmin || auth.isPrincipal);
   const showPeople = canStudents || canHr || canAcademics;
   const showCampus = canCrm || canWelfare || canHostel || canCertificates;
@@ -267,6 +274,16 @@ export default function ErpDashboard() {
                       />
                     )}
                     {canCertificates && <Tile go={go} module="certificates" label={t('Document requests', 'طلبات الوثائق')} value={s.document_requests_pending ?? 0} hint={t('Pending review', 'بانتظار المراجعة')} tone="amber" />}
+                    {canStore && (
+                      <Tile
+                        go={go}
+                        module="inventory"
+                        label={t('Store Low Stock', 'نواقص المخزن')}
+                        value={s.mess?.low_stock_count ?? 0}
+                        hint={`${s.mess?.total_items ?? 0} ${t('store items', 'صنف')}`}
+                        tone={s.mess?.low_stock_count ? 'red' : 'emerald'}
+                      />
+                    )}
                   </div>
                 </section>
               )}

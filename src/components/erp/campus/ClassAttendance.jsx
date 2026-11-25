@@ -174,7 +174,7 @@ export default function ClassAttendance() {
                   const on = marks[r.student_id]?.status === s.value;
                   return (
                     <button key={s.value} type="button" onClick={() => setStatus(r.student_id, s.value)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${on ? `${s.cls} text-white` : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-white'}`}>
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${on ? `${s.cls} text-white` : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-[#0B3B2E]'}`}>
                       {t(s.en, s.ar)}
                     </button>
                   );
