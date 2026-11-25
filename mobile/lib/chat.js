@@ -45,6 +45,31 @@ export async function readChat(conversationId) {
   if (error) throw error;
 }
 
+export async function deliverChat(conversationId = null) {
+  try {
+    await client().rpc('mark_chat_delivered', { p_conversation: conversationId });
+  } catch {
+    // non-fatal
+  }
+}
+
+export function subscribeOrgPresence(orgId, userId, onSync) {
+  if (!supabase || !userId) return () => {};
+  const channel = supabase.channel(`org-presence:${orgId || 'default'}`, {
+    config: { presence: { key: userId } },
+  });
+  channel
+    .on('presence', { event: 'sync' }, () => {
+      onSync(new Set(Object.keys(channel.presenceState())));
+    })
+    .subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await channel.track({ user_id: userId, online_at: new Date().toISOString() }).catch(() => {});
+      }
+    });
+  return () => supabase.removeChannel(channel);
+}
+
 export function liveChat(conversationId, onMessage) {
   const c = client();
   const channel = c.channel(`mobile-chat:${conversationId}`)

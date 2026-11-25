@@ -12,6 +12,7 @@ import {
 import { docxToHtml } from '../../../lib/wordFiles';
 import DocumentEditor from './DocumentEditor';
 import A4Page from './A4Page';
+import ScanAndPdfStudio from './ScanAndPdfStudio';
 
 /** ERP "Documents": library, exam papers and letterheads. Deep link: ?module=documents&doc=<id> */
 export default function DocumentsPanel() {
@@ -42,6 +43,7 @@ export default function DocumentsPanel() {
 
   const tabs = [
     { id: 'library', label: t('Library', 'المكتبة') },
+    { id: 'scan', label: t('Scan & PDF', 'المسح و PDF') },
     { id: 'papers', label: t('Exam papers', 'أوراق الامتحان') },
     ...(auth.isDocumentAdmin ? [{ id: 'letterheads', label: t('Letterheads', 'الترويسات') }] : []),
   ];
@@ -51,12 +53,18 @@ export default function DocumentsPanel() {
       <PageHeader
         title={t('Documents', 'المستندات')}
         subtitle={t(
-          'Letters, notices and exam papers on the college letterhead. Edit here, print to PDF, or download for Word.',
-          'الرسائل والإعلانات وأوراق الامتحان على ترويسة الكلية. حرّر هنا واطبع PDF أو نزّل لملف Word.'
+          'Letters, notices, scanned exam papers and letterheads. Print to A4/A5/A3 PDF or send directly.',
+          'الرسائل والإعلانات وأوراق الامتحان الممسوحة والترويسات. اطبع PDF بأي حجم أو أرسل مباشرة.'
         )}
       />
       <Tabs tabs={tabs} active={tabs.some((x) => x.id === tab) ? tab : 'library'} onChange={setTab} />
-      {tab === 'papers' ? <ExamPapersTab onOpen={open} /> : tab === 'letterheads' && auth.isDocumentAdmin ? <LetterheadsTab /> : <LibraryTab onOpen={open} />}
+      {tab === 'scan'
+        ? <ScanAndPdfStudio onSavedDoc={open} />
+        : tab === 'papers'
+          ? <ExamPapersTab onOpen={open} />
+          : tab === 'letterheads' && auth.isDocumentAdmin
+            ? <LetterheadsTab />
+            : <LibraryTab onOpen={open} />}
     </div>
   );
 }

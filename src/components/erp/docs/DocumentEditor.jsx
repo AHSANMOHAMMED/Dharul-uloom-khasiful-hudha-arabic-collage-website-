@@ -34,6 +34,8 @@ export default function DocumentEditor({ docId, onClose }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [versions, setVersions] = useState(null);
+  const [paperSize, setPaperSize] = useState('A4');
+  const [pageOrientation, setPageOrientation] = useState('');
 
   const isPaper = doc?.kind === 'exam_paper';
   const letterhead = letterheads.find((l) => l.id === doc?.letterhead_id) || null;
@@ -203,7 +205,7 @@ export default function DocumentEditor({ docId, onClose }) {
   const doPrint = async () => {
     try {
       await openDocument(doc.id, 'printed');
-      printDocument({ title: doc.title, html: currentHtml(), letterhead: await lhForExport(), dir: document.documentElement.dir || 'ltr', lang, watermark });
+      printDocument({ title: doc.title, html: currentHtml(), letterhead: await lhForExport(), paperSize, orientation: pageOrientation || null, dir: document.documentElement.dir || 'ltr', lang, watermark });
     } catch (e) {
       toast.error(e.message);
     }
@@ -350,7 +352,7 @@ export default function DocumentEditor({ docId, onClose }) {
           </div>
 
           <div className="rounded-[14px] bg-[#e9e6dd] p-3 sm:p-6 overflow-x-auto">
-            <A4Page letterhead={letterhead} bgUrl={bgUrl}>
+            <A4Page letterhead={letterhead} bgUrl={bgUrl} paperSize={paperSize} orientation={pageOrientation || null}>
               <div
                 ref={editorRef}
                 contentEditable={canEdit}
@@ -369,6 +371,26 @@ export default function DocumentEditor({ docId, onClose }) {
         <aside className="space-y-4">
           <section className="rounded-[14px] border border-sand-border bg-paper-white p-4 space-y-3">
             <h3 className="font-serif font-semibold text-ink-green-900">{t('Print & share', 'الطباعة والمشاركة')}</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <Select
+                value={paperSize}
+                onChange={(e) => setPaperSize(e.target.value)}
+                options={[
+                  { value: 'A4', label: 'A4' },
+                  { value: 'A5', label: 'A5' },
+                  { value: 'A3', label: 'A3' },
+                ]}
+              />
+              <Select
+                value={pageOrientation}
+                onChange={(e) => setPageOrientation(e.target.value)}
+                options={[
+                  { value: '', label: t('Auto', 'تلقائي') },
+                  { value: 'portrait', label: t('Portrait', 'عمودي') },
+                  { value: 'landscape', label: t('Landscape', 'أفقي') },
+                ]}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <Button variant="secondary" onClick={doPrint} disabled={!paperExportAllowed}>{t('PDF / Print', 'PDF / طباعة')}</Button>
               <Button variant="secondary" onClick={() => doWord(false)} disabled={!paperExportAllowed}>{t('Word (.docx)', 'Word (.docx)')}</Button>

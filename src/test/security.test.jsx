@@ -29,6 +29,11 @@ vi.mock('../lib/chatApi', () => ({
   openChatConversation: vi.fn(async () => 'c1'),
   sendChatMessage: vi.fn(async () => 'm1'),
   markChatRead: vi.fn(async () => 0),
+  markChatDelivered: vi.fn(async () => 0),
+  touchMyPresence: vi.fn(async () => {}),
+  subscribeOrgPresence: vi.fn(() => () => {}),
+  uploadChatAttachment: vi.fn(async () => ({ url: 'u1', name: 'f', type: 'image/png', size: 1 })),
+  getChatAttachmentUrl: vi.fn(async () => null),
   subscribeToChat: vi.fn(() => () => {}),
 }))
 

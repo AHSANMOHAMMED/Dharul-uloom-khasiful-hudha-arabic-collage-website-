@@ -140,16 +140,24 @@ export function printRecord({ title, subtitle, sections, dir = 'ltr', lang = 'en
  * repeating <thead>/<tfoot> spacer rows of a layout table, with the side
  * margins as cell padding. html must already be sanitised.
  */
-export function printDocument({ title, html, letterhead = null, dir = 'ltr', lang = 'en', watermark = '' }) {
+const PAGE_DIMS = {
+  A3: { w: 297, h: 420 },
+  A4: { w: 210, h: 297 },
+  A5: { w: 148, h: 210 },
+};
+
+export function printDocument({ title, html, letterhead = null, paperSize = 'A4', orientation = null, dir = 'ltr', lang = 'en', watermark = '' }) {
   const m = {
     top: letterhead?.margin_top_mm ?? 20,
     bottom: letterhead?.margin_bottom_mm ?? 20,
     left: letterhead?.margin_left_mm ?? 20,
     right: letterhead?.margin_right_mm ?? 20,
   };
-  const landscape = letterhead?.orientation === 'landscape';
-  const W = landscape ? 297 : 210;
-  const H = landscape ? 210 : 297;
+  const sizeKey = PAGE_DIMS[paperSize] ? paperSize : 'A4';
+  const dim = PAGE_DIMS[sizeKey];
+  const landscape = (orientation || letterhead?.orientation) === 'landscape';
+  const W = landscape ? dim.h : dim.w;
+  const H = landscape ? dim.w : dim.h;
   const bg = letterhead?.url ? `<img class="lh-bg" src="${esc(letterhead.url)}" alt="">` : '';
   const wm = watermark ? `<div class="wm">${esc(watermark)}</div>` : '';
   const doc = `<!doctype html>
@@ -158,7 +166,7 @@ export function printDocument({ title, html, letterhead = null, dir = 'ltr', lan
 <meta charset="utf-8">
 <title>${esc(title)}</title>
 <style>
-  @page { size: A4 ${landscape ? 'landscape' : 'portrait'}; margin: 0; }
+  @page { size: ${sizeKey} ${landscape ? 'landscape' : 'portrait'}; margin: 0; }
   html, body { margin: 0; }
   body { font-family: "Noto Sans", "Noto Naskh Arabic", "Noto Sans Tamil", "Times New Roman", serif; font-size: 12pt; line-height: 1.5; color: #111;
          -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -190,6 +198,83 @@ export function printDocument({ title, html, letterhead = null, dir = 'ltr', lan
 </table>
 </div>
 <script>window.addEventListener('load', function () { setTimeout(function () { window.focus(); window.print(); }, 400); });</script>
+</body>
+</html>`;
+  return openAndPrint(doc);
+}
+
+/**
+ * Print / Save as PDF a multi-page scanned exam paper or document in A4 / A5 / A3
+ * Portrait or Landscape, optionally framed with the college letterhead.
+ */
+export function printMultiPageScanPdf({
+  title = 'Scanned Document',
+  pages = [],
+  paperSize = 'A4',
+  orientation = 'portrait',
+  includeLetterhead = true,
+  letterheadUrl = '',
+  dir = 'ltr',
+  lang = 'en',
+}) {
+  const sizeKey = PAGE_DIMS[paperSize] ? paperSize : 'A4';
+  const dim = PAGE_DIMS[sizeKey];
+  const landscape = orientation === 'landscape';
+  const W = landscape ? dim.h : dim.w;
+  const H = landscape ? dim.w : dim.h;
+
+  const headerHtml = includeLetterhead && !letterheadUrl
+    ? `<div class="lh-bar">
+         <div>
+           <div class="lh-en">${esc(LETTERHEAD.en)}</div>
+           <div class="lh-place">${esc(LETTERHEAD.place)}</div>
+         </div>
+         <div class="lh-ar">${esc(LETTERHEAD.ar)}</div>
+       </div>`
+    : '';
+
+  const pageBlocks = (pages || []).map((dataUrl, idx) => `
+    <section class="scan-page">
+      ${letterheadUrl ? `<img class="lh-bg" src="${esc(letterheadUrl)}" alt="">` : ''}
+      ${headerHtml}
+      <div class="scan-body">
+        <img class="scan-img" src="${esc(dataUrl)}" alt="Page ${idx + 1}">
+      </div>
+      <div class="scan-foot">${esc(title)} · ${idx + 1} / ${pages.length}</div>
+    </section>
+  `).join('\n');
+
+  const doc = `<!doctype html>
+<html lang="${esc(lang)}" dir="${dir}">
+<head>
+<meta charset="utf-8">
+<title>${esc(title)}</title>
+<style>
+  @page { size: ${sizeKey} ${landscape ? 'landscape' : 'portrait'}; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: "Noto Sans", "Noto Naskh Arabic", "Noto Sans Tamil", Arial, sans-serif;
+               -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .scan-page { width: ${W}mm; height: ${H}mm; padding: 8mm 10mm; position: relative; display: flex; flex-direction: column;
+               page-break-after: always; break-after: page; overflow: hidden; background: #fff; }
+  .scan-page:last-child { page-break-after: auto; break-after: auto; }
+  .lh-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; z-index: 0; opacity: 0.92; }
+  .lh-bar { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid #0B3B2E; padding-bottom: 4px; margin-bottom: 6px; }
+  .lh-en { font-size: 11pt; font-weight: 700; color: #0B3B2E; }
+  .lh-ar { font-size: 11pt; font-weight: 700; color: #0B3B2E; font-family: "Noto Naskh Arabic", serif; }
+  .lh-place { font-size: 8pt; color: #4A5E56; }
+  .scan-body { position: relative; z-index: 1; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+  .scan-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .scan-foot { position: relative; z-index: 1; text-align: center; font-size: 8pt; color: #64748B; padding-top: 4px; }
+  @media screen {
+    body { background: #e2e8f0; padding: 12px 0; }
+    .scan-page { margin: 0 auto 14px; box-shadow: 0 4px 16px rgba(15,23,42,.15); }
+  }
+</style>
+</head>
+<body>
+${pageBlocks}
+<script>window.addEventListener('load', function () { setTimeout(function () { window.focus(); window.print(); }, 450); });</script>
 </body>
 </html>`;
   return openAndPrint(doc);

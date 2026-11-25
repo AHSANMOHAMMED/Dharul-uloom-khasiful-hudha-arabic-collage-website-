@@ -6,7 +6,7 @@ import { useAuth } from '../lib/auth';
 import { useI18n } from '../lib/i18n';
 import { useLiveTable } from '../lib/live';
 import { colors, radius } from '../lib/theme';
-import { chatContacts, chatConversations, chatMessages, liveChat, openChat, readChat, sendChat } from '../lib/chat';
+import { chatContacts, chatConversations, chatMessages, deliverChat, liveChat, openChat, readChat, sendChat, subscribeOrgPresence } from '../lib/chat';
 import { supabase } from '../lib/supabase';
 import { Screen, Txt, Button, ErrorBanner } from '../components';
 
@@ -30,6 +30,7 @@ export default function MessagesScreen() {
   const [sending, setSending] = useState(false);
   const [hasOlder, setHasOlder] = useState(false);
   const [error, setError] = useState('');
+  const [onlineIds, setOnlineIds] = useState(() => new Set());
   const listRef = useRef(null);
   const active = conversations.find((c) => c.conversation_id === conversationId);
 
@@ -42,7 +43,15 @@ export default function MessagesScreen() {
 
   useLiveTable({ table: 'chat_conversations', enabled: chatAllowed, onChange: reloadConversations });
 
-  useEffect(() => { reloadConversations(); }, [reloadConversations]);
+  useEffect(() => {
+    reloadConversations();
+    if (chatAllowed) deliverChat(null);
+  }, [reloadConversations, chatAllowed]);
+
+  useEffect(() => {
+    if (!chatAllowed || !user?.id) return undefined;
+    return subscribeOrgPresence(profile?.org_id, user.id, setOnlineIds);
+  }, [chatAllowed, profile?.org_id, user?.id]);
 
   useEffect(() => {
     if (!chatAllowed) { setContacts([]); return undefined; }
@@ -108,14 +117,14 @@ export default function MessagesScreen() {
         {search.trim() ? <Txt variant="label">{t('chat.people')}</Txt> : null}
         {search.trim() ? contacts.map((p) => (
           <Pressable key={p.user_id} onPress={() => selectContact(p)} disabled={sending} style={[styles.row, row]}>
-            <Avatar name={p.full_name} />
-            <View style={styles.flex}><Txt variant="strong">{p.full_name}</Txt><Txt variant="small">{typeLabel(p.account_type, t, p.role, p.assigned_tutor_role)}{p.class_number ? ` · ${t('common.class')} ${p.class_number}` : ''}</Txt></View>
+            <Avatar name={p.full_name} online={onlineIds.has(p.user_id)} />
+            <View style={styles.flex}><Txt variant="strong">{p.full_name}</Txt><Txt variant="small">{typeLabel(p.account_type, t, p.role, p.assigned_tutor_role)}{p.class_number ? ` · ${t('common.class')} ${p.class_number}` : ''}{onlineIds.has(p.user_id) ? ' · Online' : ''}</Txt></View>
             <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.primary} />
           </Pressable>
         )) : null}
         {!search.trim() && conversations.map((c) => (
           <Pressable key={c.conversation_id} onPress={() => router.push({ pathname: '/messages', params: { conversation: c.conversation_id } })} style={[styles.row, row]}>
-            <Avatar name={c.other_user_name} />
+            <Avatar name={c.other_user_name} online={onlineIds.has(c.other_user_id)} />
             <View style={styles.flex}><Txt variant="strong">{c.other_user_name}</Txt><Txt variant="muted" numberOfLines={1}>{c.last_message || typeLabel(c.other_account_type, t, c.other_role, c.other_assigned_tutor_role)}</Txt></View>
             {Number(c.unread_count) > 0 ? <View style={styles.badge}><Text style={styles.badgeText}>{c.unread_count}</Text></View> : null}
           </Pressable>
@@ -131,8 +140,14 @@ export default function MessagesScreen() {
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
       <View style={[styles.header, row]}>
         <Pressable onPress={() => router.replace('/messages')} style={styles.back}><Ionicons name="arrow-back" size={22} color={colors.primaryDark} /></Pressable>
-        <Avatar name={active?.other_user_name || ''} />
-        <View style={styles.flex}><Txt variant="strong">{active?.other_user_name || t('chat.title')}</Txt><Txt variant="small">{typeLabel(active?.other_account_type, t, active?.other_role, active?.other_assigned_tutor_role)}</Txt></View>
+        <Avatar name={active?.other_user_name || ''} online={active ? onlineIds.has(active.other_user_id) : false} />
+        <View style={styles.flex}>
+          <Txt variant="strong">{active?.other_user_name || t('chat.title')}</Txt>
+          <Txt variant="small">
+            {typeLabel(active?.other_account_type, t, active?.other_role, active?.other_assigned_tutor_role)}
+            {active ? ` · ${onlineIds.has(active.other_user_id) ? 'Online' : 'Offline'}` : ''}
+          </Txt>
+        </View>
       </View>
       {error ? <ErrorBanner message={error} /> : null}
       <FlatList
@@ -155,7 +170,28 @@ export default function MessagesScreen() {
         ListEmptyComponent={<View style={styles.empty}><Txt center variant="muted">{t('chat.start', { name: active?.other_user_name || '' })}</Txt></View>}
         renderItem={({ item }) => {
           const mine = item.sender_id === user?.id;
-          return <View style={[styles.bubbleRow, mine ? styles.mineRow : styles.theirRow]}><View style={[styles.bubble, mine ? styles.mineBubble : styles.theirBubble]}><Text style={styles.messageText}>{item.body}</Text><Text style={styles.meta}>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{mine ? (item.read_at ? '  ✓✓' : '  ✓') : ''}</Text></View></View>;
+          return (
+            <View style={[styles.bubbleRow, mine ? styles.mineRow : styles.theirRow]}>
+              <View style={[styles.bubble, mine ? styles.mineBubble : styles.theirBubble]}>
+                <Text style={styles.messageText}>{item.body}</Text>
+                <View style={styles.metaRow}>
+                  <Text style={styles.meta}>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                  {mine ? (
+                    item.read_at ? (
+                      <View style={styles.receiptRow}>
+                        <Ionicons name="checkmark-done" size={14} color="#0284C7" />
+                        <Ionicons name="eye-outline" size={12} color="#11694A" />
+                      </View>
+                    ) : item.delivered_at ? (
+                      <Ionicons name="checkmark-done" size={14} color="#64748B" />
+                    ) : (
+                      <Ionicons name="checkmark" size={14} color="#64748B" />
+                    )
+                  ) : null}
+                </View>
+              </View>
+            </View>
+          );
         }}
       />
       <View style={[styles.composer, row]}>
@@ -166,8 +202,13 @@ export default function MessagesScreen() {
   );
 }
 
-function Avatar({ name }) {
-  return <View style={styles.avatar}><Text style={styles.avatarText}>{(name || '?').trim().slice(0, 1).toUpperCase()}</Text></View>;
+function Avatar({ name, online = false }) {
+  return (
+    <View style={styles.avatar}>
+      <Text style={styles.avatarText}>{(name || '?').trim().slice(0, 1).toUpperCase()}</Text>
+      <View style={[styles.presenceDot, { backgroundColor: online ? '#10B981' : '#CBD5E1' }]} />
+    </View>
+  );
 }
 
 function typeLabel(type, t, role, assignedTutorRole) {
@@ -180,8 +221,11 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   search: { paddingHorizontal: 12, paddingVertical: 11, backgroundColor: colors.white, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, color: colors.text },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.white, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 12 },
-  avatar: { height: 42, width: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primaryLight },
+  avatar: { height: 42, width: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primaryLight, position: 'relative' },
+  presenceDot: { position: 'absolute', bottom: 0, right: 0, width: 11, height: 11, borderRadius: 6, borderWidth: 2, borderColor: '#FFFFFF' },
   avatarText: { fontWeight: '800', color: colors.primary },
+  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4, marginTop: 4 },
+  receiptRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   badge: { minWidth: 22, height: 22, borderRadius: 11, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   badgeText: { color: colors.white, fontSize: 11, fontWeight: '800' },
   header: { minHeight: 64, paddingHorizontal: 12, gap: 10, alignItems: 'center', backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.border },
