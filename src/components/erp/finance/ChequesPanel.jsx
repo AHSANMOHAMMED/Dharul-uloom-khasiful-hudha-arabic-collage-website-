@@ -5,6 +5,7 @@ import { Badge, Button, ErrorNote, Field, Input, Loading, Modal, PageHeader, Sel
 import { query, rpc, formatMoney, localIsoDate } from '../../../lib/erp/rpc';
 import { exportXlsx } from '../../../lib/spreadsheet';
 import { printTable } from '../../../lib/printReport';
+import { appPrompt } from '../../../lib/appDialog';
 
 const STATUS_TONE = { pending: 'amber', deposited: 'blue', cleared: 'green', bounced: 'red', cancelled: 'gray' };
 const today = () => localIsoDate(); // local day (toISOString() is UTC: still yesterday before 05:30 in Sri Lanka)
@@ -64,14 +65,14 @@ export default function ChequesPanel() {
   const act = async (row, status) => {
     let note = null;
     if (status === 'bounced') {
-      note = window.prompt(t('Reason given by the bank (e.g. insufficient funds)', 'السبب الذي ذكره البنك (مثل عدم كفاية الرصيد)'));
+      note = await appPrompt(t('Reason given by the bank (e.g. insufficient funds)', 'السبب الذي ذكره البنك (مثل عدم كفاية الرصيد)'));
       if (!note) return;
     }
     if (status === 'cancelled') {
-      note = window.prompt(t('Why is this cheque cancelled?', 'لماذا أُلغي هذا الشيك؟'));
+      note = await appPrompt(t('Why is this cheque cancelled?', 'لماذا أُلغي هذا الشيك؟'));
       if (!note) return;
     }
-    const onDate = window.prompt(t('Date (YYYY-MM-DD)', 'التاريخ (YYYY-MM-DD)'), today());
+    const onDate = await appPrompt(t('Date (YYYY-MM-DD)', 'التاريخ (YYYY-MM-DD)'), today());
     if (!onDate) return;
     try {
       const res = await rpc('update_cheque_status', { p_cheque: row.id, p_status: status, p_on: onDate, p_note: note });

@@ -30,6 +30,7 @@ const StaffHrPanel = lazy(() => import('../components/erp/campus/StaffHrPanel'))
 const AnalyticsPanel = lazy(() => import('../components/erp/ops/AnalyticsPanel'));
 const FeeManagement = lazy(() => import('../components/erp/finance/FeeManagement'));
 const FinanceHubPanel = lazy(() => import('../components/erp/finance/FinanceHubPanel'));
+const BankReconPanel = lazy(() => import('../components/erp/finance/BankReconPanel'));
 const AccountingPanel = lazy(() => import('../components/erp/finance/AccountingPanel'));
 const StudentsPanel = lazy(() => import('../components/erp/campus/StudentsPanel'));
 const AcademicsPanel = lazy(() => import('../components/erp/campus/AcademicsPanel'));
@@ -71,6 +72,7 @@ const ERP_TILE_TO_TAB = {
   certificates: 'certificates',
   accounting: 'accounting',
   financehub: 'financehub',
+  bankrecon: 'bankrecon',
   analytics: 'analytics',
   financetoday: 'fees',
 };
@@ -78,7 +80,7 @@ const ERP_TILE_TO_TAB = {
 const ADMIN_TABS = [
   'overview', 'mashoora', 'tasks', 'duties',
   'admissions', 'crm', 'students', 'academics', 'hrm',
-  'fees', 'financehub', 'accounting', 'cheques', 'expenses', 'donations', 'payroll', 'pettycash',
+  'fees', 'financehub', 'bankrecon', 'accounting', 'cheques', 'expenses', 'donations', 'payroll', 'pettycash',
   'hostel', 'welfare', 'certificates', 'documents',
   'reports', 'analytics', 'audit',
   'imports', 'org', 'approvals', 'tutors', 'broadcast', 'content', 'indexes',
@@ -420,6 +422,7 @@ const AdminDashboard = () => {
     { id: 'hrm', label_en: 'Staff HR', label_ar: 'الموارد البشرية', icon: 'badge', group: 'Academic & People', group_ar: 'الأكاديمي والموظفون' },
     { id: 'fees', label_en: 'Fees', label_ar: 'الرسوم', icon: 'payments', group: 'Finance', group_ar: 'المالية' },
     { id: 'financehub', label_en: 'Finance Hub', label_ar: 'مركز المالية', icon: 'hub', group: 'Finance', group_ar: 'المالية' },
+    { id: 'bankrecon', label_en: 'Bank Reconciliation', label_ar: 'المطابقة البنكية', icon: 'account_balance', group: 'Finance', group_ar: 'المالية' },
     { id: 'accounting', label_en: 'Accounting', label_ar: 'المحاسبة', icon: 'account_balance', group: 'Finance', group_ar: 'المالية' },
     { id: 'cheques', label_en: 'Cheques', label_ar: 'الشيكات', icon: 'request_quote', group: 'Finance', group_ar: 'المالية' },
     { id: 'expenses', label_en: 'Expenses', label_ar: 'المصروفات', icon: 'receipt_long', group: 'Finance', group_ar: 'المالية' },
@@ -625,6 +628,7 @@ const AdminDashboard = () => {
           {activeTab === 'academics' && <ErpPane><AcademicsPanel /></ErpPane>}
           {activeTab === 'fees' && <ErpPane><FeeManagement embedded /></ErpPane>}
           {activeTab === 'financehub' && <ErpPane><FinanceHubPanel /></ErpPane>}
+          {activeTab === 'bankrecon' && <ErpPane><BankReconPanel /></ErpPane>}
           {activeTab === 'accounting' && <ErpPane><AccountingPanel /></ErpPane>}
           {activeTab === 'cheques' && <ErpPane><ChequesPanel /></ErpPane>}
           {activeTab === 'expenses' && <ErpPane><ExpensesPanel /></ErpPane>}

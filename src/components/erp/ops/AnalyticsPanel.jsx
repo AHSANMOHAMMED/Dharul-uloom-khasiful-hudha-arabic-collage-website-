@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../../context/AuthContext';
+import { openChatConversation } from '../../../lib/chatApi';
+import { usePortalNav } from '../../../context/PortalNavContext';
 import { AsyncView, Badge, Button, Card, EmptyState, Icon, PageHeader, Stat, Table, Tabs, useAsync, useLang } from '../ui';
 import { Num } from '../finance/shared';
 import { formatDate, formatMoney } from '../../../lib/erp/rpc';
@@ -45,6 +48,10 @@ const pctTooltip = (props) => <ChartTooltip {...props} format={(v) => pct(v)} />
 // ---------------------------------------------------------------------------
 function FinanceView({ data, months, canRemind }) {
   const { t, lang } = useLang();
+  const navigate = useNavigate();
+  const [, setParams] = useSearchParams();
+  const portalNav = usePortalNav();
+  const [messagingId, setMessagingId] = useState(null);
   const rows = monthRows(data.months);
   const chartRows = rows.map((r) => ({ ...r, label: shortMonth(r.month) }));
   const ageing = ageingRows(data.aging);
@@ -72,6 +79,32 @@ function FinanceView({ data, months, canRemind }) {
     const res = await runAction(() => sendFeeReminder(r.student_id));
     if (res?.ok) toast.success(`${t('Reminder sent', 'أُرسل التذكير')}: ${r.full_name || ''}`);
     else if (res) toast.info(t('This student has no arrears — no reminder sent.', 'لا توجد متأخرات على هذا الطالب — لم يُرسل تذكير.'));
+  };
+
+  const messageGuardian = async (r) => {
+    if (!r.guardian_id) {
+      toast.info(t('No linked guardian portal account — sending fee reminder instead.', 'لا يوجد حساب ولي أمر مرتبط — جارٍ إرسال تذكير الرسوم.'));
+      await remind(r);
+      return;
+    }
+    setMessagingId(r.student_id);
+    try {
+      const convId = await openChatConversation(r.guardian_id);
+      if (portalNav?.goTab) {
+        setParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('tab', 'messages');
+          next.set('conversation', convId);
+          return next;
+        });
+      } else {
+        navigate(`/messages?conversation=${encodeURIComponent(convId)}`);
+      }
+    } catch (e) {
+      toast.error(e.message || t('Could not open guardian chat', 'تعذر فتح محادثة ولي الأمر'));
+    } finally {
+      setMessagingId(null);
+    }
   };
 
   return (
@@ -258,10 +291,31 @@ function FinanceView({ data, months, canRemind }) {
               ),
             },
             { key: 'class_number', label: t('Class', 'الصف'), render: (r) => classLabel(r.class_number) },
+            {
+              key: 'guardian_name',
+              label: t('Guardian', 'ولي الأمر'),
+              render: (r) => (
+                <span>
+                  {r.guardian_name || t('Not linked', 'غير مرتبط')}
+                  {r.guardian_phone && <span className="block text-xs text-gray-500" dir="ltr">{r.guardian_phone}</span>}
+                </span>
+              ),
+            },
             { key: 'oldest_due', label: t('Oldest due', 'أقدم استحقاق'), render: (r) => formatDate(r.oldest_due) },
             { key: 'balance', label: t('Balance', 'الرصيد'), render: (r) => <Num>{formatMoney(r.balance)}</Num>, className: 'text-end' },
             ...(canRemind
-              ? [{ key: 'actions', label: '', render: (r) => <Button size="sm" variant="ghost" onClick={() => remind(r)}>{t('Remind', 'تذكير')}</Button> }]
+              ? [{
+                  key: 'actions',
+                  label: t('Actions', 'الإجراءات'),
+                  render: (r) => (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Button size="sm" variant="secondary" disabled={messagingId === r.student_id} onClick={() => messageGuardian(r)}>
+                        {messagingId === r.student_id ? '…' : t('Message Guardian', 'مراسلة ولي الأمر')}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => remind(r)}>{t('Remind', 'تذكير')}</Button>
+                    </div>
+                  ),
+                }]
               : []),
           ]}
         />

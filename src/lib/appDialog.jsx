@@ -7,7 +7,16 @@ let listener = null;
 function openDialog(payload) {
   if (!listener) {
     // Graceful fallback in isolated unit tests without <AppDialogHost />
-    if (payload.mode === 'prompt') return Promise.resolve(payload.defaultValue ?? '');
+    if (payload.mode === 'prompt') {
+      try {
+        if (typeof window !== 'undefined' && typeof window.prompt === 'function') {
+          return Promise.resolve(window.prompt(payload.message, payload.defaultValue ?? ''));
+        }
+      } catch {
+        // jsdom unmocked window.prompt throws Not implemented
+      }
+      return Promise.resolve(payload.defaultValue ?? '');
+    }
     return Promise.resolve(true);
   }
   return new Promise((resolve) => {

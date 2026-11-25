@@ -59,7 +59,7 @@ export function Card({ title, actions, children, className = '' }) {
   );
 }
 
-export function Stat({ label, value, hint, tone = 'emerald' }) {
+export function Stat({ label, value, hint, tone = 'emerald', className = '' }) {
   const tones = {
     emerald: 'text-emerald-700',
     amber: 'text-amber-700',
@@ -68,10 +68,12 @@ export function Stat({ label, value, hint, tone = 'emerald' }) {
     gray: 'text-ink-text-primary',
   };
   return (
-    <div className="rounded-[14px] bg-paper-white p-4 border border-sand-border shadow-manuscript-sm">
-      <div className="text-xs uppercase tracking-wide text-ink-text-muted">{label}</div>
-      <div className={`text-2xl font-extrabold mt-1 ${tones[tone] || tones.emerald}`}>{value}</div>
-      {hint && <div className="text-xs text-ink-text-muted mt-1">{hint}</div>}
+    <div className={`h-full flex flex-col justify-between rounded-2xl bg-paper-white p-4 border border-sand-border shadow-manuscript-sm ${className}`}>
+      <div>
+        <div className="text-xs uppercase tracking-wide text-ink-text-muted">{label}</div>
+        <div className={`text-2xl font-extrabold mt-1 ${tones[tone] || tones.emerald}`}>{value}</div>
+      </div>
+      <div className="text-xs text-ink-text-muted mt-1.5 min-h-[1rem]">{hint || '\u00A0'}</div>
     </div>
   );
 }
