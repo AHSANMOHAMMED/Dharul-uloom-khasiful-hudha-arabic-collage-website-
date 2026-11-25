@@ -46,25 +46,28 @@ export default function DashboardSidebarLayout({
     setMobileOpen(false);
   }, [location.pathname, location.search]);
 
-  // Standard institutional quick links across workspaces
+  const hasMessagesTab = Boolean(onSelect && navItems.some((n) => n.id === 'messages'));
+  const onPortalDashboard = location.pathname === '/dashboard';
+
+  // Standard institutional quick links across workspaces (stay in-place on /dashboard)
   const defaultQuickLinks = [];
   if (isAdmin) {
     if (location.pathname !== '/admin') defaultQuickLinks.push({ to: '/admin', label_en: 'Admin Console', label_ar: 'لوحة الإدارة', icon: 'admin_panel_settings' });
-    if (location.pathname !== '/erp') defaultQuickLinks.push({ to: '/erp', label_en: 'Campus ERP', label_ar: 'نظام ERP', icon: 'domain' });
+    if (!onPortalDashboard && location.pathname !== '/erp') defaultQuickLinks.push({ to: '/erp', label_en: 'Campus ERP', label_ar: 'نظام ERP', icon: 'domain' });
     if (location.pathname !== '/library-admin') defaultQuickLinks.push({ to: '/library-admin', label_en: 'Maktabah Admin', label_ar: 'إدارة المكتبة', icon: 'local_library' });
   } else {
-    if (isEmployee && location.pathname !== '/erp') {
+    if (!onPortalDashboard && isEmployee && location.pathname !== '/erp') {
       defaultQuickLinks.push({ to: '/erp', label_en: 'Campus ERP', label_ar: 'نظام ERP', icon: 'domain' });
     }
-    if (isLibrarian && location.pathname !== '/library-admin') {
+    if (isLibrarian && !onPortalDashboard && location.pathname !== '/library-admin') {
       defaultQuickLinks.push({ to: '/library-admin', label_en: 'Maktabah Admin', label_ar: 'إدارة المكتبة', icon: 'local_library' });
     }
   }
 
-  if (canMessage && location.pathname !== '/messages') {
+  if (canMessage && !hasMessagesTab && location.pathname !== '/messages') {
     defaultQuickLinks.push({ to: '/messages', label_en: 'Messages & Chat', label_ar: 'الرسائل والمحادثات', icon: 'forum' });
   }
-  if (location.pathname !== '/library') {
+  if (!isParent && isApproved && enabled('library') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian) && location.pathname !== '/library') {
     defaultQuickLinks.push({ to: '/library', label_en: 'Digital Maktabah', label_ar: 'المكتبة الرقمية', icon: 'auto_stories' });
   }
   defaultQuickLinks.push({ to: '/', label_en: 'College Homepage', label_ar: 'بوابة الكلية العامة', icon: 'public' });
@@ -296,14 +299,26 @@ export default function DashboardSidebarLayout({
             <NotificationBell />
 
             {canMessage && (
-              <Link
-                to="/messages"
-                className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[#E8E1D0] bg-white text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
-                title={tx('الرسائل', 'Messages')}
-                aria-label={tx('الرسائل', 'Messages')}
-              >
-                <Icon name="chat" className="text-[18px] text-[#11694A]" />
-              </Link>
+              hasMessagesTab ? (
+                <button
+                  type="button"
+                  onClick={() => onSelect('messages')}
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[#E8E1D0] bg-white text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
+                  title={tx('الرسائل', 'Messages')}
+                  aria-label={tx('الرسائل', 'Messages')}
+                >
+                  <Icon name="chat" className="text-[18px] text-[#11694A]" />
+                </button>
+              ) : (
+                <Link
+                  to="/messages"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[#E8E1D0] bg-white text-[#0B3B2E] hover:bg-[#FBF8F0] shadow-xs"
+                  title={tx('الرسائل', 'Messages')}
+                  aria-label={tx('الرسائل', 'Messages')}
+                >
+                  <Icon name="chat" className="text-[18px] text-[#11694A]" />
+                </Link>
+              )
             )}
 
             {!isParent && isApproved && enabled('library') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian) && (

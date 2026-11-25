@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Suspense, lazy, useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useTabParam } from '../lib/useTabParam';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
+import { useFeatures } from '../context/FeatureFlagsContext';
 import { supabase } from '../lib/supabaseClient';
 import TutorLmsPanel from '../components/TutorLmsPanel';
 import ClassAttendance from '../components/erp/campus/ClassAttendance';
@@ -14,10 +15,17 @@ import RoleSwitcher from '../components/RoleSwitcher';
 import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
 
-const TUTOR_TABS = ['attendance', 'leaves', 'lms', 'salaries', 'messages'];
+const AcademicsPanel = lazy(() => import('../components/erp/campus/AcademicsPanel'));
+const DocumentsPanel = lazy(() => import('../components/erp/docs/DocumentsPanel'));
+const TaskBoard = lazy(() => import('../components/erp/governance/TaskBoard'));
+const MySelfServicePanel = lazy(() => import('../components/erp/campus/MySelfServicePanel'));
+const MessagesPanel = lazy(() => import('./Messages'));
+
+const TUTOR_TABS = ['attendance', 'leaves', 'lms', 'academics', 'documents', 'salaries', 'tasks', 'self', 'messages'];
 
 const TutorDashboard = () => {
-  const { user, isTutor, isEmployee, isTreasurer, loading: authLoading } = useAuth();
+  const { user, isTutor, isEmployee, loading: authLoading } = useAuth();
+  const { enabled } = useFeatures();
   useTranslation();
 
   const [activeTab, setActiveTab] = useTabParam(TUTOR_TABS, 'attendance');
@@ -114,8 +122,12 @@ const TutorDashboard = () => {
     { id: 'attendance', label_en: 'Halaqah Attendance', label_ar: 'حضور الحلقات', icon: 'edit_calendar' },
     { id: 'leaves', label_en: 'Leave Requests', label_ar: 'طلبات الإجازة', icon: 'pending_actions', badge: leaves.length },
     { id: 'lms', label_en: 'Coursework & LMS', label_ar: 'إدارة الواجبات', icon: 'assignment' },
+    { id: 'academics', label_en: 'Academics & Exams', label_ar: 'الشؤون الأكاديمية', icon: 'menu_book' },
+    { id: 'documents', label_en: 'Exam Papers & Docs', label_ar: 'الأوراق والمستندات', icon: 'description' },
     { id: 'salaries', label_en: 'Remuneration Ledger', label_ar: 'بيان الرواتب', icon: 'payments' },
-    { id: 'messages', label_en: 'Messages & Queries', label_ar: 'الرسائل والمحادثات', icon: 'forum' },
+    ...(enabled('tasks') ? [{ id: 'tasks', label_en: 'Task Board', label_ar: 'لوحة المهام', icon: 'view_kanban' }] : []),
+    ...(enabled('self_service') ? [{ id: 'self', label_en: 'My Workspace', label_ar: 'مساحتي', icon: 'badge' }] : []),
+    ...(enabled('messaging') ? [{ id: 'messages', label_en: 'Messages & Queries', label_ar: 'الرسائل والمحادثات', icon: 'forum' }] : []),
   ];
 
   if (loading) {
@@ -156,20 +168,24 @@ const TutorDashboard = () => {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              {isTreasurer && (
-                <Link to="/dashboard?view=treasurer" className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#C29A3A] hover:bg-[#A8822B] text-[#0B3B2E] font-sans font-bold text-xs sm:text-sm rounded-xl transition shadow-sm">
-                  <Icon name="account_balance" className="text-[18px]" />
-                  <span>{tx('لوحة أمين الصندوق', 'Treasurer Portal')}</span>
-                </Link>
-              )}
-              <Link to="/erp?module=academics" className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#E3F1EA] hover:bg-[#D4E8DF] border border-[#11694A]/30 text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm">
+              <button
+                type="button"
+                onClick={() => setActiveTab('academics')}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#E3F1EA] hover:bg-[#D4E8DF] border border-[#11694A]/30 text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
+              >
                 <Icon name="menu_book" className="text-[18px] text-[#11694A]" />
-                <span>{tx('الشؤون الأكاديمية ERP', 'ERP Academics')}</span>
-              </Link>
-              <Link to="/erp?module=self" className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm">
-                <Icon name="badge" className="text-[18px] text-[#11694A]" />
-                <span>{tx('مساحتي', 'My workspace')}</span>
-              </Link>
+                <span>{tx('الشؤون الأكاديمية', 'Academics & Exams')}</span>
+              </button>
+              {enabled('self_service') && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('self')}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
+                >
+                  <Icon name="badge" className="text-[18px] text-[#11694A]" />
+                  <span>{tx('مساحتي', 'My workspace')}</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -265,90 +281,43 @@ const TutorDashboard = () => {
           </div>
         )}
 
+        {activeTab === 'academics' && (
+          <div className="erp-theme rounded-2xl border border-[#E8E1D0] bg-white p-4 sm:p-6 shadow-sm">
+            <Suspense fallback={<div className="py-12 text-center text-xs text-[#4A5E56]">{tx('جاري التحميل…', 'Loading…')}</div>}>
+              <AcademicsPanel />
+            </Suspense>
+          </div>
+        )}
+
+        {activeTab === 'documents' && (
+          <div className="erp-theme rounded-2xl border border-[#E8E1D0] bg-white p-4 sm:p-6 shadow-sm">
+            <Suspense fallback={<div className="py-12 text-center text-xs text-[#4A5E56]">{tx('جاري التحميل…', 'Loading…')}</div>}>
+              <DocumentsPanel />
+            </Suspense>
+          </div>
+        )}
+
+        {activeTab === 'tasks' && (
+          <div className="erp-theme rounded-2xl border border-[#E8E1D0] bg-white p-4 sm:p-6 shadow-sm">
+            <Suspense fallback={<div className="py-12 text-center text-xs text-[#4A5E56]">{tx('جاري التحميل…', 'Loading…')}</div>}>
+              <TaskBoard />
+            </Suspense>
+          </div>
+        )}
+
+        {activeTab === 'self' && (
+          <div className="erp-theme rounded-2xl border border-[#E8E1D0] bg-white p-4 sm:p-6 shadow-sm">
+            <Suspense fallback={<div className="py-12 text-center text-xs text-[#4A5E56]">{tx('جاري التحميل…', 'Loading…')}</div>}>
+              <MySelfServicePanel />
+            </Suspense>
+          </div>
+        )}
+
         {/* Tab: Messages & Queries */}
         {activeTab === 'messages' && (
-          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E8E1D0] pb-6">
-              <div>
-                <h2 className="text-xl font-serif font-bold text-[#0B3B2E]">
-                  {tx('الرسائل والتواصل المباشر', 'Faculty Communications & Student Queries')}
-                </h2>
-                <p className="text-xs text-[#4A5E56] font-sans mt-1">
-                  {tx(
-                    'تواصل مباشرة مع الطلاب، أولياء الأمور، وإدارة الكلية عبر نظام المحادثات المؤسسي المعتمد.',
-                    'Direct communication with students, parents, and administrative staff through the verified college channel.'
-                  )}
-                </p>
-              </div>
-              <Link
-                to="/messages"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#11694A] hover:bg-[#0B3B2E] text-white text-xs font-bold shadow-xs transition"
-              >
-                <Icon name="chat" className="text-[18px]" />
-                <span>{tx('فتح مركز الرسائل الكامل', 'Open Messages Inbox')}</span>
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-5 rounded-xl bg-[#FBF8F0] border border-[#E8E1D0] space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
-                    <Icon name="groups" className="text-[22px]" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif font-bold text-sm text-[#0B3B2E]">
-                      {tx('استفسارات الطلاب وأولياء الأمور', 'Student & Parent Inquiries')}
-                    </h3>
-                    <p className="text-[11px] text-[#4A5E56]">
-                      {tx('رد على أسئلة الحلقات ومتابعة أولياء الأمور', 'Address halaqah queries and parent follow-ups')}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs text-[#14201B] leading-relaxed">
-                  {tx(
-                    'يتيح لك مركز الرسائل الرد المباشر على رسائل طلبة حلقاتك التعليمية والتواصل مع أولياء الأمور بشأن أداء أبنائهم.',
-                    'The message center allows you to reply to academic inquiries from your halaqah students and coordinate with parents regarding student progress.'
-                  )}
-                </p>
-                <Link
-                  to="/messages"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#11694A] hover:underline"
-                >
-                  <span>{tx('الانتقال للمحادثات', 'Go to Conversations')}</span>
-                  <Icon name="arrow_forward" className="text-[14px] rtl:rotate-180" />
-                </Link>
-              </div>
-
-              <div className="p-5 rounded-xl bg-[#FBF8F0] border border-[#E8E1D0] space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#F8F1DD] text-[#C29A3A] flex items-center justify-center">
-                    <Icon name="campaign" className="text-[22px]" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif font-bold text-sm text-[#0B3B2E]">
-                      {tx('التواصل مع الإدارة والعمادة', 'Administrative Coordination')}
-                    </h3>
-                    <p className="text-[11px] text-[#4A5E56]">
-                      {tx('التنسيق مع المدير وأمانة الصندوق والمكتبة', 'Coordinate with Principal, Treasurer & Maktabah')}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs text-[#14201B] leading-relaxed">
-                  {tx(
-                    'إرسال تقارير الحلقات والاستفسار عن الجداول والرواتب والمصادقات الرسمية مع إدارة دار العلوم.',
-                    'Submit halaqah reports, request schedule adjustments, or coordinate administrative approvals with leadership.'
-                  )}
-                </p>
-                <Link
-                  to="/messages"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#11694A] hover:underline"
-                >
-                  <span>{tx('بدء محادثة رسمية', 'Start Official Chat')}</span>
-                  <Icon name="arrow_forward" className="text-[14px] rtl:rotate-180" />
-                </Link>
-              </div>
-            </div>
-          </div>
+          <Suspense fallback={<div className="py-12 text-center text-xs text-[#4A5E56]">{tx('جاري التحميل…', 'Loading…')}</div>}>
+            <MessagesPanel embedded />
+          </Suspense>
         )}
       </div>
     </DashboardSidebarLayout>

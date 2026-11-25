@@ -1,14 +1,19 @@
-import { useMemo, Suspense, Component } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useMemo, Suspense, Component, lazy } from 'react';
+import { Link } from 'react-router-dom';
 import DashboardSidebarLayout from '../DashboardSidebarLayout';
 import RoleSwitcher from '../RoleSwitcher';
 import PortalTabChrome from './PortalTabChrome';
 import OverviewBanner from './OverviewBanner';
-import { ERP_QUICK_LINK } from '../../lib/portalChrome';
 import { ErpEmbedProvider } from '../../context/ErpEmbedContext';
 import { PortalNavProvider } from '../../context/PortalNavContext';
+import { useAuth } from '../../context/AuthContext';
+import { useFeatures } from '../../context/FeatureFlagsContext';
 import { tx } from '../../lib/tx';
 import { useTabParam } from '../../lib/useTabParam';
+
+const TaskBoard = lazy(() => import('../erp/governance/TaskBoard'));
+const MySelfServicePanel = lazy(() => import('../erp/campus/MySelfServicePanel'));
+const MessagesPanel = lazy(() => import('../../pages/Messages'));
 
 /** Map ErpDashboard tile modules → portal tab ids (when present). */
 const ERP_MODULE_TO_TAB = {
@@ -78,14 +83,31 @@ export default function RolePortalShell({
   banner,
   bannerProps,
 }) {
-  const navigate = useNavigate();
-  const homeId = defaultTab || tabs[0]?.id;
+  const { isEmployee, isApproved, isSuperAdmin } = useAuth();
+  const { enabled } = useFeatures();
+
+  const allTabs = useMemo(() => {
+    const existingIds = new Set(tabs.map((t) => t.id));
+    const extra = [];
+    if (isEmployee && !existingIds.has('tasks') && enabled('tasks')) {
+      extra.push({ id: 'tasks', label_en: 'Task Board', label_ar: 'لوحة المهام', icon: 'view_kanban', group: 'Workspace', group_ar: 'المساحة', embed: TaskBoard });
+    }
+    if (isEmployee && !existingIds.has('self') && enabled('self_service')) {
+      extra.push({ id: 'self', label_en: 'My Workspace', label_ar: 'مساحتي', icon: 'badge', group: 'Workspace', group_ar: 'المساحة', embed: MySelfServicePanel });
+    }
+    if (isApproved && !isSuperAdmin && !existingIds.has('messages') && enabled('messaging')) {
+      extra.push({ id: 'messages', label_en: 'Messages', label_ar: 'الرسائل', icon: 'forum', group: 'Workspace', group_ar: 'المساحة', embed: MessagesPanel, embedProps: { embedded: true } });
+    }
+    return [...tabs, ...extra];
+  }, [tabs, isEmployee, isApproved, isSuperAdmin, enabled]);
+
+  const homeId = defaultTab || allTabs[0]?.id;
   // The section lives in ?tab= so browser Back/Forward, refresh and shared links work.
-  const [active, setActive] = useTabParam(tabs.map((t) => t.id), homeId);
-  const tab = tabs.find((t) => t.id === active) || tabs[0];
+  const [active, setActive] = useTabParam(allTabs.map((t) => t.id), homeId);
+  const tab = allTabs.find((t) => t.id === active) || allTabs[0];
   const Embed = tab?.embed;
   const isHome = active === homeId;
-  const tabIds = useMemo(() => new Set(tabs.map((t) => t.id)), [tabs]);
+  const tabIds = useMemo(() => new Set(allTabs.map((t) => t.id)), [allTabs]);
 
   const portalNav = useMemo(
     () => ({
@@ -103,15 +125,18 @@ export default function RolePortalShell({
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return true;
         }
-        // No matching portal tab — open the full ERP module (not a preview).
-        navigate(`/erp?module=${encodeURIComponent(module)}`);
-        return true;
+        if (tabIds.has(module)) {
+          setActive(module);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return true;
+        }
+        return false;
       },
     }),
-    [tabIds, navigate, setActive],
+    [tabIds, setActive],
   );
 
-  const navItems = tabs.map((t) => ({
+  const navItems = allTabs.map((t) => ({
     id: t.id,
     label_en: t.label_en,
     label_ar: t.label_ar,
@@ -122,10 +147,7 @@ export default function RolePortalShell({
     badgeTone: t.badgeTone,
   }));
 
-  const links = quickLinks || [
-    ERP_QUICK_LINK,
-    { to: '/messages', label_en: 'Messages', label_ar: 'الرسائل', icon: 'chat' },
-  ];
+  const links = quickLinks;
 
   return (
     <DashboardSidebarLayout
@@ -141,7 +163,7 @@ export default function RolePortalShell({
     >
       <PortalNavProvider value={portalNav}>
         <div className="space-y-5">
-          {isHome && (banner || (bannerProps && <OverviewBanner {...bannerProps} erpLink />))}
+          {isHome && (banner || (bannerProps && <OverviewBanner {...bannerProps} />))}
 
           <PortalTabChrome
             title_en={tab?.chrome?.title_en || tab?.label_en || title_en}

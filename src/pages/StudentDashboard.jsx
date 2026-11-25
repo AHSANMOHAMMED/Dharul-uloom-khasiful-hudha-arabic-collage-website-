@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useTabParam } from '../lib/useTabParam';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,8 @@ import { ROLE_BADGE } from '../lib/roleTheme';
 import { openChatConversation, sendChatMessage } from '../lib/chatApi';
 import { rpc } from '../lib/erp/rpc';
 import { tx } from '../lib/tx';
+
+const MessagesPanel = lazy(() => import('./Messages'));
 
 const STUDENT_TABS = ['overview', 'attendance', 'results', 'fees', 'lms', 'query'];
 
@@ -443,37 +445,33 @@ export default function StudentDashboard() {
 
         {activeTab === 'query' && (
           <PortalTabChrome title_en="Message Class Tutor" title_ar="مراسلة المشرف" onBack={() => selectTab('overview')}>
-            <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="space-y-6">
+              <div className="rounded-[14px] bg-paper-white border border-sand-border p-6 shadow-manuscript space-y-3">
                 <p className="text-xs text-ink-text-muted">
                   {tutorProfile?.full_name
                     ? `${tx('إلى:', 'To:')} ${tutorProfile.full_name}`
                     : tx('لا يوجد مشرف معيّن لصفك حالياً.', 'No tutor is assigned to your class yet.')}
                 </p>
-                {enabled('messaging') && (
-                  <Link
-                    to="/messages"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sand-border bg-parchment-50 text-xs font-semibold text-ink-green-900 hover:bg-mint-wash-100 transition-colors"
-                  >
-                    <Icon name="chat" className="text-[15px] text-emerald-700" />
-                    <span>{tx('صندوق الرسائل', 'Open Messages Inbox')}</span>
-                  </Link>
-                )}
+                {querySuccess && <p className="text-xs text-emerald-700 font-semibold">{tx('تم إرسال الرسالة للمشرف.', 'Message dispatched to tutor.')}</p>}
+                <form onSubmit={handleQuerySubmit} className="space-y-2">
+                  <textarea
+                    rows={3}
+                    value={queryText}
+                    onChange={(e) => setQueryText(e.target.value)}
+                    disabled={!tutorJobs[0]?.tutor_id}
+                    placeholder={tx('اسأل بخصوص الواجبات أو الدروس...', 'Ask a question regarding assignments or lessons...')}
+                    className="w-full p-2.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs disabled:opacity-50"
+                  />
+                  <button type="submit" disabled={!tutorJobs[0]?.tutor_id} className="px-4 py-2 bg-emerald-700 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50">
+                    {tx('إرسال الاستفسار', 'Send Query')}
+                  </button>
+                </form>
               </div>
-              {querySuccess && <p className="text-xs text-emerald-700 font-semibold">{tx('تم إرسال الرسالة للمشرف.', 'Message dispatched to tutor.')}</p>}
-              <form onSubmit={handleQuerySubmit} className="space-y-2">
-                <textarea
-                  rows={3}
-                  value={queryText}
-                  onChange={(e) => setQueryText(e.target.value)}
-                  disabled={!tutorJobs[0]?.tutor_id}
-                  placeholder={tx('اسأل بخصوص الواجبات أو الدروس...', 'Ask a question regarding assignments or lessons...')}
-                  className="w-full p-2.5 rounded-[10px] bg-paper-white border border-sand-border focus:border-emerald-700 focus:outline-none text-xs disabled:opacity-50"
-                />
-                <button type="submit" disabled={!tutorJobs[0]?.tutor_id} className="px-4 py-2 bg-emerald-700 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-xs disabled:opacity-50">
-                  {tx('إرسال الاستفسار', 'Send Query')}
-                </button>
-              </form>
+              {enabled('messaging') && (
+                <Suspense fallback={<div className="py-12 text-center text-xs text-[#4A5E56]">{tx('جاري التحميل…', 'Loading…')}</div>}>
+                  <MessagesPanel embedded />
+                </Suspense>
+              )}
             </div>
           </PortalTabChrome>
         )}

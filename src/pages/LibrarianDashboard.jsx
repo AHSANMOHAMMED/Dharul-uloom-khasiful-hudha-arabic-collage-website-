@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
@@ -17,6 +17,10 @@ import RoleSwitcher from '../components/RoleSwitcher';
 import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
 import { assertSafeImage } from '../lib/contentApi';
+
+const TaskBoard = lazy(() => import('../components/erp/governance/TaskBoard'));
+const MySelfServicePanel = lazy(() => import('../components/erp/campus/MySelfServicePanel'));
+const MessagesPanel = lazy(() => import('./Messages'));
 
 const emptyForm = {
   shamela_id: '',
@@ -39,7 +43,7 @@ const LibrarianDashboard = () => {
   const { enabled } = useFeatures();
   const { i18n } = useTranslation();
   const dir = { ar: 'rtl' }[i18n.language] || 'ltr';
-  const [activeTab, setActiveTab] = useTabParam(['catalog', 'add', 'loans', 'dictionary'], 'catalog');
+  const [activeTab, setActiveTab] = useTabParam(['catalog', 'add', 'loans', 'dictionary', 'tasks', 'self', 'messages'], 'catalog');
   const [books, setBooks] = useState([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -207,6 +211,9 @@ const LibrarianDashboard = () => {
     { id: 'add', label_en: 'Add / Edit Manuscript', label_ar: 'إضافة مخطوط أو كتاب', icon: 'library_add' },
     { id: 'loans', label_en: 'Circulation', label_ar: 'الإعارة', icon: 'swap_horiz' },
     { id: 'dictionary', label_en: 'Arabic–Tamil Dictionary', label_ar: 'القاموس العربي–التاميلي', icon: 'translate' },
+    ...(auth.isEmployee && enabled('tasks') ? [{ id: 'tasks', label_en: 'Task Board', label_ar: 'لوحة المهام', icon: 'view_kanban' }] : []),
+    ...(auth.isEmployee && enabled('self_service') ? [{ id: 'self', label_en: 'My Workspace', label_ar: 'مساحتي', icon: 'badge' }] : []),
+    ...(enabled('messaging') ? [{ id: 'messages', label_en: 'Messages', label_ar: 'الرسائل', icon: 'forum' }] : []),
   ];
 
   return (
@@ -564,6 +571,28 @@ const LibrarianDashboard = () => {
 
         </div>
         </>
+        )}
+
+        {activeTab === 'tasks' && (
+          <div className="erp-theme rounded-2xl border border-[#E8E1D0] bg-white p-4 sm:p-6 shadow-sm">
+            <Suspense fallback={<div className="py-12 text-center text-xs text-[#4A5E56]">{tx('جاري التحميل…', 'Loading…')}</div>}>
+              <TaskBoard />
+            </Suspense>
+          </div>
+        )}
+
+        {activeTab === 'self' && (
+          <div className="erp-theme rounded-2xl border border-[#E8E1D0] bg-white p-4 sm:p-6 shadow-sm">
+            <Suspense fallback={<div className="py-12 text-center text-xs text-[#4A5E56]">{tx('جاري التحميل…', 'Loading…')}</div>}>
+              <MySelfServicePanel />
+            </Suspense>
+          </div>
+        )}
+
+        {activeTab === 'messages' && (
+          <Suspense fallback={<div className="py-12 text-center text-xs text-[#4A5E56]">{tx('جاري التحميل…', 'Loading…')}</div>}>
+            <MessagesPanel embedded />
+          </Suspense>
         )}
 
       </div>
