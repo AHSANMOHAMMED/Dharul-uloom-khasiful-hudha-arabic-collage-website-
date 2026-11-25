@@ -10,6 +10,7 @@ const ChequesPanel = lazy(() => import('../../components/erp/finance/ChequesPane
 const DonationsPanel = lazy(() => import('../../components/erp/finance/DonationsPanel'));
 const ExpensesPanel = lazy(() => import('../../components/erp/finance/ExpensesPanel'));
 const FinanceHubPanel = lazy(() => import('../../components/erp/finance/FinanceHubPanel'));
+const BankReconPanel = lazy(() => import('../../components/erp/finance/BankReconPanel'));
 const PayrollPanel = lazy(() => import('../../components/erp/finance/PayrollPanel'));
 const PettyCashPanel = lazy(() => import('../../components/erp/governance/PettyCashPanel'));
 const ReportsPanel = lazy(() => import('../../components/erp/ops/ReportsPanel'));
@@ -18,19 +19,20 @@ const AuditLogPanel = lazy(() => import('../../components/erp/finance/AuditLogPa
 
 export default function TreasurerPortal() {
   const tabs = [
-    { id: 'today', label_en: 'Today', label_ar: 'اليوم', icon: 'today', group: 'Treasury', group_ar: 'الخزينة', embed: FinanceTodayPanel },
-    { id: 'overview', label_en: 'Finance Overview', label_ar: 'نظرة مالية عامة', icon: 'dashboard', group: 'Treasury', group_ar: 'الخزينة', embed: ErpDashboard },
-    { id: 'fees', label_en: 'Fees', label_ar: 'الرسوم', icon: 'payments', group: 'Treasury', group_ar: 'الخزينة', embed: FeeManagement, embedProps: { embedded: true } },
-    { id: 'financehub', label_en: 'Finance Hub', label_ar: 'مركز المالية', icon: 'hub', group: 'Treasury', group_ar: 'الخزينة', embed: FinanceHubPanel },
-    { id: 'accounting', label_en: 'Accounting', label_ar: 'المحاسبة', icon: 'account_balance', group: 'Ledger & Ops', group_ar: 'السجلات والعمليات', embed: AccountingPanel },
-    { id: 'cheques', label_en: 'Cheques', label_ar: 'الشيكات', icon: 'receipt_long', group: 'Ledger & Ops', group_ar: 'السجلات والعمليات', embed: ChequesPanel },
-    { id: 'donations', label_en: 'Donations', label_ar: 'التبرعات', icon: 'volunteer_activism', group: 'Ledger & Ops', group_ar: 'السجلات والعمليات', embed: DonationsPanel },
-    { id: 'expenses', label_en: 'Expenses', label_ar: 'المصروفات', icon: 'money_off', group: 'Ledger & Ops', group_ar: 'السجلات والعمليات', embed: ExpensesPanel },
-    { id: 'payroll', label_en: 'Payroll', label_ar: 'الرواتب', icon: 'payments', group: 'Ledger & Ops', group_ar: 'السجلات والعمليات', embed: PayrollPanel },
-    { id: 'pettycash', label_en: 'Petty Cash', label_ar: 'النثرية', icon: 'account_balance_wallet', group: 'Ledger & Ops', group_ar: 'السجلات والعمليات', embed: PettyCashPanel },
-    { id: 'reports', label_en: 'Reports', label_ar: 'التقارير', icon: 'summarize', group: 'Insights', group_ar: 'التقارير والتدقيق', embed: ReportsPanel },
-    { id: 'analytics', label_en: 'Analytics', label_ar: 'التحليلات', icon: 'analytics', group: 'Insights', group_ar: 'التقارير والتدقيق', embed: AnalyticsPanel },
-    { id: 'audit', label_en: 'Audit', label_ar: 'التدقيق', icon: 'policy', group: 'Insights', group_ar: 'التقارير والتدقيق', embed: AuditLogPanel },
+    { id: 'today', label_en: 'Today & Reminders', label_ar: 'اليوم والتذكيرات', icon: 'today', group: 'Daily Desk', group_ar: 'المكتب اليومي', embed: FinanceTodayPanel },
+    { id: 'overview', label_en: 'Finance Overview', label_ar: 'نظرة مالية عامة', icon: 'dashboard', group: 'Daily Desk', group_ar: 'المكتب اليومي', embed: ErpDashboard },
+    { id: 'fees', label_en: 'Student Fees & Receipts', label_ar: 'رسوم الطلاب والإيصالات', icon: 'payments', group: 'Fees & Billing', group_ar: 'الرسوم والفوترة', embed: FeeManagement, embedProps: { embedded: true } },
+    { id: 'financehub', label_en: 'Invoices, Quotes & Hub', label_ar: 'الفواتير وعروض الأسعار', icon: 'hub', group: 'Fees & Billing', group_ar: 'الرسوم والفوترة', embed: FinanceHubPanel },
+    { id: 'bankrecon', label_en: 'Bank Reconciliation', label_ar: 'المطابقة البنكية', icon: 'account_balance', group: 'Fees & Billing', group_ar: 'الرسوم والفوترة', embed: BankReconPanel },
+    { id: 'accounting', label_en: 'Accounting & Ledger', label_ar: 'المحاسبة ودفتر الأستاذ', icon: 'menu_book', group: 'Treasury & Ledger', group_ar: 'الخزينة والمحاسبة', embed: AccountingPanel },
+    { id: 'cheques', label_en: 'Cheques Register', label_ar: 'سجل الشيكات', icon: 'receipt_long', group: 'Treasury & Ledger', group_ar: 'الخزينة والمحاسبة', embed: ChequesPanel },
+    { id: 'donations', label_en: 'Donations & Sadaqah', label_ar: 'التبرعات والصدقات', icon: 'volunteer_activism', group: 'Treasury & Ledger', group_ar: 'الخزينة والمحاسبة', embed: DonationsPanel },
+    { id: 'expenses', label_en: 'Expenses & Vouchers', label_ar: 'المصروفات والسندات', icon: 'money_off', group: 'Treasury & Ledger', group_ar: 'الخزينة والمحاسبة', embed: ExpensesPanel },
+    { id: 'pettycash', label_en: 'Petty Cash', label_ar: 'النثرية', icon: 'account_balance_wallet', group: 'Treasury & Ledger', group_ar: 'الخزينة والمحاسبة', embed: PettyCashPanel },
+    { id: 'payroll', label_en: 'Payroll & Payslips', label_ar: 'الرواتب والقسائم', icon: 'payments', group: 'Staff Payroll', group_ar: 'رواتب الموظفين', embed: PayrollPanel },
+    { id: 'reports', label_en: 'Finance Reports', label_ar: 'التقارير المالية', icon: 'summarize', group: 'Reports & Audit', group_ar: 'التقارير والتدقيق', embed: ReportsPanel },
+    { id: 'analytics', label_en: 'Finance Analytics', label_ar: 'التحليلات المالية', icon: 'analytics', group: 'Reports & Audit', group_ar: 'التقارير والتدقيق', embed: AnalyticsPanel },
+    { id: 'audit', label_en: 'Audit Log', label_ar: 'سجل التدقيق', icon: 'policy', group: 'Reports & Audit', group_ar: 'التقارير والتدقيق', embed: AuditLogPanel },
   ];
 
   return (

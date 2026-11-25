@@ -13,6 +13,7 @@ import { useTabParam } from '../../lib/useTabParam';
 
 const TaskBoard = lazy(() => import('../erp/governance/TaskBoard'));
 const MySelfServicePanel = lazy(() => import('../erp/campus/MySelfServicePanel'));
+const DutiesPanel = lazy(() => import('../erp/governance/DutiesPanel'));
 const MessagesPanel = lazy(() => import('../../pages/Messages'));
 
 /** Map ErpDashboard tile modules → portal tab ids (when present). */
@@ -94,6 +95,9 @@ export default function RolePortalShell({
     }
     if (isEmployee && !existingIds.has('self') && enabled('self_service')) {
       extra.push({ id: 'self', label_en: 'My Workspace', label_ar: 'مساحتي', icon: 'badge', group: 'Workspace', group_ar: 'المساحة', embed: MySelfServicePanel });
+    }
+    if (isEmployee && !existingIds.has('duties') && enabled('duties')) {
+      extra.push({ id: 'duties', label_en: 'My Duties', label_ar: 'مسؤولياتي', icon: 'assignment_ind', group: 'Workspace', group_ar: 'المساحة', embed: DutiesPanel });
     }
     if (isApproved && !isSuperAdmin && !existingIds.has('messages') && enabled('messaging')) {
       extra.push({ id: 'messages', label_en: 'Messages', label_ar: 'الرسائل', icon: 'forum', group: 'Workspace', group_ar: 'المساحة', embed: MessagesPanel, embedProps: { embedded: true } });
