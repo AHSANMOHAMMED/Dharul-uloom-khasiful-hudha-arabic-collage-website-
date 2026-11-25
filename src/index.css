@@ -193,17 +193,17 @@ html[lang="ta"] td {
 
 .erp-theme [class*='bg-gray-950'],
 .erp-theme [class*='bg-gray-900'] { background-color: #FFFFFF; }
-.erp-theme [class*='bg-gray-800'] { background-color: #FBF8F0; }
-.erp-theme [class*='bg-black/'] { background-color: rgba(11, 59, 46, 0.5); }
-.erp-theme [class*='bg-emerald-950'], .erp-theme [class*='bg-emerald-900/'] { background-color: #E3F1EA; }
-.erp-theme [class*='bg-amber-950'], .erp-theme [class*='bg-amber-900/'] { background-color: #FEF6E4; }
+.erp-theme [class*='bg-gray-800'] { background-color: #F8FAFC; }
+.erp-theme [class*='bg-black/'] { background-color: rgba(15, 23, 42, 0.45); }
+.erp-theme [class*='bg-emerald-950'], .erp-theme [class*='bg-emerald-900/'] { background-color: #ECFDF5; }
+.erp-theme [class*='bg-amber-950'], .erp-theme [class*='bg-amber-900/'] { background-color: #FFFBEB; }
 .erp-theme [class*='bg-red-950'], .erp-theme [class*='bg-red-900/'] { background-color: #FEF2F2; }
 .erp-theme [class*='bg-sky-950'], .erp-theme [class*='bg-sky-900/'] { background-color: #EFF6FF; }
 
 .erp-theme [class*='border-gray-7'],
 .erp-theme [class*='border-gray-8'],
-.erp-theme [class*='border-gray-9'] { border-color: #E8E1D0; }
-.erp-theme [class*='divide-gray-'] > :not([hidden]) ~ :not([hidden]) { border-color: #E8E1D0; }
+.erp-theme [class*='border-gray-9'] { border-color: #E2E8F0; }
+.erp-theme [class*='divide-gray-'] > :not([hidden]) ~ :not([hidden]) { border-color: #E2E8F0; }
 .erp-theme [class*='border-emerald-8'], .erp-theme [class*='border-emerald-9'] { border-color: rgba(17, 105, 74, 0.25); }
 .erp-theme [class*='border-amber-8'] { border-color: rgba(194, 154, 58, 0.45); }
 .erp-theme [class*='border-red-8'] { border-color: rgba(179, 38, 30, 0.3); }

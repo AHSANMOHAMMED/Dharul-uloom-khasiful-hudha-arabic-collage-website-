@@ -10,7 +10,6 @@ import PayFeeButton from '../components/PayFeeButton';
 import ReceiptsArrears from '../components/ReceiptsArrears';
 import StudentLmsPanel from '../components/StudentLmsPanel';
 import PortalTabChrome from '../components/portals/PortalTabChrome';
-import KhatamPattern from '../components/KhatamPattern';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
 import RoleSwitcher from '../components/RoleSwitcher';
 import Icon from '../components/Icon';
@@ -260,22 +259,22 @@ export default function StudentDashboard() {
     >
       <div className="space-y-8">
         {activeTab === 'overview' && (
-          <div className="rounded-[14px] bg-ink-green-900 text-paper-white p-6 sm:p-8 shadow-manuscript-md border border-sand-border/20 relative overflow-hidden">
-            <KhatamPattern className="opacity-[0.04]" strokeColor="#FBF8F0" id="student-header-khatam" />
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="rounded-2xl bg-white text-[#0F172A] p-6 sm:p-8 shadow-xs border border-slate-200 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-[#11694A]" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-700/80 text-white text-[11px] font-semibold uppercase tracking-wider">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#E3F1EA] text-[#0B3B2E] border border-[#11694A]/20 text-[11px] font-semibold uppercase tracking-wider">
                     {tx('بوابة الطالب الأكاديمية', 'Student Portal Desk')}
                   </span>
                   {user?.indexNumber && (
-                    <span className="font-mono text-xs bg-paper-white/10 px-2.5 py-0.5 rounded border border-sand-border/20 text-gold-wash-100">{user.indexNumber}</span>
+                    <span className="font-mono text-xs bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200 text-[#0B3B2E]">{user.indexNumber}</span>
                   )}
                 </div>
-                <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-paper-white">
+                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#0B3B2E]">
                   {tx(`السلام عليكم ورحمة الله، ${user?.username}`, `Assalamu Alaikum, ${user?.username}`)}
                 </h1>
-                <p className="text-xs sm:text-sm text-dark-text-primary/75 max-w-xl font-sans">
+                <p className="text-xs sm:text-sm text-slate-600 max-w-xl font-sans">
                   {tx(
                     'متابعة الحضور اليومي في الحلقات، كشف الدرجات، حالة الرسوم والواجبات المدرسية المفتوحة.',
                     'Review your daily halaqah presence, term marksheet, tuition status, and open assignment submissions.'
@@ -283,7 +282,7 @@ export default function StudentDashboard() {
                 </p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <Link to="/library" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-paper-white/10 hover:bg-paper-white/20 text-white text-xs font-semibold border border-sand-border/20 transition-colors">
+                <Link to="/library" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0B3B2E] hover:bg-[#11694A] text-white text-xs font-semibold transition-colors shadow-xs">
                   <Icon name="auto_stories" className="text-[18px]" />
                   <span>{tx('المكتبة الرقمية', 'Open Library')}</span>
                 </Link>

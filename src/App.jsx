@@ -109,7 +109,7 @@ function AppShell({ children }) {
 
   if (hideChrome) {
     return (
-      <div className="min-h-screen w-full min-w-0 flex flex-col bg-[#FBF8F0]">
+      <div className="min-h-screen w-full min-w-0 flex flex-col bg-[#F8FAFC]">
         <a href="#main-content" className="skip-link">{tx('تجاوز إلى المحتوى', 'Skip to content')}</a>
         <main id="main-content" tabIndex="-1" className="w-full min-w-0 flex-grow">{content}</main>
         <OfflineIndicator />

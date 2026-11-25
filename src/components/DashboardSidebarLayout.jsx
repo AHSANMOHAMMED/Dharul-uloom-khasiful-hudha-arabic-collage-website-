@@ -80,18 +80,18 @@ export default function DashboardSidebarLayout({
   const currentNav = navItems.find((n) => n.id === activeItem);
 
   return (
-    <div className="erp-theme min-h-screen bg-[#FBF8F0] text-[#14201B] flex relative overflow-hidden" dir={tx('rtl', 'ltr')}>
+    <div className="erp-theme min-h-screen bg-[#F8FAFC] text-[#0F172A] flex relative overflow-hidden" dir={tx('rtl', 'ltr')}>
       
-      {/* Background Watermark (Page-Wide) */}
+      {/* Subtle Institutional Watermark */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <KhatamPattern className="opacity-[0.035]" strokeColor="#0B3B2E" id="workspace-sidebar-khatam" />
+        <KhatamPattern className="opacity-[0.02]" strokeColor="#0B3B2E" id="workspace-sidebar-khatam" />
       </div>
 
       {/* Mobile Backdrop Overlay */}
       {mobileOpen && (
         <button
           type="button"
-          className="fixed inset-0 bg-[#0B3B2E]/50 backdrop-blur-xs z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden"
           onClick={() => setMobileOpen(false)}
           aria-label={tx('إغلاق القائمة الجانبية', 'Close sidebar menu')}
         />
@@ -99,7 +99,7 @@ export default function DashboardSidebarLayout({
 
       {/* ── Fixed Sidebar ─────────────────────────────────────────────────── */}
       <aside
-        className={`fixed top-0 bottom-0 start-0 z-50 w-72 bg-white border-e border-[#E8E1D0] flex flex-col shadow-[2px_0_12px_rgba(11,59,46,0.04)] transition-transform duration-300 ease-in-out lg:translate-x-0 rtl:lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 start-0 z-50 w-72 bg-white border-e border-slate-200 flex flex-col shadow-[2px_0_12px_rgba(15,23,42,0.04)] transition-transform duration-300 ease-in-out lg:translate-x-0 rtl:lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full lg:translate-x-0 rtl:lg:translate-x-0'
         }`}
       >
@@ -233,9 +233,9 @@ export default function DashboardSidebarLayout({
         </div>
 
         {/* Sidebar Footer: Profile Card + Language + Sign Out */}
-        <div className="p-3.5 border-t border-[#E8E1D0] bg-[#FDFBF7] space-y-2.5">
+        <div className="p-3.5 border-t border-slate-200 bg-white space-y-2.5">
           {/* User Profile Card */}
-          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-[#E8E1D0] shadow-2xs">
+          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
             <div className="w-9 h-9 rounded-lg bg-[#E3F1EA] text-[#11694A] font-serif font-bold text-sm flex items-center justify-center shrink-0 border border-[#11694A]/20">
               {(user?.username || user?.email || 'U')[0].toUpperCase()}
             </div>
@@ -361,7 +361,7 @@ export default function DashboardSidebarLayout({
         </main>
 
         {/* Minimal Institutional Footer */}
-        <footer className="py-3 px-6 text-center text-[11px] text-[#4A5E56] font-sans border-t border-[#E8E1D0]/60 bg-white/40">
+        <footer className="py-3 px-6 text-center text-[11px] text-slate-500 font-sans border-t border-slate-200 bg-white">
           {tx(
             'دار العلوم كاشف الهدى العربية · مدلي بالي، سريلانكا · البوابة المعتمدة © 2026',
             'D.U. Kashiful Hudha Arabic College · Mudalaippali, Sri Lanka · Institutional Portal © 2026'

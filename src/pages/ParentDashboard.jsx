@@ -12,7 +12,6 @@ import { claimParentInvite } from '../lib/parentInviteApi';
 import { rpc } from '../lib/erp/rpc';
 import { getStudentSubmissions, listAssignmentsForClass } from '../lib/lmsApi';
 import { listActivationEventsForChildren } from '../lib/notifyApi';
-import KhatamPattern from '../components/KhatamPattern';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
 import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
@@ -361,20 +360,20 @@ export default function ParentDashboard() {
       <div className="space-y-8">
 
         {activeTab === 'overview' && (
-        <div className="rounded-[14px] bg-ink-green-900 text-paper-white p-6 sm:p-8 shadow-manuscript-md border border-sand-border/20 relative overflow-hidden">
-          <KhatamPattern className="opacity-[0.04]" strokeColor="#FBF8F0" id="parent-header-khatam" />
+        <div className="rounded-2xl bg-white text-[#0F172A] p-6 sm:p-8 shadow-xs border border-slate-200 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[#C29A3A]" />
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5">
-              <span className="px-2.5 py-0.5 rounded-full bg-gold-wash-100 text-role-parent text-[11px] font-semibold uppercase tracking-wider inline-block">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-[#92400E] border border-amber-200 text-[11px] font-semibold uppercase tracking-wider inline-block">
                 {tx('بوابة أولياء الأمور', 'Parent Portal & Guardian Ledger')}
               </span>
 
-              <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-paper-white">
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#0B3B2E]">
                 {tx(`مرحباً بك، ${user?.username}`, `Welcome back, ${user?.username}`)}
               </h1>
 
-              <p className="text-xs sm:text-sm text-dark-text-primary/75 max-w-xl font-sans">
+              <p className="text-xs sm:text-sm text-slate-600 max-w-xl font-sans">
                 {tx(
                   'متابعة الحضور والغياب، تقديم طلبات الإجازة، تسوية الرسوم الدراسية، والاطلاع على النتائج الأكاديمية لأبنائك.',
                   'Review residential boarding attendance, submit leave exeats, settle term fees, and examine terminal appraisals for your wards.'
