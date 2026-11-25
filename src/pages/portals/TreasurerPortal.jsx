@@ -10,6 +10,9 @@ const DonationsPanel = lazy(() => import('../../components/erp/finance/Donations
 const ExpensesPanel = lazy(() => import('../../components/erp/finance/ExpensesPanel'));
 const FinanceHubPanel = lazy(() => import('../../components/erp/finance/FinanceHubPanel'));
 const PayrollPanel = lazy(() => import('../../components/erp/finance/PayrollPanel'));
+const PettyCashPanel = lazy(() => import('../../components/erp/governance/PettyCashPanel'));
+const ReportsPanel = lazy(() => import('../../components/erp/ops/ReportsPanel'));
+const AnalyticsPanel = lazy(() => import('../../components/erp/ops/AnalyticsPanel'));
 const AuditLogPanel = lazy(() => import('../../components/erp/finance/AuditLogPanel'));
 
 export default function TreasurerPortal() {
@@ -22,6 +25,9 @@ export default function TreasurerPortal() {
     { id: 'donations', label_en: 'Donations', label_ar: 'التبرعات', icon: 'volunteer_activism', embed: DonationsPanel },
     { id: 'expenses', label_en: 'Expenses', label_ar: 'المصروفات', icon: 'money_off', embed: ExpensesPanel },
     { id: 'payroll', label_en: 'Payroll', label_ar: 'الرواتب', icon: 'payments', embed: PayrollPanel },
+    { id: 'pettycash', label_en: 'Petty Cash', label_ar: 'النثرية', icon: 'account_balance_wallet', embed: PettyCashPanel },
+    { id: 'reports', label_en: 'Reports', label_ar: 'التقارير', icon: 'summarize', embed: ReportsPanel },
+    { id: 'analytics', label_en: 'Analytics', label_ar: 'التحليلات', icon: 'analytics', embed: AnalyticsPanel },
     { id: 'audit', label_en: 'Audit', label_ar: 'التدقيق', icon: 'policy', embed: AuditLogPanel },
   ];
 

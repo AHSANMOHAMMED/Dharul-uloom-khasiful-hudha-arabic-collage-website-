@@ -9,6 +9,8 @@ const ChequesPanel = lazy(() => import('../../components/erp/finance/ChequesPane
 const DonationsPanel = lazy(() => import('../../components/erp/finance/DonationsPanel'));
 const ExpensesPanel = lazy(() => import('../../components/erp/finance/ExpensesPanel'));
 const FinanceHubPanel = lazy(() => import('../../components/erp/finance/FinanceHubPanel'));
+const ReportsPanel = lazy(() => import('../../components/erp/ops/ReportsPanel'));
+const AnalyticsPanel = lazy(() => import('../../components/erp/ops/AnalyticsPanel'));
 const AuditLogPanel = lazy(() => import('../../components/erp/finance/AuditLogPanel'));
 
 export default function AccountantPortal() {
@@ -20,6 +22,8 @@ export default function AccountantPortal() {
     { id: 'cheques', label_en: 'Cheques', label_ar: 'الشيكات', icon: 'receipt_long', embed: ChequesPanel },
     { id: 'donations', label_en: 'Donations', label_ar: 'التبرعات', icon: 'volunteer_activism', embed: DonationsPanel },
     { id: 'expenses', label_en: 'Expenses', label_ar: 'المصروفات', icon: 'money_off', embed: ExpensesPanel },
+    { id: 'reports', label_en: 'Reports', label_ar: 'التقارير', icon: 'summarize', embed: ReportsPanel },
+    { id: 'analytics', label_en: 'Analytics', label_ar: 'التحليلات', icon: 'analytics', embed: AnalyticsPanel },
     { id: 'audit', label_en: 'Audit', label_ar: 'التدقيق', icon: 'policy', embed: AuditLogPanel },
   ];
 

@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useAuth } from '../../../context/AuthContext';
 import { AsyncView, Button, Card, PageHeader, Stat, useAsync, useLang } from '../ui';
 import { formatMoney, rpc } from '../../../lib/erp/rpc';
 import { CRM_STAGES, labelOf } from '../../../lib/erp/campusApi';
@@ -31,10 +32,24 @@ function ChartTooltip({ active, payload, label, money }) {
 
 export default function ErpDashboard() {
   const { t, ar } = useLang();
+  const auth = useAuth();
   const navigate = useNavigate();
   const [, setParams] = useSearchParams();
   const portalNav = usePortalNav();
   const [state, reload] = useAsync(async () => (await rpc('org_dashboard_stats')) ?? {}, []);
+
+  const canStudents = Boolean(auth.isAdmin || auth.isAcademicAdmin || auth.isAdmissionsStaff || auth.isTutor || auth.isHostelStaff || auth.isWelfareStaff);
+  const canHr = Boolean(auth.isHrStaff || auth.isPrincipal || auth.isVP);
+  const canAcademics = Boolean(auth.isAdmin || auth.isAcademicAdmin || auth.isTutor);
+  const canFinance = Boolean(auth.isFinanceViewer);
+  const canCrm = Boolean(auth.isAdmissionsStaff);
+  const canWelfare = Boolean(auth.isWelfareStaff);
+  const canHostel = Boolean(auth.isHostelStaff);
+  const canCertificates = Boolean(auth.isAcademicAdmin || auth.isAdmin);
+  const canPayroll = Boolean(auth.isHrStaff || auth.isFinanceViewer);
+  const canExpenses = Boolean(auth.isFinanceViewer || auth.isFinanceStaff);
+  const showPeople = canStudents || canHr || canAcademics;
+  const showCampus = canCrm || canWelfare || canHostel || canCertificates;
   const go = (module) => {
     // Prefer in-portal tab switch (admin / role portals) so the full module
     // replaces overview — never leave a mini preview under the dashboard.
@@ -75,76 +90,96 @@ export default function ErpDashboard() {
           const occRate = hostel.beds ? Math.round((hostel.occupied * 100) / hostel.beds) : null;
           return (
             <div className="space-y-6">
-              <section>
-                <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('People', 'الأشخاص')}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-                  <Tile go={go} module="students" label={t('Students', 'الطلاب')} value={s.students ?? 0} />
-                  <Tile go={go} module="hr" label={t('Employees', 'الموظفون')} value={s.employees ?? 0} tone="blue" />
-                  <Tile go={go} module="students" label={t('Parents', 'أولياء الأمور')} value={s.parents ?? 0} tone="gray" />
-                  <Tile go={go} module="students" label={t('Pending approvals', 'بانتظار الموافقة')} value={s.pending_approvals ?? 0}
-                    hint={`${s.pending_parent_links ?? 0} ${t('parent link requests', 'طلبات ربط')}`} tone={s.pending_approvals ? 'amber' : 'gray'} />
-                  <Tile go={go} module="academics" label={t('Attendance today', 'حضور اليوم')}
-                    value={att.rate != null ? `${att.rate}%` : '—'} hint={`${att.present ?? 0}/${att.marked ?? 0} ${t('marked', 'مسجل')}`} />
-                  <Tile go={go} module="hr" label={t('Leave pending', 'إجازات معلقة')} value={(s.staff_leave_pending ?? 0) + (s.student_leave_pending ?? 0)}
-                    hint={`${t('Staff', 'موظفون')} ${s.staff_leave_pending ?? 0} · ${t('Students', 'طلاب')} ${s.student_leave_pending ?? 0}`} tone="amber" />
-                </div>
-              </section>
-
-              <section>
-                <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('Finance', 'المالية')} · {fees.month}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-                  <Tile go={go} module="fees" label={t('Fees invoiced', 'الرسوم المفوترة')} value={formatMoney(fees.invoiced)} tone="gray" />
-                  <Tile go={go} module="fees" label={t('Fees collected', 'الرسوم المحصلة')} value={formatMoney(fees.collected)} />
-                  <Tile go={go} module="fees" label={t('Outstanding (month)', 'المتبقي (الشهر)')} value={formatMoney(fees.outstanding)}
-                    hint={`${t('All time', 'الإجمالي')}: ${formatMoney(s.fees_outstanding_total)}`} tone="red" />
-                  <Tile go={go} module="fees" label={t('Collections 30 days', 'تحصيل 30 يومًا')} value={formatMoney(s.collections_30d)} />
-                  <Tile go={go} module="expenses" label={t('Expenses (month)', 'المصروفات (الشهر)')} value={formatMoney(s.expenses_month)}
-                    hint={`${s.expenses_pending ?? 0} ${t('awaiting approval', 'بانتظار الموافقة')}`} tone="amber" />
-                  <Tile go={go} module="donations" label={t('Donations (month)', 'التبرعات (الشهر)')} value={formatMoney(s.donations_month)} tone="blue" />
-                  <Tile go={go} module="payroll" label={t('Last payroll', 'آخر رواتب')}
-                    value={pay ? formatMoney(pay.net) : '—'} hint={pay ? `${pay.period} · ${pay.status} · ${pay.staff} ${t('staff', 'موظف')}` : t('No payroll yet', 'لا رواتب بعد')} tone="gray" />
-                </div>
-              </section>
-
-              <section>
-                <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('Campus & admissions', 'الحرم والقبول')}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-                  <Tile go={go} module="crm" label={t('Overdue follow-ups', 'متابعات متأخرة')} value={s.followups_overdue ?? 0} tone={s.followups_overdue ? 'red' : 'gray'} />
-                  <Tile go={go} module="welfare" label={t('Open discipline cases', 'حالات انضباط مفتوحة')} value={s.discipline_open ?? 0} tone="amber" />
-                  <Tile go={go} module="hostel" label={t('Hostel occupancy', 'إشغال السكن')}
-                    value={occRate != null ? `${occRate}%` : '—'} hint={`${hostel.occupied ?? 0}/${hostel.beds ?? 0} ${t('beds', 'سرير')}`} tone="blue" />
-                  <Tile go={go} module="certificates" label={t('Document requests', 'طلبات الوثائق')} value={s.document_requests_pending ?? 0} tone="amber" />
-                </div>
-              </section>
-
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <Card title={t('Admissions pipeline', 'مسار القبول')} actions={<Button size="sm" variant="ghost" onClick={() => go('crm')}>{t('Open CRM', 'فتح CRM')} →</Button>}>
-                  <div className="h-64" dir="ltr">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={pipeline} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                        <CartesianGrid stroke={GRID} vertical={false} />
-                        <XAxis dataKey="name" stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                        <YAxis allowDecimals={false} stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                        <Tooltip cursor={{ fill: 'rgba(17,105,74,0.06)' }} content={<ChartTooltip />} />
-                        <Bar dataKey="value" fill={BAR} radius={[4, 4, 0, 0]} maxBarSize={40} />
-                      </BarChart>
-                    </ResponsiveContainer>
+              {showPeople && (
+                <section>
+                  <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('People', 'الأشخاص')}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                    {canStudents && <Tile go={go} module="students" label={t('Students', 'الطلاب')} value={s.students ?? 0} />}
+                    {canHr && <Tile go={go} module="hr" label={t('Employees', 'الموظفون')} value={s.employees ?? 0} tone="blue" />}
+                    {canStudents && <Tile go={go} module="students" label={t('Parents', 'أولياء الأمور')} value={s.parents ?? 0} tone="gray" />}
+                    {canStudents && (
+                      <Tile go={go} module="students" label={t('Pending approvals', 'بانتظار الموافقة')} value={s.pending_approvals ?? 0}
+                        hint={`${s.pending_parent_links ?? 0} ${t('parent link requests', 'طلبات ربط')}`} tone={s.pending_approvals ? 'amber' : 'gray'} />
+                    )}
+                    {canAcademics && (
+                      <Tile go={go} module="academics" label={t('Attendance today', 'حضور اليوم')}
+                        value={att.rate != null ? `${att.rate}%` : '—'} hint={`${att.present ?? 0}/${att.marked ?? 0} ${t('marked', 'مسجل')}`} />
+                    )}
+                    {canHr && (
+                      <Tile go={go} module="hr" label={t('Leave pending', 'إجازات معلقة')} value={(s.staff_leave_pending ?? 0) + (s.student_leave_pending ?? 0)}
+                        hint={`${t('Staff', 'موظفون')} ${s.staff_leave_pending ?? 0} · ${t('Students', 'طلاب')} ${s.student_leave_pending ?? 0}`} tone="amber" />
+                    )}
                   </div>
-                </Card>
-                <Card title={`${t('Fees this month', 'رسوم هذا الشهر')} (${fees.month || ''})`} actions={<Button size="sm" variant="ghost" onClick={() => go('fees')}>{t('Open fees', 'فتح الرسوم')} →</Button>}>
-                  <div className="h-64" dir="ltr">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={feeBars} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                        <CartesianGrid stroke={GRID} vertical={false} />
-                        <XAxis dataKey="name" stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                        <YAxis stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => Number(v).toLocaleString('en-LK')} />
-                        <Tooltip cursor={{ fill: 'rgba(17,105,74,0.06)' }} content={<ChartTooltip money />} />
-                        <Bar dataKey="value" fill={BAR} radius={[4, 4, 0, 0]} maxBarSize={56} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                </section>
+              )}
+
+              {canFinance && (
+                <section>
+                  <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('Finance', 'المالية')} · {fees.month}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                    <Tile go={go} module="fees" label={t('Fees invoiced', 'الرسوم المفوترة')} value={formatMoney(fees.invoiced)} tone="gray" />
+                    <Tile go={go} module="fees" label={t('Fees collected', 'الرسوم المحصلة')} value={formatMoney(fees.collected)} />
+                    <Tile go={go} module="fees" label={t('Outstanding (month)', 'المتبقي (الشهر)')} value={formatMoney(fees.outstanding)}
+                      hint={`${t('All time', 'الإجمالي')}: ${formatMoney(s.fees_outstanding_total)}`} tone="red" />
+                    <Tile go={go} module="fees" label={t('Collections 30 days', 'تحصيل 30 يومًا')} value={formatMoney(s.collections_30d)} />
+                    <Tile go={go} module={canExpenses ? 'expenses' : undefined} label={t('Expenses (month)', 'المصروفات (الشهر)')} value={formatMoney(s.expenses_month)}
+                      hint={`${s.expenses_pending ?? 0} ${t('awaiting approval', 'بانتظار الموافقة')}`} tone="amber" />
+                    <Tile go={go} module="donations" label={t('Donations (month)', 'التبرعات (الشهر)')} value={formatMoney(s.donations_month)} tone="blue" />
+                    <Tile go={go} module={canPayroll ? 'payroll' : undefined} label={t('Last payroll', 'آخر رواتب')}
+                      value={pay ? formatMoney(pay.net) : '—'} hint={pay ? `${pay.period} · ${pay.status} · ${pay.staff} ${t('staff', 'موظف')}` : t('No payroll yet', 'لا رواتب بعد')} tone="gray" />
                   </div>
-                </Card>
-              </div>
+                </section>
+              )}
+
+              {showCampus && (
+                <section>
+                  <h3 className="text-sm uppercase tracking-wide text-ink-text-muted mb-3">{t('Campus & admissions', 'الحرم والقبول')}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                    {canCrm && <Tile go={go} module="crm" label={t('Overdue follow-ups', 'متابعات متأخرة')} value={s.followups_overdue ?? 0} tone={s.followups_overdue ? 'red' : 'gray'} />}
+                    {canWelfare && <Tile go={go} module="welfare" label={t('Open discipline cases', 'حالات انضباط مفتوحة')} value={s.discipline_open ?? 0} tone="amber" />}
+                    {canHostel && (
+                      <Tile go={go} module="hostel" label={t('Hostel occupancy', 'إشغال السكن')}
+                        value={occRate != null ? `${occRate}%` : '—'} hint={`${hostel.occupied ?? 0}/${hostel.beds ?? 0} ${t('beds', 'سرير')}`} tone="blue" />
+                    )}
+                    {canCertificates && <Tile go={go} module="certificates" label={t('Document requests', 'طلبات الوثائق')} value={s.document_requests_pending ?? 0} tone="amber" />}
+                  </div>
+                </section>
+              )}
+
+              {(canCrm || canFinance) && (
+                <div className={`grid grid-cols-1 ${canCrm && canFinance ? 'xl:grid-cols-2' : ''} gap-6`}>
+                  {canCrm && (
+                    <Card title={t('Admissions pipeline', 'مسار القبول')} actions={<Button size="sm" variant="ghost" onClick={() => go('crm')}>{t('Open CRM', 'فتح CRM')} →</Button>}>
+                      <div className="h-64" dir="ltr">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={pipeline} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                            <CartesianGrid stroke={GRID} vertical={false} />
+                            <XAxis dataKey="name" stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                            <YAxis allowDecimals={false} stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                            <Tooltip cursor={{ fill: 'rgba(17,105,74,0.06)' }} content={<ChartTooltip />} />
+                            <Bar dataKey="value" fill={BAR} radius={[4, 4, 0, 0]} maxBarSize={40} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </Card>
+                  )}
+                  {canFinance && (
+                    <Card title={`${t('Fees this month', 'رسوم هذا الشهر')} (${fees.month || ''})`} actions={<Button size="sm" variant="ghost" onClick={() => go('fees')}>{t('Open fees', 'فتح الرسوم')} →</Button>}>
+                      <div className="h-64" dir="ltr">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={feeBars} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+                            <CartesianGrid stroke={GRID} vertical={false} />
+                            <XAxis dataKey="name" stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                            <YAxis stroke={AXIS} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={(v) => Number(v).toLocaleString('en-LK')} />
+                            <Tooltip cursor={{ fill: 'rgba(17,105,74,0.06)' }} content={<ChartTooltip money />} />
+                            <Bar dataKey="value" fill={BAR} radius={[4, 4, 0, 0]} maxBarSize={56} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </Card>
+                  )}
+                </div>
+              )}
             </div>
           );
         }}

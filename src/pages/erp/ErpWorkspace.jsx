@@ -97,7 +97,7 @@ const MODULES = [
     show: (a) => a.isFinanceViewer || a.isAdmin || a.isPrincipal,
     load: () => import('../../components/erp/governance/PettyCashPanel') },
   { id: 'audit', label: (t) => t('Audit Log', 'سجل التدقيق'), icon: 'history_edu', group: 'admin',
-    show: (a) => a.isAdmin || a.isAccountant,
+    show: (a) => a.isAdmin || a.isFinanceStaff,
     load: () => import('../../components/erp/finance/AuditLogPanel') },
   // SaaS / feature control lives on /platform (separate Super Admin console).
 ];
