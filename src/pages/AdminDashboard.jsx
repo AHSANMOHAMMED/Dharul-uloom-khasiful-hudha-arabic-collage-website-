@@ -380,7 +380,11 @@ const AdminDashboard = () => {
     }
   };
 
+  const [reminderBusy, setReminderBusy] = useState(false);
+
   const handleTriggerFeeReminder = async () => {
+    if (reminderBusy) return;
+    setReminderBusy(true);
     try {
       // Generates this month's invoices (fee structures, hostel, concessions) and
       // notifies students + linked parents — idempotent, safe to press twice.
@@ -391,6 +395,8 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error('Error triggering fee reminders:', err);
       toast.error(tx('فشل إرسال تذكيرات الرسوم', 'Failed to dispatch fee reminders'));
+    } finally {
+      setReminderBusy(false);
     }
   };
 
@@ -482,12 +488,14 @@ const AdminDashboard = () => {
       ]}
       topActions={
         <button
+          type="button"
+          disabled={reminderBusy}
           onClick={handleTriggerFeeReminder}
           title={tx('إرسال تذكير بالرسوم', 'Trigger Fee Reminders')}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E2E8F0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#F8FAFC] shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-slate-50 shadow-xs disabled:opacity-50"
         >
           <Icon name="notifications_active" className="text-[16px] text-[#C29A3A]" />
-          <span className="hidden md:inline">{tx('تذكير الرسوم', 'Fee Reminders')}</span>
+          <span className="hidden md:inline">{reminderBusy ? tx('جارٍ الإرسال…', 'Sending…') : tx('تذكير الرسوم', 'Fee Reminders')}</span>
         </button>
       }
     >

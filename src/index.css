@@ -49,6 +49,12 @@
   }
 }
 
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -209,6 +215,92 @@ html[lang="ta"] td {
 .erp-theme [class*='border-gray-8'],
 .erp-theme [class*='border-gray-9'] { border-color: #E2E8F0; }
 .erp-theme [class*='divide-gray-'] > :not([hidden]) ~ :not([hidden]) { border-color: #E2E8F0; }
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * Dark mode overrides for TailAdmin-style workspace (.erp-theme inside html.dark)
+ * ─────────────────────────────────────────────────────────────────────────── */
+html.dark .erp-theme {
+  background-color: #0C1512;
+  color: #EAF2EE;
+}
+
+html.dark .erp-theme .bg-white,
+html.dark .erp-theme .bg-paper-white,
+html.dark .erp-theme [class*='bg-gray-9'] {
+  background-color: #13201B;
+}
+
+html.dark .erp-theme .bg-parchment-50,
+html.dark .erp-theme .bg-slate-50,
+html.dark .erp-theme .bg-\[\#F8FAFC\],
+html.dark .erp-theme .bg-\[\#FBF8F0\],
+html.dark .erp-theme [class*='bg-gray-8'] {
+  background-color: #0F1A16;
+}
+
+html.dark .erp-theme .bg-slate-100 {
+  background-color: #1A2B24;
+}
+
+html.dark .erp-theme .border-slate-200,
+html.dark .erp-theme .border-slate-100,
+html.dark .erp-theme .border-sand-border,
+html.dark .erp-theme .border-\[\#E2E8F0\],
+html.dark .erp-theme .border-\[\#E8E1D0\],
+html.dark .erp-theme [class*='border-gray-'] {
+  border-color: #223329;
+}
+
+html.dark .erp-theme .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .erp-theme .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+html.dark .erp-theme .divide-\[\#E2E8F0\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #223329;
+}
+
+html.dark .erp-theme .text-slate-900,
+html.dark .erp-theme .text-slate-800,
+html.dark .erp-theme .text-slate-700,
+html.dark .erp-theme .text-ink-green-900,
+html.dark .erp-theme .text-ink-text-primary,
+html.dark .erp-theme .text-\[\#0B3B2E\],
+html.dark .erp-theme .text-\[\#0F172A\],
+html.dark .erp-theme .text-gray-100,
+html.dark .erp-theme .text-gray-200,
+html.dark .erp-theme .text-gray-300 {
+  color: #EAF2EE;
+}
+
+html.dark .erp-theme .text-slate-600,
+html.dark .erp-theme .text-slate-500,
+html.dark .erp-theme .text-slate-400,
+html.dark .erp-theme .text-ink-text-secondary,
+html.dark .erp-theme .text-ink-text-muted,
+html.dark .erp-theme .text-\[\#4A5E56\],
+html.dark .erp-theme .text-gray-400,
+html.dark .erp-theme .text-gray-500,
+html.dark .erp-theme .text-gray-600 {
+  color: #9FB3AA;
+}
+
+html.dark .erp-theme input,
+html.dark .erp-theme select,
+html.dark .erp-theme textarea {
+  color-scheme: dark;
+  background-color: #0C1512;
+  color: #EAF2EE;
+  border-color: #223329;
+}
+
+html.dark .erp-theme tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #0C1512;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #223329;
+}
 .erp-theme [class*='border-emerald-8'], .erp-theme [class*='border-emerald-9'] { border-color: rgba(17, 105, 74, 0.25); }
 .erp-theme [class*='border-amber-8'] { border-color: rgba(194, 154, 58, 0.45); }
 .erp-theme [class*='border-red-8'] { border-color: rgba(179, 38, 30, 0.3); }

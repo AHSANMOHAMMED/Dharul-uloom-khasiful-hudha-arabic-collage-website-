@@ -115,17 +115,27 @@ export default function DashboardSidebarLayout({
   }, [location.pathname, location.search]);
 
   useEffect(() => {
-    const onFsChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    const onFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement || document.webkitFullscreenElement));
+    };
     document.addEventListener('fullscreenchange', onFsChange);
-    return () => document.removeEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+    };
   }, []);
 
   const toggleFullscreen = () => {
     if (typeof document === 'undefined') return;
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.().catch(() => {});
+    const activeEl = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!activeEl) {
+      const rootEl = document.documentElement;
+      const req = rootEl.requestFullscreen || rootEl.webkitRequestFullscreen;
+      Promise.resolve(req?.call(rootEl)).catch(() => {});
     } else {
-      document.exitFullscreen?.().catch(() => {});
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      Promise.resolve(exit?.call(document)).catch(() => {});
     }
   };
 
@@ -203,7 +213,7 @@ export default function DashboardSidebarLayout({
   })();
 
   return (
-    <div className="erp-theme min-h-screen bg-[#F8FAFC] dark:bg-dark-canvas text-[#0F172A] dark:text-dark-text-primary flex relative overflow-hidden" dir={tx('rtl', 'ltr')}>
+    <div className="erp-theme min-h-screen bg-[#F8FAFC] dark:bg-dark-canvas text-[#0F172A] dark:text-dark-text-primary flex relative overflow-x-clip" dir={tx('rtl', 'ltr')}>
       <a className="skip-link" href="#workspace-main">{tx('تخطي إلى المحتوى', 'Skip to main content')}</a>
 
       {/* Subtle Institutional Watermark */}
@@ -460,7 +470,7 @@ export default function DashboardSidebarLayout({
       </aside>
 
       {/* ── Main Workspace Body ────────────────────────────────────────────── */}
-      <div className={`flex-1 flex flex-col min-w-0 relative z-10 ${sidebarCollapsed ? 'lg:ms-20' : 'lg:ms-72'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 overflow-x-clip relative z-10 ${sidebarCollapsed ? 'lg:ms-20' : 'lg:ms-72'}`}>
         
         {/* Top Utility Header */}
         <header className="sticky top-0 z-30 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-md border-b border-slate-200 dark:border-dark-border px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
@@ -675,7 +685,7 @@ export default function DashboardSidebarLayout({
         </header>
 
         {/* Scrollable Content Workspace — erp-theme so embedded ERP panels use the official light manuscript palette */}
-        <main id="workspace-main" tabIndex="-1" className="erp-theme flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 space-y-5 max-w-screen-2xl w-full mx-auto text-ink-text-primary focus:outline-none">
+        <main id="workspace-main" tabIndex="-1" className="erp-theme flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 space-y-5 max-w-screen-2xl w-full min-w-0 overflow-x-clip mx-auto text-ink-text-primary focus:outline-none">
           {(() => {
             // Back / Forward / Home + "Portal › Section" on every section.
             const homeId = homeItem || navItems[0]?.id;
