@@ -100,26 +100,26 @@ export default function Home() {
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-r from-[#0b3b2e]/92 via-[#0b3b2e]/72 to-[#0b3b2e]/35"
+          className="absolute inset-0 bg-gradient-to-r rtl:bg-gradient-to-l from-[#0b3b2e]/90 via-[#0b3b2e]/75 to-[#0b3b2e]/40"
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-t from-[#0b3b2e]/80 via-transparent to-[#0b3b2e]/25"
+          className="absolute inset-0 bg-gradient-to-t from-[#0b3b2e]/85 via-[#0b3b2e]/20 to-[#0b3b2e]/30"
         />
 
         <div className="relative mx-auto flex min-h-[min(88vh,720px)] max-w-[1240px] flex-col justify-end px-5 pb-14 pt-28 sm:px-8 lg:justify-center lg:px-10 lg:pb-20 lg:pt-24">
           <div className="max-w-2xl text-white">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-white/95 backdrop-blur-sm">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/25 bg-[#0b3b2e]/60 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-white backdrop-blur-sm">
               <span className="h-2 w-2 rounded-full bg-[#e77835]" />
               {tx('مدلايبلي · كالبيتيا · سريلانكا', 'Mudalippalli · Kalpitiya · Sri Lanka')}
             </div>
-            <p className="mb-2 font-arabic text-2xl text-[#f0c786] sm:text-3xl" dir="rtl">
+            <p className="mb-2 font-arabic text-2xl text-[#f0c786] drop-shadow-sm sm:text-3xl" dir="rtl">
               دار العلوم كاشف الهدى
             </p>
-            <h1 className="font-serif text-4xl font-semibold leading-[1.12] tracking-tight sm:text-5xl lg:text-[3.4rem]">
+            <h1 className="font-serif text-4xl font-semibold leading-[1.12] tracking-tight drop-shadow-sm sm:text-5xl lg:text-[3.4rem]">
               {tx('العلمُ هدايةٌ ونور', 'Combine quality with morality')}
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-white/85 sm:text-lg sm:leading-8">
+            <p className="mt-5 max-w-xl text-base leading-7 text-white/95 drop-shadow-sm sm:text-lg sm:leading-8">
               {tx(
                 'كلية عربية إسلامية في مدلايبلي، كالبيتيا — برامج دراسية وقبول وبوابات للطلاب وأولياء الأمور في منصة واحدة.',
                 'An Arabic Islamic college in Mudalippalli, Kalpitiya — studies, admissions, and student & parent portals in one place.'
