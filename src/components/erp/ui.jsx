@@ -47,10 +47,10 @@ export function useAsync(fn, deps = []) {
 
 export function Card({ title, actions, children, className = '' }) {
   return (
-    <section className={`rounded-[14px] bg-paper-white p-5 border border-sand-border shadow-manuscript-sm ${className}`}>
+    <section className={`rounded-2xl bg-paper-white dark:bg-dark-surface p-5 border border-slate-200 dark:border-dark-border shadow-sm ${className}`}>
       {(title || actions) && (
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          {title && <h3 className="text-lg font-serif font-semibold text-ink-green-900">{title}</h3>}
+          {title && <h3 className="text-base font-sans font-semibold text-slate-900 dark:text-dark-text-primary text-pretty">{title}</h3>}
           {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
         </div>
       )}
@@ -59,7 +59,7 @@ export function Card({ title, actions, children, className = '' }) {
   );
 }
 
-export function Stat({ label, value, hint, tone = 'emerald', icon = null, className = '' }) {
+export function Stat({ label, value, hint, tone = 'emerald', icon = null, badge = null, badgeTone = null, onClick = null, className = '' }) {
   const tones = {
     emerald: 'text-emerald-700',
     amber: 'text-amber-700',
@@ -74,12 +74,26 @@ export function Stat({ label, value, hint, tone = 'emerald', icon = null, classN
     blue: 'bg-sky-50 text-sky-700 border-sky-200/70',
     gray: 'bg-slate-100 text-slate-700 border-slate-200',
   };
+  const badgeTones = {
+    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+    amber: 'bg-amber-50 text-amber-700 border-amber-200/80',
+    red: 'bg-rose-50 text-rose-700 border-rose-200/80',
+    blue: 'bg-sky-50 text-sky-700 border-sky-200/80',
+    gray: 'bg-slate-100 text-slate-600 border-slate-200',
+  };
+  const Tag = onClick ? 'button' : 'div';
   return (
-    <div className={`h-full flex flex-col justify-between rounded-2xl bg-white p-4 sm:p-5 border border-slate-200/90 shadow-xs ${className}`}>
-      <div className="flex items-start justify-between gap-3">
+    <Tag
+      type={onClick ? 'button' : undefined}
+      onClick={onClick || undefined}
+      className={`h-full w-full text-start flex flex-col justify-between rounded-2xl bg-white dark:bg-dark-surface p-4 sm:p-5 border border-slate-200 dark:border-dark-border shadow-sm ${
+        onClick ? 'cursor-pointer hover:border-emerald-300 hover:shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40' : ''
+      } ${className}`}
+    >
+      <div className="flex items-start justify-between gap-3 w-full">
         <div className="min-w-0">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 leading-snug">{label}</div>
-          <div className={`text-xl sm:text-2xl font-extrabold mt-1.5 tracking-tight tabular-nums ${tones[tone] || tones.emerald}`}>{value}</div>
+          <div className={`text-xl sm:text-2xl font-bold mt-1.5 tracking-tight tabular-nums ${tones[tone] || tones.emerald}`}>{value}</div>
         </div>
         {icon && (
           <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${iconTones[tone] || iconTones.emerald}`}>
@@ -87,8 +101,15 @@ export function Stat({ label, value, hint, tone = 'emerald', icon = null, classN
           </span>
         )}
       </div>
-      <div className="text-xs text-slate-500 mt-2.5 min-h-[1rem]">{hint || '\u00A0'}</div>
-    </div>
+      <div className="flex items-center justify-between gap-2 text-xs text-slate-500 mt-2.5 min-h-[1rem] w-full">
+        <span className="truncate">{hint || '\u00A0'}</span>
+        {badge && (
+          <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeTones[badgeTone || tone] || badgeTones.emerald}`}>
+            {badge}
+          </span>
+        )}
+      </div>
+    </Tag>
   );
 }
 
@@ -103,7 +124,7 @@ export function Button({ variant = 'primary', size = 'md', className = '', ...pr
   return (
     <button
       type="button"
-      className={`rounded-[10px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`rounded-[10px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     />
   );
@@ -296,9 +317,9 @@ export function PageHeader({ title, subtitle, actions }) {
   const embedded = useErpEmbedded();
   return (
     <div className={`flex flex-wrap items-end justify-between gap-4 erp-page-header ${embedded ? 'mb-4' : 'mb-6'}`}>
-      <div>
-        <h2 className={`${embedded ? 'text-xl' : 'text-2xl'} font-serif font-semibold text-ink-green-900`}>{title}</h2>
-        {subtitle && <p className="text-sm text-ink-text-secondary mt-1">{subtitle}</p>}
+      <div className="min-w-0">
+        <h2 className={`${embedded ? 'text-lg' : 'text-xl sm:text-2xl'} font-sans font-semibold text-slate-900 text-balance`}>{title}</h2>
+        {subtitle && <p className="text-sm text-slate-500 mt-1 max-w-3xl">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>

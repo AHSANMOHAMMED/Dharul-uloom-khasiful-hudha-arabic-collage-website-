@@ -50,7 +50,7 @@ export default function MessInventoryPanel() {
 
   const loadAll = useCallback(async () => {
     const [summary, items, movements, meals] = await Promise.all([
-      rpc('mess_inventory_summary').catch(() => null),
+      rpc('mess_inventory_summary'),
       query('inventory_items', (q) => q.select('*').eq('is_active', true).order('name')),
       query('inventory_movements', (q) => q.select('*, item:item_id(name, unit)').order('created_at', { ascending: false }).limit(150)),
       query('daily_meals', (q) => q.select('*').order('meal_date', { ascending: false }).limit(90)),

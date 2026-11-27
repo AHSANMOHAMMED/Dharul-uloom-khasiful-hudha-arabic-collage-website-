@@ -63,6 +63,7 @@ const MODULES = {
   'campus/CrmPanel': () => import('../components/erp/campus/CrmPanel'),
   'campus/StaffHrPanel': () => import('../components/erp/campus/StaffHrPanel'),
   'campus/HostelPanel': () => import('../components/erp/campus/HostelPanel'),
+  'campus/MessInventoryPanel': () => import('../components/erp/campus/MessInventoryPanel'),
   'campus/WelfarePanel': () => import('../components/erp/campus/WelfarePanel'),
   'campus/CertificatesPanel': () => import('../components/erp/campus/CertificatesPanel'),
   'campus/PlatformPanel': () => import('../components/erp/campus/PlatformPanel'),

@@ -8,12 +8,12 @@ async function unwrap(label, { data, error }) {
 export const ROLE_TEMPLATE_KEYS = [
   'student', 'parent', 'tutor', 'staff', 'admin', 'librarian',
   'principal', 'vice_principal', 'treasurer', 'accountant', 'hr_manager',
-  'admissions_officer', 'warden', 'counselor', 'exam_officer', 'it_officer',
+  'admissions_officer', 'warden', 'counselor', 'exam_officer', 'it_officer', 'store_manager',
 ];
 
 export const STAFF_HATS = [
   'none', 'principal', 'vice_principal', 'treasurer', 'accountant', 'hr_manager',
-  'librarian', 'admissions_officer', 'warden', 'counselor', 'exam_officer', 'it_officer',
+  'librarian', 'admissions_officer', 'warden', 'counselor', 'exam_officer', 'it_officer', 'store_manager',
 ];
 
 export async function platformInviteUser(payload) {

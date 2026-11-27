@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
@@ -15,6 +15,8 @@ import OrgAdminPanel from '../components/OrgAdminPanel';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import OverviewBanner from '../components/portals/OverviewBanner';
+import { Stat } from '../components/erp/ui';
 import RoleSwitcher from '../components/RoleSwitcher';
 import Icon from '../components/Icon';
 import { ErpEmbedProvider } from '../context/ErpEmbedContext';
@@ -498,117 +500,123 @@ const AdminDashboard = () => {
 
         {/* Welcome Executive Header — only on overview */}
         {activeTab === 'overview' && (
-        <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 sm:p-7 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#11694A]"></div>
-
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center font-serif text-2xl font-bold shrink-0 border border-[#11694A]/20">
-                إ
-              </div>
-              <div>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E3F1EA] text-[#11694A] border border-[#11694A]/20 mb-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#11694A]"></span>
-                  {tx('لوحة التحكم الإدارية', 'College Admin Console')}
-                </span>
-                <h1 className="text-xl sm:text-2xl font-serif font-bold text-[#0B3B2E]">
-                  {tx('مرحباً، {name}', 'Welcome, {name}').replace('{name}', user?.username || tx('المدير', 'Administrator'))}
-                </h1>
-                <p className="text-xs text-[#4A5E56] font-sans mt-0.5">
-                  {tx('اضغط أي مؤشر لفتح الوحدة كاملة.', 'Click any tile to open that full module.')}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                to="/erp"
-                className="text-xs font-semibold text-emerald-700 border border-[#E2E8F0] rounded-lg px-3 py-1.5 bg-[#F8FAFC] hover:bg-white"
-              >
-                {tx('فتح ERP الكامل', 'Open full ERP')}
-              </Link>
-              <span className="text-xs font-semibold text-[#0B3B2E] bg-[#F8FAFC] border border-[#E2E8F0] px-3 py-1.5 rounded-xl">
+          <OverviewBanner
+            portal_en={user?.role === 'super_admin' ? 'Super Admin Console' : 'College Admin Console'}
+            portal_ar={user?.role === 'super_admin' ? 'لوحة المشرف العام' : 'لوحة التحكم الإدارية'}
+            greeting_en="Welcome, {name}"
+            greeting_ar="مرحباً، {name}"
+            hint_en="Click any tile to open that full module."
+            hint_ar="اضغط أي مؤشر لفتح الوحدة كاملة."
+            erpLink
+            actions={
+              <span className="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl">
                 {tx('العام الأكاديمي: ٢٠٢٦', 'Academic Year: 2026')}
               </span>
-            </div>
-          </div>
-        </div>
+            }
+          />
         )}
 
         {/* KPI Stats Strip — clickable into real modules */}
         {activeTab === 'overview' && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[
-            {
-              label_en: 'Total Students',
-              label_ar: 'إجمالي الطلاب',
-              value: stats?.users?.students ?? '—',
-              icon: 'school',
-              color: '#11694A',
-              bg: '#E3F1EA',
-              tab: 'students',
-            },
-            {
-              label_en: 'Total Tutors',
-              label_ar: 'إجمالي المعلمين',
-              value: stats?.users?.tutors ?? '—',
-              icon: 'person_book',
-              color: '#0F7C86',
-              bg: '#E0F2F1',
-              tab: 'hrm',
-            },
-            {
-              label_en: 'Pending Approvals',
-              label_ar: 'بانتظار الموافقة',
-              value: pendingApprovals.length,
-              icon: 'pending_actions',
-              color: pendingApprovals.length > 0 ? '#B91C1C' : '#11694A',
-              bg: pendingApprovals.length > 0 ? '#FEE2E2' : '#E3F1EA',
-              tab: 'approvals',
-            },
-            {
-              label_en: 'Library Books',
-              label_ar: 'الكتب المتاحة',
-              value: stats?.library?.books ?? '—',
-              icon: 'menu_book',
-              color: '#C29A3A',
-              bg: '#FEF9EE',
-              href: '/library-admin',
-            },
-          ].map((kpi) => {
-            const inner = (
-              <>
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: kpi.bg, color: kpi.color }}
-                >
-                  <Icon name={kpi.icon} className="text-xl" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-2xl font-serif font-bold" style={{ color: kpi.color }}>
-                    {kpi.value}
-                  </p>
-                  <p className="text-[11px] text-[#4A5E56] font-sans truncate">
-                    {tx(kpi.label_ar, kpi.label_en)}
-                  </p>
-                </div>
-              </>
-            );
-            const cls = 'bg-white rounded-2xl border border-[#E2E8F0] p-5 flex items-center gap-4 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] text-start hover:ring-2 hover:ring-emerald-600/40 transition w-full';
-            if (kpi.href) {
-              return (
-                <Link key={kpi.label_en} to={kpi.href} className={cls}>
-                  {inner}
-                </Link>
-              );
-            }
-            return (
-              <button key={kpi.label_en} type="button" className={cls} onClick={() => openTab(kpi.tab)}>
-                {inner}
-              </button>
-            );
-          })}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Stat
+            label={tx('إجمالي الطلاب', 'Total Students')}
+            value={stats?.users?.students ?? '—'}
+            hint={tx('فتح شؤون الطلاب', 'Open student records')}
+            icon="school"
+            tone="emerald"
+            onClick={() => openTab('students')}
+          />
+          <Stat
+            label={tx('إجمالي المعلمين', 'Total Tutors')}
+            value={stats?.users?.tutors ?? '—'}
+            hint={tx('فتح الموارد البشرية', 'Open Staff HR')}
+            icon="person_book"
+            tone="blue"
+            onClick={() => openTab('hrm')}
+          />
+          <Stat
+            label={tx('بانتظار الموافقة', 'Pending Approvals')}
+            value={pendingApprovals.length}
+            hint={pendingApprovals.length > 0 ? tx('مراجعة الطلبات الجديدة', 'Review pending accounts') : tx('لا توجد طلبات معلقة', 'All caught up')}
+            icon="pending_actions"
+            tone={pendingApprovals.length > 0 ? 'red' : 'emerald'}
+            badge={pendingApprovals.length > 0 ? tx('مطلوب إجراء', 'Action needed') : tx('مكتمل', 'Clear')}
+            badgeTone={pendingApprovals.length > 0 ? 'red' : 'emerald'}
+            onClick={() => openTab('approvals')}
+          />
+          <Stat
+            label={tx('الكتب المتاحة', 'Library Books')}
+            value={stats?.library?.books ?? '—'}
+            hint={tx('إدارة المكتبة الرقمية', 'Open Maktabah Admin')}
+            icon="menu_book"
+            tone="amber"
+            onClick={() => navigate('/library-admin')}
+          />
         </div>
+        )}
+
+        {/* TailAdmin Actionable Queues Summary */}
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-2xl bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-sans font-semibold text-slate-900 dark:text-dark-text-primary">
+                  {tx('طلبات اعتماد الحسابات', 'Pending Account Approvals')}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => openTab('approvals')}
+                  className="text-xs font-semibold text-emerald-700 hover:underline"
+                >
+                  {tx('عرض الكل', 'Review all')} ({pendingApprovals.length})
+                </button>
+              </div>
+              {pendingApprovals.length === 0 ? (
+                <p className="text-xs text-slate-500 py-2">{tx('لا توجد حسابات بانتظار الاعتماد.', 'All accounts are reviewed.')}</p>
+              ) : (
+                <ul className="divide-y divide-slate-100 dark:divide-dark-border">
+                  {pendingApprovals.slice(0, 4).map((acc) => (
+                    <li key={acc.id} className="py-2 flex items-center justify-between gap-2 text-xs">
+                      <span className="font-medium text-slate-800 dark:text-dark-text-primary truncate">{acc.full_name || acc.email || '—'}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold uppercase">
+                        {acc.account_type || acc.role || 'user'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="rounded-2xl bg-white dark:bg-dark-surface border border-slate-200 dark:border-dark-border p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-sans font-semibold text-slate-900 dark:text-dark-text-primary">
+                  {tx('طلبات القبول الجديدة', 'Admissions Inquiries Queue')}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => openTab('admissions')}
+                  className="text-xs font-semibold text-emerald-700 hover:underline"
+                >
+                  {tx('مراجعة الطلبات', 'Open queue')} ({admissions.length})
+                </button>
+              </div>
+              {admissions.length === 0 ? (
+                <p className="text-xs text-slate-500 py-2">{tx('لا توجد طلبات قبول معلقة حالياً.', 'No pending admissions inquiries.')}</p>
+              ) : (
+                <ul className="divide-y divide-slate-100 dark:divide-dark-border">
+                  {admissions.slice(0, 4).map((adm) => (
+                    <li key={adm._id || adm.id} className="py-2 flex items-center justify-between gap-2 text-xs">
+                      <span className="font-medium text-slate-800 dark:text-dark-text-primary truncate">{adm.studentName || '—'}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-semibold uppercase">
+                        {adm.course || '—'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Overview = live ERP dashboard. Tile clicks open the full module tab (not a preview). */}

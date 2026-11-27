@@ -75,7 +75,7 @@ Hard-gated behind `LEGACY_API_ENABLED=1`. See [`backend/README.md`](../backend/R
 ├── public/                   # Static assets, PWA SW, images
 ├── mobile/                   # ★ Expo Router native app
 ├── supabase/
-│   ├── migrations/           # 0001–0014 + books migration
+│   ├── migrations/           # Versioned Postgres schema, RLS, and workflow changes (currently through 0085)
 │   ├── functions/            # Edge Functions
 │   └── config.toml
 ├── scripts/shamela/          # Bulk library import workers
@@ -344,7 +344,7 @@ Shared helpers: `supabase/functions/_shared/notify.ts`.
 | Piece | Where | Notes |
 |-------|-------|-------|
 | SPA | **Vercel** | Env: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` |
-| DB / Auth / Storage / Functions | **Supabase** | Migrations 0001–0014 applied |
+| DB / Auth / Storage / Functions | **Supabase** | Apply through the latest checked-in migration (currently 0085); verify the staging head before release |
 | Secrets | Supabase Edge secrets | PayHere, Twilio, Resend, `SITE_URL` |
 | Mobile | Expo / EAS (when published) | `EXPO_PUBLIC_SUPABASE_*` |
 | Shamela bulk | Local or DO worker | Service role + `SHAMELA_API_KEY` |

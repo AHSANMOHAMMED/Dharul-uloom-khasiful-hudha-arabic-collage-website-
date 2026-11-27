@@ -11,7 +11,7 @@ so no role can read or write another institution's rows.
 |---|---|---|
 | `profiles.role` | `user`, `librarian`, `admin`, `super_admin` | admin = institution administrator; super_admin = SaaS operator |
 | `profiles.account_type` | `guest`, `student`, `parent`, `tutor`, `staff` | portal type (`staff` = non-teaching employee) |
-| `profiles.assigned_tutor_role` + `extra_roles[]` | `principal`, `vice_principal`, `treasurer`, `accountant`, `hr_manager`, `librarian`, `admissions_officer`, `warden`, `counselor`, `exam_officer` | duties (one person may hold several) |
+| `profiles.assigned_tutor_role` + `extra_roles[]` | `principal`, `vice_principal`, `treasurer`, `accountant`, `hr_manager`, `librarian`, `admissions_officer`, `warden`, `counselor`, `exam_officer`, `store_manager` | duties (one person may hold several) |
 | `profiles.is_approved` | bool | staff/student duties only work once approved |
 | `profiles.org_id` | uuid | tenant (set by sign-up trigger / invitation / index record) |
 
@@ -58,6 +58,9 @@ Public (anon): website content, `verify_student_index`, `verify_certificate(code
 
 See also [FINANCE_HUB.md](./FINANCE_HUB.md) and Super Admin `/platform` sidebar (identity, role/user feature ACL, communities, audit feed).
 
+**Meals & store inventory:** approved `store_manager`, warden, principal/vice-principal, finance-viewer, and admin roles use the ERP inventory module. Inventory movement history is read-only to clients; purchases and kitchen issues are recorded through guarded database RPCs.
+When the organization requires staff MFA, `store_manager` is included in the MFA-sensitive roles and requires an `aal2` session for inventory operations.
+
 ## Integrity rules (database-enforced)
 
 - Money is `numeric`; invoices = sum of append-only `fee_invoice_lines`; `paid_amount` = sum of posted `fee_payments`.
@@ -68,4 +71,4 @@ See also [FINANCE_HUB.md](./FINANCE_HUB.md) and Super Admin `/platform` sidebar 
 - Sensitive tables are captured in `audit_logs` (profiles, fees, payments, payroll, journals, HR, certificates…).
 - Direct messages are restricted to the two conversation participants; students/parents can contact approved staff, and staff can contact approved users in their own institution. WhatsApp alerts are independently controlled by each recipient's notification preference.
 
-Tests: `npm run test:db` (135 assertions in `supabase/tests/rls_erp_test.sql`).
+Tests: `npm run test:db` (RLS/workflow assertions in `supabase/tests/rls_erp_test.sql` plus the business-logic SQL suites).

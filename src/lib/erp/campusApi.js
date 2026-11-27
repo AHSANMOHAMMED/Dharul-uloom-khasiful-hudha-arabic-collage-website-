@@ -33,6 +33,7 @@ export const STAFF_ROLES = [
   { value: 'counselor', en: 'Counselor', ar: 'المرشد' },
   { value: 'exam_officer', en: 'Exam officer', ar: 'مسؤول الامتحانات' },
   { value: 'it_officer', en: 'IT officer (exam printing)', ar: 'مسؤول تقنية المعلومات' },
+  { value: 'store_manager', en: 'Store & kitchen manager', ar: 'مسؤول المخزن والمطبخ' },
 ];
 
 export const CRM_STAGES = [

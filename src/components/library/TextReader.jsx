@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import { cleanArabicWord } from '../../lib/dictionaryApi';
+import { getReadingProgress, saveReadingProgress } from '../../lib/libraryUserApi';
 import { tx } from '../../lib/tx';
 
 const HAS_ARABIC = /[ء-يٱ-ۓ]/;
@@ -26,16 +27,43 @@ function tokenize(content) {
  * Paginated Arabic page text (book_pages) where every Arabic word is clickable.
  * onWord(word, sentence) is called when the reader taps a word.
  */
-export default function TextReader({ bookId, totalPages: knownTotal, onWord }) {
+export default function TextReader({ bookId, totalPages: knownTotal, externalPage, onPageChange, onWord }) {
   useTranslation();
   const [index, setIndex] = useState(1); // 1-based position in page_index order
   const [total, setTotal] = useState(knownTotal || 0);
   const [jump, setJump] = useState('');
   const [state, setState] = useState({ loading: true, page: null, error: null });
+  const restoredForBook = useRef(null);
 
   useEffect(() => {
     setIndex(1);
-  }, [bookId]);
+    onPageChange?.(1);
+    restoredForBook.current = null;
+    if (!bookId) return undefined;
+    let alive = true;
+    getReadingProgress(bookId).then((prog) => {
+      if (!alive || restoredForBook.current === bookId) return;
+      restoredForBook.current = bookId;
+      const saved = Number(prog?.last_page);
+      if (Number.isFinite(saved) && saved > 1) {
+        const clamped = knownTotal ? Math.min(saved, knownTotal) : saved;
+        setIndex(clamped);
+        onPageChange?.(clamped);
+      }
+    });
+    return () => {
+      alive = false;
+    };
+  }, [bookId, knownTotal, onPageChange]);
+
+  useEffect(() => {
+    const p = Number(externalPage?.page);
+    if (!Number.isFinite(p) || p < 1) return;
+    const clamped = total ? Math.min(p, total) : p;
+    restoredForBook.current = bookId;
+    setIndex(clamped);
+    onPageChange?.(clamped);
+  }, [externalPage, total, bookId, onPageChange]);
 
   useEffect(() => {
     if (knownTotal) setTotal(knownTotal);
@@ -80,6 +108,9 @@ export default function TextReader({ bookId, totalPages: knownTotal, onWord }) {
     const max = total || 1;
     const next = Math.min(Math.max(1, n), max);
     setIndex(next);
+    onPageChange?.(next);
+    const pct = total > 0 ? Math.min(100, Math.round((next / total) * 10000) / 100) : 0;
+    saveReadingProgress(bookId, next, pct);
     if (typeof window !== 'undefined') window.scrollTo?.({ top: 0, behavior: 'smooth' });
   };
 

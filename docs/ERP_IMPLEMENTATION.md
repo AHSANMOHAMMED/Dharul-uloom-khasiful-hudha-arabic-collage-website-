@@ -78,7 +78,7 @@ admin/finance lite), EN/AR, PayHere via hosted checkout + deep links.
 npm run lint          # ESLint, 0 warnings
 npm run build         # Vite production build
 npm test              # Vitest unit tests
-npm run test:db       # all migrations on a scratch Postgres + 135 RLS/ERP assertions
+npm run test:db       # all migrations on a scratch Postgres + RLS/ERP assertions
 deno check supabase/functions/*/index.ts
 cd mobile && npx expo export --platform android   # bundles every mobile route
 ```

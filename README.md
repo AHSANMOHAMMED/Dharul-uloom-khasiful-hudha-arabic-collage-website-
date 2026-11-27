@@ -120,8 +120,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 - PWA: install prompt, offline shell, service worker
 - 7-year curriculum, gallery, faculty, news from Supabase
 - Google Maps & WhatsApp integration
-- CI: lint, build, Vitest, database migrations + 135 RLS/ERP tests (`npm run test:db`), `deno check` for edge functions
-- College ERP workspace at `/erp`: students & academics, exams/report cards, admissions CRM, fees ledger, double-entry accounting, expenses, donations, payroll (EPF/ETF), HR & leave, hostel, discipline/welfare, certificates (`/verify/:code`), audit log, SaaS tenant admin
+- CI: lint, build, Vitest, database migrations + RLS/ERP assertions (`npm run test:db`), `deno check` for edge functions
+- College ERP workspace at `/erp`: students & academics, exams/report cards, admissions CRM, fees ledger, double-entry accounting, expenses, donations, payroll (EPF/ETF), HR & leave, hostel, meals & store inventory, discipline/welfare, certificates (`/verify/:code`), audit log, SaaS tenant admin
 
 ### Optional / external setup
 - PayHere merchant account (sandbox available)

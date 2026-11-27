@@ -1,6 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildDriveDownloadUrl, buildDrivePreviewUrl } from '../../lib/booksApi';
+import {
+  addBookmark,
+  addNote,
+  isFavorite,
+  listBookmarks,
+  listNotes,
+  removeBookmark,
+  removeNote,
+  toggleFavorite,
+} from '../../lib/libraryUserApi';
 import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 import { tx } from '../../lib/tx';
 import TextReader from './TextReader';
@@ -21,6 +31,102 @@ export default function BookReader({ book }) {
   const [embedFailed, setEmbedFailed] = useState(false);
   const [pageCount, setPageCount] = useState(0);
   const [meaning, setMeaning] = useState(null); // { word, context } when the panel is open
+  const [currentPage, setCurrentPage] = useState(1);
+  const [jumpPage, setJumpPage] = useState(null);
+  const [favorite, setFavorite] = useState(false);
+  const [favBusy, setFavBusy] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [bookmarks, setBookmarks] = useState([]);
+  const [notes, setNotes] = useState([]);
+  const [bmLabel, setBmLabel] = useState('');
+  const [noteText, setNoteText] = useState('');
+  const [savingEngage, setSavingEngage] = useState(false);
+
+  const handlePageChange = useCallback((p) => setCurrentPage(p), []);
+
+  // Load user engagement (favorite, bookmarks, notes) for this book.
+  useEffect(() => {
+    setFavorite(false);
+    setBookmarks([]);
+    setNotes([]);
+    setCurrentPage(1);
+    setJumpPage(null);
+    if (!book?.id) return undefined;
+    let alive = true;
+    Promise.all([isFavorite(book.id), listBookmarks(book.id), listNotes(book.id)]).then(
+      ([fav, bms, nts]) => {
+        if (!alive) return;
+        setFavorite(fav);
+        setBookmarks(bms);
+        setNotes(nts);
+      },
+    );
+    return () => {
+      alive = false;
+    };
+  }, [book?.id]);
+
+  const onToggleFavorite = async () => {
+    if (!book?.id || favBusy) return;
+    setFavBusy(true);
+    try {
+      const next = await toggleFavorite(book.id);
+      setFavorite(next);
+    } finally {
+      setFavBusy(false);
+    }
+  };
+
+  const onAddBookmark = async (e) => {
+    e.preventDefault();
+    if (!book?.id || savingEngage) return;
+    setSavingEngage(true);
+    try {
+      const created = await addBookmark(book.id, currentPage, bmLabel.trim() || null);
+      if (created) {
+        setBookmarks((prev) =>
+          [...prev.filter((b) => b.page_number !== created.page_number), created].sort(
+            (a, b) => (a.page_number || 0) - (b.page_number || 0),
+          ),
+        );
+        setBmLabel('');
+      }
+    } finally {
+      setSavingEngage(false);
+    }
+  };
+
+  const onRemoveBookmark = async (id) => {
+    await removeBookmark(id);
+    setBookmarks((prev) => prev.filter((b) => b.id !== id));
+  };
+
+  const onAddNote = async (e) => {
+    e.preventDefault();
+    const content = noteText.trim();
+    if (!book?.id || !content || savingEngage) return;
+    setSavingEngage(true);
+    try {
+      const created = await addNote(book.id, currentPage, content);
+      if (created) {
+        setNotes((prev) => [created, ...prev]);
+        setNoteText('');
+      }
+    } finally {
+      setSavingEngage(false);
+    }
+  };
+
+  const onRemoveNote = async (id) => {
+    await removeNote(id);
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const openAtPage = (pageNum) => {
+    if (!pageNum || pageCount <= 0) return;
+    setMode('text');
+    setJumpPage({ page: pageNum, key: Date.now() });
+  };
 
   // "Text + meanings" mode is offered only for books with imported page text.
   useEffect(() => {
@@ -167,6 +273,41 @@ export default function BookReader({ book }) {
             ))}
           </div>
 
+          <button
+            type="button"
+            onClick={onToggleFavorite}
+            disabled={favBusy}
+            aria-pressed={favorite}
+            title={favorite ? tx('إزالة من المفضلة', 'Remove from favorites') : tx('إضافة إلى المفضلة', 'Add to favorites')}
+            className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
+              favorite
+                ? 'border-rose-300 bg-rose-50 text-rose-700'
+                : 'border-sand-border hover:bg-parchment-50 text-ink-text-secondary'
+            }`}
+          >
+            <Icon name={favorite ? 'favorite' : 'favorite_border'} className="text-[15px]" />
+            <span className="hidden md:inline">{favorite ? tx('مفضل', 'Saved') : tx('مفضلة', 'Save')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDrawerOpen((v) => !v)}
+            aria-expanded={drawerOpen}
+            className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
+              drawerOpen
+                ? 'border-emerald-700 bg-emerald-700 text-white'
+                : 'border-sand-border hover:bg-parchment-50 text-ink-text-secondary'
+            }`}
+          >
+            <Icon name="bookmark" className="text-[15px]" />
+            <span className="hidden md:inline">{tx('إشارات وملاحظات', 'Bookmarks & Notes')}</span>
+            {(bookmarks.length + notes.length) > 0 && (
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${drawerOpen ? 'bg-white/20 text-white' : 'bg-mint-wash-100 text-emerald-800'}`}>
+                {bookmarks.length + notes.length}
+              </span>
+            )}
+          </button>
+
           {previewUrl && (
             <a
               href={previewUrl}
@@ -193,11 +334,121 @@ export default function BookReader({ book }) {
         </div>
       </div>
 
+      {/* Bookmarks & Notes Drawer */}
+      {drawerOpen && (
+        <div className="border-b border-sand-border bg-parchment-50/70 p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2.5">
+            <h4 className="text-xs font-bold text-ink-green-900 uppercase tracking-wider">
+              {tx('الإشارات المرجعية', 'Bookmarks')}
+            </h4>
+            <form onSubmit={onAddBookmark} className="flex gap-2">
+              <input
+                type="text"
+                value={bmLabel}
+                onChange={(e) => setBmLabel(e.target.value)}
+                placeholder={tx(`إشارة للصفحة ${currentPage} (اختياري)`, `Bookmark page ${currentPage} (optional)`)}
+                className="flex-1 rounded-lg border border-sand-border bg-paper-white px-2.5 py-1.5 text-xs"
+              />
+              <button
+                type="submit"
+                disabled={savingEngage}
+                className="rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
+              >
+                {tx('إضافة', 'Add')}
+              </button>
+            </form>
+            {bookmarks.length === 0 ? (
+              <p className="text-xs text-ink-text-muted">{tx('لا توجد إشارات بعد.', 'No bookmarks yet.')}</p>
+            ) : (
+              <ul className="space-y-1.5 max-h-40 overflow-y-auto">
+                {bookmarks.map((b) => (
+                  <li key={b.id} className="flex items-center justify-between gap-2 rounded-lg border border-sand-border bg-paper-white px-2.5 py-1.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => openAtPage(b.page_number)}
+                      disabled={pageCount <= 0}
+                      className="text-start flex-1 truncate font-medium text-emerald-800 hover:underline disabled:no-underline disabled:text-ink-text-primary"
+                    >
+                      {tx('صفحة', 'Page')} {b.page_number || 1}{b.label ? ` — ${b.label}` : ''}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onRemoveBookmark(b.id)}
+                      className="text-ink-text-muted hover:text-rose-700 text-[11px] font-semibold"
+                    >
+                      {tx('حذف', 'Remove')}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="space-y-2.5">
+            <h4 className="text-xs font-bold text-ink-green-900 uppercase tracking-wider">
+              {tx('ملاحظات الدراسة', 'Study Notes')}
+            </h4>
+            <form onSubmit={onAddNote} className="flex gap-2">
+              <input
+                type="text"
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder={tx(`أضف ملاحظة للصفحة ${currentPage}...`, `Add note for page ${currentPage}...`)}
+                className="flex-1 rounded-lg border border-sand-border bg-paper-white px-2.5 py-1.5 text-xs"
+              />
+              <button
+                type="submit"
+                disabled={savingEngage || !noteText.trim()}
+                className="rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
+              >
+                {tx('حفظ', 'Save')}
+              </button>
+            </form>
+            {notes.length === 0 ? (
+              <p className="text-xs text-ink-text-muted">{tx('لا توجد ملاحظات بعد.', 'No notes yet.')}</p>
+            ) : (
+              <ul className="space-y-1.5 max-h-40 overflow-y-auto">
+                {notes.map((n) => (
+                  <li key={n.id} className="flex items-start justify-between gap-2 rounded-lg border border-sand-border bg-paper-white px-2.5 py-1.5 text-xs">
+                    <div className="flex-1 space-y-0.5">
+                      {n.page_number != null && (
+                        <button
+                          type="button"
+                          onClick={() => openAtPage(n.page_number)}
+                          disabled={pageCount <= 0}
+                          className="text-[11px] font-semibold text-emerald-700 hover:underline disabled:no-underline"
+                        >
+                          {tx('صفحة', 'Page')} {n.page_number}
+                        </button>
+                      )}
+                      <p className="text-ink-text-primary whitespace-pre-wrap">{n.content}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onRemoveNote(n.id)}
+                      className="text-ink-text-muted hover:text-rose-700 text-[11px] font-semibold shrink-0"
+                    >
+                      {tx('حذف', 'Remove')}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Reader Canvas Area */}
       <div className={`relative min-h-[75vh] flex items-center justify-center p-2 sm:p-4 ${themeClasses[theme]}`}>
         {mode === 'text' && pageCount > 0 ? (
           <div className="w-full">
-            <TextReader bookId={book.id} totalPages={pageCount} onWord={(word, context) => setMeaning({ word, context })} />
+            <TextReader
+              bookId={book.id}
+              totalPages={pageCount}
+              externalPage={jumpPage}
+              onPageChange={handlePageChange}
+              onWord={(word, context) => setMeaning({ word, context })}
+            />
           </div>
         ) : embedFailed || !previewUrl ? (
           fallbackCard

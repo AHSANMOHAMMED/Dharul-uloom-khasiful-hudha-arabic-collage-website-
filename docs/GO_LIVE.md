@@ -1,9 +1,13 @@
-# Go-live execution (full plan)
+# Go-live execution
 
-Code for the complete platform plan is in this repo. These steps apply it to **your** Supabase + Vercel + PayHere accounts.
+This guide covers deploying the checked-in platform. It does **not** mean every product
+requirement or production gate is complete; the remaining engineering, policy, and
+operations work is tracked in [GAP_STATUS_REGISTER.md](./GAP_STATUS_REGISTER.md) and
+[APP_COMPLETION_ROADMAP.md](./APP_COMPLETION_ROADMAP.md).
 
-> **Credential boundary:** repository validation is engineering-complete for the
-> checked-in code, but Supabase, Vercel, PayHere, notification-provider, and Expo/EAS
+> **Credential boundary:** local validation has passed for the checks listed below;
+> it does not certify full requirement coverage or staging/production readiness.
+> Supabase, Vercel, PayHere, notification-provider, and Expo/EAS
 > account operations require credentials owned by the deployment operator. Never
 > commit those values or place service-role keys in the frontend or mobile bundle.
 >
@@ -11,6 +15,15 @@ Code for the complete platform plan is in this repo. These steps apply it to **y
 > and institutional policy pack [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md). See
 > [GAP_STATUS_REGISTER.md](./GAP_STATUS_REGISTER.md) and
 > [APP_COMPLETION_ROADMAP.md](./APP_COMPLETION_ROADMAP.md).
+
+**Local verification (27 Nov 2026):** `npm test` (26 files / 143 tests),
+`npm run lint`, `npm run build`, and `npm run test:db` passed. The database run
+applied the checked-in migrations to a disposable local Postgres database, passed
+510 RLS/ERP assertions and all five business-logic suites. This is not a staging
+or production drill. `deno check supabase/functions/*/index.ts` and
+`deno test supabase/functions/_shared/` also passed (10 functions checked; 15
+shared tests). Keep the release gates below open until staging/production checks
+are run.
 
 ## Required account-bound release steps
 
@@ -55,7 +68,7 @@ supabase link --project-ref YOUR_PROJECT_REF
 # 0. Back up production first (Dashboard → Database → Backups) and run the
 #    full suite locally: npm run test:db   (must print "DB TESTS PASSED")
 
-# Apply all migrations (through latest, including 0074+). 0015–0022 must be applied
+# Apply all migrations through the latest checked-in migration (currently 0085+). 0015–0022 must be applied
 # in one go and the edge functions below deployed IMMEDIATELY after: 0018 makes
 # student_fees paid_amount ledger-controlled, so the OLD payhere-notify would fail.
 # NOTE: the stray 20240730000000 file is now a no-op; if the CLI complains that

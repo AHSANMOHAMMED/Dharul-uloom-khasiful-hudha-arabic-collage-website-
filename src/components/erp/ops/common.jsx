@@ -5,14 +5,12 @@ import { formatMoney } from '../../../lib/erp/rpc';
 import { STATUS_TONES } from '../../../lib/erp/opsApi';
 
 /**
- * Shared bits for the operations modules (activities, finance desk, analytics).
- * Chart colours are the validated dark-surface categorical steps
- * (blue / orange / aqua — adjacent CVD ΔE ≥ 9.4, ≥ 3:1 on the portal surface).
+ * Shared operations and analytics primitives for the light workspace theme.
  */
-export const SERIES = ['#3987e5', '#d95926', '#199e70'];
-export const GRID = '#1f2937';
-export const AXIS = '#9ca3af';
-export const CURSOR = { fill: 'rgba(255,255,255,0.05)' };
+export const SERIES = ['#2563EB', '#11694A', '#C29A3A'];
+export const GRID = '#E2E8F0';
+export const AXIS = '#64748B';
+export const CURSOR = { fill: 'rgba(15,23,42,0.04)' };
 export const axisProps = { stroke: AXIS, tick: { fontSize: 11 }, tickLine: false, axisLine: false };
 export const compact = (v) => {
   const x = Number(v) || 0;
@@ -32,13 +30,13 @@ export function PairBadge({ map, value }) {
 export function ChartTooltip({ active, payload, label, format = (v) => v, labelFormat = (l) => l }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg bg-gray-950 border border-gray-700 px-3 py-2 text-xs text-gray-100 space-y-1 min-w-36">
-      <div className="text-gray-400">{labelFormat(label)}</div>
+    <div className="rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs text-slate-800 shadow-lg space-y-1 min-w-36">
+      <div className="text-slate-500">{labelFormat(label)}</div>
       {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center gap-2">
           <span className="inline-block w-3 h-0.5 rounded" style={{ background: p.color || p.fill || p.stroke }} />
           <span className="font-bold tabular-nums">{format(p.value)}</span>
-          <span className="text-gray-400">{p.name}</span>
+          <span className="text-slate-500">{p.name}</span>
         </div>
       ))}
     </div>
@@ -50,7 +48,7 @@ export const moneyTooltip = (props) => <ChartTooltip {...props} format={formatMo
 /** HTML legend (identity never relies on colour alone: names are always written). */
 export function Legend({ items, line = false }) {
   return (
-    <div className="flex flex-wrap gap-4 text-xs text-gray-300 mb-2">
+    <div className="flex flex-wrap gap-4 text-xs text-slate-600 mb-2">
       {items.map((it) => (
         <span key={it.label} className="inline-flex items-center gap-2">
           <span className={line ? 'inline-block w-4 h-0.5 rounded' : 'inline-block w-3 h-3 rounded-sm'} style={{ background: it.color }} />
@@ -95,7 +93,7 @@ export function ChartCard({ title, subtitle, legend, table, height = 260, childr
 /** Small key/value row used for totals. */
 export function TotalLine({ label, value, strong = false, tone = 'text-gray-200' }) {
   return (
-    <div className={`flex items-center justify-between gap-4 py-1 text-sm ${strong ? 'border-t border-gray-700 mt-1 pt-2 font-bold' : ''}`}>
+    <div className={`flex items-center justify-between gap-4 py-1 text-sm ${strong ? 'border-t border-slate-200 mt-1 pt-2 font-bold' : ''}`}>
       <span className="text-gray-400">{label}</span>
       <span className={`tabular-nums ${tone}`}>{value}</span>
     </div>

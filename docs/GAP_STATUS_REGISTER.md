@@ -2,7 +2,7 @@
 
 **Source:** [Kashiful_Hudha_Real_World_Gap_Analysis.md](../Kashiful_Hudha_Real_World_Gap_Analysis.md)  
 **Companion logic:** [FEATURE_LOGIC_ANALYSIS.md](./FEATURE_LOGIC_ANALYSIS.md) · [PRIVACY_PDPA.md](./PRIVACY_PDPA.md) · [GO_LIVE.md](./GO_LIVE.md) · [OFFLINE_ATTENDANCE_SYNC.md](./OFFLINE_ATTENDANCE_SYNC.md) · [OPS_DRILLS.md](./OPS_DRILLS.md) · [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md) · [APP_COMPLETION_ROADMAP.md](./APP_COMPLETION_ROADMAP.md)  
-**Updated:** 23 Nov 2026 — P0/P1 logic hardening via `0074_p0_p1_logic_hardening.sql`
+**Updated:** 27 Nov 2026 — store-manager role allowlist/inventory authorization added (`0081`, `0085`); local database suite passed (510 RLS/ERP assertions + five business-logic suites).
 
 Statuses: `Already implemented` · `Partial` · `Missing` · `Needs institutional policy` · `Deferred(P2)` · `Tested in staging`
 
@@ -15,7 +15,7 @@ Statuses: `Already implemented` · `Partial` · `Missing` · `Needs institutiona
 | Item | Priority | Status | Evidence | Prod verified | Owner notes |
 |------|----------|--------|----------|---------------|-------------|
 | Tenant + role RLS helpers (`is_admin`, `current_org_id`, `mfa_ok`) | P0 | Already implemented | `0015`, `0023`, `0026`; `docs/SECURITY.md` | | Prove every table in ongoing tests |
-| Cross-tenant / cross-user AuthZ tests | P0 | Partial | `rls_erp_test.sql` §20–21 (lifecycle, guardian, break-glass, admissions, fee lines, bank, offline) | | Continue per release |
+| Cross-tenant / cross-user AuthZ tests | P0 | Partial | `rls_erp_test.sql` §20–22 passed in local disposable Postgres on 27 Nov 2026 (510 assertions total); storage/RPC coverage and staging proof remain ongoing | | Continue per release |
 | Storage bucket AuthZ | P0 | Partial | `0004`, `0014`, `0031`, `0046`; pgTAP storage negatives | | Keep auditing new buckets |
 | SECURITY DEFINER RPC caller checks | P0 | Partial | Fixed `search_path`; Edge `_shared/authz.ts`; `0068`/`0074` gates | | Continue per-RPC review |
 | Break-glass emergency access | P0 | Partial (Needs institutional policy) | `0057` + `0067` + Super Admin; [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md) §2 | | Policy sign-off before production use |
@@ -50,7 +50,8 @@ Statuses: `Already implemented` · `Partial` · `Missing` · `Needs institutiona
 
 | Item | Priority | Status | Evidence | Prod verified | Owner notes |
 |------|----------|--------|----------|---------------|-------------|
-| Procurement / assets / catering / transport | P2 | Deferred(P2) | — | | Only if institution operates them |
+| Meals / store inventory | P2 | Partial | `0081` + `0082` + `0084` + `0085`; `MessInventoryPanel`; `rls_erp_test.sql` §22 | | Basic meal and stock workflows; no approved procurement or catering budget policy |
+| Procurement / fixed assets / transport | P2 | Deferred(P2) | — | | Service scope, approvals, and operational policies are not specified; confirm before implementation |
 | SaaS subscription billing automation | P2 | Partial | `/platform` orgs + ACL | | Billing lifecycle Needs institutional policy |
 
 ---
@@ -59,7 +60,7 @@ Statuses: `Already implemented` · `Partial` · `Missing` · `Needs institutiona
 
 ### Logic MVP (`0054`–`0066`) + hardening (`0067`–`0073`)
 
-See prior register history; migrations through `0073` remain required.
+See prior register history for the `0054`–`0073` sprint. The authoritative migration chain must be applied through the latest checked-in migration (currently `0085`).
 
 ### P0/P1 logic sprint (`0074`)
 
@@ -85,6 +86,6 @@ See prior register history; migrations through `0073` remain required.
 |----------|---------------------|---------|--------------------|
 | P0 (17) | 8 | 9 | 0 Missing |
 | P1 (8) | 4 | 4 | — |
-| P2 | — | 1 (SaaS billing) | Procurement Deferred |
+| P2 | — | 2 (SaaS billing, meals/store inventory) | Procurement/assets/transport Deferred |
 
 Trust for go-live: [MASTER_PRD.md](./MASTER_PRD.md) §2 + [APP_COMPLETION_ROADMAP.md](./APP_COMPLETION_ROADMAP.md) + [OPS_DRILLS.md](./OPS_DRILLS.md) + [POLICY_SIGN_OFF.md](./POLICY_SIGN_OFF.md). Ignore obsolete claims in root `PROJECT_SUMMARY.md`.

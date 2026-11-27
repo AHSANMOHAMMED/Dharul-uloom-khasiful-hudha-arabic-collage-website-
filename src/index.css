@@ -20,6 +20,11 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  html.dark, html.dark body {
+    background-color: #0C1512;
+    color: #EAF2EE;
+  }
+
   #root {
     width: 100%;
     min-width: 0;

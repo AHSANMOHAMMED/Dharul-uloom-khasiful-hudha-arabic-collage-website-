@@ -13,6 +13,8 @@ import DictionaryAdmin from '../components/library/DictionaryAdmin';
 import { tx } from '../lib/tx';
 import { useTabParam } from '../lib/useTabParam';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import OverviewBanner from '../components/portals/OverviewBanner';
+import { Stat } from '../components/erp/ui';
 import RoleSwitcher from '../components/RoleSwitcher';
 import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
@@ -246,42 +248,26 @@ const LibrarianDashboard = () => {
         <div id="librarian-khatam" className="hidden" aria-hidden="true" />
 
         {/* Header Banner */}
-        <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#11694A]"></div>
-
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-5">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center font-serif text-2xl sm:text-3xl font-bold shrink-0 shadow-sm border border-[#11694A]/20">
-                ك
-              </div>
-              <div>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#E3F1EA] text-[#11694A] border border-[#11694A]/20 mb-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#11694A]"></span>
-                  {tx('أمين المكتبة الرقمية', 'Digital Maktabah Administration')}
-                </span>
-                <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#0B3B2E]">
-                  {tx('مرحباً، {name}', 'Welcome, {name}').replace('{name}', user?.username || tx('أمين المكتبة', 'Librarian'))}
-                </h1>
-                <p className="mt-1 text-xs sm:text-sm text-[#4A5E56] font-sans">
-                  {tx('فهرسة المخطوطات والكتب وربطها بروابط Google Drive للمطالعة والتحميل', 'Catalog manuscripts, curate Islamic texts & integrate Google Drive preview manifests')}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                to="/library"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
-              >
-                <Icon name="auto_stories" className="text-[16px] text-[#11694A]" />
-                {tx('عرض المكتبة للعامة', 'Public Library View')}
-              </Link>
-            </div>
-          </div>
-        </div>
+        <OverviewBanner
+          portal_en="Digital Maktabah Administration"
+          portal_ar="أمين المكتبة الرقمية"
+          greeting_en="Welcome, {name}"
+          greeting_ar="مرحباً، {name}"
+          hint_en="Catalog manuscripts, curate Islamic texts & integrate Google Drive preview manifests"
+          hint_ar="فهرسة المخطوطات والكتب وربطها بروابط Google Drive للمطالعة والتحميل"
+          actions={
+            <Link
+              to="/library"
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-white border border-slate-200 text-slate-800 font-semibold text-xs rounded-xl transition-colors"
+            >
+              <Icon name="auto_stories" className="text-[16px] text-emerald-700" />
+              {tx('عرض المكتبة للعامة', 'Public Library View')}
+            </Link>
+          }
+        />
 
         {activeTab === 'dictionary' && (
-          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-4 sm:p-6 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)]">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-sm">
             <DictionaryAdmin />
           </div>
         )}
@@ -292,39 +278,27 @@ const LibrarianDashboard = () => {
         <>
         {/* 3 KPI Stat Tiles */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-5 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] flex items-center justify-between">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-[#4A5E56]">{tx('إجمالي الكتب المفهرسة', 'Total Cataloged Books')}</div>
-              <div className="mt-1 text-3xl font-serif font-bold text-[#0B3B2E] font-mono tabular-nums">{stats.total}</div>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-[#E3F1EA] text-[#11694A] flex items-center justify-center">
-              <svg className="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-5 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] flex items-center justify-between">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-[#4A5E56]">{tx('الكتب باللغة العربية', 'Arabic Folios')}</div>
-              <div className="mt-1 text-3xl font-serif font-bold text-[#11694A] font-mono tabular-nums">{stats.arabic}</div>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-[#E0F2F1] text-[#0F7C86] flex items-center justify-center font-arabic font-bold text-lg">
-              ض
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-[#E8E1D0] p-5 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] flex items-center justify-between">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-[#4A5E56]">{tx('كتب ذات أغلفة مصورة', 'With Bound Covers')}</div>
-              <div className="mt-1 text-3xl font-serif font-bold text-[#C29A3A] font-mono tabular-nums">{stats.withCover}</div>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-[#F7EDD2] text-[#C29A3A] flex items-center justify-center">
-              <svg className="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          </div>
+          <Stat
+            label={tx('إجمالي الكتب المفهرسة', 'Total Cataloged Books')}
+            value={stats.total}
+            hint={tx('فهرس المكتبة الرقمية', 'Digital catalog records')}
+            icon="menu_book"
+            tone="emerald"
+          />
+          <Stat
+            label={tx('الكتب باللغة العربية', 'Arabic Folios')}
+            value={stats.arabic}
+            hint={tx('المؤلفات العربية', 'Arabic collection')}
+            icon="translate"
+            tone="blue"
+          />
+          <Stat
+            label={tx('كتب ذات أغلفة مصورة', 'With Bound Covers')}
+            value={stats.withCover}
+            hint={tx('أغلفة جاهزة للعرض', 'Cover artwork linked')}
+            icon="image"
+            tone="amber"
+          />
         </div>
 
         {/* Main Content Layout: Form on Left, Latest Books Table on Right */}

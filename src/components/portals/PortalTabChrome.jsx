@@ -32,18 +32,18 @@ export default function PortalTabChrome({
               <button
                 type="button"
                 onClick={goBack}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#E8E1D0] bg-white text-[11px] font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0]"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl border border-slate-200 bg-white text-[11px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#0B3B2E]"
               >
                 <Icon name="arrow_back" className="text-[16px] rtl:rotate-180" />
                 {tx('رجوع', 'Back')}
               </button>
             )}
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#0B3B2E]">
+            <h2 className="font-sans text-lg sm:text-xl font-semibold text-slate-900">
               {tx(title_ar, title_en)}
             </h2>
           </div>
           {(subtitle_en || subtitle_ar) && (
-            <p className="text-xs text-[#4A5E56] mt-1">{tx(subtitle_ar, subtitle_en)}</p>
+            <p className="text-xs text-slate-500 mt-1">{tx(subtitle_ar, subtitle_en)}</p>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -51,7 +51,7 @@ export default function PortalTabChrome({
             <button
               type="button"
               onClick={onPrint}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B3B2E] text-white text-xs font-semibold hover:bg-[#11694A]"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0B3B2E] text-white text-xs font-semibold hover:bg-[#11694A]"
             >
               <Icon name="print" className="text-[16px]" />
               {tx('طباعة', 'Print')}
@@ -61,7 +61,7 @@ export default function PortalTabChrome({
             <button
               type="button"
               onClick={onExport}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8E1D0] bg-white text-xs font-semibold text-[#0B3B2E] hover:bg-[#FBF8F0]"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#0B3B2E]"
             >
               <Icon name="download" className="text-[16px]" />
               {tx('تصدير', 'Export')}

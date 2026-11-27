@@ -15,8 +15,8 @@ const BAR = '#11694A';
 const GOLD = '#C29A3A';
 const RED = '#B91C1C';
 const BLUE = '#0F7C86';
-const GRID = '#E8E1D0';
-const AXIS = '#4A5E56';
+const GRID = '#E2E8F0';
+const AXIS = '#64748B';
 
 function Tile({ label, value, hint, tone, icon, module, go }) {
   const inner = <Stat label={label} value={value} hint={hint} tone={tone} icon={icon} className="w-full" />;

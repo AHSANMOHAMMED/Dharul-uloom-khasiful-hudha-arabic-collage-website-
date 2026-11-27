@@ -57,7 +57,7 @@ const KINDS = {
       {
         key: 'staff_role',
         label: 'Staff role (new accounts only)',
-        hint: 'none, principal, vice_principal, treasurer, accountant, hr_manager, librarian, admissions_officer, warden, counselor, exam_officer',
+        hint: 'none, principal, vice_principal, treasurer, accountant, hr_manager, librarian, admissions_officer, warden, counselor, exam_officer, store_manager',
         example: 'none',
       },
       { key: 'phone', label: 'Phone', example: '0771234567' },

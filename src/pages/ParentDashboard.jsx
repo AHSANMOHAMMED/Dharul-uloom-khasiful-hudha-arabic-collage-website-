@@ -7,6 +7,8 @@ import { supabase } from '../lib/supabaseClient';
 import PayFeeButton from '../components/PayFeeButton';
 import ReceiptsArrears from '../components/ReceiptsArrears';
 import PortalTabChrome from '../components/portals/PortalTabChrome';
+import AttendanceTrendChart from '../components/portals/AttendanceTrendChart';
+import { Stat } from '../components/erp/ui';
 import RoleSwitcher from '../components/RoleSwitcher';
 import { claimParentInvite } from '../lib/parentInviteApi';
 import { rpc } from '../lib/erp/rpc';
@@ -492,7 +494,7 @@ export default function ParentDashboard() {
 
         {selectedChild && !dataLoading && activeTab === 'overview' && (
           <div className="space-y-8">
-            {showAttendanceWarning && (
+            {guardianMay(selectedChild, 'attendance') && showAttendanceWarning && (
               <div className="p-4 rounded-xl bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger flex items-start gap-3 text-xs">
                 <Icon name="warning" className="text-xl shrink-0" />
                 <div>
@@ -507,41 +509,50 @@ export default function ParentDashboard() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="p-5 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
-                <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider block mb-1">
-                  {tx('معدل الحضور', 'Attendance Metric')}
-                </span>
-                <span className="font-serif text-3xl font-bold text-emerald-700 tabular-nums">{attendanceRate}%</span>
-                <span className="text-[11px] text-ink-text-muted block mt-1">
-                  {presentDays} {tx('حاضر من أصل', 'present of')} {totalDays} {tx('أيام مسجلة', 'recorded days')}
-                </span>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {guardianMay(selectedChild, 'attendance') && (
+                <Stat
+                  label={tx('معدل الحضور', 'Attendance Metric')}
+                  value={`${attendanceRate}%`}
+                  hint={`${presentDays} ${tx('حاضر من أصل', 'present of')} ${totalDays} ${tx('أيام مسجلة', 'recorded days')}`}
+                  icon="event_available"
+                  tone={attendanceRate >= 85 ? 'emerald' : 'red'}
+                  badge={attendanceRate >= 85 ? tx('منتظم', 'On track') : tx('تنبيه', 'Below 85%')}
+                  badgeTone={attendanceRate >= 85 ? 'emerald' : 'red'}
+                />
+              )}
 
-              <div className="p-5 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
-                <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider block mb-1">
-                  {tx('الرصيد المستحق للرسوم', 'Tuition Balance')}
-                </span>
-                <span className="font-serif text-3xl font-bold text-brass-gold-500 tabular-nums">
-                  {tx('روبية', 'LKR')} {feeBalance.toLocaleString()}
-                </span>
-                <span className="text-[11px] text-ink-text-muted block mt-1">
-                  {feeBalance > 0 ? tx('متأخرات مسجلة في ERP', 'Arrears on ERP ledger') : tx('لا توجد متأخرات نشطة', 'No active arrears')}
-                </span>
-              </div>
+              {guardianMay(selectedChild, 'fees') && (
+                <Stat
+                  label={tx('الرصيد المستحق للرسوم', 'Tuition Balance')}
+                  value={`${tx('روبية', 'LKR')} ${feeBalance.toLocaleString()}`}
+                  hint={feeBalance > 0 ? tx('متأخرات مسجلة في ERP', 'Arrears on ERP ledger') : tx('لا توجد متأخرات نشطة', 'No active arrears')}
+                  icon="payments"
+                  tone={feeBalance > 0 ? 'amber' : 'emerald'}
+                  badge={feeBalance > 0 ? tx('مستحق', 'Due') : tx('مسدد', 'Clear')}
+                  badgeTone={feeBalance > 0 ? 'amber' : 'emerald'}
+                />
+              )}
 
-              <div className="p-5 rounded-[14px] bg-paper-white border border-sand-border shadow-manuscript">
-                <span className="text-[11px] font-semibold text-ink-text-muted uppercase tracking-wider block mb-1">
-                  {tx('مشرف الفصل', 'Class Mentor Contact')}
-                </span>
-                <span className="font-serif text-base font-semibold text-ink-green-900 block truncate">
-                  {tutorProfile?.full_name || tx('لا يوجد مشرف معيّن', 'No tutor assigned')}
-                </span>
-                {tutorProfile?.phone && (
-                  <div className="flex items-center gap-2 mt-2">
+              <div className="h-full flex flex-col justify-between rounded-2xl bg-white p-4 sm:p-5 border border-slate-200 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 leading-snug">
+                      {tx('مشرف الفصل', 'Class Mentor Contact')}
+                    </div>
+                    <div className="text-base sm:text-lg font-bold text-slate-900 mt-1.5 truncate">
+                      {tutorProfile?.full_name || tx('لا يوجد مشرف معيّن', 'No tutor assigned')}
+                    </div>
+                  </div>
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-slate-100 text-slate-700 border-slate-200">
+                    <Icon name="person_book" className="text-[20px]" />
+                  </span>
+                </div>
+                {tutorProfile?.phone ? (
+                  <div className="flex items-center gap-2 mt-3">
                     <a
                       href={`tel:${tutorProfile.phone}`}
-                      className="px-2.5 py-1 rounded bg-sand-border/40 text-[11px] text-ink-text-primary font-semibold hover:bg-emerald-700 hover:text-white transition-colors"
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 text-[11px] text-slate-800 font-semibold hover:bg-emerald-700 hover:text-white transition-colors"
                     >
                       {tx('اتصال', 'Call Tutor')}
                     </a>
@@ -550,15 +561,18 @@ export default function ParentDashboard() {
                         href={`https://wa.me/${tutorPhoneDigits}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-2.5 py-1 rounded bg-mint-wash-100 text-[11px] text-emerald-700 font-semibold hover:bg-emerald-700 hover:text-white transition-colors"
+                        className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[11px] text-emerald-700 font-semibold hover:bg-emerald-700 hover:text-white transition-colors"
                       >
                         {tx('واتساب', 'WhatsApp')}
                       </a>
                     )}
                   </div>
+                ) : (
+                  <div className="text-xs text-slate-500 mt-2.5">{tx('سجلات منصة الحلقات', 'From halaqah assignments')}</div>
                 )}
               </div>
             </div>
+            {guardianMay(selectedChild, 'attendance') && <AttendanceTrendChart records={attendance} />}
           </div>
         )}
 

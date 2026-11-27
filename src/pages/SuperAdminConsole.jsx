@@ -105,8 +105,10 @@ export default function SuperAdminConsole() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [navSearch, setNavSearch] = useState('');
   const [orgId, setOrgId] = useState('');
   const [mobileNav, setMobileNav] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [featureScope, setFeatureScope] = useState('global');
   const [roleKey, setRoleKey] = useState('accountant');
   const [roleFeatures, setRoleFeatures] = useState([]);
@@ -232,46 +234,106 @@ export default function SuperAdminConsole() {
       key={item.id}
       type="button"
       onClick={() => { setSection(item.id); setMobileNav(false); }}
-      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
-        section === item.id ? 'bg-emerald-700 text-white' : 'text-ink-green-900 hover:bg-parchment-50'
+      title={sidebarCollapsed ? tx(item.label_ar || item.label, item.label) : undefined}
+      aria-label={tx(item.label_ar || item.label, item.label)}
+      aria-current={section === item.id ? 'page' : undefined}
+      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40 ${
+        sidebarCollapsed ? 'lg:justify-center lg:px-2' : ''
+      } ${
+        section === item.id ? 'bg-emerald-50 text-ink-green-900 ring-1 ring-emerald-700/10' : 'text-slate-600 hover:bg-slate-50 hover:text-ink-green-900'
       }`}
     >
-      <Icon name={item.icon} className="text-[18px]" />
-      {tx(item.label_ar || item.label, item.label)}
+      <Icon name={item.icon} className="text-[18px] shrink-0" aria-hidden="true" />
+      <span className={sidebarCollapsed ? 'lg:hidden' : ''}>{tx(item.label_ar || item.label, item.label)}</span>
     </button>
   );
 
   const activeNav = NAV.find((n) => n.id === section);
+  const visibleNav = navSearch.trim()
+    ? NAV.filter((item) => tx(item.label_ar || item.label, item.label).toLocaleLowerCase().includes(navSearch.trim().toLocaleLowerCase()))
+    : NAV;
 
   return (
     <div dir={tx('rtl', 'ltr')} className="erp-theme min-h-screen bg-parchment-50 text-ink-text-primary flex relative overflow-hidden">
       <KhatamPattern className="opacity-[0.03]" strokeColor="#0B3B2E" id="sa-console-khatam" />
 
-      {mobileNav && <div className="fixed inset-0 z-40 bg-ink-green-900/40 lg:hidden" onClick={() => setMobileNav(false)} aria-hidden />}
+      {mobileNav && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-ink-green-900/40 lg:hidden"
+          onClick={() => setMobileNav(false)}
+          aria-label={tx('إغلاق القائمة', 'Close navigation')}
+        />
+      )}
 
-      <aside className={`fixed inset-y-0 start-0 z-50 w-72 border-e border-sand-border bg-paper-white flex flex-col transition-transform lg:translate-x-0 ${mobileNav ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="border-b border-sand-border bg-ink-green-900 text-paper-white p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brass-gold-500">{tx('مشغل المنصة', 'Platform operator')}</p>
-          <h1 className="font-serif text-xl font-semibold mt-1">{tx('المدير العام', 'Super Admin')}</h1>
-          <p className="text-xs text-white/70 mt-1">{tx('تحكم كامل عبر الكليات والمستخدمين والصلاحيات والمجتمعات ونظام ERP.', 'Full control across colleges, users, ACL, communities & ERP.')}</p>
+      <aside className={`fixed inset-y-0 start-0 z-50 w-72 ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'} border-e border-slate-200 bg-white flex flex-col transition-transform duration-300 motion-reduce:transition-none lg:translate-x-0 rtl:lg:translate-x-0 ${mobileNav ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full lg:translate-x-0 rtl:lg:translate-x-0'}`}>
+        <div className={`border-b border-slate-200 bg-white p-5 ${sidebarCollapsed ? 'lg:px-3' : ''}`}>
+          <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] text-brass-gold-500 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{tx('مشغل المنصة', 'Platform operator')}</p>
+          <h1 className={`font-sans text-xl font-semibold mt-1 text-ink-green-900 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{tx('المدير العام', 'Super Admin')}</h1>
+          <p className={`text-xs text-slate-500 mt-1 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>{tx('تحكم كامل عبر الكليات والمستخدمين والصلاحيات والمجتمعات ونظام ERP.', 'Full control across colleges, users, ACL, communities & ERP.')}</p>
         </div>
-        <nav className="flex-1 overflow-y-auto p-3 space-y-1">{NAV.map(navBtn)}</nav>
+        <div className={`px-3 pt-3 ${sidebarCollapsed ? 'lg:hidden' : ''}`}>
+          <label htmlFor="platform-navigation-search" className="sr-only">{tx('البحث في الأقسام', 'Search navigation')}</label>
+          <input
+            id="platform-navigation-search"
+            name="platform_navigation_search"
+            type="search"
+            autoComplete="off"
+            value={navSearch}
+            onChange={(event) => setNavSearch(event.target.value)}
+            placeholder={tx('ابحث عن قسم…', 'Find a section…')}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-700/15"
+          />
+        </div>
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1" aria-label={tx('أقسام المنصة', 'Platform sections')}>
+          {visibleNav.map(navBtn)}
+          {navSearch.trim() && visibleNav.length === 0 && (
+            <p className="px-3 py-4 text-xs text-slate-500">{tx('لا توجد أقسام مطابقة', 'No matching sections')}</p>
+          )}
+        </nav>
         <div className="border-t border-sand-border p-3 space-y-2">
-          <LanguageSelect className="w-full rounded-lg border border-sand-border bg-paper-white px-2.5 py-1.5 text-xs text-ink-green-900" />
-          <button type="button" disabled={busy} onClick={reloadAll} className="w-full rounded-lg border border-sand-border px-3 py-2 text-xs font-semibold">{tx('تحديث', 'Refresh')}</button>
+          <div className={sidebarCollapsed ? 'lg:hidden' : ''}>
+            <LanguageSelect className="w-full rounded-lg border border-sand-border bg-paper-white px-2.5 py-1.5 text-xs text-ink-green-900" />
+          </div>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={reloadAll}
+            aria-label={tx('تحديث', 'Refresh')}
+            className={`w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold transition-colors hover:bg-slate-50 disabled:opacity-50 ${sidebarCollapsed ? 'lg:px-2' : ''}`}
+          >
+            <span className={sidebarCollapsed ? 'lg:hidden' : ''}>{tx('تحديث', 'Refresh')}</span>
+            <Icon name="refresh" className={`hidden text-base ${sidebarCollapsed ? 'lg:inline' : ''}`} aria-hidden="true" />
+          </button>
         </div>
       </aside>
 
-      <div className="flex-1 lg:ms-72 min-w-0 relative z-10">
+      <div className={`flex-1 ${sidebarCollapsed ? 'lg:ms-20' : 'lg:ms-72'} min-w-0 relative z-10`}>
         <header className="sticky top-0 z-20 border-b border-sand-border bg-paper-white/95 backdrop-blur px-4 py-3 flex items-center gap-3">
           <button type="button" className="lg:hidden rounded-lg border border-sand-border p-2" onClick={() => setMobileNav(true)} aria-label={tx('فتح القائمة', 'Open menu')}>
             <Icon name="menu" />
+          </button>
+          <button
+            type="button"
+            className="hidden lg:inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
+            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+            aria-label={sidebarCollapsed ? tx('توسيع القائمة الجانبية', 'Expand sidebar') : tx('طي القائمة الجانبية', 'Collapse sidebar')}
+            aria-pressed={sidebarCollapsed}
+            title={sidebarCollapsed ? tx('توسيع القائمة الجانبية', 'Expand sidebar') : tx('طي القائمة الجانبية', 'Collapse sidebar')}
+          >
+            <Icon name={sidebarCollapsed ? 'chevron_right' : 'chevron_left'} className="rtl:rotate-180" aria-hidden="true" />
           </button>
           <div className="min-w-0">
             <h2 className="font-serif text-lg font-semibold text-ink-green-900 truncate">{activeNav ? tx(activeNav.label_ar || activeNav.label, activeNav.label) : tx('نظرة عامة', 'Overview')}</h2>
           </div>
           <div className="ms-auto flex flex-wrap gap-2 items-center">
-            <select className="rounded-lg border border-sand-border px-2 py-1.5 text-xs" value={orgId} onChange={(e) => setOrgId(e.target.value)}>
+            <select
+              className="rounded-lg border border-sand-border px-2 py-1.5 text-xs"
+              name="platform_organization"
+              aria-label={tx('اختر المؤسسة', 'Select institution')}
+              value={orgId}
+              onChange={(e) => setOrgId(e.target.value)}
+            >
               {(controls?.organizations || []).map((o) => (
                 <option key={o.org_id} value={o.org_id}>{tx(o.name_ar || o.name_en, o.name_en)}</option>
               ))}

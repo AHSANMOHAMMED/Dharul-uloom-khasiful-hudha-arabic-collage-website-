@@ -1647,6 +1647,138 @@ select tst.fails($$
 $$, 'fees: accountant cannot direct-insert invoice lines');
 
 -- ---------------------------------------------------------------------------
+-- 22. Kitchen inventory & meals (0081): store staff access and tenant isolation
+-- ---------------------------------------------------------------------------
+select tst.logout();
+insert into public.inventory_items (
+  id, org_id, name, category, unit, current_stock, min_stock_level, unit_cost
+)
+values (
+  'd0000000-0000-0000-0000-000000000001',
+  public.default_org_id(),
+  'pgTAP Rice',
+  'grains',
+  'kg',
+  10,
+  2,
+  100
+)
+on conflict (id) do update
+set current_stock = excluded.current_stock,
+    min_stock_level = excluded.min_stock_level,
+    unit_cost = excluded.unit_cost,
+    is_active = true;
+
+select tst.login('00000000-0000-0000-0000-000000000001'); -- admin
+select tst.succeeds($$update public.profiles
+  set extra_roles = array['store_manager']
+  where id = '00000000-0000-0000-0000-000000000016'$$,
+  'roles: admin can assign store_manager as an additional duty');
+select tst.succeeds($$update public.profiles
+  set assigned_tutor_role = 'store_manager'
+  where id = '00000000-0000-0000-0000-000000000016'$$,
+  'roles: store_manager is accepted as the primary staff duty');
+select tst.succeeds($$update public.profiles
+  set assigned_tutor_role = 'warden'
+  where id = '00000000-0000-0000-0000-000000000016'$$,
+  'roles: admin can restore the warden duty after role validation');
+
+select tst.logout();
+update public.organizations
+   set require_mfa_for_staff = true
+ where id = public.default_org_id();
+insert into auth.mfa_factors (user_id, status)
+values ('00000000-0000-0000-0000-000000000016', 'verified');
+select tst.login('00000000-0000-0000-0000-000000000016'); -- warden / store manager, aal1
+select tst.ok(public.mfa_required() and not public.mfa_ok() and not public.is_store_staff(),
+              'roles: store manager is MFA-gated when the tenant requires staff MFA');
+select tst.fails($$select public.record_inventory_purchase(
+  'd0000000-0000-0000-0000-000000000001', 1, 'kg', 100, 100,
+  null, null, 'cash', false, null
+)$$, 'inventory: store manager cannot bypass the MFA gate');
+
+select tst.login_aal('00000000-0000-0000-0000-000000000016', 'aal2');
+select tst.ok(public.mfa_ok() and public.is_store_staff(),
+              'roles: store manager gains inventory access with aal2');
+
+select tst.login('00000000-0000-0000-0000-000000000008'); -- student
+select tst.ok((select count(*) = 0 from public.inventory_items),
+              'inventory: student cannot read store items');
+select tst.ok((select count(*) = 0 from public.daily_meals),
+              'meals: student cannot read staff meal planning');
+select tst.fails($$select public.record_inventory_purchase(
+  'd0000000-0000-0000-0000-000000000001', 1, 'kg', 100, 100,
+  null, null, 'cash', false, null
+)$$, 'inventory: student cannot record purchases');
+select tst.fails($$select public.issue_inventory_to_kitchen(
+  'd0000000-0000-0000-0000-000000000001', 1, 'kg', current_date,
+  'lunch', null, null
+)$$, 'inventory: student cannot issue stock');
+
+select tst.login('00000000-0000-0000-0000-000000000013'); -- other-college admin
+select tst.ok((select count(*) = 0 from public.inventory_items),
+              'inventory: other tenant cannot read store items');
+select tst.fails($$select public.record_inventory_purchase(
+  'd0000000-0000-0000-0000-000000000001', 1, 'kg', 100, 100,
+  null, null, 'cash', false, null
+)$$, 'inventory: other tenant cannot purchase into this store');
+
+select tst.login_aal('00000000-0000-0000-0000-000000000016', 'aal2'); -- warden / store manager
+select tst.ok((select count(*) = 1 from public.inventory_items where name = 'pgTAP Rice'),
+              'inventory: approved warden can read store items');
+select tst.succeeds($$select public.record_inventory_purchase(
+  'd0000000-0000-0000-0000-000000000001', 2, 'kg', 150, 300,
+  'Test Supplier', 'TEST-INV-1', 'cash', false, 'pgTAP purchase'
+)$$, 'inventory: warden records purchase through RPC');
+select tst.ok((
+  select current_stock = 12
+  from public.inventory_items
+  where id = 'd0000000-0000-0000-0000-000000000001'
+), 'inventory: purchase updates stock atomically');
+select tst.succeeds($$select public.issue_inventory_to_kitchen(
+  'd0000000-0000-0000-0000-000000000001', 2, 'kg', current_date,
+  'lunch', 'Kitchen', 'pgTAP issue'
+)$$, 'inventory: warden issues stock through RPC');
+select tst.ok((
+  select current_stock = 10
+  from public.inventory_items
+  where id = 'd0000000-0000-0000-0000-000000000001'
+), 'inventory: kitchen issue decrements stock atomically');
+select tst.fails($$select public.issue_inventory_to_kitchen(
+  'd0000000-0000-0000-0000-000000000001', 20, 'kg', current_date,
+  'lunch', 'Kitchen', 'excess issue'
+)$$, 'inventory: issue cannot reduce stock below zero');
+select tst.ok((
+  select current_stock = 10
+  from public.inventory_items
+  where id = 'd0000000-0000-0000-0000-000000000001'
+), 'inventory: rejected issue leaves stock unchanged');
+select tst.succeeds($$insert into public.daily_meals (
+  org_id, meal_date, meal_type, menu_items, expected_count
+) values (
+  public.default_org_id(), current_date, 'dinner', 'Rice and dhal', 20
+)$$, 'meals: warden can schedule a meal');
+select tst.fails($$insert into public.inventory_movements (
+  org_id, item_id, movement_type, quantity, unit, base_quantity
+) values (
+  public.default_org_id(), 'd0000000-0000-0000-0000-000000000001',
+  'adjustment', 1, 'kg', 1
+)$$, 'inventory: movement log writes must use guarded RPCs');
+
+select tst.login('00000000-0000-0000-0000-000000000008'); -- student
+select tst.ok((select count(*) = 0 from public.inventory_movements),
+              'inventory: student cannot read movement history');
+select tst.ok((select count(*) = 0 from public.daily_meals),
+              'meals: student cannot read scheduled meals');
+
+select tst.logout();
+update public.organizations
+   set require_mfa_for_staff = false
+ where id = public.default_org_id();
+delete from auth.mfa_factors
+ where user_id = '00000000-0000-0000-0000-000000000016';
+
+-- ---------------------------------------------------------------------------
 select tst.logout();
 \echo '-----------------------------------------------'
 select count(*) filter (where ok) as passed, count(*) filter (where not ok) as failed from tst.results;

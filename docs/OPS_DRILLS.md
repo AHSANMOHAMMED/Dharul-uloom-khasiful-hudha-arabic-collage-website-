@@ -23,7 +23,7 @@ This file is the checklist. It does **not** replace running the drill on a real 
 
 ### Preconditions
 
-- [ ] Staging Supabase project linked; migrations applied through latest (`0073`+)
+- [ ] Staging Supabase project linked; migrations applied through the latest checked-in version (currently `0085`)
 - [ ] Dashboard → Database → Backups: latest backup visible (or PITR enabled)
 - [ ] `npm run test:db` passed against local/staging as documented in CI
 - [ ] Super Admin → Job runs panel loads (`0059_job_runs.sql`)

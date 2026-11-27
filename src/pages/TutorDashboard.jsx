@@ -11,6 +11,8 @@ import ClassAttendance from '../components/erp/campus/ClassAttendance';
 import SelfPayslips from '../components/erp/campus/SelfPayslips';
 import { tx } from '../lib/tx';
 import DashboardSidebarLayout from '../components/DashboardSidebarLayout';
+import OverviewBanner from '../components/portals/OverviewBanner';
+import { Stat } from '../components/erp/ui';
 import RoleSwitcher from '../components/RoleSwitcher';
 import Icon from '../components/Icon';
 import { ROLE_BADGE } from '../lib/roleTheme';
@@ -156,42 +158,68 @@ const TutorDashboard = () => {
       <div className="space-y-8">
         <div id="tutor-khatam" className="hidden" aria-hidden="true" />
 
-        <div className="bg-white rounded-2xl border border-[#E8E1D0] p-6 sm:p-8 shadow-[0_2px_8px_-2px_rgba(11,59,46,0.05)] relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[#11694A]" />
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#0B3B2E]">
-                {tx('مرحباً بك، فضيلة الشيخ {name}', 'Welcome, Sheikh {name}').replace('{name}', user?.username || tx('المعلم', 'Tutor'))}
-              </h1>
-              <p className="text-xs sm:text-sm text-[#4A5E56] font-sans mt-0.5">
-                {tx('الحضور عبر ERP، الإجازات، الواجبات، وكشوف الرواتب', 'ERP attendance, leave approvals, coursework & payslips')}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
+        <OverviewBanner
+          portal_en="Tutor Desk"
+          portal_ar="بوابة المدرس"
+          greeting_en="Welcome, Sheikh {name}"
+          greeting_ar="مرحباً بك، فضيلة الشيخ {name}"
+          hint_en="ERP attendance, leave approvals, coursework & payslips"
+          hint_ar="الحضور عبر ERP، الإجازات، الواجبات، وكشوف الرواتب"
+          actions={
+            <>
               <button
                 type="button"
                 onClick={() => setActiveTab('academics')}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#E3F1EA] hover:bg-[#D4E8DF] border border-[#11694A]/30 text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
+                className="inline-flex items-center gap-2 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-900 font-semibold text-xs rounded-xl transition-colors"
               >
-                <Icon name="menu_book" className="text-[18px] text-[#11694A]" />
+                <Icon name="menu_book" className="text-[17px] text-emerald-700" />
                 <span>{tx('الشؤون الأكاديمية', 'Academics & Exams')}</span>
               </button>
               {enabled('self_service') && (
                 <button
                   type="button"
                   onClick={() => setActiveTab('self')}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-[#FBF8F0] border border-[#E8E1D0] text-[#0B3B2E] font-sans font-semibold text-xs sm:text-sm rounded-xl transition shadow-sm"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-50 hover:bg-white border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors"
                 >
-                  <Icon name="badge" className="text-[18px] text-[#11694A]" />
+                  <Icon name="badge" className="text-[17px] text-emerald-700" />
                   <span>{tx('مساحتي', 'My workspace')}</span>
                 </button>
               )}
-            </div>
-          </div>
+            </>
+          }
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Stat
+            label={tx('الحلقات المعينة', 'Assigned Classes')}
+            value={new Set(jobs.map((j) => j.class_number).filter((n) => n != null)).size || jobs.length}
+            hint={tx('تسجيل الحضور اليومي', 'Daily class attendance')}
+            icon="school"
+            tone="emerald"
+            onClick={() => setActiveTab('attendance')}
+          />
+          <Stat
+            label={tx('طلبات الإجازة المعلقة', 'Pending Leave Requests')}
+            value={leaves.length}
+            hint={leaves.length > 0 ? tx('تحتاج للمراجعة', 'Needs your review') : tx('لا توجد طلبات معلقة', 'All caught up')}
+            icon="event_busy"
+            tone={leaves.length > 0 ? 'amber' : 'emerald'}
+            badge={leaves.length > 0 ? tx('قيد المراجعة', 'Pending') : tx('مكتمل', 'Clear')}
+            badgeTone={leaves.length > 0 ? 'amber' : 'emerald'}
+            onClick={() => setActiveTab('leaves')}
+          />
+          <Stat
+            label={tx('الواجبات والدروس', 'Coursework & LMS')}
+            value={tx('إدارة', 'Manage')}
+            hint={tx('رفع الدروس ومتابعة التسليمات', 'Assignments & submissions')}
+            icon="assignment"
+            tone="blue"
+            onClick={() => setActiveTab('lms')}
+          />
         </div>
 
         {activeTab === 'attendance' && (
-          <div className="erp-theme rounded-2xl border border-[#E8E1D0] bg-white p-4 sm:p-6 shadow-sm">
+          <div className="erp-theme rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
             {jobs.length > 0 && (
               <p className="text-xs text-[#4A5E56] mb-4">
                 {tx('الحلقات المعينة:', 'Assigned classes:')}{' '}

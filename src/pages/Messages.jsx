@@ -50,6 +50,7 @@ export default function Messages({ embedded = false } = {}) {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [hasOlder, setHasOlder] = useState(false);
   const [error, setError] = useState('');
+  const [contactHint, setContactHint] = useState('');
   const [mobileListOpen, setMobileListOpen] = useState(true);
   const [onlineIds, setOnlineIds] = useState(() => new Set());
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -60,6 +61,10 @@ export default function Messages({ embedded = false } = {}) {
   const attachRef = useRef(null);
   const endRef = useRef(null);
   const active = useMemo(() => conversations.find((c) => c.conversation_id === selectedId) || null, [conversations, selectedId]);
+  const availableContacts = useMemo(() => {
+    const existingIds = new Set(conversations.map((c) => c.other_user_id));
+    return contacts.filter((p) => !existingIds.has(p.user_id));
+  }, [contacts, conversations]);
 
   const setConversationParam = useCallback((id) => {
     setParams((prev) => {
@@ -107,10 +112,21 @@ export default function Messages({ embedded = false } = {}) {
         const rows = await searchChatContacts(search);
         if (live) {
           setContacts(rows);
+          setContactHint('');
           setError('');
         }
       } catch (e) {
-        if (live) setError(e.message || tx('تعذر البحث عن المستخدمين', 'Could not search users'));
+        if (!live) return;
+        const msg = String(e?.message || '');
+        if (msg.toLowerCase().includes('link a student')) {
+          setContacts([]);
+          setContactHint(tx(
+            'اربط حساب الطالب أولاً لبدء محادثات جديدة مع المدرّسين والإدارة.',
+            'Link a student first to start new conversations with tutors and administration.',
+          ));
+        } else {
+          setError(msg || tx('تعذر البحث عن المستخدمين', 'Could not search users'));
+        }
       }
     }, 250);
     return () => { live = false; clearTimeout(timer); };
@@ -415,8 +431,35 @@ export default function Messages({ embedded = false } = {}) {
                   </button>
                 );
               })}
-              {!loadingList && !conversations.length && <p className="px-5 py-8 text-center text-sm text-slate-500">{tx('لا توجد محادثات بعد. ابحث عن شخص لبدء محادثة.', 'No conversations yet. Search for someone to start one.')}</p>}
+              {!loadingList && !conversations.length && !availableContacts.length && !contactHint && (
+                <p className="px-5 py-8 text-center text-sm text-slate-500">{tx('لا توجد محادثات بعد. ابحث عن شخص لبدء محادثة.', 'No conversations yet. Search for someone to start one.')}</p>
+              )}
               {loadingList && <p className="px-4 py-6 text-center text-xs text-slate-500">{tx('جارٍ التحميل…', 'Loading…')}</p>}
+              {contactHint && (
+                <div className="mx-3 my-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+                  {contactHint}
+                </div>
+              )}
+              {availableContacts.length > 0 && (
+                <>
+                  <div className="px-4 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                    {tx('جهات الاتصال المتاحة', 'Available contacts')}
+                  </div>
+                  {availableContacts.map((person) => (
+                    <button key={person.user_id} type="button" disabled={busy} onClick={() => chooseContact(person)} className="flex w-full items-center gap-3 px-4 py-2.5 text-start hover:bg-white disabled:opacity-50">
+                      <Avatar name={person.full_name} online={onlineIds.has(person.user_id)} />
+                      <span className="min-w-0 flex-1">
+                        <b className="block truncate text-sm text-[#0B3B2E]">{person.full_name}</b>
+                        <small className="text-xs text-slate-500">
+                          {roleName(person.account_type, person.role, person.assigned_tutor_role)}
+                          {person.class_number ? ` · ${tx('الصف', 'Class')} ${person.class_number}` : ''}
+                          {onlineIds.has(person.user_id) ? ` · ${tx('متصل', 'Online')}` : ''}
+                        </small>
+                      </span>
+                    </button>
+                  ))}
+                </>
+              )}
             </>
           )}
         </div>
@@ -733,6 +776,7 @@ function roleName(type, role, assignedTutorRole) {
     counselor: tx('المرشد', 'Counselor'),
     exam_officer: tx('مسؤول الامتحانات', 'Exam Officer'),
     it_officer: tx('مسؤول التقنية', 'IT Officer'),
+    store_manager: tx('مسؤول المخزن والمطبخ', 'Store & Kitchen Manager'),
     librarian: tx('أمين المكتبة', 'Librarian'),
   };
   if (assignedTutorRole && assignedTutorRole !== 'none' && dutyLabels[assignedTutorRole]) {
