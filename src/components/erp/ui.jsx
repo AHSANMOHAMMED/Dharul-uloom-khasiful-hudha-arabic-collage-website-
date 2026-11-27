@@ -51,7 +51,7 @@ export function Card({ title, actions, children, className = '' }) {
       {(title || actions) && (
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           {title && <h3 className="text-base font-sans font-semibold text-slate-900 dark:text-dark-text-primary text-pretty">{title}</h3>}
-          {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+          {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}
         </div>
       )}
       {children}
@@ -172,7 +172,7 @@ export function Badge({ children, tone = 'gray' }) {
     red: 'bg-red-50 text-feedback-danger border border-feedback-danger/20',
     blue: 'bg-sky-50 text-feedback-info border border-feedback-info/20',
   };
-  return <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${tones[tone] || tones.gray}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${tones[tone] || tones.gray}`}>{children}</span>;
 }
 
 /** Map common workflow statuses to badge tones. */
@@ -321,7 +321,7 @@ export function PageHeader({ title, subtitle, actions }) {
         <h2 className={`${embedded ? 'text-lg' : 'text-xl sm:text-2xl'} font-sans font-semibold text-slate-900 text-balance`}>{title}</h2>
         {subtitle && <p className="text-sm text-slate-500 mt-1 max-w-3xl">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}
     </div>
   );
 }

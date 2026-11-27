@@ -50,7 +50,7 @@ function TodayView({ data, canAct }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
         <Stat label={t('Collected today', 'المحصّل اليوم')} value={formatMoney(collected)} hint={`${num(data.receipts)} ${t('receipts', 'إيصالات')}`} />
         <Stat
           label={t('Online (PayHere)', 'عبر الإنترنت (PayHere)')}
@@ -80,9 +80,9 @@ function TodayView({ data, canAct }) {
               {methods.rows.map((r) => (
                 <TotalLine key={r.method} label={labelOf(PAYMENT_METHODS, r.method, t)} value={formatMoney(r.amount)} />
               ))}
-              <TotalLine strong label={t('Total collected today', 'إجمالي المحصّل اليوم')} value={formatMoney(methods.total)} tone="text-emerald-300" />
+              <TotalLine strong label={t('Total collected today', 'إجمالي المحصّل اليوم')} value={formatMoney(methods.total)} tone="text-emerald-700" />
               {Math.round(methods.total * 100) !== Math.round(collected * 100) && (
-                <p className="text-xs text-amber-300 mt-2">{t('Method totals differ from the day total — refresh.', 'مجاميع الطرق تختلف عن مجموع اليوم — حدّث.')}</p>
+                <p className="text-xs text-amber-700 mt-2">{t('Method totals differ from the day total — refresh.', 'مجاميع الطرق تختلف عن مجموع اليوم — حدّث.')}</p>
               )}
             </div>
           ) : (
@@ -282,7 +282,7 @@ function StudentDesk({ canAct }) {
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <h4 className="font-bold text-white">{t('Message log', 'سجل الرسائل')}</h4>
+              <h4 className="font-bold text-slate-900">{t('Message log', 'سجل الرسائل')}</h4>
               <Button size="sm" variant="ghost" onClick={reloadLog}>{t('Refresh', 'تحديث')}</Button>
             </div>
             <AsyncView state={log}>
