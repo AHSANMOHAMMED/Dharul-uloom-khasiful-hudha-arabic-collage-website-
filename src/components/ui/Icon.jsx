@@ -836,6 +836,29 @@ export default function Icon({ name, className = '', size, ...props }) {
           </>
         );
 
+      case 'light_mode':
+      case 'wb_sunny':
+        return (
+          <>
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+          </>
+        );
+
+      case 'dark_mode':
+      case 'nights_stay':
+        return <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />;
+
+      case 'fullscreen':
+        return (
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+        );
+
+      case 'fullscreen_exit':
+        return (
+          <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+        );
+
       // Clean default geometric glyph: crisp bullet circle (NEVER text)
       case 'circle':
       default:

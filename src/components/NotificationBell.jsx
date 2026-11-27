@@ -191,7 +191,7 @@ export default function NotificationBell() {
         aria-label={tx('الإشعارات', 'Notifications')}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="relative p-2 rounded-xl text-[#0B3B2E] hover:bg-[#FBF8F0] border border-transparent hover:border-[#E8E1D0] transition"
+        className="relative inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas text-slate-600 dark:text-dark-text-primary hover:bg-slate-50 hover:text-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
       >
         <svg className="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 11-6 0" />

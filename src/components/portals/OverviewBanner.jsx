@@ -46,11 +46,11 @@ export default function OverviewBanner({
             alt={name}
             width="48"
             height="48"
-            className="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-200 shadow-xs"
+            className="w-12 h-12 rounded-full object-cover shrink-0 border border-slate-200 shadow-xs"
           />
         ) : (
           <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center font-serif text-xl font-bold shrink-0 border ${a.avatar}`}
+            className={`w-12 h-12 rounded-full flex items-center justify-center font-serif text-xl font-bold shrink-0 border ${a.avatar}`}
           >
             {(name[0] || 'د').toUpperCase()}
           </div>

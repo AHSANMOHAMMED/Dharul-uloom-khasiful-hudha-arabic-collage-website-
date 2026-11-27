@@ -433,9 +433,9 @@ export default function DashboardSidebarLayout({
             className={`flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40 ${sidebarCollapsed ? 'lg:justify-center lg:px-1' : ''}`}
           >
             {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user?.username || 'Profile'} width="36" height="36" className="w-9 h-9 rounded-lg object-cover border border-slate-200 shrink-0" />
+              <img src={user.avatarUrl} alt={user?.username || 'Profile'} width="36" height="36" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
             ) : (
-              <div className="w-9 h-9 rounded-lg bg-[#E3F1EA] text-[#11694A] font-serif font-bold text-sm flex items-center justify-center shrink-0 border border-[#11694A]/20">
+              <div className="w-9 h-9 rounded-full bg-[#E3F1EA] text-[#11694A] font-serif font-bold text-sm flex items-center justify-center shrink-0 border border-[#11694A]/20">
                 {(user?.username || user?.email || 'U')[0].toUpperCase()}
               </div>
             )}
@@ -545,7 +545,7 @@ export default function DashboardSidebarLayout({
               aria-pressed={darkMode}
               aria-label={darkMode ? tx('تفعيل الوضع الفاتح', 'Switch to light mode') : tx('تفعيل الوضع الداكن', 'Switch to dark mode')}
               title={darkMode ? tx('الوضع الفاتح', 'Light mode') : tx('الوضع الداكن', 'Dark mode')}
-              className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas text-slate-700 dark:text-dark-text-primary hover:bg-slate-50 hover:text-emerald-700 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas text-slate-600 dark:text-dark-text-primary hover:bg-slate-50 hover:text-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
             >
               <Icon name={darkMode ? 'light_mode' : 'dark_mode'} className="text-[18px]" aria-hidden="true" />
             </button>
@@ -556,7 +556,7 @@ export default function DashboardSidebarLayout({
               aria-pressed={isFullscreen}
               aria-label={isFullscreen ? tx('إنهاء ملء الشاشة', 'Exit fullscreen') : tx('ملء الشاشة', 'Toggle fullscreen')}
               title={isFullscreen ? tx('إنهاء ملء الشاشة', 'Exit fullscreen') : tx('ملء الشاشة', 'Fullscreen')}
-              className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas text-slate-700 dark:text-dark-text-primary hover:bg-slate-50 hover:text-emerald-700 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
+              className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas text-slate-600 dark:text-dark-text-primary hover:bg-slate-50 hover:text-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
             >
               <Icon name={isFullscreen ? 'fullscreen_exit' : 'fullscreen'} className="text-[18px]" aria-hidden="true" />
             </button>
@@ -568,7 +568,7 @@ export default function DashboardSidebarLayout({
                 <button
                   type="button"
                   onClick={() => onSelect('messages')}
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas text-slate-700 dark:text-dark-text-primary hover:bg-slate-50 hover:text-emerald-700 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas text-slate-600 dark:text-dark-text-primary hover:bg-slate-50 hover:text-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
                   title={tx('الرسائل', 'Messages')}
                   aria-label={tx('الرسائل', 'Messages')}
                 >
@@ -577,7 +577,7 @@ export default function DashboardSidebarLayout({
               ) : (
                 <Link
                   to="/messages"
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas text-slate-700 dark:text-dark-text-primary hover:bg-slate-50 hover:text-emerald-700 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas text-slate-600 dark:text-dark-text-primary hover:bg-slate-50 hover:text-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
                   title={tx('الرسائل', 'Messages')}
                   aria-label={tx('الرسائل', 'Messages')}
                 >
@@ -589,7 +589,7 @@ export default function DashboardSidebarLayout({
             {!isParent && isApproved && enabled('library') && (user?.accountType !== 'guest' || isEmployee || isAdmin || isLibrarian) && (
               <Link
                 to="/library"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas text-xs font-semibold text-slate-700 dark:text-dark-text-primary hover:bg-slate-50 hover:text-emerald-700 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
+                className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas text-xs font-semibold text-slate-700 dark:text-dark-text-primary hover:bg-slate-50 hover:text-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
               >
                 <Icon name="auto_stories" className="text-[16px] text-emerald-700" aria-hidden="true" />
                 <span>{tx('المكتبة', 'Library')}</span>
@@ -603,12 +603,12 @@ export default function DashboardSidebarLayout({
                 aria-expanded={userMenuOpen}
                 aria-haspopup="menu"
                 aria-label={tx('قائمة الحساب', 'Account menu')}
-                className="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas hover:bg-slate-50 shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
+                className="inline-flex items-center gap-2 p-1 pe-2.5 rounded-full border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-canvas hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/40"
               >
                 {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user?.username || 'Profile'} width="28" height="28" className="w-7 h-7 rounded-lg object-cover border border-slate-200 shrink-0" />
+                  <img src={user.avatarUrl} alt={user?.username || 'Profile'} width="32" height="32" className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0" />
                 ) : (
-                  <span className="w-7 h-7 rounded-lg bg-[#E3F1EA] text-[#11694A] text-xs font-bold flex items-center justify-center shrink-0">
+                  <span className="w-8 h-8 rounded-full bg-[#E3F1EA] text-[#11694A] text-xs font-bold flex items-center justify-center shrink-0">
                     {(user?.username || user?.email || 'U')[0].toUpperCase()}
                   </span>
                 )}
